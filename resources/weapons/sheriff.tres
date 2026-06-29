@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="WeaponConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/WeaponConfig.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+weapon_name = "Magnum"
+weapon_type = 0
+category = 0
+cost = 800
+damage = 55.0
+damage_min = 45.0
+falloff_start = 30.0
+falloff_end = 50.0
+headshot_mult = 3.5
+max_range = 150.0
+fire_rate = 4.0
+automatic = false
+spread_hip = 1.2
+spread_aim = 0.2
+mag_size = 6
+reserve_ammo = 24
+reload_time = 2.2
+aim_fov = 65.0
+aim_speed = 12.0
+pellets = 1
+pellet_spread = 0.0

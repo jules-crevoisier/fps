@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="WeaponConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/WeaponConfig.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+weapon_name = "Pistolet"
+weapon_type = 0
+category = 0
+cost = 0
+damage = 26.0
+damage_min = 22.0
+falloff_start = 30.0
+falloff_end = 50.0
+headshot_mult = 3.0
+max_range = 120.0
+fire_rate = 6.75
+automatic = false
+spread_hip = 1.6
+spread_aim = 0.4
+mag_size = 12
+reserve_ammo = 60
+reload_time = 1.5
+aim_fov = 70.0
+aim_speed = 14.0
+pellets = 1
+pellet_spread = 0.0

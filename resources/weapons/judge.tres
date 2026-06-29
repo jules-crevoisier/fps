@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="WeaponConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/WeaponConfig.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+weapon_name = "Fracas"
+weapon_type = 1
+category = 3
+cost = 1850
+damage = 17.0
+damage_min = 6.0
+falloff_start = 8.0
+falloff_end = 22.0
+headshot_mult = 2.0
+max_range = 40.0
+fire_rate = 3.5
+automatic = true
+spread_hip = 3.0
+spread_aim = 2.0
+mag_size = 5
+reserve_ammo = 25
+reload_time = 2.5
+aim_fov = 70.0
+aim_speed = 14.0
+pellets = 12
+pellet_spread = 4.5

@@ -1,9 +1,13 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://scripts/networking/GameWorld.gd" id="1_world"]
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="2_player"]
 [ext_resource type="Script" path="res://scripts/levels/ArenaBuilder.gd" id="3_arena"]
 [ext_resource type="Script" path="res://scripts/ui/SpeedHUD.gd" id="4_hud"]
+[ext_resource type="Script" path="res://scripts/ui/PauseMenu.gd" id="5_pause"]
+[ext_resource type="Script" path="res://scripts/ui/GameHUD.gd" id="6_ghud"]
+[ext_resource type="Script" path="res://scripts/ui/BuyMenu.gd" id="7_buy"]
+[ext_resource type="Script" path="res://scripts/world/TrainingDummy.gd" id="8_dummy"]
 
 [sub_resource type="ProceduralSkyMaterial" id="Sky_1"]
 sky_top_color = Color(0.38, 0.6, 0.86, 1)
@@ -26,6 +30,7 @@ ssao_enabled = true
 [node name="TestArena" type="Node3D"]
 script = ExtResource("1_world")
 player_scene = ExtResource("2_player")
+agent_select = false
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Env_1")
@@ -55,15 +60,24 @@ _spawnable_scenes = PackedStringArray("res://scenes/player/player.tscn")
 spawn_path = NodePath("../Players")
 
 [node name="HUD" type="CanvasLayer" parent="."]
-script = ExtResource("4_hud")
+script = ExtResource("6_ghud")
 
-[node name="Label" type="Label" parent="HUD"]
-offset_left = 24.0
-offset_top = 20.0
-offset_right = 360.0
-offset_bottom = 110.0
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 0.6)
-theme_override_constants/outline_size = 6
-theme_override_font_sizes/font_size = 30
-text = ""
+[node name="PauseMenu" type="CanvasLayer" parent="."]
+script = ExtResource("5_pause")
+
+[node name="BuyMenu" type="CanvasLayer" parent="."]
+script = ExtResource("7_buy")
+
+[node name="Dummies" type="Node3D" parent="."]
+
+[node name="Dummy1" type="StaticBody3D" parent="Dummies"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, -9)
+script = ExtResource("8_dummy")
+
+[node name="Dummy2" type="StaticBody3D" parent="Dummies"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -10)
+script = ExtResource("8_dummy")
+
+[node name="Dummy3" type="StaticBody3D" parent="Dummies"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, -9)
+script = ExtResource("8_dummy")

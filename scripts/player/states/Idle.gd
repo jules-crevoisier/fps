@@ -18,7 +18,7 @@ func physics_update(delta: float) -> void:
 	if config.dive_enabled and Input.is_action_just_pressed("dive"):
 		transition_to("Dive")
 		return
-	if Input.is_action_just_pressed("crouch"):
+	if Input.is_action_pressed("crouch"):
 		transition_to("Crouch")
 		return
 	if player.input_vector != Vector2.ZERO:

@@ -29,11 +29,11 @@ PlayerController (CharacterBody3D)
     ├── Idle    — immobile au sol
     ├── Walk    — marche lente (Shift)
     ├── Sprint  — course (par défaut)
-    ├── Crouch  — accroupi (toggle)
-    ├── Air     — en l'air (air-strafe CS + contrôle direct)
-    ├── Slide   — glissade (+ cancel / jump)
-    ├── Dive    — plongée dolphin dive
-    ├── Roll    — roulade d'atterrissage (galipette caméra)
+    ├── Crouch  — accroupi (maintien)
+	├── Air     — en l'air (air-strafe CS + contrôle direct)
+	├── Slide   — glissade (+ cancel / jump)
+	├── Dive    — plongée dolphin dive
+	├── Roll    — roulade d'atterrissage (galipette caméra)
     └── Stun    — étourdissement cartoon (étoiles)
 ```
 
@@ -48,14 +48,22 @@ joueurs sont répliqués via le `MultiplayerSynchronizer`.
 
 ## 2. Contrôles
 
-| Action | Touche (position physique → ZQSD sur AZERTY) |
-|--------|----------------------------------------------|
-| Avancer / reculer / gauche / droite | W / S / A / D |
-| Sauter | Espace |
-| Marche lente (sinon **sprint auto**) | Shift (maintenu) |
-| Crouch / Slide (toggle) | Ctrl (tap) |
-| Dive / Landing-roll | V |
-| Libérer la souris | Échap |
+| Action | Clavier* | Manette (Xbox) |
+|--------|----------|----------------|
+| Déplacement | W / A / S / D | Stick gauche |
+| Visée | Souris | Stick droit |
+| Sauter | Espace | A |
+| Marche lente (sinon **sprint auto**) | Shift (maintenu) | L3 |
+| Accroupi / Slide | Ctrl (maintien) | B |
+| Dive / Landing-roll | V | LB |
+| Tirer / Viser (ADS) | Clic G / Clic D | RT / LT |
+| Recharger | R | X |
+| Pause | Échap | Start |
+
+\* Les touches sont en **position physique** (donc ZQSD sur AZERTY), et leur
+**libellé s'adapte à la disposition système** (DisplayServer). Tout est
+remappable dans Options (clavier + manette), + switch AZERTY/QWERTY. Détails :
+[`docs/CONTROLS.md`](CONTROLS.md).
 
 ---
 
@@ -67,8 +75,8 @@ Modèle **`ground_move()`** : la vitesse horizontale est tirée directement vers
 
 - **Sprint automatique** : dès que tu bouges, tu cours à `sprint_speed`.
 - **Marche** : maintenir Shift réduit à `walk_speed`.
-- **Crouch (toggle)** : un tap de Ctrl t'accroupis (`crouch_speed`), un autre te
-  relève (si le plafond est dégagé — `CeilingCheck`).
+- **Crouch (maintien)** : tenir Ctrl = accroupi (`crouch_speed`) ; relâcher relève
+  (si le plafond est dégagé — `CeilingCheck`). Jamais bloqué.
 
 | Paramètre | Déf. | Rôle |
 |-----------|------|------|
@@ -129,11 +137,11 @@ Déclenché par un **tap de Ctrl en courant** (vitesse ≥ `slide_min_speed`).
 Un boost initial, puis décélération ; dans une **pente descendante** le slide
 **accélère** (`slide_slope_accel`). Steer limité pour infléchir la trajectoire.
 
-Trois variantes d'enchaînement :
+Contrôle simple (une seule touche, sans conflit) :
 
-- **Slide-cancel** : re-tap de Ctrl pendant le slide → on l'annule en gardant la
-  vitesse (`slide_keep`). Sécurité : le cancel ne s'arme qu'**après avoir relâché
-  Ctrl une fois**, pour que l'appui qui lance le slide ne l'annule pas aussitôt.
+- **Slide-cancel** : **relâcher Ctrl** pendant le slide → on se relève en gardant
+  l'élan (`slide_keep`). Tenir Ctrl jusqu'au bout → on finit accroupi (relâcher
+  relève ensuite).
 - **Slide-jump** : sauter pendant le slide conserve le momentum + un petit pop
   vertical (`slide_jump_pop`).
 - **Slide-hop** : atterrir en gardant Ctrl enfoncé relance un slide en gardant la

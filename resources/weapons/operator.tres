@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="WeaponConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/WeaponConfig.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+weapon_name = "Faucheur"
+weapon_type = 2
+category = 4
+cost = 4700
+damage = 150.0
+damage_min = 120.0
+falloff_start = 60.0
+falloff_end = 120.0
+headshot_mult = 1.7
+max_range = 300.0
+fire_rate = 0.75
+automatic = false
+spread_hip = 6.0
+spread_aim = 0.0
+mag_size = 5
+reserve_ammo = 10
+reload_time = 3.7
+aim_fov = 30.0
+aim_speed = 16.0
+pellets = 1
+pellet_spread = 0.0
+recoil_vertical = 2.6
+recoil_horizontal = 0.4
+recoil_recovery = 4.0
+scoped = true

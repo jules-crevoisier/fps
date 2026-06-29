@@ -1,19 +1,16 @@
-## Slide — glissade façon MW2019 : courte, contrôlable, avec SLIDE-CANCEL.
-##  - boost à l'entrée, décélère vite (slide_friction élevé),
-##  - accélère un peu en descente,
-##  - SLIDE-CANCEL : re-tapper crouch annule le slide en gardant la vitesse
-##    pour repartir aussitôt (mécanique signature de MW2019),
-##  - SLIDE-JUMP : sauter pendant le slide conserve le momentum + petit pop.
+## Slide — glissade. Modèle de contrôle simple et sans conflit de touche :
+##  - RELÂCHER Ctrl pendant le slide = cancel (on se relève en gardant l'élan) ;
+##  - TENIR Ctrl jusqu'au bout = on finit accroupi (relâcher Ctrl relève ensuite) ;
+##  - SAUTER = slide-jump (conserve le momentum + petit pop).
+## Le slide accélère dans les pentes descendantes (cœur du mouvement).
 extends PlayerState
 
 var _timer: float = 0.0
 var _dir: Vector3 = Vector3.ZERO
-var _armed: bool = false  ## Le cancel n'est possible qu'après avoir relâché crouch une fois.
 
 func enter(_from: String, _msg: Dictionary = {}) -> void:
 	player.set_crouching(true)
 	_timer = 0.0
-	_armed = false
 	_dir = player.horizontal_velocity().normalized()
 	if _dir == Vector3.ZERO:
 		_dir = -player.global_transform.basis.z
@@ -50,13 +47,13 @@ func physics_update(delta: float) -> void:
 
 	player.apply_friction(config.slide_friction, delta)
 
-	# Plafond de vitesse du slide.
+	# Plafond de vitesse.
 	if player.horizontal_speed() > config.slide_max_speed:
 		var c := player.horizontal_velocity().normalized()
 		player.velocity.x = c.x * config.slide_max_speed
 		player.velocity.z = c.z * config.slide_max_speed
 
-	# --- SLIDE-JUMP : garde le momentum, petit pop, repart en l'air ---
+	# SLIDE-JUMP : sauter garde le momentum + petit pop.
 	if player.jump_buffered() and player.can_jump():
 		_keep_momentum()
 		player.set_crouching(false)
@@ -66,19 +63,15 @@ func physics_update(delta: float) -> void:
 		transition_to("Air")
 		return
 
-	# --- SLIDE-CANCEL : re-tap de crouch pendant le slide (façon MW2019) ---
-	# On "arme" le cancel seulement une fois crouch relâché, pour que l'appui qui
-	# a lancé le slide ne l'annule pas instantanément.
+	# CANCEL : relâcher Ctrl pendant le slide => on se relève en gardant l'élan.
 	if not Input.is_action_pressed("crouch"):
-		_armed = true
-	if config.slide_cancel_enabled and _armed and Input.is_action_just_pressed("crouch"):
 		_keep_momentum()
 		_exit_to_ground()
 		return
 
-	# Fin naturelle : durée écoulée ou trop lent => on se RELÈVE et on repart en
-	# sprint (plus de passage forcé en crouch).
-	var too_slow := player.horizontal_speed() < config.slide_min_speed * 0.7
+	# Fin naturelle : durée écoulée ou trop lent (Ctrl encore tenu => on reste
+	# accroupi ; relâcher Ctrl relèvera ensuite).
+	var too_slow := player.horizontal_speed() < config.slide_min_speed * 0.6
 	if _timer >= config.slide_max_time or too_slow:
 		_exit_to_ground()
 
@@ -88,6 +81,10 @@ func _keep_momentum() -> void:
 
 func _exit_to_ground() -> void:
 	player.set_crouching(false)
+	# Ctrl encore tenu => on s'accroupit (crouch en maintien : relâcher relève).
+	if Input.is_action_pressed("crouch"):
+		transition_to("Crouch")
+		return
 	if player.input_vector == Vector2.ZERO:
 		transition_to("Idle")
 	elif Input.is_action_pressed("walk"):

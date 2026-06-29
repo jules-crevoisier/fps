@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="WeaponConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/WeaponConfig.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+weapon_name = "Marqueur"
+weapon_type = 0
+category = 2
+cost = 2400
+damage = 65.0
+damage_min = 55.0
+falloff_start = 45.0
+falloff_end = 80.0
+headshot_mult = 2.3
+max_range = 240.0
+fire_rate = 5.25
+automatic = false
+spread_hip = 1.6
+spread_aim = 0.15
+mag_size = 12
+reserve_ammo = 60
+reload_time = 2.5
+aim_fov = 55.0
+aim_speed = 11.0
+pellets = 1
+pellet_spread = 0.0

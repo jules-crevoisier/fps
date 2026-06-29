@@ -38,6 +38,39 @@ func consume_roll_buffer() -> void:
 
 @export var fall_limit: float = -40.0   ## Sous cette altitude => respawn.
 var spawn_point: Vector3 = Vector3(0, 2, 0)
+var team: int = 0                        ## Équipe assignée par le serveur.
+
+# Recul (vrai recoil : déplace la visée, puis récupère).
+var _recoil_target: Vector2 = Vector2.ZERO   # x = pitch (haut), y = yaw
+var _recoil_applied: Vector2 = Vector2.ZERO
+var _recoil_recovery: float = 7.0
+
+## Ajoute un kick de recul (radians). Appelé par l'arme à chaque tir.
+func add_recoil(pitch: float, yaw: float, recovery: float) -> void:
+	_recoil_target += Vector2(pitch, yaw)
+	_recoil_recovery = recovery
+
+func _update_recoil(delta: float) -> void:
+	# Récupération : la cible revient vers 0, ce qui ramène la visée.
+	_recoil_target = _recoil_target.lerp(Vector2.ZERO, clampf(_recoil_recovery * delta, 0.0, 1.0))
+	var new_applied := _recoil_applied.lerp(_recoil_target, clampf(22.0 * delta, 0.0, 1.0))
+	var d := new_applied - _recoil_applied
+	head.rotation.x = clamp(head.rotation.x + d.x, deg_to_rad(-89), deg_to_rad(89))
+	rotate_y(d.y)
+	_recoil_applied = new_applied
+
+## L'autorité multijoueur DOIT être réglée dans _enter_tree (pas _ready), sinon le
+## MultiplayerSynchronizer ne peut pas traiter le spawn (erreur "no network ID").
+## Nom du nœud = id du peer propriétaire (identique sur tous les pairs). Le
+## mouvement/caméra appartient à ce peer ; la vie (Health) est forcée sur le
+## SERVEUR (peer 1) pour rester autoritaire.
+func _enter_tree() -> void:
+	var owner_id := str(name).to_int()
+	if owner_id > 0:
+		set_multiplayer_authority(owner_id)  # récursif (corps, synchronizer, arme)
+	var hp := get_node_or_null("Health")
+	if hp:
+		hp.set_multiplayer_authority(1)
 
 func _ready() -> void:
 	if config == null:
@@ -45,6 +78,7 @@ func _ready() -> void:
 		push_warning("Aucun MovementConfig assigné — valeurs par défaut utilisées.")
 	current_height = config.stand_height
 	_air_peak_y = global_position.y
+	spawn_point = global_position  # point de respawn par défaut = position de départ
 
 	# Réglages sol pour un mouvement fluide sur les pentes (slide qui glisse,
 	# pas de blocage en haut de pente, vitesse conservée aux ruptures de pente).
@@ -67,8 +101,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		_look(event.relative)
-	if event.is_action_pressed("ui_cancel"):
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED else Input.MOUSE_MODE_CAPTURED
 	state_machine.handle_input(event)
 
 func _physics_process(delta: float) -> void:
@@ -77,13 +109,41 @@ func _physics_process(delta: float) -> void:
 	if global_position.y < fall_limit:
 		respawn()
 		return
+	# Mort : on fige le joueur (pas d'input/action) jusqu'au respawn serveur.
+	var hp := get_node_or_null("Health") as Health
+	if hp and hp.is_dead:
+		velocity.x = 0.0
+		velocity.z = 0.0
+		if not is_on_floor():
+			velocity.y -= config.gravity * delta
+		move_and_slide()
+		return
 	_read_input()
+	_gamepad_look(delta)
+	_update_recoil(delta)
 	_update_timers(delta)
 	state_machine.physics_update(delta)
 	_update_crouch_height(delta)
 	move_and_slide()
 	_check_fall_stun()
 	_was_on_floor = is_on_floor()
+
+## Visée à la manette (stick droit). Gelée si un menu est ouvert.
+func _gamepad_look(delta: float) -> void:
+	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+		return
+	var rx := Input.get_joy_axis(0, JOY_AXIS_RIGHT_X)
+	var ry := Input.get_joy_axis(0, JOY_AXIS_RIGHT_Y)
+	var dz := 0.15
+	if absf(rx) < dz: rx = 0.0
+	if absf(ry) < dz: ry = 0.0
+	if rx == 0.0 and ry == 0.0:
+		return
+	if Settings.invert_y:
+		ry = -ry
+	rotate_y(-rx * Settings.gamepad_sensitivity * delta)
+	head.rotate_x(-ry * Settings.gamepad_sensitivity * delta)
+	head.rotation.x = clamp(head.rotation.x, deg_to_rad(-89), deg_to_rad(89))
 
 ## Suit la hauteur de chute et déclenche un stun à l'atterrissage si trop haut.
 ## Rouler (Dive/Roll) absorbe la chute : pas de stun.
@@ -117,6 +177,11 @@ func _maybe_stun(fall_height: float) -> void:
 #  ENTRÉES
 # ------------------------------------------------------------------
 func _read_input() -> void:
+	# Si la souris est libérée (menu pause/options ouvert), on ignore les entrées.
+	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+		input_vector = Vector2.ZERO
+		wish_dir = Vector3.ZERO
+		return
 	input_vector = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	# Direction voulue relative à l'orientation du joueur (yaw sur le body).
 	var basis_dir := (global_transform.basis * Vector3(input_vector.x, 0.0, input_vector.y))
@@ -131,14 +196,25 @@ func _read_input() -> void:
 		_roll_buffer_timer = lerpf(config.land_roll_window, config.land_roll_window_max, f)
 
 func _look(relative: Vector2) -> void:
-	rotate_y(-relative.x * config.mouse_sensitivity)
-	head.rotate_x(-relative.y * config.mouse_sensitivity)
+	rotate_y(-relative.x * Settings.mouse_sensitivity)
+	head.rotate_x(-relative.y * Settings.mouse_sensitivity)
 	head.rotation.x = clamp(head.rotation.x, deg_to_rad(-89), deg_to_rad(89))
 
 ## Replace le joueur au point de spawn (chute hors map, etc.).
 func respawn() -> void:
 	velocity = Vector3.ZERO
 	global_position = spawn_point
+	if state_machine:
+		state_machine.transition_to("Idle")
+
+## Respawn réseau : le SERVEUR appelle ceci sur le PROPRIÉTAIRE (rpc_id) pour le
+## téléporter — nécessaire car le mouvement est client-autoritaire (le serveur ne
+## peut pas changer directement la position d'un autre pair).
+@rpc("any_peer", "call_local", "reliable")
+func net_respawn(pos: Vector3) -> void:
+	spawn_point = pos
+	velocity = Vector3.ZERO
+	global_position = pos
 	if state_machine:
 		state_machine.transition_to("Idle")
 

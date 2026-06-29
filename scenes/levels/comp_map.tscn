@@ -1,0 +1,118 @@
+[gd_scene load_steps=14 format=3]
+
+[ext_resource type="Script" path="res://scripts/networking/GameWorld.gd" id="1_world"]
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="2_player"]
+[ext_resource type="Script" path="res://scripts/levels/CompMapBuilder.gd" id="3_map"]
+[ext_resource type="Script" path="res://scripts/ui/GameHUD.gd" id="4_hud"]
+[ext_resource type="Script" path="res://scripts/ui/PauseMenu.gd" id="5_pause"]
+[ext_resource type="Script" path="res://scripts/ui/BuyMenu.gd" id="6_buy"]
+[ext_resource type="Script" path="res://scripts/modes/HardpointMode.gd" id="7_mode"]
+
+[sub_resource type="BoxShape3D" id="HpBox"]
+size = Vector3(10, 4, 10)
+
+[sub_resource type="BoxMesh" id="HpMesh"]
+size = Vector3(10, 4, 10)
+
+[sub_resource type="StandardMaterial3D" id="HpMat"]
+transparency = 1
+albedo_color = Color(0.88, 0.7, 0.25, 0.22)
+emission_enabled = true
+emission = Color(0.5, 0.4, 0.1, 1)
+
+[sub_resource type="ProceduralSkyMaterial" id="Sky_1"]
+sky_top_color = Color(0.32, 0.42, 0.58, 1)
+sky_horizon_color = Color(0.72, 0.76, 0.82, 1)
+ground_horizon_color = Color(0.72, 0.76, 0.82, 1)
+
+[sub_resource type="Sky" id="Sky_2"]
+sky_material = SubResource("Sky_1")
+
+[sub_resource type="Environment" id="Env_1"]
+background_mode = 2
+sky = SubResource("Sky_2")
+ambient_light_source = 3
+ambient_light_color = Color(0.7, 0.74, 0.8, 1)
+ambient_light_energy = 0.4
+tonemap_mode = 2
+
+[node name="CompMap" type="Node3D"]
+script = ExtResource("1_world")
+player_scene = ExtResource("2_player")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Env_1")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.707107, -0.353553, 0.612372, 0, 0.866025, 0.5, -0.707107, -0.353553, 0.612372, 0, 28, 0)
+shadow_enabled = true
+
+[node name="Map" type="Node3D" parent="."]
+script = ExtResource("3_map")
+
+[node name="Hardpoint" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+
+[node name="Collision" type="CollisionShape3D" parent="Hardpoint"]
+shape = SubResource("HpBox")
+
+[node name="Mesh" type="MeshInstance3D" parent="Hardpoint"]
+material_override = SubResource("HpMat")
+mesh = SubResource("HpMesh")
+
+[node name="HardpointPoints" type="Node3D" parent="."]
+
+[node name="P1" type="Marker3D" parent="HardpointPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+
+[node name="P2" type="Marker3D" parent="HardpointPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 2, 12)
+
+[node name="P3" type="Marker3D" parent="HardpointPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 2, -12)
+
+[node name="HardpointMode" type="Node" parent="."]
+script = ExtResource("7_mode")
+zone_path = NodePath("../Hardpoint")
+points_path = NodePath("../HardpointPoints")
+
+[node name="SpawnPoints" type="Node3D" parent="."]
+
+[node name="T1" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27, 1, 6)
+metadata/team = 0
+
+[node name="T2" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27, 1, -6)
+metadata/team = 0
+
+[node name="T3" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27, 1, 0)
+metadata/team = 0
+
+[node name="CT1" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27, 1, 6)
+metadata/team = 1
+
+[node name="CT2" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27, 1, -6)
+metadata/team = 1
+
+[node name="CT3" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27, 1, 0)
+metadata/team = 1
+
+[node name="Players" type="Node3D" parent="."]
+
+[node name="PlayerSpawner" type="MultiplayerSpawner" parent="."]
+_spawnable_scenes = PackedStringArray("res://scenes/player/player.tscn")
+spawn_path = NodePath("../Players")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+script = ExtResource("4_hud")
+
+[node name="PauseMenu" type="CanvasLayer" parent="."]
+script = ExtResource("5_pause")
+
+[node name="BuyMenu" type="CanvasLayer" parent="."]
+script = ExtResource("6_buy")

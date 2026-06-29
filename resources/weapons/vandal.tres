@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="WeaponConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/WeaponConfig.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+weapon_name = "Ravage"
+weapon_type = 0
+category = 2
+cost = 2900
+damage = 40.0
+damage_min = 34.0
+falloff_start = 40.0
+falloff_end = 70.0
+headshot_mult = 2.8
+max_range = 220.0
+fire_rate = 9.75
+automatic = true
+spread_hip = 2.2
+spread_aim = 0.25
+mag_size = 25
+reserve_ammo = 75
+reload_time = 2.5
+aim_fov = 60.0
+aim_speed = 12.0
+pellets = 1
+pellet_spread = 0.0
+recoil_vertical = 0.7
+recoil_horizontal = 0.4
+recoil_recovery = 6.5

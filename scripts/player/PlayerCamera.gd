@@ -31,7 +31,7 @@ func _ready() -> void:
 		player = get_parent().get_parent() as PlayerController
 	if player:
 		config = player.config
-		fov = config.base_fov
+		fov = Settings.fov
 	_base_local_pos = position
 
 func _process(delta: float) -> void:
@@ -61,7 +61,14 @@ func _update_roll(delta: float) -> void:
 		rotation.x = 0.0
 
 func _update_fov(delta: float) -> void:
-	var target := config.base_fov
+	# Visée (ADS) : zoom au FOV de l'arme courante. Prioritaire sur tout le reste.
+	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and Input.is_action_pressed("aim"):
+		var w := player.get_node_or_null("Weapon")
+		var aim_target: float = w.current_aim_fov() if w and w.has_method("current_aim_fov") else 55.0
+		fov = lerp(fov, aim_target, 16.0 * delta)
+		return
+
+	var target := Settings.fov
 	var sm := player.state_machine.current_name
 	if sm == "Sprint":
 		target += config.sprint_fov_add

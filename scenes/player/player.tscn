@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3]
+[gd_scene load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/PlayerController.gd" id="1_ctrl"]
 [ext_resource type="Resource" path="res://resources/movement/default_movement.tres" id="2_cfg"]
@@ -14,6 +14,10 @@
 [ext_resource type="Script" path="res://scripts/player/states/Roll.gd" id="12_roll"]
 [ext_resource type="Script" path="res://scripts/player/states/Stun.gd" id="13_stun"]
 [ext_resource type="Script" path="res://scripts/player/StunStars.gd" id="14_stars"]
+[ext_resource type="Script" path="res://scripts/combat/Health.gd" id="15_health"]
+[ext_resource type="Script" path="res://scripts/combat/Weapon.gd" id="16_weapon"]
+[ext_resource type="Resource" path="res://resources/weapons/default_rifle.tres" id="17_wcfg"]
+[ext_resource type="Script" path="res://scripts/agents/AbilityController.gd" id="18_ability"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
 radius = 0.4
@@ -97,6 +101,16 @@ script = ExtResource("13_stun")
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.05, 0)
 script = ExtResource("14_stars")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("15_health")
+
+[node name="Weapon" type="Node" parent="."]
+script = ExtResource("16_weapon")
+config = ExtResource("17_wcfg")
+
+[node name="Abilities" type="Node" parent="."]
+script = ExtResource("18_ability")
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
 replication_config = SubResource("SceneReplicationConfig_1")

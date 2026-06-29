@@ -18,11 +18,11 @@ func physics_update(delta: float) -> void:
 	if config.dive_enabled and Input.is_action_just_pressed("dive"):
 		transition_to("Dive")
 		return
-	if Input.is_action_just_pressed("crouch"):
-		if player.horizontal_speed() >= config.slide_min_speed:
-			transition_to("Slide")
-		else:
-			transition_to("Crouch")
+	if Input.is_action_just_pressed("crouch") and player.horizontal_speed() >= config.slide_min_speed:
+		transition_to("Slide")
+		return
+	if Input.is_action_pressed("crouch"):
+		transition_to("Crouch")
 		return
 	if player.input_vector == Vector2.ZERO:
 		transition_to("Idle")

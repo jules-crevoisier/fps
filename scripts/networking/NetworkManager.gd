@@ -4,6 +4,11 @@
 ## - join() : se connecte à un serveur.
 ## Le spawn effectif des joueurs est géré par le MultiplayerSpawner de la scène
 ## de niveau (voir GameWorld.gd).
+##
+## Normalement enregistré en autoload ("Net"). Pour être ROBUSTE même si
+## l'autoload n'est pas pris en compte, on y accède via NetworkManager.get_net()
+## (qui le retrouve à /root/Net, ou le crée au besoin).
+class_name NetworkManager
 extends Node
 
 signal player_connected(peer_id: int)
@@ -17,6 +22,17 @@ const DEFAULT_IP: String = "127.0.0.1"
 const MAX_PLAYERS: int = 16
 
 var peer: ENetMultiplayerPeer
+
+## Accès robuste au gestionnaire réseau, indépendant de l'autoload.
+## Le retrouve à /root/Net (autoload) ou le crée s'il n'existe pas.
+static func get_net(tree: SceneTree) -> NetworkManager:
+	var root := tree.root
+	var n := root.get_node_or_null("Net")
+	if n == null:
+		n = NetworkManager.new()
+		n.name = "Net"
+		root.add_child(n)
+	return n
 
 func _ready() -> void:
 	multiplayer.peer_connected.connect(_on_peer_connected)
