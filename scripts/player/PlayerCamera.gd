@@ -56,4 +56,4 @@ func _update_bob(delta: float) -> void:
 		position = _base_local_pos + Vector3(offset_x, offset_y, 0.0)
 	else:
 		_bob_time = 0.0
-		posit
+		position = position.lerp(_base_local_pos, 10.0 * delta)
