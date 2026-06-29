@@ -21,9 +21,15 @@ Source, slide avec momentum, et **slide cancel** pour enchaîner la vitesse.
 | Crouch / Slide    | Ctrl |
 | Libérer la souris | Échap |
 
-**Slide** : en sprint, appuyer sur Ctrl → glissade boostée.
-**Slide cancel** : re-tapper Ctrl (ou sauter) pendant le slide → on garde le
-momentum et on peut re-slider immédiatement.
+Mouvement **façon Apex** (un peu plus fluide) :
+- **Slide** : en sprint, appuyer sur Ctrl → glissade qui **accélère en descente**.
+- **Slide-jump** : sauter pendant le slide conserve **tout** le momentum.
+- **Slide-hop** : atterrir en gardant Ctrl enfoncé relance un slide sans perdre
+  la vitesse → on enchaîne sprint → slide → saut → slide…
+- **Air control / tap-strafe** : en l'air, les touches de direction (re-tappées)
+  redirigent la trajectoire en gardant la vitesse.
+
+Détails et réglages : [`docs/MOVEMENT.md`](docs/MOVEMENT.md).
 
 ## Architecture
 
@@ -58,13 +64,4 @@ Tout se règle sans toucher au code via la ressource
 ## Multijoueur
 
 Base posée avec l'API multijoueur haut-niveau de Godot (ENet) :
-`Net.host()` / `Net.join(ip)`. Le `MultiplayerSpawner` réplique les joueurs ;
-l'autorité de chaque perso est donnée à son pair propriétaire.
-
-## Roadmap
-
-- [ ] Menu host/join + écran de connexion
-- [ ] Reconciliation / prédiction côté client (netcode robuste)
-- [ ] Armes (hitscan + projectiles cartoon)
-- [ ] Wall-run / grapple (mouvement avancé)
-- [ ] Style visuel cartoon (toon shader, outline)
+`Net.host()` / `Net.join(ip)`. Le `Mul

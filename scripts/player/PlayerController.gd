@@ -24,11 +24,7 @@ var current_height: float = 0.0
 var _coyote_timer: float = 0.0
 var _jump_buffer_timer: float = 0.0
 var _was_on_floor: bool = false
-var slide_cooldown_timer: float = 0.0  ## Empêche un nouveau slide tant que > 0.
-
-## Un slide est-il autorisé maintenant ?
-func can_slide() -> bool:
-	return slide_cooldown_timer <= 0.0
+var slide_jumped: bool = false  ## Vrai juste après un slide-jump (pour le slide-hop).
 
 func _ready() -> void:
 	if config == null:
@@ -92,6 +88,19 @@ func accelerate(dir: Vector3, wish_speed: float, accel: float, delta: float) -> 
 	velocity.x += accel_speed * dir.x
 	velocity.z += accel_speed * dir.z
 
+## Redirige le vecteur vitesse horizontal vers `dir` SANS changer sa norme.
+## C'est ce qui donne le côté fluide / tap-strafe : on tourne sa course en
+## conservant toute la vitesse. `rate` = vitesse de rotation (rad/s approx).
+func redirect_velocity(dir: Vector3, rate: float, delta: float) -> void:
+	var horiz := Vector3(velocity.x, 0.0, velocity.z)
+	var speed := horiz.length()
+	if speed < 0.5 or dir == Vector3.ZERO:
+		return
+	var cur_dir := horiz / speed
+	var new_dir := cur_dir.slerp(dir.normalized(), clamp(rate * delta, 0.0, 1.0)).normalized()
+	velocity.x = new_dir.x * speed
+	velocity.z = new_dir.z * speed
+
 ## Friction horizontale (décélération exponentielle stable).
 func apply_friction(friction: float, delta: float) -> void:
 	var horiz := Vector3(velocity.x, 0.0, velocity.z)
@@ -126,14 +135,11 @@ func can_jump() -> bool:
 func jump_buffered() -> bool:
 	return _jump_buffer_timer > 0.0
 
-## Exécute le saut en conservant (ou non) le momentum horizontal.
+## Exécute le saut. Le momentum horizontal est TOUJOURS conservé (style Apex).
 func do_jump() -> void:
 	velocity.y = config.jump_velocity
 	_jump_buffer_timer = 0.0
 	_coyote_timer = 0.0
-	if not config.preserve_momentum_on_jump:
-		velocity.x = 0.0
-		velocity.z = 0.0
 
 ## Y a-t-il un obstacle au-dessus empêchant de se relever ?
 func is_blocked_above() -> bool:
@@ -148,14 +154,6 @@ func _update_timers(delta: float) -> void:
 	else:
 		_coyote_timer = max(_coyote_timer - delta, 0.0)
 	_jump_buffer_timer = max(_jump_buffer_timer - delta, 0.0)
-	slide_cooldown_timer = max(slide_cooldown_timer - delta, 0.0)
 
 func _update_crouch_height(delta: float) -> void:
-	var target := config.crouch_height if is_crouching else config.stand_height
-	current_height = lerp(current_height, target, config.crouch_lerp_speed * delta)
-	var shape := collision.shape
-	if shape is CapsuleShape3D:
-		shape.height = current_height
-		collision.position.y = current_height * 0.5
-	# La tête suit la hauteur (légèrement sous le sommet).
-	head.position.y = current_height - 0.2
+	va

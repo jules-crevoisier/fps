@@ -38,12 +38,15 @@ func _update_fov(delta: float) -> void:
 	# Léger bonus de FOV proportionnel à la survitesse.
 	var over := player.horizontal_speed() - config.sprint_speed
 	if over > 0.0:
-		target += clamp(over * 0.6, 0.0, 10.0)
+		target += clamp(over * 0.6, 0.0, config.speed_fov_add)
 	fov = lerp(fov, target, config.fov_lerp_speed * delta)
 
 func _update_tilt(delta: float) -> void:
-	# Roule la caméra dans le sens du strafe.
-	var target_roll := -player.input_vector.x * deg_to_rad(config.strafe_tilt)
+	# Roule la caméra dans le sens du strafe (renforcé pendant le slide).
+	var tilt := config.strafe_tilt
+	if player.state_machine.current_name == "Slide":
+		tilt += config.slide_tilt
+	var target_roll := -player.input_vector.x * deg_to_rad(tilt)
 	rotation.z = lerp(rotation.z, target_roll, config.tilt_lerp_speed * delta)
 
 func _update_bob(delta: float) -> void:
@@ -52,8 +55,4 @@ func _update_bob(delta: float) -> void:
 	if grounded and speed > 0.5 and player.state_machine.current_name != "Slide":
 		_bob_time += delta * config.bob_frequency * clamp(speed / config.sprint_speed, 0.4, 1.4)
 		var offset_y := sin(_bob_time) * config.bob_amplitude
-		var offset_x := cos(_bob_time * 0.5) * config.bob_amplitude * 0.6
-		position = _base_local_pos + Vector3(offset_x, offset_y, 0.0)
-	else:
-		_bob_time = 0.0
-		posit
+		var offset_x := cos(_

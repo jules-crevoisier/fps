@@ -1,93 +1,82 @@
 ## MovementConfig.gd
 ## Ressource centralisant TOUS les paramètres de mouvement.
+## Modèle inspiré d'APEX LEGENDS (en un peu plus fluide) :
+##  - slide qui PREND de la vitesse en descente,
+##  - slide-jump qui conserve tout le momentum,
+##  - slide-hop : re-slide à l'atterrissage en gardant la vitesse,
+##  - air control généreux pour rediriger sa course en l'air.
 ## Crée des variantes (.tres) pour tester différents "feels" sans toucher au code.
-## Inspiré du modèle accélération/friction de Source (air-strafe) + slide cancel façon Apex/CoD.
 class_name MovementConfig
 extends Resource
 
 @export_group("Vitesses (m/s)")
-## Vitesse de marche de base.
-@export var walk_speed: float = 6.0
-## Vitesse en sprint.
-@export var sprint_speed: float = 9.5
-## Vitesse max accroupi.
-@export var crouch_speed: float = 3.0
-## Vitesse en l'air visée (faible : on garde l'inertie, on ne "pousse" pas fort).
-@export var air_speed: float = 1.2
+## Vitesse sans sprint (déplacement lent, arme lourde, etc.).
+@export var walk_speed: float = 4.2
+## Vitesse de course (locomotion principale, comme le sprint tactique d'Apex).
+@export var sprint_speed: float = 7.0
+## Vitesse max accroupi (immobile/lent).
+@export var crouch_speed: float = 2.8
+## Cap d'accélération à l'air (faible : style Source, on REDIRIGE plus qu'on pousse).
+@export var air_speed: float = 1.4
 
 @export_group("Accélération / Friction")
-## Accélération au sol (plus haut = réponse plus sèche).
-@export var ground_accel: float = 90.0
-## Friction au sol quand on relâche les touches (décélération).
-@export var ground_friction: float = 60.0
-## Accélération en l'air (clé du air-strafe fluide : laisser bas).
-@export var air_accel: float = 28.0
-## Friction en l'air (≈0 pour conserver le momentum).
+## Accélération au sol (haut = réponse sèche et nerveuse).
+@export var ground_accel: float = 110.0
+## Friction au sol quand on relâche (décélération).
+@export var ground_friction: float = 7.5
+## Accélération en l'air (gain de vitesse en strafe, style Source).
+@export var air_accel: float = 55.0
+## Friction en l'air (0 = on garde tout le momentum).
 @export var air_friction: float = 0.0
 
+@export_group("Air Control (fluidité)")
+## Vitesse de redirection du vecteur vitesse vers la direction visée, en l'air.
+## C'est LA valeur "fluide" : plus haut = on tourne sa trajectoire vite,
+## façon tap-strafe d'Apex. 0 = pas de redirection (air strafe pur).
+@export var air_control: float = 9.0
+## Active une redirection renforcée sur une nouvelle pression de touche (tap-strafe-like).
+@export var tap_strafe_enabled: bool = true
+## Multiplicateur d'air control lors d'un tap directionnel frais.
+@export var tap_strafe_boost: float = 2.6
+
 @export_group("Saut")
-@export var jump_velocity: float = 6.2
-## Gravité (m/s²). Négatif appliqué en interne.
-@export var gravity: float = 20.0
+@export var jump_velocity: float = 6.0
+## Gravité (m/s²). Appliquée négativement en interne.
+@export var gravity: float = 22.0
 ## Gravité multipliée à la descente (saut plus "punchy").
-@export var fall_gravity_mult: float = 1.45
+@export var fall_gravity_mult: float = 1.3
 ## Fenêtre coyote (s) : saut autorisé juste après avoir quitté le sol.
-@export var coyote_time: float = 0.12
+@export var coyote_time: float = 0.1
 ## Buffer de saut (s) : saut mémorisé si pressé juste avant d'atterrir.
 @export var jump_buffer_time: float = 0.12
-## Conserve la vitesse horizontale au décollage (bunny-hop friendly).
-@export var preserve_momentum_on_jump: bool = true
 
 @export_group("Slide")
 ## Vitesse minimale pour déclencher un slide.
-@export var slide_min_speed: float = 6.5
-## Boost de vitesse injecté au début du slide.
-@export var slide_boost: float = 4.0
-## Vitesse max atteignable par un slide.
-@export var slide_max_speed: float = 16.0
+@export var slide_min_speed: float = 4.5
+## Petit boost injecté au début du slide (modeste, comme sur du plat dans Apex).
+@export var slide_boost: float = 2.5
+## Vitesse max atteignable en slide (sur pente raide).
+@export var slide_max_speed: float = 15.0
 ## Friction pendant le slide (faible = on glisse longtemps).
-@export var slide_friction: float = 4.5
-## Durée max d'un slide (s) avant de repasser en crouch.
-@export var slide_max_time: float = 1.1
-## Accélération bonus dans les descentes pendant le slide.
-@export var slide_slope_accel: float = 18.0
+@export var slide_friction: float = 3.0
+## Durée max d'un slide (s) sur du plat avant de repasser en crouch.
+@export var slide_max_time: float = 1.5
+## Accélération en descente : c'est là qu'on GAGNE de la vitesse (cœur d'Apex).
+@export var slide_slope_accel: float = 24.0
 ## Contrôle directionnel autorisé pendant le slide (0 = aucun, 1 = total).
-@export_range(0.0, 1.0) var slide_steer: float = 0.25
+@export_range(0.0, 1.0) var slide_steer: float = 0.32
 
-@export_group("Slide Cancel")
-## Active la mécanique de slide cancel (chaîner les slides pour garder la vitesse).
-@export var slide_cancel_enabled: bool = true
-## Fenêtre (s) après le début du slide pendant laquelle un cancel garde tout le momentum.
-@export var slide_cancel_window: float = 0.45
-## Cooldown entre deux slides. 0 = chaînage libre (mouvement très permissif).
-@export var slide_cooldown: float = 0.0
-## Fraction de vitesse conservée lors d'un cancel propre (1.0 = tout gardé).
-@export_range(0.0, 1.0) var slide_cancel_keep: float = 1.0
+@export_group("Slide-Jump / Slide-Hop")
+## Fraction de vitesse horizontale conservée en sautant depuis un slide (1 = tout).
+@export_range(0.0, 1.0) var slide_jump_keep: float = 1.0
+## Atterrir crouch maintenu => re-slide direct en gardant le momentum (slide-hop).
+@export var slide_hop_enabled: bool = true
+## Cap de vitesse quand on enchaîne les slides (évite l'accélération infinie).
+@export var chain_speed_cap: float = 15.0
+## Bonus de vitesse vertical ajouté au saut quand on slide-jump (petit pop).
+@export var slide_jump_pop: float = 0.6
 
 @export_group("Crouch")
 ## Hauteur debout de la collision.
 @export var stand_height: float = 1.8
-## Hauteur accroupi de la collision.
-@export var crouch_height: float = 0.9
-## Vitesse de transition de hauteur (lerp).
-@export var crouch_lerp_speed: float = 12.0
-
-@export_group("Caméra")
-## Sensibilité souris.
-@export var mouse_sensitivity: float = 0.0025
-## FOV de base.
-@export var base_fov: float = 90.0
-## FOV ajouté au sprint.
-@export var sprint_fov_add: float = 8.0
-## FOV ajouté au slide.
-@export var slide_fov_add: float = 14.0
-## Vitesse d'interpolation du FOV.
-@export var fov_lerp_speed: float = 8.0
-## Inclinaison (deg) de la caméra en strafe.
-@export var strafe_tilt: float = 1.6
-## Vitesse d'interpolation du tilt.
-@export var tilt_lerp_speed: float = 9.0
-## Amplitude du head-bob.
-@export var bob_amplitude: float = 0.045
-## Fréquence du head-bob.
-@export var bob_frequency: float = 9.0
+## Hauteur accroup
