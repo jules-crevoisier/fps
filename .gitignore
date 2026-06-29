@@ -1,3 +1,25 @@
 # Godot 4+ specific ignores
 .godot/
 /android/
+
+# Imported assets cache
+.import/
+
+# Exports & presets (export_presets.cfg peut contenir des secrets/clés)
+export_presets.cfg
+/build/
+/exports/
+*.translation
+
+# Mono / .NET (si jamais on passe sur le build C#)
+.mono/
+data_*/
+*.csproj
+*.sln
+
+# OS / éditeurs
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/

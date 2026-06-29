@@ -46,7 +46,9 @@ func _spawn_player(id: int) -> void:
 	get_node(players_root).add_child(player, true)
 	# Autorité au pair propriétaire (il pilote ses entrées).
 	player.set_multiplayer_authority(id)
-	player.global_position = _get_spawn_position()
+	var spawn := _get_spawn_position()
+	player.global_position = spawn
+	player.spawn_point = spawn  # point de respawn en cas de chute
 
 func _get_spawn_position() -> Vector3:
 	var root := get_node_or_null(spawn_points_root)

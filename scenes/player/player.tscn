@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=18 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/PlayerController.gd" id="1_ctrl"]
 [ext_resource type="Resource" path="res://resources/movement/default_movement.tres" id="2_cfg"]
@@ -10,6 +10,10 @@
 [ext_resource type="Script" path="res://scripts/player/states/Crouch.gd" id="8_crouch"]
 [ext_resource type="Script" path="res://scripts/player/states/Air.gd" id="9_air"]
 [ext_resource type="Script" path="res://scripts/player/states/Slide.gd" id="10_slide"]
+[ext_resource type="Script" path="res://scripts/player/states/Dive.gd" id="11_dive"]
+[ext_resource type="Script" path="res://scripts/player/states/Roll.gd" id="12_roll"]
+[ext_resource type="Script" path="res://scripts/player/states/Stun.gd" id="13_stun"]
+[ext_resource type="Script" path="res://scripts/player/StunStars.gd" id="14_stars"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
 radius = 0.4
@@ -79,6 +83,20 @@ script = ExtResource("9_air")
 
 [node name="Slide" type="Node" parent="StateMachine"]
 script = ExtResource("10_slide")
+
+[node name="Dive" type="Node" parent="StateMachine"]
+script = ExtResource("11_dive")
+
+[node name="Roll" type="Node" parent="StateMachine"]
+script = ExtResource("12_roll")
+
+[node name="Stun" type="Node" parent="StateMachine"]
+script = ExtResource("13_stun")
+
+[node name="StunStars" type="Node3D" parent="."]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.05, 0)
+script = ExtResource("14_stars")
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
 replication_config = SubResource("SceneReplicationConfig_1")

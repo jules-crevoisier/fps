@@ -1,11 +1,15 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/networking/GameWorld.gd" id="1_world"]
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="2_player"]
+[ext_resource type="Script" path="res://scripts/levels/ArenaBuilder.gd" id="3_arena"]
+[ext_resource type="Script" path="res://scripts/ui/SpeedHUD.gd" id="4_hud"]
 
 [sub_resource type="ProceduralSkyMaterial" id="Sky_1"]
-sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
-ground_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
+sky_top_color = Color(0.38, 0.6, 0.86, 1)
+sky_horizon_color = Color(0.78, 0.86, 0.93, 1)
+ground_horizon_color = Color(0.78, 0.86, 0.93, 1)
+ground_bottom_color = Color(0.62, 0.66, 0.7, 1)
 
 [sub_resource type="Sky" id="Sky_2"]
 sky_material = SubResource("Sky_1")
@@ -13,20 +17,11 @@ sky_material = SubResource("Sky_1")
 [sub_resource type="Environment" id="Env_1"]
 background_mode = 2
 sky = SubResource("Sky_2")
+ambient_light_source = 3
+ambient_light_color = Color(0.7, 0.75, 0.82, 1)
+ambient_light_energy = 0.35
 tonemap_mode = 2
 ssao_enabled = true
-
-[sub_resource type="BoxShape3D" id="FloorShape"]
-size = Vector3(60, 1, 60)
-
-[sub_resource type="BoxMesh" id="FloorMesh"]
-size = Vector3(60, 1, 60)
-
-[sub_resource type="BoxShape3D" id="RampShape"]
-size = Vector3(10, 1, 16)
-
-[sub_resource type="BoxMesh" id="RampMesh"]
-size = Vector3(10, 1, 16)
 
 [node name="TestArena" type="Node3D"]
 script = ExtResource("1_world")
@@ -36,41 +31,39 @@ player_scene = ExtResource("2_player")
 environment = SubResource("Env_1")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(0.707107, -0.5, 0.5, 0, 0.707107, 0.707107, -0.707107, -0.5, 0.5, 0, 15, 0)
+transform = Transform3D(0.707107, -0.353553, 0.612372, 0, 0.866025, 0.5, -0.707107, -0.353553, 0.612372, 0, 30, 0)
 shadow_enabled = true
 
-[node name="Floor" type="StaticBody3D" parent="."]
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
-shape = SubResource("FloorShape")
-
-[node name="Mesh" type="MeshInstance3D" parent="Floor"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
-mesh = SubResource("FloorMesh")
-
-[node name="Ramp" type="StaticBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.965926, 0.258819, 0, -0.258819, 0.965926, 14, 1.5, -10)
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Ramp"]
-shape = SubResource("RampShape")
-
-[node name="Mesh" type="MeshInstance3D" parent="Ramp"]
-mesh = SubResource("RampMesh")
+[node name="Arena" type="Node3D" parent="."]
+script = ExtResource("3_arena")
 
 [node name="SpawnPoints" type="Node3D" parent="."]
 
 [node name="Spawn1" type="Marker3D" parent="SpawnPoints"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 1.5, 6)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 
 [node name="Spawn2" type="Marker3D" parent="SpawnPoints"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 1.5, 6)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 1, 4)
 
 [node name="Spawn3" type="Marker3D" parent="SpawnPoints"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 1, -4)
 
 [node name="Players" type="Node3D" parent="."]
 
 [node name="PlayerSpawner" type="MultiplayerSpawner" parent="."]
 _spawnable_scenes = PackedStringArray("res://scenes/player/player.tscn")
 spawn_path = NodePath("../Players")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+script = ExtResource("4_hud")
+
+[node name="Label" type="Label" parent="HUD"]
+offset_left = 24.0
+offset_top = 20.0
+offset_right = 360.0
+offset_bottom = 110.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.6)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 30
+text = ""

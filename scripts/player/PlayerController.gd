@@ -15,6 +15,7 @@ extends CharacterBody3D
 @onready var collision: CollisionShape3D = %Collision
 @onready var ceiling_check: RayCast3D = %CeilingCheck
 @onready var state_machine: PlayerStateMachine = %StateMachine
+@onready var stun_stars: Node3D = get_node_or_null("%StunStars")
 
 # --- État partagé entre les states ---
 var wish_dir: Vector3 = Vector3.ZERO      ## Direction voulue (monde), normalisée.
@@ -25,18 +26,40 @@ var _coyote_timer: float = 0.0
 var _jump_buffer_timer: float = 0.0
 var _was_on_floor: bool = false
 var slide_jumped: bool = false  ## Vrai juste après un slide-jump (pour le slide-hop).
+var _air_peak_y: float = 0.0    ## Altitude max atteinte en l'air (pour la hauteur de chute).
+var _roll_buffer_timer: float = 0.0  ## Roulade d'atterrissage mémorisée (anti-stun).
+
+## Une roulade d'atterrissage a-t-elle été déclenchée au bon timing ?
+func land_roll_buffered() -> bool:
+	return _roll_buffer_timer > 0.0
+
+func consume_roll_buffer() -> void:
+	_roll_buffer_timer = 0.0
+
+@export var fall_limit: float = -40.0   ## Sous cette altitude => respawn.
+var spawn_point: Vector3 = Vector3(0, 2, 0)
 
 func _ready() -> void:
 	if config == null:
 		config = MovementConfig.new()
 		push_warning("Aucun MovementConfig assigné — valeurs par défaut utilisées.")
 	current_height = config.stand_height
+	_air_peak_y = global_position.y
+
+	# Réglages sol pour un mouvement fluide sur les pentes (slide qui glisse,
+	# pas de blocage en haut de pente, vitesse conservée aux ruptures de pente).
+	floor_stop_on_slope = false
+	floor_constant_speed = true
+	floor_snap_length = 0.4
+	floor_max_angle = deg_to_rad(52)
+
 	state_machine.setup(self)
 
 	# En multijoueur, seul le propriétaire pilote sa caméra + input.
 	var mine := is_multiplayer_authority()
 	camera.current = mine
 	if mine:
+		add_to_group("local_player")
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -51,12 +74,44 @@ func _unhandled_input(event: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
 	if not is_multiplayer_authority():
 		return
+	if global_position.y < fall_limit:
+		respawn()
+		return
 	_read_input()
 	_update_timers(delta)
 	state_machine.physics_update(delta)
 	_update_crouch_height(delta)
 	move_and_slide()
+	_check_fall_stun()
 	_was_on_floor = is_on_floor()
+
+## Suit la hauteur de chute et déclenche un stun à l'atterrissage si trop haut.
+## Rouler (Dive/Roll) absorbe la chute : pas de stun.
+func _check_fall_stun() -> void:
+	if is_on_floor():
+		if not _was_on_floor:
+			# Atterrissage. La roulade (buffer "dive" au bon timing) est PRIORITAIRE
+			# sur le stun : on doit la tester ici car la détection du sol par
+			# move_and_slide arrive avant que l'état Air n'ait sa frame.
+			if land_roll_buffered():
+				consume_roll_buffer()
+				if state_machine.current_name != "Roll":
+					state_machine.transition_to("Roll")
+			else:
+				_maybe_stun(_air_peak_y - global_position.y)
+		_air_peak_y = global_position.y
+	else:
+		_air_peak_y = max(_air_peak_y, global_position.y)
+
+func _maybe_stun(fall_height: float) -> void:
+	if not config.stun_enabled or fall_height < config.fall_min_height:
+		return
+	var s := state_machine.current_name
+	if s == "Roll" or s == "Dive" or s == "Stun":
+		return  # la roulade absorbe l'impact
+	var t: float = remap(fall_height, config.fall_min_height, config.fall_max_height, config.stun_min_time, config.stun_max_time)
+	t = clampf(t, config.stun_min_time, config.stun_max_time)
+	state_machine.transition_to("Stun", {"duration": t})
 
 # ------------------------------------------------------------------
 #  ENTRÉES
@@ -68,11 +123,24 @@ func _read_input() -> void:
 	wish_dir = Vector3(basis_dir.x, 0.0, basis_dir.z).normalized()
 	if Input.is_action_just_pressed("jump"):
 		_jump_buffer_timer = config.jump_buffer_time
+	# Appuyer sur "dive" EN L'AIR mémorise une roulade d'atterrissage (anti-stun).
+	# Plus on tombe vite (chute haute), plus la fenêtre est large => plus facile.
+	if Input.is_action_just_pressed("dive") and not is_on_floor():
+		var fall_speed: float = max(-velocity.y, 0.0)
+		var f: float = clampf(fall_speed / config.land_roll_fast_speed, 0.0, 1.0)
+		_roll_buffer_timer = lerpf(config.land_roll_window, config.land_roll_window_max, f)
 
 func _look(relative: Vector2) -> void:
 	rotate_y(-relative.x * config.mouse_sensitivity)
 	head.rotate_x(-relative.y * config.mouse_sensitivity)
 	head.rotation.x = clamp(head.rotation.x, deg_to_rad(-89), deg_to_rad(89))
+
+## Replace le joueur au point de spawn (chute hors map, etc.).
+func respawn() -> void:
+	velocity = Vector3.ZERO
+	global_position = spawn_point
+	if state_machine:
+		state_machine.transition_to("Idle")
 
 # ------------------------------------------------------------------
 #  HELPERS DE MOUVEMENT (utilisés par les states)
@@ -87,6 +155,32 @@ func accelerate(dir: Vector3, wish_speed: float, accel: float, delta: float) -> 
 	var accel_speed: float = min(accel * wish_speed * delta, add_speed)
 	velocity.x += accel_speed * dir.x
 	velocity.z += accel_speed * dir.z
+
+## Mouvement SOL façon CoD : réponse sèche et instantanée (move_toward linéaire).
+## `target_speed` = vitesse visée ; `accel`/`friction` en m/s^2.
+func ground_move(target_speed: float, accel: float, friction: float, delta: float) -> void:
+	var hv := Vector3(velocity.x, 0.0, velocity.z)
+	if wish_dir != Vector3.ZERO:
+		hv = hv.move_toward(wish_dir * target_speed, accel * delta)
+	else:
+		hv = hv.move_toward(Vector3.ZERO, friction * delta)
+	velocity.x = hv.x
+	velocity.z = hv.z
+
+## Contrôle directionnel DIRECT en l'air : freine / réoriente vers wish_dir.
+## Toute AUGMENTATION de vitesse est ramenée à la vitesse d'entrée → ce contrôle
+## ne crée pas de vitesse (il freine et fait tourner la trajectoire), le gain
+## restant réservé à l'air-strafe (accelerate).
+func air_control_move(strength: float, delta: float) -> void:
+	if wish_dir == Vector3.ZERO:
+		return
+	var hv := Vector3(velocity.x, 0.0, velocity.z)
+	var before := hv.length()
+	hv += wish_dir * strength * delta
+	if hv.length() > before:
+		hv = hv.normalized() * before
+	velocity.x = hv.x
+	velocity.z = hv.z
 
 ## Redirige le vecteur vitesse horizontal vers `dir` SANS changer sa norme.
 ## C'est ce qui donne le côté fluide / tap-strafe : on tourne sa course en
@@ -111,9 +205,9 @@ func apply_friction(friction: float, delta: float) -> void:
 		return
 	var drop := speed * friction * delta
 	var new_speed: float = max(speed - drop, 0.0)
-	var scale := new_speed / speed
-	velocity.x *= scale
-	velocity.z *= scale
+	var factor := new_speed / speed
+	velocity.x *= factor
+	velocity.z *= factor
 
 func apply_gravity(delta: float) -> void:
 	var g := config.gravity
@@ -154,6 +248,14 @@ func _update_timers(delta: float) -> void:
 	else:
 		_coyote_timer = max(_coyote_timer - delta, 0.0)
 	_jump_buffer_timer = max(_jump_buffer_timer - delta, 0.0)
+	_roll_buffer_timer = max(_roll_buffer_timer - delta, 0.0)
 
 func _update_crouch_height(delta: float) -> void:
-	va
+	var target := config.crouch_height if is_crouching else config.stand_height
+	current_height = lerp(current_height, target, config.crouch_lerp_speed * delta)
+	var shape := collision.shape
+	if shape is CapsuleShape3D:
+		shape.height = current_height
+		collision.position.y = current_height * 0.5
+	# La tête suit la hauteur (légèrement sous le sommet).
+	head.position.y = current_height - 0.2
