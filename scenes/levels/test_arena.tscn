@@ -10,10 +10,10 @@
 [ext_resource type="Script" path="res://scripts/world/TrainingDummy.gd" id="8_dummy"]
 
 [sub_resource type="ProceduralSkyMaterial" id="Sky_1"]
-sky_top_color = Color(0.38, 0.6, 0.86, 1)
-sky_horizon_color = Color(0.78, 0.86, 0.93, 1)
-ground_horizon_color = Color(0.78, 0.86, 0.93, 1)
-ground_bottom_color = Color(0.62, 0.66, 0.7, 1)
+sky_top_color = Color(0.25, 0.58, 0.98, 1)
+sky_horizon_color = Color(0.78, 0.91, 1.0, 1)
+ground_horizon_color = Color(0.78, 0.91, 1.0, 1)
+ground_bottom_color = Color(0.66, 0.74, 0.62, 1)
 
 [sub_resource type="Sky" id="Sky_2"]
 sky_material = SubResource("Sky_1")
@@ -22,10 +22,10 @@ sky_material = SubResource("Sky_1")
 background_mode = 2
 sky = SubResource("Sky_2")
 ambient_light_source = 3
-ambient_light_color = Color(0.7, 0.75, 0.82, 1)
-ambient_light_energy = 0.35
+ambient_light_color = Color(0.82, 0.86, 0.95, 1)
+ambient_light_energy = 0.6
 tonemap_mode = 2
-ssao_enabled = true
+ssao_enabled = false
 
 [node name="TestArena" type="Node3D"]
 script = ExtResource("1_world")

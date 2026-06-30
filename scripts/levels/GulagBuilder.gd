@@ -25,11 +25,14 @@ func _ready() -> void:
 func _mat(color: Color, transparent := false) -> StandardMaterial3D:
 	var key := str(color) + str(transparent)
 	if not _mats.has(key):
-		var m := StandardMaterial3D.new()
-		m.albedo_color = color
-		m.roughness = 0.95
+		var m: StandardMaterial3D
 		if transparent:
+			m = StandardMaterial3D.new()
+			m.albedo_color = color
+			m.roughness = 0.95
 			m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		else:
+			m = Cartoon.mat(color)
 		_mats[key] = m
 	return _mats[key]
 

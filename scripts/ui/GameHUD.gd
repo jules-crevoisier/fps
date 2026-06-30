@@ -35,16 +35,17 @@ func _ready() -> void:
 	_build()
 
 func _build() -> void:
-	# Crosshair central.
-	_crosshair = Label.new()
-	_crosshair.text = "+"
-	_crosshair.add_theme_font_size_override("font_size", 28)
+	# Crosshair : 4 traits + point central (style FPS).
+	_crosshair = Control.new()
 	_crosshair.set_anchors_preset(Control.PRESET_CENTER)
-	_crosshair.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_crosshair.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_crosshair.offset_left = -10
-	_crosshair.offset_top = -18
+	_crosshair.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_crosshair)
+	var col := Color(0.95, 1.0, 0.95, 0.9)
+	_cross_line(_crosshair, Rect2(-1, -11, 2, 7), col)   # haut
+	_cross_line(_crosshair, Rect2(-1, 4, 2, 7), col)     # bas
+	_cross_line(_crosshair, Rect2(-11, -1, 7, 2), col)   # gauche
+	_cross_line(_crosshair, Rect2(4, -1, 7, 2), col)     # droite
+	_cross_line(_crosshair, Rect2(-1, -1, 2, 2), col)    # point central
 
 	# Barre de vie (bas-gauche).
 	var hp_bg := ColorRect.new()
@@ -199,6 +200,25 @@ func _build_scope() -> void:
 	vbar.offset_left = -1; vbar.offset_right = 1; vbar.offset_top = -120; vbar.offset_bottom = 120
 	_scope_reticle.add_child(vbar)
 	add_child(_scope_reticle)
+
+func _cross_line(parent: Control, r: Rect2, c: Color) -> void:
+	# Contour noir fin pour la lisibilité.
+	var outline := ColorRect.new()
+	outline.color = Color(0, 0, 0, 0.55)
+	outline.offset_left = r.position.x - 1
+	outline.offset_top = r.position.y - 1
+	outline.offset_right = r.position.x + r.size.x + 1
+	outline.offset_bottom = r.position.y + r.size.y + 1
+	outline.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(outline)
+	var rect := ColorRect.new()
+	rect.color = c
+	rect.offset_left = r.position.x
+	rect.offset_top = r.position.y
+	rect.offset_right = r.position.x + r.size.x
+	rect.offset_bottom = r.position.y + r.size.y
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(rect)
 
 func _build_scoreboard() -> void:
 	_scoreboard = ColorRect.new()

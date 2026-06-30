@@ -27,9 +27,7 @@ func _ready() -> void:
 	cm.radius = 0.4
 	mesh.mesh = cm
 	mesh.position.y = 0.9
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.85, 0.3, 0.3)
-	mesh.material_override = mat
+	mesh.material_override = Cartoon.mat(Color(0.95, 0.32, 0.32))
 	add_child(mesh)
 
 	# Vie (serveur-autoritaire) — sans régénération pour voir les dégâts cumulés.

@@ -37,10 +37,9 @@ func _ready() -> void:
 	bm.size = Vector3(0.7, 0.16, 0.16)
 	mesh.mesh = bm
 	mesh.position.y = 0.15
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.85, 0.7, 0.25)
+	var mat := Cartoon.mat(Color(1.0, 0.82, 0.3))
 	mat.emission_enabled = true
-	mat.emission = Color(0.5, 0.4, 0.1)
+	mat.emission = Color(0.6, 0.45, 0.12)
 	mesh.material_override = mat
 	add_child(mesh)
 

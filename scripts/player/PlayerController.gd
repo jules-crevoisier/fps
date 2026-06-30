@@ -89,6 +89,11 @@ func _ready() -> void:
 
 	state_machine.setup(self)
 
+	# Look cartoon : capsule en cel-shading + contour noir.
+	var mesh := get_node_or_null("Mesh")
+	if mesh:
+		mesh.material_override = Cartoon.mat(Color(1.0, 0.58, 0.28))
+
 	# En multijoueur, seul le propriétaire pilote sa caméra + input.
 	var mine := is_multiplayer_authority()
 	camera.current = mine

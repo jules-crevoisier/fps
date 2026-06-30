@@ -32,10 +32,7 @@ func _ready() -> void:
 # ------------------------------------------------------------------ HELPERS
 func _mat(color: Color) -> StandardMaterial3D:
 	if not _mats.has(color):
-		var m := StandardMaterial3D.new()
-		m.albedo_color = color
-		m.roughness = 0.95
-		_mats[color] = m
+		_mats[color] = Cartoon.mat(color)
 	return _mats[color]
 
 func _piece(xform: Transform3D, size: Vector3, color: Color, nm: String) -> StaticBody3D:

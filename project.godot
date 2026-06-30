@@ -24,6 +24,10 @@ Net="*res://scripts/networking/NetworkManager.gd"
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
+[gui]
+
+theme/custom="res://resources/ui/ui_theme.tres"
+
 [input]
 
 ui_accept={
@@ -220,3 +224,4 @@ scoreboard={
 [rendering]
 
 rendering_device/driver.windows="d3d12"
+environment/defaults/default_clear_color=Color(0.45, 0.72, 0.95, 1)

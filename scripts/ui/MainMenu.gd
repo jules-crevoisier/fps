@@ -39,16 +39,31 @@ func _build() -> void:
 	add_child(center)
 	_menu_box = center
 
+	# Panneau stylé (thème global).
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(420, 0)
+	center.add_child(panel)
+
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 14)
-	box.custom_minimum_size = Vector2(360, 0)
-	center.add_child(box)
+	box.add_theme_constant_override("separation", 12)
+	panel.add_child(box)
 
 	var title := Label.new()
 	title.text = "FPS CARTOON"
-	title.add_theme_font_size_override("font_size", 48)
+	title.add_theme_font_size_override("font_size", 56)
+	title.add_theme_color_override("font_color", Color(1.0, 0.78, 0.2))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(title)
+
+	var subtitle := Label.new()
+	subtitle.text = "ARENA SHOOTER"
+	subtitle.add_theme_font_size_override("font_size", 16)
+	subtitle.add_theme_color_override("font_color", Color(1.0, 0.55, 0.3))
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(subtitle)
+
+	var sep := HSeparator.new()
+	box.add_child(sep)
 
 	_mode_btn = Button.new()
 	_mode_btn.custom_minimum_size = Vector2(0, 38)
