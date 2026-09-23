@@ -1,0 +1,61 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/networking/GameWorld.gd" id="1_world"]
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="2_player"]
+[ext_resource type="Script" path="res://scripts/levels/maps/MapSetup.gd" id="3_setup"]
+[ext_resource type="Script" path="res://scripts/ui/GameHUD.gd" id="4_hud"]
+[ext_resource type="Script" path="res://scripts/ui/PauseMenu.gd" id="5_pause"]
+[ext_resource type="Script" path="res://scripts/ui/BuyMenu.gd" id="6_buy"]
+
+[sub_resource type="ProceduralSkyMaterial" id="Sky_1"]
+sky_top_color = Color(0.55, 0.58, 0.72, 1)
+sky_horizon_color = Color(0.92, 0.73, 0.6, 1)
+ground_horizon_color = Color(0.92, 0.73, 0.6, 1)
+
+[sub_resource type="Sky" id="Sky_2"]
+sky_material = SubResource("Sky_1")
+
+[sub_resource type="Environment" id="Env_1"]
+background_mode = 2
+sky = SubResource("Sky_2")
+ambient_light_source = 3
+ambient_light_color = Color(0.88, 0.78, 0.72, 1)
+ambient_light_energy = 0.75
+tonemap_mode = 2
+
+[node name="LeBelvedere" type="Node3D"]
+script = ExtResource("1_world")
+player_scene = ExtResource("2_player")
+respawn_delay = 3.0
+spawn_points_root = NodePath("MapSetup/SpawnPoints")
+allow_bot_fill = true
+agent_select = true
+buy_enabled = false
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Env_1")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.965926, -0.149429, 0.211325, 0, 0.816497, 0.57735, -0.258819, -0.55767, 0.788675, 0, 20, 0)
+shadow_enabled = true
+light_energy = 1.05
+light_color = Color(1.0, 0.9, 0.8, 1)
+
+[node name="MapSetup" type="Node3D" parent="."]
+script = ExtResource("3_setup")
+map_id = "le_belvedere"
+
+[node name="Players" type="Node3D" parent="."]
+
+[node name="PlayerSpawner" type="MultiplayerSpawner" parent="."]
+_spawnable_scenes = PackedStringArray("res://scenes/player/player.tscn")
+spawn_path = NodePath("../Players")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+script = ExtResource("4_hud")
+
+[node name="PauseMenu" type="CanvasLayer" parent="."]
+script = ExtResource("5_pause")
+
+[node name="BuyMenu" type="CanvasLayer" parent="."]
+script = ExtResource("6_buy")

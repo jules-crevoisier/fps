@@ -9,30 +9,37 @@ extends Node3D
 const DAMAGE_ZONE := preload("res://scripts/world/DamageZone.gd")
 const HEAL_ZONE := preload("res://scripts/world/HealZone.gd")
 
-const C_FLOOR := Color("5a6470")
-const C_FLOOR2 := Color("646e7a")
-const C_WALL := Color("39424d")
-const C_COVER := Color("c0843d")
-const C_PLATFORM := Color("8a8f98")
-const C_DMG := Color("d9433f")
-const C_HEAL := Color("3fb56b")
+# Palette verrouillée "La Fosse" (.orchestrator/design.md §4 : carrière —
+# calcaire/argile/schiste) — AUCUNE teinte d'équipe. Dégât/soin restent une
+# convention universelle de gameplay (danger/vert de soin), pas la couleur
+# d'un ennemi : tons nettement moins saturés que le rouge ennemi (#E0362C).
+# L'ENCRE (#17130E) est réservée au TRAIT (contours/hachures/ink_edges),
+# jamais à un aplat de mur (gris bruité en shader ink_toon) : les murs
+# utilisent un schiste très sombre (jamais < ~35 % de valeur).
+const C_FLOOR := Color("d0c7b3")     # calcaire (sol)
+const C_WALL := Color("55605a")      # schiste très sombre (murs — PAS l'encre pure)
+const C_COVER := Color("9c8a77")     # argile (caisses de couverture)
+const C_PLATFORM := Color("5f5a52")  # schiste (plateforme centrale)
+const C_DMG := Color("8c3b2e")       # brique sombre (zone de dégâts)
+const C_HEAL := Color("5c8f5a")      # sauge (zone de soin)
 
 var _mats: Dictionary = {}
 
 func _ready() -> void:
 	build()
 
-func _mat(color: Color, transparent := false) -> StandardMaterial3D:
+func _mat(color: Color, transparent := false) -> Material:
 	var key := str(color) + str(transparent)
 	if not _mats.has(key):
-		var m: StandardMaterial3D
+		var m: Material
 		if transparent:
-			m = StandardMaterial3D.new()
-			m.albedo_color = color
-			m.roughness = 0.95
-			m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			var sm := StandardMaterial3D.new()
+			sm.albedo_color = color
+			sm.roughness = 0.95
+			sm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			m = sm
 		else:
-			m = Cartoon.mat(color)
+			m = Cartoon.world(color)
 		_mats[key] = m
 	return _mats[key]
 

@@ -72,7 +72,7 @@ spawn_path = NodePath("../Players")
 
 [node name="GameMode" type="Node" parent="."]
 script = ExtResource("7_tdm")
-score_to_win = 30
+score_to_win = 50
 
 [node name="HUD" type="CanvasLayer" parent="."]
 script = ExtResource("4_hud")

@@ -39,6 +39,7 @@ tonemap_mode = 2
 [node name="CompMap" type="Node3D"]
 script = ExtResource("1_world")
 player_scene = ExtResource("2_player")
+respawn_delay = 5.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Env_1")

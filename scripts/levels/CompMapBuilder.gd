@@ -5,30 +5,36 @@
 class_name CompMapBuilder
 extends Node3D
 
-const C_FLOOR := Color("4f5a66")
-const C_FLOOR2 := Color("596570")
-const C_WALL := Color("39434e")
-const C_COVER := Color("b8863f")
-const C_PLATFORM := Color("7d838c")
-const C_SITE := Color("d94f44")
-const C_HARDPOINT := Color("e0b341")
+# Palette verrouillée "Port-Ferraille" (.orchestrator/design.md §4 : quai
+# embrumé — brume/coque/rouille) — AUCUNE teinte d'équipe. Le marqueur de
+# site reste chaud (convention FPS universelle type "bombsite"), en rouille
+# signalétique, nettement plus sourd/brun que le rouge vif d'un ennemi
+# (#E0362C). L'ENCRE (#17130E) est réservée au TRAIT (contours/hachures/
+# ink_edges), jamais à un aplat de mur (gris bruité en shader ink_toon) : les
+# murs utilisent une "coque" très sombre (jamais < ~35 % de valeur).
+const C_FLOOR := Color("c9c6b8")     # brume (sol)
+const C_WALL := Color("4f5c55")      # coque très sombre (murs — PAS l'encre pure)
+const C_COVER := Color("8a7466")     # rouille (caisses de couverture)
+const C_PLATFORM := Color("6f7f76")  # coque (bâtiment central)
+const C_SITE := Color("b35a35")      # rouille signalétique (marqueurs A/B)
 
 var _mats: Dictionary = {}
 
 func _ready() -> void:
 	build()
 
-func _mat(color: Color, transp := false) -> StandardMaterial3D:
+func _mat(color: Color, transp := false) -> Material:
 	var key := str(color) + str(transp)
 	if not _mats.has(key):
-		var m: StandardMaterial3D
+		var m: Material
 		if transp:
-			m = StandardMaterial3D.new()
-			m.albedo_color = color
-			m.roughness = 0.95
-			m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			var sm := StandardMaterial3D.new()
+			sm.albedo_color = color
+			sm.roughness = 0.95
+			sm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			m = sm
 		else:
-			m = Cartoon.mat(color)
+			m = Cartoon.world(color)
 		_mats[key] = m
 	return _mats[key]
 

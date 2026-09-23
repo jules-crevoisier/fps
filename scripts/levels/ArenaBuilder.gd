@@ -13,15 +13,25 @@ extends Node3D
 
 const JUMP_PAD := preload("res://scripts/levels/JumpPad.gd")
 
-# Palette cartoon (plate, lisible)
-const C_PLAZA := Color("4e9bd4")
-const C_SLOPE := Color("f2b134")
-const C_FIELD := Color("6abf69")
-const C_PLATFORM := Color("ece6d4")
-const C_PILLAR := Color("d9534f")
-const C_WALL := Color("38485a")
-const C_PAD := Color("9b59d6")
-const C_ACCENT := Color("ff6f59")
+# Palette verrouillée "Col du Vautour" (.orchestrator/design.md §4 : base de
+# montagne enneigée — neige/pin/granit) : AUCUNE teinte d'équipe, chroma
+# décor très sourde. Les accents "interactifs" (pad/kicker) sortent
+# volontairement de ce triptyque (plus de chroma, comme une signalétique),
+# mais restent loin des 4 teintes d'équipe (bleu/rouge/jaune/magenta).
+# IMPORTANT : l'ENCRE (#17130E) est réservée au TRAIT (contours, hachures,
+# ink_edges) — jamais un aplat de mur. Un mur "à l'encre" en fond de shader
+# ink_toon donne un gris bruité (la rampe/les hachures n'ont plus de couleur
+# à moduler) : les murs utilisent donc le ton le plus sombre du TRIPTYQUE de
+# la carte (jamais < ~35 % de valeur), qui reste "sombre et neutre" sans
+# tomber dans le piège du noir bruité (retour DA).
+const C_PLAZA := Color("e3e2da")     # neige (place de départ)
+const C_SLOPE := Color("827e77")     # granit (pente rocheuse)
+const C_FIELD := Color("5e6b61")     # pin (champ de piliers, à l'ombre)
+const C_PLATFORM := Color("e3e2da")  # neige (plateformes)
+const C_PILLAR := Color("6c7871")    # pin foncé (piliers)
+const C_WALL := Color("525f58")      # pin très foncé (murs — PAS l'encre pure)
+const C_PAD := Color("5fa8a0")       # cyan glacé (accent "interactif")
+const C_ACCENT := Color("c97a3f")    # ambre rouille (kicker)
 
 var _mats: Dictionary = {}
 
@@ -30,9 +40,9 @@ func _ready() -> void:
 		build()
 
 # ------------------------------------------------------------------ HELPERS
-func _mat(color: Color) -> StandardMaterial3D:
+func _mat(color: Color) -> ShaderMaterial:
 	if not _mats.has(color):
-		_mats[color] = Cartoon.mat(color)
+		_mats[color] = Cartoon.world(color)
 	return _mats[color]
 
 func _piece(xform: Transform3D, size: Vector3, color: Color, nm: String) -> StaticBody3D:
@@ -92,7 +102,8 @@ func _pad(center: Vector3, size: Vector3, boost: float) -> Area3D:
 	var bm := BoxMesh.new()
 	bm.size = size
 	mesh.mesh = bm
-	mesh.material_override = _mat(C_PAD)
+	# Prop (pas world) : fin liseré d'encre pour signaler que c'est interactif.
+	mesh.material_override = Cartoon.prop(C_PAD)
 	a.add_child(mesh)
 	add_child(a)
 	return a

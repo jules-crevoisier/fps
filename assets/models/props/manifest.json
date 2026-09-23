@@ -1,0 +1,1928 @@
+{
+  "props": [
+    {
+      "name": "truck_wreck",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/truck_wreck.glb",
+      "footprint": {
+        "w": 2.0,
+        "d": 5.0,
+        "h": 1.8
+      },
+      "collision": [
+        {
+          "size": [
+            2.0,
+            3.2,
+            1.8
+          ],
+          "center": [
+            0.0,
+            0.9,
+            -1.5
+          ]
+        },
+        {
+          "size": [
+            1.9,
+            2.8,
+            1.3
+          ],
+          "center": [
+            0.0,
+            0.65,
+            0.9
+          ]
+        }
+      ],
+      "slots": [
+        "painted_metal",
+        "rust",
+        "accent",
+        "glass",
+        "rubber"
+      ],
+      "tris": 2752
+    },
+    {
+      "name": "sedan_wreck",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/sedan_wreck.glb",
+      "footprint": {
+        "w": 2.45,
+        "d": 4.9,
+        "h": 1.4
+      },
+      "collision": [
+        {
+          "size": [
+            2.45,
+            4.9,
+            1.4
+          ],
+          "center": [
+            0.0,
+            0.7,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "painted_metal",
+        "rust",
+        "glass",
+        "rubber",
+        "accent"
+      ],
+      "tris": 2612
+    },
+    {
+      "name": "fuel_pump",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/fuel_pump.glb",
+      "footprint": {
+        "w": 0.6,
+        "d": 0.6,
+        "h": 1.7
+      },
+      "collision": [
+        {
+          "size": [
+            0.6,
+            0.6,
+            1.7
+          ],
+          "center": [
+            0.0,
+            0.85,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "concrete",
+        "painted_metal",
+        "accent",
+        "rust",
+        "rubber"
+      ],
+      "tris": 820
+    },
+    {
+      "name": "fuel_billboard",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/fuel_billboard.glb",
+      "footprint": {
+        "w": 2.6,
+        "d": 0.5,
+        "h": 3.4
+      },
+      "collision": [
+        {
+          "size": [
+            2.6,
+            0.5,
+            3.4
+          ],
+          "center": [
+            0.0,
+            1.7,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "wood",
+        "sign",
+        "accent"
+      ],
+      "tris": 1156
+    },
+    {
+      "name": "gas_billboard",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/gas_billboard.glb",
+      "footprint": {
+        "w": 1.4,
+        "d": 1.0,
+        "h": 4.6
+      },
+      "collision": [
+        {
+          "size": [
+            1.4,
+            1.0,
+            4.6
+          ],
+          "center": [
+            0.0,
+            2.3,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "painted_metal",
+        "concrete",
+        "sign",
+        "accent"
+      ],
+      "tris": 1152
+    },
+    {
+      "name": "shop_sign",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/shop_sign.glb",
+      "footprint": {
+        "w": 1.9,
+        "d": 0.5,
+        "h": 1.3
+      },
+      "collision": [
+        {
+          "size": [
+            1.9,
+            0.5,
+            1.3
+          ],
+          "center": [
+            0.0,
+            0.65,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "wood",
+        "painted_metal",
+        "accent"
+      ],
+      "tris": 1136
+    },
+    {
+      "name": "oil_drum",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/oil_drum.glb",
+      "footprint": {
+        "w": 0.6,
+        "d": 0.6,
+        "h": 0.9
+      },
+      "collision": [
+        {
+          "size": [
+            0.6,
+            0.6,
+            0.9
+          ],
+          "center": [
+            0.0,
+            0.45,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "rust",
+        "painted_metal",
+        "accent"
+      ],
+      "tris": 832
+    },
+    {
+      "name": "wooden_crate",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/wooden_crate.glb",
+      "footprint": {
+        "w": 0.8,
+        "d": 0.8,
+        "h": 0.8
+      },
+      "collision": [
+        {
+          "size": [
+            0.8,
+            0.8,
+            0.8
+          ],
+          "center": [
+            0.0,
+            0.4,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "wood",
+        "accent"
+      ],
+      "tris": 540
+    },
+    {
+      "name": "pallet",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/pallet.glb",
+      "footprint": {
+        "w": 1.2,
+        "d": 1.0,
+        "h": 0.15
+      },
+      "collision": [
+        {
+          "size": [
+            1.2,
+            1.0,
+            0.15
+          ],
+          "center": [
+            0.0,
+            0.075,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "wood"
+      ],
+      "tris": 1188
+    },
+    {
+      "name": "tyre_stack",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/tyre_stack.glb",
+      "footprint": {
+        "w": 0.9,
+        "d": 0.9,
+        "h": 1.2
+      },
+      "collision": [
+        {
+          "size": [
+            0.9,
+            0.9,
+            1.2
+          ],
+          "center": [
+            0.0,
+            0.6,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "rubber"
+      ],
+      "tris": 2240
+    },
+    {
+      "name": "wooden_shack",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/wooden_shack.glb",
+      "footprint": {
+        "w": 4.2,
+        "d": 4.35,
+        "h": 3.05
+      },
+      "collision": [
+        {
+          "size": [
+            4.2,
+            4.35,
+            3.05
+          ],
+          "center": [
+            0.0,
+            1.525,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "wood",
+        "corrugated",
+        "accent",
+        "glass"
+      ],
+      "tris": 1188
+    },
+    {
+      "name": "corrugated_shed",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/corrugated_shed.glb",
+      "footprint": {
+        "w": 3.8,
+        "d": 3.2,
+        "h": 2.7
+      },
+      "collision": [
+        {
+          "size": [
+            3.8,
+            3.2,
+            2.7
+          ],
+          "center": [
+            0.0,
+            1.35,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "corrugated",
+        "painted_metal",
+        "accent",
+        "rust"
+      ],
+      "tris": 680
+    },
+    {
+      "name": "pipe_straight",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/pipe_straight.glb",
+      "footprint": {
+        "w": 0.26,
+        "d": 2.0,
+        "h": 0.26
+      },
+      "collision": [
+        {
+          "size": [
+            0.26,
+            2.0,
+            0.26
+          ],
+          "center": [
+            0.0,
+            0.13,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "painted_metal",
+        "rust",
+        "accent"
+      ],
+      "tris": 512
+    },
+    {
+      "name": "pipe_elbow",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/pipe_elbow.glb",
+      "footprint": {
+        "w": 0.4,
+        "d": 1.0,
+        "h": 0.98
+      },
+      "collision": [
+        {
+          "size": [
+            0.4,
+            1.0,
+            0.98
+          ],
+          "center": [
+            0.0,
+            0.49,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "painted_metal",
+        "rust"
+      ],
+      "tris": 560
+    },
+    {
+      "name": "pipe_valve",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/pipe_valve.glb",
+      "footprint": {
+        "w": 0.4,
+        "d": 0.94,
+        "h": 0.61
+      },
+      "collision": [
+        {
+          "size": [
+            0.4,
+            0.94,
+            0.61
+          ],
+          "center": [
+            0.0,
+            0.305,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "painted_metal",
+        "rust",
+        "accent"
+      ],
+      "tris": 1684
+    },
+    {
+      "name": "power_pole",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/power_pole.glb",
+      "footprint": {
+        "w": 1.6,
+        "d": 1.0,
+        "h": 7.2
+      },
+      "collision": [
+        {
+          "size": [
+            1.6,
+            1.0,
+            7.2
+          ],
+          "center": [
+            0.0,
+            3.6,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "wood",
+        "accent",
+        "rust"
+      ],
+      "tris": 1212
+    },
+    {
+      "name": "water_tower",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/water_tower.glb",
+      "footprint": {
+        "w": 3.3,
+        "d": 3.3,
+        "h": 9.3
+      },
+      "collision": [
+        {
+          "size": [
+            3.0,
+            3.0,
+            5.5
+          ],
+          "center": [
+            0.0,
+            2.75,
+            0.0
+          ]
+        },
+        {
+          "size": [
+            3.4,
+            3.4,
+            3.9
+          ],
+          "center": [
+            0.0,
+            7.05,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "painted_metal",
+        "rust"
+      ],
+      "tris": 1860
+    },
+    {
+      "name": "oil_derrick",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/oil_derrick.glb",
+      "footprint": {
+        "w": 4.4,
+        "d": 4.4,
+        "h": 10.0
+      },
+      "collision": [
+        {
+          "size": [
+            4.4,
+            4.4,
+            10.0
+          ],
+          "center": [
+            0.0,
+            5.0,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "painted_metal",
+        "rust"
+      ],
+      "tris": 6588
+    },
+    {
+      "name": "gantry_crane",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/gantry_crane.glb",
+      "footprint": {
+        "w": 6.5,
+        "d": 3.2,
+        "h": 6.5
+      },
+      "collision": [
+        {
+          "size": [
+            6.5,
+            3.2,
+            6.5
+          ],
+          "center": [
+            0.0,
+            3.25,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "painted_metal",
+        "rust",
+        "accent"
+      ],
+      "tris": 9504
+    },
+    {
+      "name": "fence_wood",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/fence_wood.glb",
+      "footprint": {
+        "w": 2.2,
+        "d": 0.15,
+        "h": 1.3
+      },
+      "collision": [
+        {
+          "size": [
+            2.2,
+            0.15,
+            1.3
+          ],
+          "center": [
+            0.0,
+            0.65,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "wood"
+      ],
+      "tris": 540
+    },
+    {
+      "name": "fence_chainlink",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/fence_chainlink.glb",
+      "footprint": {
+        "w": 2.2,
+        "d": 0.1,
+        "h": 1.6
+      },
+      "collision": [
+        {
+          "size": [
+            2.2,
+            0.1,
+            1.6
+          ],
+          "center": [
+            0.0,
+            0.8,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "painted_metal",
+        "glass"
+      ],
+      "tris": 528
+    },
+    {
+      "name": "sandbags",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/sandbags.glb",
+      "footprint": {
+        "w": 1.3,
+        "d": 0.55,
+        "h": 0.55
+      },
+      "collision": [
+        {
+          "size": [
+            1.3,
+            0.55,
+            0.55
+          ],
+          "center": [
+            0.0,
+            0.275,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "sand"
+      ],
+      "tris": 540
+    },
+    {
+      "name": "rock_small",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/rock_small.glb",
+      "footprint": {
+        "w": 0.5,
+        "d": 0.4,
+        "h": 0.35
+      },
+      "collision": [
+        {
+          "size": [
+            0.5,
+            0.4,
+            0.35
+          ],
+          "center": [
+            0.0,
+            0.175,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "concrete"
+      ],
+      "tris": 216
+    },
+    {
+      "name": "rock_medium",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/rock_medium.glb",
+      "footprint": {
+        "w": 0.9,
+        "d": 0.75,
+        "h": 0.7
+      },
+      "collision": [
+        {
+          "size": [
+            0.9,
+            0.75,
+            0.7
+          ],
+          "center": [
+            0.0,
+            0.35,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "concrete"
+      ],
+      "tris": 324
+    },
+    {
+      "name": "rock_large",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/rock_large.glb",
+      "footprint": {
+        "w": 1.6,
+        "d": 1.3,
+        "h": 1.3
+      },
+      "collision": [
+        {
+          "size": [
+            1.6,
+            1.3,
+            1.3
+          ],
+          "center": [
+            0.0,
+            0.65,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "concrete"
+      ],
+      "tris": 432
+    },
+    {
+      "name": "cactus",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/cactus.glb",
+      "footprint": {
+        "w": 0.8,
+        "d": 0.6,
+        "h": 2.4
+      },
+      "collision": [
+        {
+          "size": [
+            0.8,
+            0.6,
+            2.4
+          ],
+          "center": [
+            0.0,
+            1.2,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "sand",
+        "accent"
+      ],
+      "tris": 1060
+    },
+    {
+      "name": "shopfront_1_store",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/shopfront_1_store.glb",
+      "footprint": {
+        "w": 4.3,
+        "d": 4.0,
+        "h": 3.65
+      },
+      "collision": [
+        {
+          "size": [
+            4.3,
+            4.0,
+            3.65
+          ],
+          "center": [
+            0.0,
+            1.825,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "wood",
+        "corrugated",
+        "glass",
+        "accent",
+        "sign",
+        "rust",
+        "painted_metal"
+      ],
+      "tris": 3008
+    },
+    {
+      "name": "shopfront_1_bar",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/shopfront_1_bar.glb",
+      "footprint": {
+        "w": 3.8,
+        "d": 3.4,
+        "h": 3.3
+      },
+      "collision": [
+        {
+          "size": [
+            3.8,
+            3.4,
+            3.3
+          ],
+          "center": [
+            0.0,
+            1.65,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "wood",
+        "corrugated",
+        "painted_metal",
+        "glass",
+        "accent",
+        "sign",
+        "rust"
+      ],
+      "tris": 2256
+    },
+    {
+      "name": "shopfront_2_saloon",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/shopfront_2_saloon.glb",
+      "footprint": {
+        "w": 4.6,
+        "d": 3.0,
+        "h": 6.75
+      },
+      "collision": [
+        {
+          "size": [
+            4.6,
+            3.0,
+            6.75
+          ],
+          "center": [
+            0.0,
+            3.375,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "wood",
+        "glass",
+        "accent",
+        "sign",
+        "rust",
+        "painted_metal"
+      ],
+      "tris": 5844
+    },
+    {
+      "name": "shopfront_2_motel",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/shopfront_2_motel.glb",
+      "footprint": {
+        "w": 5.8,
+        "d": 2.7,
+        "h": 5.85
+      },
+      "collision": [
+        {
+          "size": [
+            4.3,
+            3.35,
+            5.85
+          ],
+          "center": [
+            0.0,
+            2.93,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "wood",
+        "corrugated",
+        "accent",
+        "glass",
+        "painted_metal",
+        "sign",
+        "rust"
+      ],
+      "tris": 3960
+    },
+    {
+      "name": "shopfront_corner_garage",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/shopfront_corner_garage.glb",
+      "footprint": {
+        "w": 5.45,
+        "d": 4.41,
+        "h": 3.95
+      },
+      "collision": [
+        {
+          "size": [
+            4.4,
+            2.2,
+            2.9
+          ],
+          "center": [
+            -0.3,
+            1.45,
+            0.1
+          ]
+        },
+        {
+          "size": [
+            2.2,
+            3.6,
+            2.9
+          ],
+          "center": [
+            1.6,
+            1.45,
+            1.3
+          ]
+        }
+      ],
+      "slots": [
+        "corrugated",
+        "painted_metal",
+        "accent",
+        "glass",
+        "wood",
+        "sign",
+        "rust"
+      ],
+      "tris": 2604
+    },
+    {
+      "name": "balcony_railing",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/balcony_railing.glb",
+      "footprint": {
+        "w": 2.4,
+        "d": 0.9,
+        "h": 1.56
+      },
+      "collision": [
+        {
+          "size": [
+            2.4,
+            0.9,
+            1.56
+          ],
+          "center": [
+            0.0,
+            0.78,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "wood"
+      ],
+      "tris": 1404
+    },
+    {
+      "name": "exterior_stairs",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/exterior_stairs.glb",
+      "footprint": {
+        "w": 0.9,
+        "d": 2.7,
+        "h": 3.1
+      },
+      "collision": [
+        {
+          "size": [
+            0.9,
+            2.7,
+            3.1
+          ],
+          "center": [
+            0.0,
+            1.55,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "wood"
+      ],
+      "tris": 1296
+    },
+    {
+      "name": "junk_pile",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/junk_pile.glb",
+      "footprint": {
+        "w": 1.27,
+        "d": 0.93,
+        "h": 0.6
+      },
+      "collision": [
+        {
+          "size": [
+            1.27,
+            0.93,
+            0.6
+          ],
+          "center": [
+            0.0,
+            0.3,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "rust",
+        "painted_metal",
+        "accent"
+      ],
+      "tris": 712
+    },
+    {
+      "name": "scrap_sheets",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/scrap_sheets.glb",
+      "footprint": {
+        "w": 1.35,
+        "d": 0.8,
+        "h": 1.4
+      },
+      "collision": [
+        {
+          "size": [
+            1.35,
+            0.8,
+            1.4
+          ],
+          "center": [
+            0.0,
+            0.7,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "corrugated",
+        "rust"
+      ],
+      "tris": 324
+    },
+    {
+      "name": "cable_spool",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/cable_spool.glb",
+      "footprint": {
+        "w": 0.9,
+        "d": 1.1,
+        "h": 1.1
+      },
+      "collision": [
+        {
+          "size": [
+            0.9,
+            1.1,
+            1.1
+          ],
+          "center": [
+            0.0,
+            0.55,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "wood",
+        "accent"
+      ],
+      "tris": 1100
+    },
+    {
+      "name": "crate_stack",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/crate_stack.glb",
+      "footprint": {
+        "w": 1.0,
+        "d": 1.0,
+        "h": 1.85
+      },
+      "collision": [
+        {
+          "size": [
+            1.0,
+            1.0,
+            1.85
+          ],
+          "center": [
+            0.0,
+            0.925,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "wood",
+        "accent"
+      ],
+      "tris": 432
+    },
+    {
+      "name": "bottle_crates",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/bottle_crates.glb",
+      "footprint": {
+        "w": 0.6,
+        "d": 0.5,
+        "h": 0.7
+      },
+      "collision": [
+        {
+          "size": [
+            0.6,
+            0.5,
+            0.7
+          ],
+          "center": [
+            0.0,
+            0.35,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "wood",
+        "glass"
+      ],
+      "tris": 1056
+    },
+    {
+      "name": "tyre_ground",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/tyre_ground.glb",
+      "footprint": {
+        "w": 0.9,
+        "d": 0.9,
+        "h": 0.23
+      },
+      "collision": [
+        {
+          "size": [
+            0.9,
+            0.9,
+            0.23
+          ],
+          "center": [
+            0.0,
+            0.115,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "rubber"
+      ],
+      "tris": 738
+    },
+    {
+      "name": "fence_broken",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/fence_broken.glb",
+      "footprint": {
+        "w": 2.32,
+        "d": 0.58,
+        "h": 1.21
+      },
+      "collision": [
+        {
+          "size": [
+            2.32,
+            0.58,
+            1.21
+          ],
+          "center": [
+            0.0,
+            0.605,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "wood"
+      ],
+      "tris": 540
+    },
+    {
+      "name": "street_lamp",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/street_lamp.glb",
+      "footprint": {
+        "w": 0.9,
+        "d": 0.4,
+        "h": 4.15
+      },
+      "collision": [
+        {
+          "size": [
+            0.9,
+            0.4,
+            4.15
+          ],
+          "center": [
+            0.0,
+            2.075,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "concrete",
+        "painted_metal",
+        "glass",
+        "rust"
+      ],
+      "tris": 684
+    },
+    {
+      "name": "wires_catenary",
+      "set": "wasteland",
+      "path": "res://assets/models/props/wasteland/wires_catenary.glb",
+      "footprint": {
+        "w": 7.4,
+        "d": 0.2,
+        "h": 1.1
+      },
+      "collision": [
+        {
+          "size": [
+            7.4,
+            0.2,
+            1.1
+          ],
+          "center": [
+            0.0,
+            0.55,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "painted_metal"
+      ],
+      "tris": 1080
+    },
+    {
+      "name": "container_20ft",
+      "set": "cargo_ship",
+      "path": "res://assets/models/props/cargo_ship/container_20ft.glb",
+      "footprint": {
+        "w": 2.44,
+        "d": 6.06,
+        "h": 2.59
+      },
+      "collision": [
+        {
+          "size": [
+            2.44,
+            6.06,
+            2.59
+          ],
+          "center": [
+            0.0,
+            1.295,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "container",
+        "accent"
+      ],
+      "tris": 2916
+    },
+    {
+      "name": "container_40ft",
+      "set": "cargo_ship",
+      "path": "res://assets/models/props/cargo_ship/container_40ft.glb",
+      "footprint": {
+        "w": 2.44,
+        "d": 12.19,
+        "h": 2.59
+      },
+      "collision": [
+        {
+          "size": [
+            2.44,
+            12.19,
+            2.59
+          ],
+          "center": [
+            0.0,
+            1.295,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "container",
+        "accent"
+      ],
+      "tris": 5292
+    },
+    {
+      "name": "hull_bow",
+      "set": "cargo_ship",
+      "path": "res://assets/models/props/cargo_ship/hull_bow.glb",
+      "footprint": {
+        "w": 7.8,
+        "d": 9.3,
+        "h": 4.4
+      },
+      "collision": [
+        {
+          "size": [
+            7.8,
+            9.3,
+            4.4
+          ],
+          "center": [
+            0.0,
+            2.2,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "painted_metal",
+        "ship_deck",
+        "rust"
+      ],
+      "tris": 820
+    },
+    {
+      "name": "hull_mid",
+      "set": "cargo_ship",
+      "path": "res://assets/models/props/cargo_ship/hull_mid.glb",
+      "footprint": {
+        "w": 7.0,
+        "d": 9.0,
+        "h": 5.0
+      },
+      "collision": [
+        {
+          "size": [
+            7.0,
+            9.0,
+            5.0
+          ],
+          "center": [
+            0.0,
+            2.5,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "painted_metal",
+        "ship_deck",
+        "rust",
+        "glass"
+      ],
+      "tris": 1660
+    },
+    {
+      "name": "hull_stern",
+      "set": "cargo_ship",
+      "path": "res://assets/models/props/cargo_ship/hull_stern.glb",
+      "footprint": {
+        "w": 6.4,
+        "d": 6.6,
+        "h": 6.4
+      },
+      "collision": [
+        {
+          "size": [
+            6.4,
+            6.6,
+            6.4
+          ],
+          "center": [
+            0.0,
+            3.2,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "painted_metal",
+        "ship_deck",
+        "rust",
+        "glass"
+      ],
+      "tris": 896
+    },
+    {
+      "name": "bridge_superstructure",
+      "set": "cargo_ship",
+      "path": "res://assets/models/props/cargo_ship/bridge_superstructure.glb",
+      "footprint": {
+        "w": 5.2,
+        "d": 4.5,
+        "h": 7.2
+      },
+      "collision": [
+        {
+          "size": [
+            5.2,
+            4.5,
+            7.2
+          ],
+          "center": [
+            0.0,
+            3.6,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "painted_metal",
+        "glass",
+        "ship_deck",
+        "rust",
+        "accent"
+      ],
+      "tris": 1608
+    },
+    {
+      "name": "deck_railing",
+      "set": "cargo_ship",
+      "path": "res://assets/models/props/cargo_ship/deck_railing.glb",
+      "footprint": {
+        "w": 2.0,
+        "d": 0.12,
+        "h": 1.1
+      },
+      "collision": [
+        {
+          "size": [
+            2.0,
+            0.12,
+            1.1
+          ],
+          "center": [
+            0.0,
+            0.55,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "painted_metal"
+      ],
+      "tris": 808
+    },
+    {
+      "name": "mast_antennas",
+      "set": "cargo_ship",
+      "path": "res://assets/models/props/cargo_ship/mast_antennas.glb",
+      "footprint": {
+        "w": 1.8,
+        "d": 0.45,
+        "h": 6.8
+      },
+      "collision": [
+        {
+          "size": [
+            1.8,
+            0.45,
+            6.8
+          ],
+          "center": [
+            0.0,
+            3.4,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "painted_metal",
+        "accent"
+      ],
+      "tris": 1796
+    },
+    {
+      "name": "cargo_crane",
+      "set": "cargo_ship",
+      "path": "res://assets/models/props/cargo_ship/cargo_crane.glb",
+      "footprint": {
+        "w": 3.2,
+        "d": 8.5,
+        "h": 10.0
+      },
+      "collision": [
+        {
+          "size": [
+            2.4,
+            1.4,
+            8.6
+          ],
+          "center": [
+            0.0,
+            4.3,
+            -3.0
+          ]
+        },
+        {
+          "size": [
+            1.4,
+            8.0,
+            1.6
+          ],
+          "center": [
+            0.0,
+            8.6,
+            0.3
+          ]
+        }
+      ],
+      "slots": [
+        "painted_metal",
+        "rust",
+        "glass",
+        "accent"
+      ],
+      "tris": 6696
+    },
+    {
+      "name": "lifeboat_davits",
+      "set": "cargo_ship",
+      "path": "res://assets/models/props/cargo_ship/lifeboat_davits.glb",
+      "footprint": {
+        "w": 3.6,
+        "d": 1.6,
+        "h": 2.4
+      },
+      "collision": [
+        {
+          "size": [
+            3.6,
+            1.6,
+            2.4
+          ],
+          "center": [
+            0.0,
+            1.2,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "accent",
+        "painted_metal"
+      ],
+      "tris": 864
+    },
+    {
+      "name": "bollard",
+      "set": "cargo_ship",
+      "path": "res://assets/models/props/cargo_ship/bollard.glb",
+      "footprint": {
+        "w": 0.35,
+        "d": 0.35,
+        "h": 0.55
+      },
+      "collision": [
+        {
+          "size": [
+            0.35,
+            0.35,
+            0.55
+          ],
+          "center": [
+            0.0,
+            0.275,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "concrete",
+        "painted_metal",
+        "accent"
+      ],
+      "tris": 1360
+    },
+    {
+      "name": "hatch_cover",
+      "set": "cargo_ship",
+      "path": "res://assets/models/props/cargo_ship/hatch_cover.glb",
+      "footprint": {
+        "w": 2.6,
+        "d": 2.6,
+        "h": 0.35
+      },
+      "collision": [
+        {
+          "size": [
+            2.6,
+            2.6,
+            0.35
+          ],
+          "center": [
+            0.0,
+            0.175,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "ship_deck",
+        "accent"
+      ],
+      "tris": 972
+    },
+    {
+      "name": "stairs_ladder",
+      "set": "cargo_ship",
+      "path": "res://assets/models/props/cargo_ship/stairs_ladder.glb",
+      "footprint": {
+        "w": 0.9,
+        "d": 2.6,
+        "h": 3.0
+      },
+      "collision": [
+        {
+          "size": [
+            0.9,
+            2.6,
+            3.0
+          ],
+          "center": [
+            0.0,
+            1.5,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "painted_metal"
+      ],
+      "tris": 1296
+    },
+    {
+      "name": "life_ring",
+      "set": "cargo_ship",
+      "path": "res://assets/models/props/cargo_ship/life_ring.glb",
+      "footprint": {
+        "w": 0.75,
+        "d": 0.12,
+        "h": 0.75
+      },
+      "collision": [
+        {
+          "size": [
+            0.75,
+            0.12,
+            0.75
+          ],
+          "center": [
+            0.0,
+            0.375,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "accent",
+        "sign",
+        "painted_metal"
+      ],
+      "tris": 1264
+    },
+    {
+      "name": "gangway",
+      "set": "cargo_ship",
+      "path": "res://assets/models/props/cargo_ship/gangway.glb",
+      "footprint": {
+        "w": 1.4,
+        "d": 4.1,
+        "h": 2.7
+      },
+      "collision": [
+        {
+          "size": [
+            1.4,
+            4.1,
+            2.7
+          ],
+          "center": [
+            0.0,
+            1.35,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "ship_deck",
+        "painted_metal"
+      ],
+      "tris": 540
+    },
+    {
+      "name": "container_open20",
+      "set": "cargo_ship",
+      "path": "res://assets/models/props/cargo_ship/container_open20.glb",
+      "footprint": {
+        "w": 2.6,
+        "d": 7.4,
+        "h": 2.7
+      },
+      "collision": [
+        {
+          "size": [
+            2.6,
+            7.4,
+            2.7
+          ],
+          "center": [
+            0.0,
+            1.35,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "container",
+        "accent"
+      ],
+      "tris": 2808
+    },
+    {
+      "name": "container_stack2",
+      "set": "cargo_ship",
+      "path": "res://assets/models/props/cargo_ship/container_stack2.glb",
+      "footprint": {
+        "w": 2.9,
+        "d": 6.5,
+        "h": 5.3
+      },
+      "collision": [
+        {
+          "size": [
+            2.9,
+            6.5,
+            5.3
+          ],
+          "center": [
+            0.0,
+            2.65,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "container",
+        "accent"
+      ],
+      "tris": 5832
+    },
+    {
+      "name": "container_stack3",
+      "set": "cargo_ship",
+      "path": "res://assets/models/props/cargo_ship/container_stack3.glb",
+      "footprint": {
+        "w": 3.15,
+        "d": 6.7,
+        "h": 7.9
+      },
+      "collision": [
+        {
+          "size": [
+            3.15,
+            6.7,
+            7.9
+          ],
+          "center": [
+            0.0,
+            3.95,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "container",
+        "accent"
+      ],
+      "tris": 8748
+    },
+    {
+      "name": "deck_hatch",
+      "set": "cargo_ship",
+      "path": "res://assets/models/props/cargo_ship/deck_hatch.glb",
+      "footprint": {
+        "w": 2.6,
+        "d": 2.6,
+        "h": 0.35
+      },
+      "collision": [
+        {
+          "size": [
+            2.6,
+            2.6,
+            0.35
+          ],
+          "center": [
+            0.0,
+            0.175,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "ship_deck",
+        "accent"
+      ],
+      "tris": 1404
+    },
+    {
+      "name": "lashing_bar",
+      "set": "cargo_ship",
+      "path": "res://assets/models/props/cargo_ship/lashing_bar.glb",
+      "footprint": {
+        "w": 0.98,
+        "d": 0.15,
+        "h": 0.35
+      },
+      "collision": [
+        {
+          "size": [
+            0.98,
+            0.15,
+            0.35
+          ],
+          "center": [
+            0.0,
+            0.175,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "painted_metal",
+        "rust",
+        "accent"
+      ],
+      "tris": 528
+    },
+    {
+      "name": "pipe_manifold",
+      "set": "cargo_ship",
+      "path": "res://assets/models/props/cargo_ship/pipe_manifold.glb",
+      "footprint": {
+        "w": 1.7,
+        "d": 1.6,
+        "h": 0.75
+      },
+      "collision": [
+        {
+          "size": [
+            1.7,
+            1.6,
+            0.75
+          ],
+          "center": [
+            0.0,
+            0.375,
+            0.0
+          ]
+        }
+      ],
+      "slots": [
+        "painted_metal",
+        "rust",
+        "accent"
+      ],
+      "tris": 3008
+    }
+  ]
+}
