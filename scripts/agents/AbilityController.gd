@@ -245,7 +245,7 @@ func _spawn_barrier(pos: Vector3, fwd: Vector3, size: Vector3, duration: float, 
 	wall.global_position = pos
 	wall.look_at(pos + fwd, Vector3.UP)
 	var t := scene.get_tree().create_timer(duration)
-	t.timeout.connect(func(): if is_instance_valid(wall): wall.queue_free())
+	t.timeout.connect(wall.queue_free)
 
 ## Spawn d'une sphère de fumée RÉPLIQUÉE (SmokeAbility) : opaque, bloque
 ## vraiment la vue et les tirs (StaticBody3D + collision, comme le mur).
@@ -287,7 +287,7 @@ func _spawn_smoke(pos: Vector3, radius: float, duration: float, color: Color) ->
 	scene.add_child(body)
 	body.global_position = pos
 	var t := scene.get_tree().create_timer(duration)
-	t.timeout.connect(func(): if is_instance_valid(body): body.queue_free())
+	t.timeout.connect(body.queue_free)
 
 ## Spawn d'un tremplin RÉPLIQUÉ (JumpPadAbility). La détection de contact
 ## (Area3D.body_entered) tourne sur TOUS les pairs (géométrie répliquée), mais
@@ -330,7 +330,7 @@ func _spawn_jump_pad(pos: Vector3, duration: float, boost: float) -> void:
 		body.velocity.y = maxf(body.velocity.y, boost)
 	)
 	var t := scene.get_tree().create_timer(duration)
-	t.timeout.connect(func(): if is_instance_valid(pad): pad.queue_free())
+	t.timeout.connect(pad.queue_free)
 
 ## Spawn d'un piège étourdissant RÉPLIQUÉ (StunTrapAbility). Comme le
 ## tremplin, l'objet existe sur tous les pairs, mais SEULE la copie SERVEUR
@@ -386,7 +386,7 @@ func _spawn_stun_trap(pos: Vector3, owner_team: int, trap_duration: float, stun_
 		col.set_deferred("disabled", true)
 	)
 	var t := scene.get_tree().create_timer(trap_duration)
-	t.timeout.connect(func(): if is_instance_valid(trap): trap.queue_free())
+	t.timeout.connect(trap.queue_free)
 
 # ======================================================================
 #  EFFETS CIBLÉS (étourdissement, éblouissement, reveal) — appelés
@@ -473,7 +473,7 @@ func net_show_markers(marks: Array, duration: float) -> void:
 		scene.add_child(label)
 		label.global_position = pos + Vector3(0, 1.6, 0)
 		var t := scene.get_tree().create_timer(duration)
-		t.timeout.connect(func(): if is_instance_valid(label): label.queue_free())
+		t.timeout.connect(label.queue_free)
 
 ## Pour le HUD : état de chaque capacité (API inchangée). Lit la copie
 ## prédictive chez le propriétaire (réactive), sinon la copie autoritaire en

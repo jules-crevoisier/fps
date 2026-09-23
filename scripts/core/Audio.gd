@@ -533,7 +533,7 @@ func _wire_local_extras(node: Node) -> void:
 				play_local("reload_out")
 				var reload_time: float = cfg.reload_time if cfg else 1.5
 				var t := get_tree().create_timer(maxf(reload_time, 0.05))
-				t.timeout.connect(func(): if is_instance_valid(w): play_local("reload_in"))
+				t.timeout.connect(play_local.bind("reload_in"))
 			)
 		if w.has_signal("hit_confirmed"):
 			w.hit_confirmed.connect(func(_pos: Vector3, _dmg: float, headshot: bool):

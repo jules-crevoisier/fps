@@ -60,9 +60,16 @@ func _ready() -> void:
 	var net := NetworkManager.get_net(get_tree())
 	net.player_disconnected.connect(_on_player_disconnected)
 
-	if multiplayer.multiplayer_peer == null:
+	var peer := multiplayer.multiplayer_peer
+	if peer == null:
 		# Lancé sans réseau (test solo dans l'éditeur) : on héberge localement.
 		net.host()
+	elif not (peer is OfflineMultiplayerPeer) \
+			and peer.get_connection_status() != MultiplayerPeer.CONNECTION_CONNECTED:
+		# Tentative de connexion restée en cours (ex. « Rejoindre » raté puis
+		# terrain d'entraînement) : on l'abandonne, sinon on se croirait client
+		# d'un serveur absent et la demande de spawn partirait dans le vide.
+		net.disconnect_from_game()
 
 	# Serveur dédié (scripts/networking/ServerBoot.gd) : le process serveur
 	# n'est JAMAIS un joueur (pas de spawn local ni d'écran de sélection

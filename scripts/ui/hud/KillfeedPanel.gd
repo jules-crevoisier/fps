@@ -39,6 +39,6 @@ func push(killer: String, victim: String, killer_team: int, is_local: bool = fal
 	if get_child_count() > MAX_ENTRIES:
 		get_child(get_child_count() - 1).queue_free()
 
-	get_tree().create_timer(ENTRY_LIFETIME).timeout.connect(func():
-		if is_instance_valid(panel):
-			panel.queue_free())
+	var tw := panel.create_tween()
+	tw.tween_interval(ENTRY_LIFETIME)
+	tw.tween_callback(panel.queue_free)

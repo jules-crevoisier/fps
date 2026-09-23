@@ -222,7 +222,7 @@ func _process(delta: float) -> void:
 	var c := weapon.cfg()
 	var ads_speed := 1.0 / maxf(c.ads_time, 0.001) if c else 10.0
 	_ads_t = _anim.ads_blend(aiming, _ads_t, delta, ads_speed)
-	_sprint_t = _anim.sprint_pose_blend(sm == "Sprint", _sprint_t, delta)
+	_sprint_t = _anim.sprint_pose_blend(false, _sprint_t, delta)
 	_slide_t = _anim.slide_tilt_blend(sm == "Slide", _slide_t, delta)
 
 	_anim.tick_sway(_last_mouse_delta, delta)

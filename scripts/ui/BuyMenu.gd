@@ -159,9 +159,9 @@ func _try_open() -> void:
 
 func _flash_locked() -> void:
 	_locked_label.visible = true
-	get_tree().create_timer(1.5).timeout.connect(func():
-		if is_instance_valid(_locked_label):
-			_locked_label.visible = false)
+	var tw := _locked_label.create_tween()
+	tw.tween_interval(1.5)
+	tw.tween_callback(_locked_label.hide)
 
 func _close() -> void:
 	_open = false

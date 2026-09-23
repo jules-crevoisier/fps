@@ -152,7 +152,10 @@ func _owner_tick(delta: float) -> void:
 	# Sensation d'arme (R3-IN#4) : délais avant de pouvoir tirer après un
 	# sprint/slide/dive — voir WeaponFeel.fire_delay_left.
 	var sm := player.state_machine.current_name
-	_since_sprint = 0.0 if sm == "Sprint" else _since_sprint + delta
+	# Le sprint est AUTOMATIQUE dès qu'on bouge (docs/MOVEMENT.md) : c'est la
+	# course normale, on doit pouvoir y tirer (avec la dispersion de
+	# mouvement). Seuls la glissade et le plongeon imposent un délai de tir.
+	_since_sprint = INF
 	_since_slide = 0.0 if sm == "Slide" else _since_slide + delta
 	_since_dive = 0.0 if sm == "Dive" else _since_dive + delta
 
