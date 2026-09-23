@@ -29,3 +29,6 @@ reports/
 .env
 .env.*
 !.env.example
+
+# Caches Python (scripts Blender/outils)
+__pycache__/
