@@ -1,0 +1,41 @@
+# docker-compose.yml — un conteneur = un match (docs/ROADMAP.md §5). Sert à
+# la fois de parité locale (`docker compose up --build`) et de base pour un
+# déploiement compose sur Dokploy (docs/SERVER.md). Variables lues depuis un
+# fichier `.env` local (copie de .env.example, jamais commité) ou l'UI
+# "Environment" de Dokploy.
+#
+# Pour PLUSIEURS matchs simultanés (N conteneurs) : voir docs/SERVER.md
+# §"Plusieurs matchs" — copier ce service avec un nom, un PORT et un mapping
+# de port différents (Dokploy : autant de services que de matchs).
+
+services:
+  fps-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: fps-server:latest
+    restart: unless-stopped
+    ports:
+      # UDP : trafic de jeu (ENet). TCP : sonde de santé uniquement.
+      - "${PORT:-7777}:7777/udp"
+      - "${HEALTH_PORT:-8080}:8080/tcp"
+    environment:
+      PORT: "7777"
+      HEALTH_PORT: "8080"
+      MODE: "${MODE:-tdm}"
+      MAP: "${MAP:-}"
+      MAX_PLAYERS: "${MAX_PLAYERS:-16}"
+      BOTS: "${BOTS:-true}"
+      BOT_DIFFICULTY: "${BOT_DIFFICULTY:-veteran}"
+      MATCH_TOKEN_SECRET: "${MATCH_TOKEN_SECRET:-}"
+      MATCH_ID: "${MATCH_ID:-}"
+      RESTART_ON_END: "${RESTART_ON_END:-true}"
+    healthcheck:
+      test: >-
+        bash -c 'exec 3<>"/dev/tcp/127.0.0.1/8080" &&
+        printf "GET /health HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" >&3 &&
+        head -c 15 <&3 | grep -q "200"'
+      interval: 10s
+      timeout: 3s
+      start_period: 20s
+      retries: 3

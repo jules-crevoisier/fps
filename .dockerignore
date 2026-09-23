@@ -1,0 +1,47 @@
+# Contexte de build Docker — garde le strict nécessaire pour exporter le
+# serveur dédié (voir Dockerfile, stage "export") : le jeu lui-même (client
+# est open source, cf. docs/ROADMAP.md §5) mais rien qui gonfle l'image ou
+# ralentit l'upload du contexte.
+
+# VCS
+.git/
+.gitignore
+.gitattributes
+
+# Godot local (régénéré par --import dans le stage export)
+.godot/
+.import/
+/android/
+*.translation
+
+# Builds précédents (le stage export écrit dans build/server/ lui-même)
+/build/*
+!/build/server/
+/build/server/*
+!/build/server/fps_server.x86_64
+/exports/
+
+# Tests, outillage, orchestration — exclus de l'export par export_presets.cfg
+# (exclude_filter) mais aussi inutiles dans le contexte de build lui-même.
+tests/
+tools/
+reports/
+docs/
+.orchestrator/
+addons/gdUnit4/
+
+# Markdown — sauf les licences tierces (attributions requises à l'exécution).
+*.md
+!THIRD_PARTY_LICENSES.md
+
+# OS / éditeurs
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+
+# Secrets locaux — ne doivent JAMAIS entrer dans une image Docker.
+.env
+.env.*
+!.env.example
