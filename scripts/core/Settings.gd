@@ -34,6 +34,28 @@ static var gamepad_sensitivity: float = 3.0
 static var invert_y: bool = false
 static var fov: float = 90.0
 static var layout: String = "qwerty"
+
+## Couleur ennemi (DA v2 "Peint au soleil, encré gras", design.md §9) : 0
+## Magenta (défaut), 1 Citron — remplace le rouge/jaune/magenta de v1 (ces
+## teintes retombaient dans les bandes désormais réservées au monde). Citron
+## est recommandé pour les joueurs protanopes/deutéranopes (design.md §9).
+## Consommé par Cartoon.enemy_color().
+static var enemy_color: int = 0
+## Échelle d'interface (design.md, Steam Deck) : 1.0 défaut, 1.15 recommandée
+## sur Steam Deck. Multiplie la taille des éléments HUD/menus qui l'exposent.
+static var ui_scale: float = 1.0
+## Mouvement réduit (design.md §13 "Reduced motion: fades only") : les
+## contrôles animés (BrushHeader, KillWordBurst, LowHealthVignette, …) sautent
+## le balayage/pop et ne gardent qu'un fondu. Lu via Comic.reduced_motion().
+static var reduced_motion: bool = false
+## Contours d'arête plein écran (ink_edges.gdshader / InkPost.gd) — activable
+## pour le confort/perf (Steam Deck, machines modestes).
+static var ink_edges: bool = true
+## Volumes (0..1), consommés par Audio.gd (bus Master/SFX/Music).
+static var volume_master: float = 1.0
+static var volume_sfx: float = 1.0
+static var volume_music: float = 0.7
+
 static var _loaded: bool = false
 
 static func load_all() -> void:
@@ -48,6 +70,21 @@ static func load_all() -> void:
 	invert_y = bool(cfg.get_value("input", "invert_y", invert_y))
 	fov = float(cfg.get_value("video", "fov", fov))
 	layout = str(cfg.get_value("input", "layout", layout))
+	# `enemy_palette_version` n'existe que dans les fichiers sauvegardés APRÈS
+	# le passage à la DA v2 (0 Magenta/1 Citron) — son absence signale un
+	# fichier v1 (0 rouge/1 jaune/2 violet), dont la valeur numérique ne veut
+	# plus rien dire dans la nouvelle palette : on force 0 (Magenta, défaut)
+	# plutôt que de réinterpréter silencieusement 1 (jaune v1) en 1 (Citron
+	# v2) — voir `migrate_enemy_color`.
+	var has_v2_key := cfg.has_section_key("render", "enemy_palette_version")
+	var stored_enemy_color := int(cfg.get_value("render", "enemy_color", enemy_color))
+	enemy_color = migrate_enemy_color(stored_enemy_color, has_v2_key)
+	ui_scale = clamp_ui_scale(float(cfg.get_value("video", "ui_scale", ui_scale)))
+	reduced_motion = bool(cfg.get_value("accessibility", "reduced_motion", reduced_motion))
+	ink_edges = bool(cfg.get_value("render", "ink_edges", ink_edges))
+	volume_master = clamp_volume(float(cfg.get_value("audio", "volume_master", volume_master)))
+	volume_sfx = clamp_volume(float(cfg.get_value("audio", "volume_sfx", volume_sfx)))
+	volume_music = clamp_volume(float(cfg.get_value("audio", "volume_music", volume_music)))
 	for action in ACTIONS:
 		var dk = cfg.get_value("binds_kb", action, null)
 		if dk is Dictionary:
@@ -67,6 +104,14 @@ static func save_all() -> void:
 	cfg.set_value("input", "invert_y", invert_y)
 	cfg.set_value("input", "layout", layout)
 	cfg.set_value("video", "fov", fov)
+	cfg.set_value("video", "ui_scale", ui_scale)
+	cfg.set_value("accessibility", "reduced_motion", reduced_motion)
+	cfg.set_value("render", "enemy_color", enemy_color)
+	cfg.set_value("render", "enemy_palette_version", 2)
+	cfg.set_value("render", "ink_edges", ink_edges)
+	cfg.set_value("audio", "volume_master", volume_master)
+	cfg.set_value("audio", "volume_sfx", volume_sfx)
+	cfg.set_value("audio", "volume_music", volume_music)
 	for action in ACTIONS:
 		var kb := _first_key_or_mouse(action)
 		if kb:
@@ -75,6 +120,34 @@ static func save_all() -> void:
 		if pad:
 			cfg.set_value("binds_pad", action, _event_to_dict(pad))
 	cfg.save(PATH)
+
+## Borne un index de couleur ennemi (0 Magenta, 1 Citron — DA v2, design.md
+## §9). Fonction pure isolée pour rester testable sans dépendre du garde `_loaded`.
+static func clamp_enemy_color(v: int) -> int:
+	return clampi(v, 0, 1)
+
+## Migration v1 -> v2 (design.md, "Next" : Settings.enemy_color Magenta 0,
+## Citron 1) : un fichier de settings SANS la clé `enemy_palette_version`
+## vient d'avant la DA v2 — sa valeur numérique (0 rouge/1 jaune/2 violet)
+## n'a plus de sens dans la nouvelle palette (2 devient hors-bornes, et 1
+## jaune se réinterpréterait à tort en 1 Citron). On la force donc à 0
+## (Magenta, défaut) plutôt que de la réinterpréter silencieusement. Un
+## fichier déjà v2 (`has_v2_key` vrai) garde sa valeur, simplement bornée.
+static func migrate_enemy_color(stored: int, has_v2_key: bool) -> int:
+	if not has_v2_key:
+		return 0
+	return clamp_enemy_color(stored)
+
+## Borne l'échelle d'interface (design.md, Steam Deck : 1.0 défaut, 1.15
+## recommandée). Fonction pure isolée pour rester testable sans dépendre du
+## garde `_loaded`.
+static func clamp_ui_scale(v: float) -> float:
+	return clampf(v, 0.8, 1.5)
+
+## Borne un volume (Master/SFX/Musique) à [0, 1]. Fonction pure isolée pour
+## rester testable sans dépendre du garde `_loaded`.
+static func clamp_volume(v: float) -> float:
+	return clampf(v, 0.0, 1.0)
 
 ## Applique un préset de disposition clavier (touches de déplacement).
 static func apply_layout(name: String) -> void:
