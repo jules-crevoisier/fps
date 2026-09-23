@@ -50,8 +50,10 @@ Chaque arme est une ressource (`scripts/combat/WeaponConfig.gd`,
 - **Sniper** : un rayon, gros dégâts, **lunette** (zoom fort + overlay).
 
 Le tir est **validé côté serveur** : le client envoie origine + directions + l'**ID
-d'arme** ; le serveur refait les rayons et applique les dégâts (falloff + headshot).
-L'ID d'arme est nécessaire car l'inventaire n'est pas répliqué.
+d'arme** ; le serveur vérifie que c'est bien l'arme en main dans **son** inventaire
+(autoritaire), que le chargeur et la cadence le permettent, puis refait les rayons
+et applique les dégâts (falloff + headshot, `WeaponMath`). Détail des contrôles :
+[`MULTIPLAYER.md`](MULTIPLAYER.md) §3.
 
 ---
 
@@ -82,8 +84,10 @@ spray, puis revient à zéro (`recoil_recovery`). Moins de recul en visée
   - **inventaire plein** → **F** (ou R3) pour **échanger** l'arme en main avec celle
     du sol (l'ancienne est lâchée sur place).
 
-`scripts/world/WorldWeapon.gd` gère l'arme au sol (physique + ramassage). Local
-pour l'instant (training/solo) ; réplication réseau à venir.
+`scripts/world/WorldWeapon.gd` gère l'arme au sol (physique + détection). Elle est
+**répliquée** : le serveur lui attribue un identifiant et la fait apparaître chez
+tous ; le client ne fait que **demander** le ramassage, le serveur vérifie la
+distance (≤ 2 m) puis met à jour l'inventaire.
 
 ---
 
@@ -107,5 +111,9 @@ main). Le menu principal a aussi une page **Arsenal** (catalogue + stats).
 ## 9. Régler une arme
 
 Ouvre le `.tres` voulu dans `resources/weapons/` (inspector) ou duplique-le pour
-créer une variante. Ajoute le chemin dans `WeaponDatabase.PATHS` pour qu'elle
-apparaisse dans l'arsenal / la boutique.
+créer une variante. Ajoute le chemin **à la fin** de `WeaponDatabase.PATHS` pour
+qu'elle apparaisse dans l'arsenal / la boutique : l'index dans cette liste est
+l'identifiant réseau de l'arme, on n'insère ni ne réordonne jamais.
+
+Les calculs (dégâts à distance, coups pour tuer, TTK) sont dans
+`scripts/combat/WeaponMath.gd` et couverts par `tests/combat/`.

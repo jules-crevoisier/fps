@@ -34,11 +34,27 @@ Modèle **serveur-autoritaire pour le combat** (pragmatique et robuste) :
 
 | Système | Autorité | Détail |
 |---------|----------|--------|
-| Mouvement / caméra | **Client** propriétaire | Chaque joueur simule son perso ; répliqué via `MultiplayerSynchronizer`. |
-| Vie (`Health`) | **Serveur** (peer 1) | Seul le serveur applique dégâts/soin/mort, puis réplique la valeur par RPC. |
-| Tir (`Weapon`) | **Serveur** | Le client envoie origine+direction ; le serveur refait le rayon et applique les dégâts. |
+| Mouvement / caméra | **Client** propriétaire | Chaque joueur simule son perso ; répliqué via `MultiplayerSynchronizer`. Passe côté serveur en Phase 1 (netfox). |
+| Vie (`Health`) | **Serveur** (peer 1) | Seul le serveur applique dégâts/soin/mort, puis réplique la valeur par RPC. Aucun soin n'est demandé par le client. |
+| Armes (`Weapon`) | **Serveur** | Inventaire, munitions, rechargement, achat, ramassage, lâcher : tout est validé par le serveur (voir §3). |
+| Capacités (`Abilities`) | **Serveur** | Charges, cooldowns et ultime sont comptés côté serveur ; le propriétaire prédit pour la réactivité. |
+| Armes au sol | **Serveur** | Le serveur attribue un identifiant, fait apparaître et disparaître l'arme chez tous. |
 | Zones dmg/heal | **Serveur** | Appliquées uniquement côté serveur. |
-| Spawn / équipes / respawn | **Serveur** | `GameWorld` assigne équipe, place au spawn, respawn après mort. |
+| Spawn / équipes / agent / respawn | **Serveur** | `GameWorld` assigne équipe et agent (répliqués au spawn), place au spawn, respawn après mort. |
+
+### Règles réseau (à respecter dans tout nouveau code)
+
+- Les nœuds de gameplay `Health`, `Weapon` et `Abilities` ont le **serveur** comme
+  autorité (fixé dans `PlayerController._enter_tree`). Le corps du joueur garde
+  son propriétaire comme autorité (synchro du mouvement).
+- Requête client → serveur : RPC `any_peer` qui transmet à une méthode
+  `_server_*(sender_id, ...)`. Celle-ci vérifie **toujours** que `sender_id` est
+  le propriétaire du joueur, puis valide chaque argument.
+- Serveur → client : RPC `authority` (le moteur refuse tout autre émetteur).
+- Le serveur ne renvoie l'état au propriétaire que quand il **refuse** une action :
+  une synchro après une action acceptée arriverait en retard et effacerait les
+  actions prédites entre-temps.
+- Si le serveur disparaît, le client revient au menu avec le motif affiché.
 
 L'autorité de chaque joueur est fixée **de façon identique sur tous les pairs**
 dans `PlayerController._ready` (basée sur le nom du nœud = id du peer). La vie est
@@ -56,9 +72,14 @@ spawner du client existe ».
 `Weapon.gd` + `WeaponConfig.gd` (ressource `resources/weapons/default_rifle.tres`).
 
 - **Hitscan** : balle instantanée (raycast), comme la plupart des armes de BO2.
-- **Client** : raycast local pour le traceur (feedback immédiat) puis envoi au serveur.
-- **Serveur** : met les tirs en **file** et les résout dans `_physics_process`
-  (un raycast doit se faire pendant le pas physique), applique les dégâts.
+- **Client** : prédit le tir (chargeur, traceur, recul) puis envoie origine,
+  directions et ID d'arme au serveur.
+- **Serveur** : refuse le tir si l'expéditeur n'est pas le propriétaire, si le
+  tireur est mort, si l'arme n'est pas celle qu'il a en main, si le chargeur est
+  vide ou en rechargement, si la cadence dépasse celle de l'arme (seau de jetons,
+  rafale de 2), ou si l'origine est à plus de 3 m de sa tête / les directions
+  sont invalides (`ShotValidator`). Les tirs acceptés sont mis en **file** et
+  résolus dans `_physics_process` ; les refus sont comptés (`rejected_shots`).
 - **Damage falloff** : dégâts pleins jusqu'à `falloff_start`, puis chute linéaire
   jusqu'à `damage_min` à `falloff_end`.
 - **Headshot** : `headshot_mult` si l'impact touche le haut de la capsule.
@@ -114,14 +135,23 @@ common/physics_ticks_per_second=60
 ### Limites actuelles (honnêteté)
 
 Ce n'est **pas encore** un netcode compétitif complet :
-- Pas de **prédiction client + réconciliation** ni de **rollback/lag
-  compensation** (ce que font CS/Valorant). Le mouvement est client-autoritaire
-  (chaque joueur a raison sur sa position).
+- Le **mouvement** reste client-autoritaire (chaque joueur a raison sur sa
+  position) : c'est le chantier P1.1-P1.2 de la roadmap (netfox).
 - Les hits sont validés serveur mais **sans rembobinage** des positions selon le
-  ping de l'attaquant (pas de lag comp). En LAN / faible latence, c'est correct.
+  ping de l'attaquant (pas de lag comp, P1.3). En LAN / faible latence, c'est correct.
+- Un joueur qui rejoint en cours de partie ne voit pas les armes déjà au sol.
 
-C'est une base **solide et extensible** ; la prédiction/rollback est un chantier
-séparé à ajouter quand le reste du gameplay est en place.
+### Test réseau automatique (2 processus)
+
+`tools/net_smoke.gd` lance un hôte et un client headless sur le terrain
+d'entraînement : le client tire 3 fois légitimement puis tente 4 triches (arme non
+possédée, origine à 50 m, rafale au-delà de la cadence, tir usurpé au nom de
+l'hôte). L'hôte affiche `NET_SMOKE_RESULT ok=true ...` si tout est conforme.
+
+```bash
+godot --headless --path . -s res://tools/net_smoke.gd -- --role=host &
+sleep 3; godot --headless --path . -s res://tools/net_smoke.gd -- --role=client
+```
 
 ---
 

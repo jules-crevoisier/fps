@@ -86,6 +86,9 @@ l'autorité de chaque perso est donnée à son pair propriétaire.
 
 ## Roadmap
 
+Plan complet vers un jeu en ligne publiable (phases, chiffres cibles, stack,
+sources) : [`docs/ROADMAP.md`](docs/ROADMAP.md). Historique du prototype :
+
 - [x] Système de mouvement complet (sol MW2019, air CS, slide, dive/roll, stun)
 - [x] Arène de test + HUD vitesse/état + respawn à la chute
 - [x] Menu host/join + map 1v1/2v2 (goulag) + spawns par équipe
