@@ -1,28 +1,40 @@
 ## GameHUD.gd
-## HUD de jeu construit par code : crosshair, barre de vie, munitions, vitesse/état
-## (debug) et écran de mort. Se branche automatiquement sur le joueur local
-## (groupe "local_player") et ses composants Health / Weapon.
+## HUD de jeu construit par code, look pro et cohérent : modules à panneaux
+## arrondis translucides (vie, munitions, capacités, score), crosshair épuré,
+## killfeed, scoreboard (Tab), écrans de mort et de fin. Se branche automatiquement
+## sur le joueur local (groupe "local_player") et ses composants.
 extends CanvasLayer
+
+const ACCENT := Color(1.0, 0.8, 0.12)
+const PANEL_BG := Color(0.07, 0.07, 0.1, 0.86)
+const TEXT := Color(0.93, 0.95, 0.99)
+const DIM := Color(0.62, 0.67, 0.78)
+const HP_GOOD := Color(0.32, 0.86, 0.46)
+const HP_BAD := Color(0.92, 0.26, 0.26)
+const FONT_BLACK := preload("res://resources/fonts/Lato-Black.ttf")
 
 var _player: PlayerController
 var _health: Health
 var _weapon: Weapon
 
-var _crosshair: Label
-var _hp_fill: ColorRect
+var _crosshair: Control
+var _hp_bar: ProgressBar
+var _hp_fill_style: StyleBoxFlat
 var _hp_label: Label
 var _ammo_label: Label
+var _reserve_label: Label
 var _weapon_label: Label
+var _inv_label: Label
 var _debug_label: Label
 var _death_panel: ColorRect
-var _death_label: Label
 var _scope: TextureRect
 var _scope_reticle: Control
-var _inv_label: Label
 var _abilities: Node
-var _ability_label: Label
+var _ability_box: HBoxContainer
+var _ability_chips: Array = []
 var _mode: Node
 var _score_label: Label
+var _objective_label: Label
 var _match: Node
 var _killfeed_box: VBoxContainer
 var _scoreboard: Control
@@ -34,137 +46,207 @@ var _end_shown: bool = false
 func _ready() -> void:
 	_build()
 
+# ----------------------------------------------------------- Styles utilitaires
+func _round_panel(bg: Color, radius: int = 6, accent_edge: bool = false) -> StyleBoxFlat:
+	# Panneau "comic" : gros contour encre (ou magenta pour accent).
+	var s := StyleBoxFlat.new()
+	s.bg_color = bg
+	s.set_corner_radius_all(radius)
+	s.content_margin_left = 16
+	s.content_margin_right = 16
+	s.content_margin_top = 10
+	s.content_margin_bottom = 10
+	s.set_border_width_all(5)
+	s.border_color = Color(1.0, 0.13, 0.5) if accent_edge else Color(0.05, 0.05, 0.07)
+	return s
+
+func _lab(text: String, size: int, color: Color, outline: bool = false, black: bool = false) -> Label:
+	var l := Label.new()
+	l.text = text
+	if black:
+		l.add_theme_font_override("font", FONT_BLACK)
+	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_color_override("font_color", color)
+	if outline:
+		l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.75))
+		l.add_theme_constant_override("outline_size", 5)
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return l
+
+# ----------------------------------------------------------- Construction
 func _build() -> void:
-	# Crosshair : 4 traits + point central (style FPS).
+	_build_crosshair()
+	_build_health()
+	_build_ammo()
+	_build_abilities()
+	_build_score()
+	_build_killfeed()
+	_build_debug()
+	_build_death()
+	_build_scoreboard()
+	_build_end_panel()
+	_build_scope()
+	# Rien ne doit intercepter la souris (sinon look/lunette bloqués).
+	_ignore_mouse(self)
+
+func _build_crosshair() -> void:
 	_crosshair = Control.new()
 	_crosshair.set_anchors_preset(Control.PRESET_CENTER)
 	_crosshair.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_crosshair)
-	var col := Color(0.95, 1.0, 0.95, 0.9)
-	_cross_line(_crosshair, Rect2(-1, -11, 2, 7), col)   # haut
-	_cross_line(_crosshair, Rect2(-1, 4, 2, 7), col)     # bas
-	_cross_line(_crosshair, Rect2(-11, -1, 7, 2), col)   # gauche
-	_cross_line(_crosshair, Rect2(4, -1, 7, 2), col)     # droite
-	_cross_line(_crosshair, Rect2(-1, -1, 2, 2), col)    # point central
+	var col := Color(0.95, 1.0, 0.97, 0.92)
+	_cross_line(_crosshair, Rect2(-1, -12, 2, 7), col)
+	_cross_line(_crosshair, Rect2(-1, 5, 2, 7), col)
+	_cross_line(_crosshair, Rect2(-12, -1, 7, 2), col)
+	_cross_line(_crosshair, Rect2(5, -1, 7, 2), col)
+	_cross_line(_crosshair, Rect2(-1, -1, 2, 2), col)
 
-	# Barre de vie (bas-gauche).
-	var hp_bg := ColorRect.new()
-	hp_bg.color = Color(0, 0, 0, 0.5)
-	hp_bg.position = Vector2(24, 0)
-	hp_bg.size = Vector2(260, 26)
-	hp_bg.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	hp_bg.offset_left = 24
-	hp_bg.offset_top = -60
-	hp_bg.offset_right = 284
-	hp_bg.offset_bottom = -34
-	add_child(hp_bg)
+func _build_health() -> void:
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", _round_panel(PANEL_BG, 14))
+	p.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	p.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	p.grow_horizontal = Control.GROW_DIRECTION_END
+	p.offset_left = 28
+	p.offset_bottom = -28
+	add_child(p)
 
-	_hp_fill = ColorRect.new()
-	_hp_fill.color = Color(0.2, 0.85, 0.3, 0.9)
-	_hp_fill.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	_hp_fill.offset_left = 26
-	_hp_fill.offset_top = -58
-	_hp_fill.offset_right = 282
-	_hp_fill.offset_bottom = -36
-	add_child(_hp_fill)
+	var hb := HBoxContainer.new()
+	hb.add_theme_constant_override("separation", 14)
+	hb.alignment = BoxContainer.ALIGNMENT_CENTER
+	p.add_child(hb)
 
-	_hp_label = _make_label(Control.PRESET_BOTTOM_LEFT, 18)
-	_hp_label.offset_left = 30
-	_hp_label.offset_top = -58
-	_hp_label.text = "100"
-	add_child(_hp_label)
+	var icon := _lab("✚", 30, HP_GOOD)
+	hb.add_child(icon)
 
-	# Munitions (bas-droite).
-	_ammo_label = _make_label(Control.PRESET_BOTTOM_RIGHT, 26)
-	_ammo_label.offset_left = -180
-	_ammo_label.offset_top = -60
-	_ammo_label.offset_right = -24
-	_ammo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_ammo_label.text = "-- / --"
-	add_child(_ammo_label)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 3)
+	hb.add_child(col)
+	col.add_child(_lab("VITALITÉ", 11, DIM))
 
-	# Nom de l'arme courante (au-dessus des munitions).
-	_weapon_label = _make_label(Control.PRESET_BOTTOM_RIGHT, 20)
-	_weapon_label.offset_left = -220
-	_weapon_label.offset_top = -92
-	_weapon_label.offset_right = -24
+	_hp_bar = ProgressBar.new()
+	_hp_bar.custom_minimum_size = Vector2(230, 14)
+	_hp_bar.min_value = 0
+	_hp_bar.max_value = 100
+	_hp_bar.value = 100
+	_hp_bar.show_percentage = false
+	var bg := StyleBoxFlat.new()
+	bg.bg_color = Color(0, 0, 0, 0.5)
+	bg.set_corner_radius_all(5)
+	_hp_fill_style = StyleBoxFlat.new()
+	_hp_fill_style.bg_color = HP_GOOD
+	_hp_fill_style.set_corner_radius_all(5)
+	_hp_bar.add_theme_stylebox_override("background", bg)
+	_hp_bar.add_theme_stylebox_override("fill", _hp_fill_style)
+	col.add_child(_hp_bar)
+
+	_hp_label = _lab("100", 32, TEXT, false, true)
+	_hp_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	hb.add_child(_hp_label)
+
+func _build_ammo() -> void:
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", _round_panel(PANEL_BG, 14))
+	p.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	p.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	p.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	p.offset_right = -28
+	p.offset_bottom = -28
+	add_child(p)
+
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 2)
+	v.alignment = BoxContainer.ALIGNMENT_END
+	p.add_child(v)
+
+	_weapon_label = _lab("", 19, ACCENT)
 	_weapon_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_weapon_label.text = ""
-	add_child(_weapon_label)
+	_weapon_label.size_flags_horizontal = Control.SIZE_SHRINK_END
+	v.add_child(_weapon_label)
 
-	# Debug vitesse/état (haut-gauche).
-	_debug_label = _make_label(Control.PRESET_TOP_LEFT, 22)
-	_debug_label.offset_left = 24
-	_debug_label.offset_top = 20
+	var ammo_row := HBoxContainer.new()
+	ammo_row.alignment = BoxContainer.ALIGNMENT_END
+	ammo_row.add_theme_constant_override("separation", 6)
+	v.add_child(ammo_row)
+	_ammo_label = _lab("--", 38, TEXT, false, true)
+	ammo_row.add_child(_ammo_label)
+	_reserve_label = _lab("/ --", 20, DIM)
+	_reserve_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	ammo_row.add_child(_reserve_label)
+
+	_inv_label = _lab("", 14, DIM)
+	_inv_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_inv_label.size_flags_horizontal = Control.SIZE_SHRINK_END
+	v.add_child(_inv_label)
+
+func _build_abilities() -> void:
+	_ability_box = HBoxContainer.new()
+	_ability_box.alignment = BoxContainer.ALIGNMENT_CENTER
+	_ability_box.add_theme_constant_override("separation", 10)
+	_ability_box.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	_ability_box.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_ability_box.offset_bottom = -26
+	_ability_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_ability_box)
+
+func _build_score() -> void:
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", _round_panel(PANEL_BG, 12))
+	p.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	p.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	p.grow_vertical = Control.GROW_DIRECTION_END
+	p.offset_top = 14
+	add_child(p)
+
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 1)
+	p.add_child(v)
+	_score_label = _lab("", 26, TEXT, false, true)
+	_score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(_score_label)
+	_objective_label = _lab("", 13, DIM)
+	_objective_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(_objective_label)
+
+func _build_killfeed() -> void:
+	_killfeed_box = VBoxContainer.new()
+	_killfeed_box.alignment = BoxContainer.ALIGNMENT_BEGIN
+	_killfeed_box.add_theme_constant_override("separation", 4)
+	_killfeed_box.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_killfeed_box.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_killfeed_box.offset_top = 70
+	_killfeed_box.offset_right = -20
+	add_child(_killfeed_box)
+
+func _build_debug() -> void:
+	# Lecture vitesse/état, volontairement discrète (haut-gauche, dim).
+	_debug_label = _lab("", 13, Color(0.7, 0.74, 0.82, 0.55))
+	_debug_label.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	_debug_label.offset_left = 22
+	_debug_label.offset_top = 16
 	add_child(_debug_label)
 
-	# Écran de mort (plein écran, caché par défaut).
+func _build_death() -> void:
 	_death_panel = ColorRect.new()
-	_death_panel.color = Color(0.4, 0.0, 0.0, 0.45)
+	_death_panel.color = Color(0.35, 0.0, 0.0, 0.42)
 	_death_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_death_panel.visible = false
 	_death_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_death_panel)
-
-	_death_label = Label.new()
-	_death_label.text = "ÉLIMINÉ"
-	_death_label.add_theme_font_size_override("font_size", 64)
-	_death_label.set_anchors_preset(Control.PRESET_CENTER)
-	_death_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_death_label.offset_left = -300
-	_death_label.offset_right = 300
-	_death_label.offset_top = -40
-	_death_panel.add_child(_death_label)
-
-	# Inventaire (centre-bas) : liste des armes, courante entre crochets.
-	_inv_label = _make_label(Control.PRESET_BOTTOM_WIDE, 18)
-	_inv_label.offset_bottom = -16
-	_inv_label.offset_top = -40
-	_inv_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_inv_label.text = ""
-	add_child(_inv_label)
-
-	# Capacités (bas-gauche, au-dessus de la vie).
-	_ability_label = _make_label(Control.PRESET_BOTTOM_LEFT, 18)
-	_ability_label.offset_left = 24
-	_ability_label.offset_top = -96
-	_ability_label.offset_right = 700
-	_ability_label.text = ""
-	add_child(_ability_label)
-
-	# Scoreboard (haut-centre).
-	_score_label = _make_label(Control.PRESET_TOP_WIDE, 26)
-	_score_label.offset_top = 14
-	_score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_score_label.text = ""
-	add_child(_score_label)
-
-	# Killfeed (haut-droite).
-	_killfeed_box = VBoxContainer.new()
-	_killfeed_box.alignment = BoxContainer.ALIGNMENT_BEGIN
-	_killfeed_box.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	_killfeed_box.offset_left = -420
-	_killfeed_box.offset_top = 60
-	_killfeed_box.offset_right = -16
-	add_child(_killfeed_box)
-
-	_build_scoreboard()
-	_build_end_panel()
-
-	_build_scope()
-	# Aucun élément du HUD ne doit intercepter la souris (sinon le look est bloqué,
-	# notamment le réticule de lunette centré sous le curseur capturé).
-	_ignore_mouse(self)
-
-func _ignore_mouse(node: Node) -> void:
-	for c in node.get_children():
-		# On laisse les éléments interactifs (boutons, sliders) recevoir la souris.
-		if c is Control and not (c is BaseButton) and not (c is Range):
-			c.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_ignore_mouse(c)
+	var v := VBoxContainer.new()
+	v.set_anchors_preset(Control.PRESET_CENTER)
+	v.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	v.grow_vertical = Control.GROW_DIRECTION_BOTH
+	v.alignment = BoxContainer.ALIGNMENT_CENTER
+	_death_panel.add_child(v)
+	var t := _lab("ÉLIMINÉ", 72, Color(0.95, 0.92, 0.92), true, true)
+	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(t)
+	var s := _lab("Réapparition imminente…", 20, Color(0.85, 0.7, 0.7), true)
+	s.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(s)
 
 func _build_scope() -> void:
-	# Masque de lunette : noir partout sauf un disque central transparent.
 	var s := 256
 	var img := Image.create(s, s, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 1))
@@ -181,10 +263,9 @@ func _build_scope() -> void:
 	_scope.stretch_mode = TextureRect.STRETCH_SCALE
 	_scope.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_scope.visible = false
-	_scope.mouse_filter = Control.MOUSE_FILTER_IGNORE  # ne pas bloquer le look
+	_scope.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_scope)
 
-	# Réticule de lunette : fine croix centrale.
 	_scope_reticle = Control.new()
 	_scope_reticle.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_scope_reticle.visible = false
@@ -201,8 +282,13 @@ func _build_scope() -> void:
 	_scope_reticle.add_child(vbar)
 	add_child(_scope_reticle)
 
+func _ignore_mouse(node: Node) -> void:
+	for c in node.get_children():
+		if c is Control and not (c is BaseButton) and not (c is Range):
+			c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_ignore_mouse(c)
+
 func _cross_line(parent: Control, r: Rect2, c: Color) -> void:
-	# Contour noir fin pour la lisibilité.
 	var outline := ColorRect.new()
 	outline.color = Color(0, 0, 0, 0.55)
 	outline.offset_left = r.position.x - 1
@@ -220,46 +306,53 @@ func _cross_line(parent: Control, r: Rect2, c: Color) -> void:
 	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(rect)
 
+# ----------------------------------------------------------- Scoreboard / fin
 func _build_scoreboard() -> void:
 	_scoreboard = ColorRect.new()
-	_scoreboard.color = Color(0.04, 0.05, 0.08, 0.85)
+	_scoreboard.color = Color(0.03, 0.04, 0.07, 0.86)
 	_scoreboard.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_scoreboard.visible = false
 	add_child(_scoreboard)
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_scoreboard.add_child(center)
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _round_panel(Color(0.08, 0.09, 0.14, 0.95), 16))
+	center.add_child(panel)
 	_scoreboard_list = VBoxContainer.new()
 	_scoreboard_list.custom_minimum_size = Vector2(560, 0)
-	center.add_child(_scoreboard_list)
-	var lbl := _make_label(Control.PRESET_TOP_LEFT, 22)
+	panel.add_child(_scoreboard_list)
+	var lbl := _lab("", 22, TEXT)
 	lbl.name = "Text"
 	_scoreboard_list.add_child(lbl)
 
 func _build_end_panel() -> void:
 	_end_panel = ColorRect.new()
-	_end_panel.color = Color(0.04, 0.05, 0.08, 0.82)
+	_end_panel.color = Color(0.03, 0.04, 0.07, 0.85)
 	_end_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_end_panel.visible = false
 	add_child(_end_panel)
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_end_panel.add_child(center)
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _round_panel(Color(0.09, 0.1, 0.16, 0.97), 18))
+	center.add_child(panel)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 16)
-	box.custom_minimum_size = Vector2(320, 0)
-	center.add_child(box)
-	_end_label = _make_label(Control.PRESET_TOP_WIDE, 48)
+	box.custom_minimum_size = Vector2(360, 0)
+	panel.add_child(box)
+	_end_label = _lab("", 46, ACCENT, false, true)
 	_end_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(_end_label)
 	var replay := Button.new()
 	replay.text = "Rejouer"
-	replay.custom_minimum_size = Vector2(0, 46)
+	replay.custom_minimum_size = Vector2(0, 48)
 	replay.pressed.connect(_on_replay)
 	box.add_child(replay)
 	var menu := Button.new()
 	menu.text = "Retour au menu"
-	menu.custom_minimum_size = Vector2(0, 46)
+	menu.custom_minimum_size = Vector2(0, 48)
 	menu.pressed.connect(func():
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		get_tree().change_scene_to_file("res://scenes/ui/main_menu.tscn"))
@@ -274,16 +367,17 @@ func _team_color(t: int) -> Color:
 func _on_kill_logged(killer: String, victim: String, killer_team: int) -> void:
 	if _killfeed_box == null:
 		return
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", _round_panel(Color(0.05, 0.06, 0.1, 0.7), 8))
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var l := Label.new()
-	l.text = "%s  ▸  %s" % [killer, victim]
-	l.add_theme_font_size_override("font_size", 18)
+	l.text = "%s   ▸   %s" % [killer, victim]
+	l.add_theme_font_size_override("font_size", 17)
 	l.add_theme_color_override("font_color", _team_color(killer_team))
-	l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.7))
-	l.add_theme_constant_override("outline_size", 4)
-	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_killfeed_box.add_child(l)
-	get_tree().create_timer(5.0).timeout.connect(func(): if is_instance_valid(l): l.queue_free())
+	p.add_child(l)
+	_killfeed_box.add_child(p)
+	get_tree().create_timer(5.0).timeout.connect(func(): if is_instance_valid(p): p.queue_free())
 
 func _refresh_scoreboard() -> void:
 	if _match == null or _scoreboard_list == null:
@@ -292,7 +386,7 @@ func _refresh_scoreboard() -> void:
 	if lbl == null:
 		return
 	var info: Dictionary = _match.player_info
-	var txt := "── TABLEAU DES SCORES ──\n"
+	var txt := "TABLEAU DES SCORES\n"
 	for team in [0, 1]:
 		txt += "\nÉQUIPE %d\n" % (team + 1)
 		for id in info:
@@ -322,26 +416,17 @@ func _on_replay() -> void:
 	else:
 		_match.request_reset.rpc_id(1)
 
-func _make_label(preset: int, size: int) -> Label:
-	var l := Label.new()
-	l.add_theme_font_size_override("font_size", size)
-	l.add_theme_color_override("font_color", Color(1, 1, 1))
-	l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.7))
-	l.add_theme_constant_override("outline_size", 5)
-	l.set_anchors_preset(preset)
-	return l
-
+# ----------------------------------------------------------- Boucle
 func _process(_delta: float) -> void:
 	if _player == null or not is_instance_valid(_player):
 		_acquire_player()
 		return
 	if _debug_label:
 		var ground := "SOL" if _player.is_on_floor() else "AIR"
-		_debug_label.text = "%.1f m/s  %s [%s]" % [_player.horizontal_speed(), _player.state_machine.current_name, ground]
+		_debug_label.text = "%.1f m/s · %s · %s" % [_player.horizontal_speed(), _player.state_machine.current_name, ground]
 	_update_abilities()
 	_update_scoreboard()
 
-	# Match : killfeed + scoreboard (Tab) + écran de fin.
 	if _match == null or not is_instance_valid(_match):
 		_match = get_tree().get_first_node_in_group("match")
 		if _match and _match.has_signal("kill_logged") and not _match.kill_logged.is_connected(_on_kill_logged):
@@ -353,7 +438,6 @@ func _process(_delta: float) -> void:
 			_refresh_scoreboard()
 	_update_end()
 
-	# Lunette : visible si l'arme courante est à lunette et qu'on vise.
 	if _weapon and _scope:
 		var scoping: bool = _weapon.is_scoped() and Input.is_action_pressed("aim") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
 		_scope.visible = scoping
@@ -383,16 +467,20 @@ func _acquire_player() -> void:
 			_on_ammo_changed(_weapon.mag[_weapon.current], _weapon.reserve_a[_weapon.current])
 
 func _on_health_changed(current: float, maximum: float) -> void:
-	var ratio := clampf(current / maximum, 0.0, 1.0)
-	if _hp_fill:
-		_hp_fill.offset_right = 26 + 256 * ratio
-		_hp_fill.color = Color(0.2, 0.85, 0.3, 0.9).lerp(Color(0.9, 0.2, 0.2, 0.9), 1.0 - ratio)
+	if _hp_bar:
+		_hp_bar.max_value = maximum
+		_hp_bar.value = current
+	if _hp_fill_style:
+		var ratio := clampf(current / maximum, 0.0, 1.0)
+		_hp_fill_style.bg_color = HP_BAD.lerp(HP_GOOD, ratio)
 	if _hp_label:
 		_hp_label.text = "%d" % roundi(current)
 
 func _on_ammo_changed(ammo: int, reserve: int) -> void:
 	if _ammo_label:
-		_ammo_label.text = "%d / %d" % [ammo, reserve]
+		_ammo_label.text = "%d" % ammo
+	if _reserve_label:
+		_reserve_label.text = "/ %d" % reserve
 
 func _update_scoreboard() -> void:
 	if _score_label == null:
@@ -402,24 +490,47 @@ func _update_scoreboard() -> void:
 	if _mode == null:
 		return
 	if _mode.winner >= 0:
-		_score_label.text = "ÉQUIPE %d GAGNE   %d - %d" % [_mode.winner + 1, _mode.team_score(0), _mode.team_score(1)]
+		_score_label.text = "%d   ÉQUIPE %d GAGNE   %d" % [_mode.team_score(0), _mode.winner + 1, _mode.team_score(1)]
+		_objective_label.text = ""
 	else:
-		_score_label.text = "ÉQ.1  %d   —   %d  ÉQ.2\n%s" % [_mode.team_score(0), _mode.team_score(1), _mode.hud_state]
+		_score_label.text = "ÉQ.1   %d   —   %d   ÉQ.2" % [_mode.team_score(0), _mode.team_score(1)]
+		_objective_label.text = str(_mode.hud_state)
 
 func _update_abilities() -> void:
-	if _ability_label == null or _abilities == null or not _abilities.has_method("slot_info"):
+	if _ability_box == null or _abilities == null or not _abilities.has_method("slot_info"):
 		return
-	var parts: Array = []
-	for s in _abilities.slot_info():
-		var t: String = "%s:%s" % [s.slot, s.name]
+	var infos: Array = _abilities.slot_info()
+	# Construit les badges crantés une fois (nombre de slots stable par agent).
+	if _ability_chips.size() != infos.size():
+		for ch in _ability_box.get_children():
+			ch.queue_free()
+		_ability_chips.clear()
+		for i in infos.size():
+			var s: Dictionary = infos[i]
+			var col: Color = Comic.SLOT_COLORS[i % Comic.SLOT_COLORS.size()]
+			if s.ult:
+				col = Comic.RED
+			var chip := ComicChip.new()
+			chip.setup(str(s.slot), str(s.name), col)
+			_ability_box.add_child(chip)
+			_ability_chips.append(chip)
+		return
+	# Met à jour le statut de chaque badge.
+	for i in infos.size():
+		var s: Dictionary = infos[i]
+		var chip: ComicChip = _ability_chips[i]
+		var txt := ""
+		var dim := true
 		if s.ult:
-			t += " PRÊT" if s.ready else " %d%%" % int(s.ratio * 100.0)
+			txt = "PRÊT" if s.ready else "%d%%" % int(s.ratio * 100.0)
+			dim = not s.ready
 		elif s.charges > 0:
-			t += " x%d" % s.charges
+			txt = "x%d" % s.charges
+			dim = false
 		else:
-			t += " %d%%" % int(s.ratio * 100.0)
-		parts.append(t)
-	_ability_label.text = "   ".join(parts)
+			txt = "%d%%" % int(s.ratio * 100.0)
+			dim = true
+		chip.set_status(txt, dim)
 
 func _on_weapon_changed(cfg: WeaponConfig) -> void:
 	if _weapon_label and cfg:
@@ -433,8 +544,8 @@ func _update_inventory() -> void:
 	for i in _weapon.weapons.size():
 		var w = _weapon.weapons[i]
 		var nm: String = w.weapon_name if w else "—"
-		parts.append("[ %s ]" % nm if i == _weapon.current else nm)
-	_inv_label.text = "   ".join(parts)
+		parts.append(("● " + nm) if i == _weapon.current else ("○ " + nm))
+	_inv_label.text = "    ".join(parts)
 
 func _on_died(_killer_id: int) -> void:
 	if _death_panel:

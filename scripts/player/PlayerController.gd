@@ -89,7 +89,7 @@ func _ready() -> void:
 
 	state_machine.setup(self)
 
-	# Look cartoon : capsule en cel-shading + contour noir.
+	# Look cartoon : capsule en couleur plate vive.
 	var mesh := get_node_or_null("Mesh")
 	if mesh:
 		mesh.material_override = Cartoon.mat(Color(1.0, 0.58, 0.28))
@@ -98,6 +98,9 @@ func _ready() -> void:
 	var mine := is_multiplayer_authority()
 	camera.current = mine
 	if mine:
+		# Vue FPS : on ne rend pas sa propre capsule (la caméra est dedans).
+		if mesh:
+			mesh.visible = false
 		add_to_group("local_player")
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
