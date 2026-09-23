@@ -5,13 +5,16 @@ class_name WeaponDatabase
 extends RefCounted
 
 const PATHS := [
-	"res://resources/weapons/classic.tres",
-	"res://resources/weapons/sheriff.tres",
-	"res://resources/weapons/spectre.tres",
-	"res://resources/weapons/guardian.tres",
-	"res://resources/weapons/vandal.tres",
-	"res://resources/weapons/judge.tres",
-	"res://resources/weapons/operator.tres",
+	"res://resources/weapons/pistolet.tres",
+	"res://resources/weapons/magnum.tres",
+	"res://resources/weapons/rafale.tres",
+	"res://resources/weapons/marqueur.tres",
+	"res://resources/weapons/ravage.tres",
+	"res://resources/weapons/fracas.tres",
+	"res://resources/weapons/faucheur.tres",
+	"res://resources/weapons/eclair.tres",
+	"res://resources/weapons/semeuse.tres",
+	"res://resources/weapons/percuteur.tres",
 ]
 
 static var _cache: Array = []
@@ -30,16 +33,27 @@ static func get_by_name(n: String) -> WeaponConfig:
 			return w
 	return null
 
-## Loadout de départ (sidearm + fusil) — utilisé tant qu'il n'y a pas de boutique.
-static func default_loadout() -> Array:
-	var l: Array = []
+## ID = index dans PATHS (ordre append-only). Renvoie null hors limites.
+static func get_by_id(id: int) -> WeaponConfig:
+	var db := all()
+	if id < 0 or id >= db.size():
+		return null
+	return db[id]
+
+## Retrouve l'ID (index) d'une config déjà chargée. -1 si inconnue.
+static func id_of(c: WeaponConfig) -> int:
+	if c == null:
+		return -1
+	return all().find(c)
+
+## IDs du loadout de départ (sidearm + fusil), pour l'inventaire serveur.
+static func default_loadout_ids() -> Array[int]:
+	var ids: Array[int] = []
 	for n in ["Ravage", "Pistolet"]:
 		var w := get_by_name(n)
 		if w:
-			l.append(w)
-	if l.is_empty():
-		l = all().duplicate()
-	return l
+			ids.append(id_of(w))
+	return ids
 
 static func type_name(t: int) -> String:
 	match t:

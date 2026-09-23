@@ -69,3 +69,35 @@ enum Category { SIDEARM, SMG, RIFLE, SHOTGUN, SNIPER, HEAVY, MELEE }
 @export_group("Lunette / Scope")
 ## Affiche une lunette (overlay) en visée — pour les snipers.
 @export var scoped: bool = false
+
+@export_group("Recul (motif fixe)")
+## Motif de recul FIXE pour les premiers tirs (façon Valorant) : chaque élément
+## est un décalage en degrés (x = déviation horizontale/yaw, y = montée
+## verticale/pitch) appliqué au tir correspondant. Au-delà de `pattern_shots`,
+## le recul redevient pseudo-aléatoire (recoil_vertical/recoil_horizontal
+## ci-dessus). Consommé par Weapon.gd (round suivant) — pur champ de données ici.
+@export var recoil_pattern: PackedVector2Array = PackedVector2Array()
+## Nombre de tirs couverts par `recoil_pattern` avant bascule sur le recul
+## pseudo-aléatoire.
+@export var pattern_shots: int = 0
+
+@export_group("Dispersion en mouvement")
+## Dispersion (deg) ajoutée à spread_hip/spread_aim quand le joueur se déplace
+## (marche ou course). Les armes fines de contact bougent bien, les armes de
+## précision punissent le mouvement.
+@export var move_spread_add: float = 0.0
+## Dispersion (deg) ajoutée quand le joueur est en l'air (saut/chute).
+@export var air_spread_add: float = 0.0
+
+@export_group("Pénalités de mouvement (temps avant tir)")
+## Délai (s) avant de pouvoir tirer après un sprint.
+@export var sprint_to_fire: float = 0.15
+## Délai (s) avant de pouvoir tirer après une glissade (slide). Référence
+## commune ≈ 0.38 s (docs/ROADMAP.md §4).
+@export var slide_to_fire: float = 0.38
+## Délai (s) avant de pouvoir tirer après un plongeon (dive). Référence commune
+## ≈ 0.46 s (docs/ROADMAP.md §4).
+@export var dive_to_fire: float = 0.46
+## Durée (s) de la transition de visée (ADS) — l'arme se centre en ce temps ;
+## distinct de `aim_speed` qui règle l'interpolation caméra/FOV.
+@export var ads_time: float = 0.2

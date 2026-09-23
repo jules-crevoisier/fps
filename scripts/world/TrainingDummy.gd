@@ -27,7 +27,14 @@ func _ready() -> void:
 	cm.radius = 0.4
 	mesh.mesh = cm
 	mesh.position.y = 0.9
-	mesh.material_override = Cartoon.mat(Color(0.95, 0.32, 0.32))
+	mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# Mannequin = "personnage" : corps en couleur ennemi SATURÉE (toujours
+	# hostile, jamais allié — c'est une cible d'entraînement), design.md §5
+	# "joueurs en couleur" (chroma ≥ 0.15) — le rim reste un repère
+	# SECONDAIRE, pas le seul porteur de couleur. Contour ennemi 50% plus
+	# épais qu'un allié (design.md §12 — repère d'accessibilité).
+	mesh.material_override = Cartoon.character(Cartoon.enemy_color(), PlayerLook.outline_px_for(false))
+	Cartoon.set_rim(mesh, Cartoon.enemy_color(), 1.4)
 	add_child(mesh)
 
 	# Vie (serveur-autoritaire) — sans régénération pour voir les dégâts cumulés.
