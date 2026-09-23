@@ -5,8 +5,8 @@
 # Imported assets cache
 .import/
 
-# Exports & presets (export_presets.cfg peut contenir des secrets/clés)
-export_presets.cfg
+# Exports (export_presets.cfg est versionné pour la CI ; Godot garde les
+# identifiants d'export dans .godot/export_credentials.cfg, jamais ici)
 /build/
 /exports/
 *.translation
@@ -23,3 +23,9 @@ Thumbs.db
 *.swp
 .vscode/
 .idea/
+reports/
+
+# Secrets locaux (voir .env.example)
+.env
+.env.*
+!.env.example

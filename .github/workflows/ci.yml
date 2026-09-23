@@ -1,0 +1,153 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Doit rester alignée avec config/features dans project.godot et avec le
+  # binaire de dev Godot_v4.7-stable_win64.exe. Le tag d'image barichello/godot-ci
+  # ci-dessous doit suivre la même version (voir jobs.*.container.image).
+  GODOT_VERSION: "4.7"
+
+jobs:
+  tests:
+    name: Tests (gdUnit4)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      checks: write
+    container:
+      image: barichello/godot-ci:4.7
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Importer le projet
+        run: godot --headless --path . --import
+
+      - name: Lancer la suite gdUnit4
+        env:
+          GODOT_BIN: godot
+        run: |
+          set +e
+          bash tools/test.sh
+          code=$?
+          echo "Code de sortie de tools/test.sh : $code"
+          # 0 = succès, 101 = avertissements seulement (non bloquant).
+          # Tout autre code (100 = échecs, etc.) fait échouer le job.
+          if [ "$code" -ne 0 ] && [ "$code" -ne 101 ]; then
+            echo "::error::tools/test.sh a échoué avec le code $code"
+            exit 1
+          fi
+          exit 0
+
+      - name: Upload des rapports (reports/)
+        if: always()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: gdunit4-reports
+          path: reports/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Publier les résultats JUnit
+        if: always()
+        continue-on-error: true
+        uses: mikepenz/action-junit-report@v6.5.0
+        with:
+          report_paths: "reports/report_*/results.xml"
+          require_tests: false
+          fail_on_failure: false
+
+  export:
+    name: Export (Windows / Linux / Linux Server)
+    needs: tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    container:
+      image: barichello/godot-ci:4.7
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Préparer les modèles d'export
+        # L'image barichello/godot-ci embarque les modèles d'export sous /root,
+        # mais les jobs "container:" de GitHub Actions exposent $HOME=/github/home.
+        # On les relocalise pour que Godot les retrouve à l'export.
+        run: |
+          mkdir -p "$HOME/.local/share/godot/export_templates/"
+          mv "/root/.local/share/godot/export_templates/${GODOT_VERSION}.stable" \
+             "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
+
+      - name: Importer le projet
+        run: godot --headless --path . --import
+
+      - name: Préparer les dossiers de build
+        run: mkdir -p build/windows build/linux build/server
+
+      - name: Export Windows Desktop
+        run: godot --headless --path . --export-release "Windows Desktop" "$(pwd)/build/windows/fps.exe"
+
+      - name: Export Linux
+        run: godot --headless --path . --export-release "Linux" "$(pwd)/build/linux/fps.x86_64"
+
+      - name: Export Linux Server (dédié)
+        run: godot --headless --path . --export-release "Linux Server" "$(pwd)/build/server/fps_server.x86_64"
+
+      - name: Upload des builds (build/)
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: build-${{ github.sha }}
+          path: build/
+          retention-days: 14
+
+  docker:
+    name: Image serveur (build + healthcheck)
+    needs: export
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Récupérer l'export serveur
+        uses: actions/download-artifact@v8.0.1
+        with:
+          name: build-${{ github.sha }}
+          path: build/
+
+      - name: Construire l'image (binaire déjà exporté, sans image godot-ci)
+        run: docker build --build-arg BINARY_SOURCE=prebuilt -t fps-server:ci .
+
+      - name: Démarrer un match TDM avec bots et attendre /health
+        run: |
+          docker run -d --name fps-ci -p 8080:8080 -e MODE=tdm -e BOTS=true fps-server:ci
+          for i in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:8080/health; then echo; exit 0; fi
+            sleep 2
+          done
+          echo "::error::/health ne répond pas"
+          docker logs fps-ci
+          exit 1
+
+      - name: Taille de l'image et journaux
+        if: always()
+        run: |
+          docker image inspect fps-server:ci --format 'Taille : {{.Size}} octets'
+          docker image ls fps-server:ci
+          docker logs fps-ci 2>&1 | tail -n 40 || true
+          docker rm -f fps-ci || true
+
