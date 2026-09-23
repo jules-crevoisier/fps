@@ -7,6 +7,12 @@
 class_name PlayerController
 extends CharacterBody3D
 
+## Ids >= ce seuil désignent un BOT (joueur simulé par le SERVEUR, jamais un
+## pair réel) — contract-r3.md, "Cross-slice interfaces" : "ids >= 9001,
+## authority 1". Utilisé par GameWorld (attribution des ids de bot) et
+## `_enter_tree` (résolution de l'autorité réseau, voir plus bas).
+const BOT_ID_START := 9001
+
 @export var config: MovementConfig
 
 # --- Références de scène ---
@@ -16,6 +22,11 @@ extends CharacterBody3D
 @onready var ceiling_check: RayCast3D = %CeilingCheck
 @onready var state_machine: PlayerStateMachine = %StateMachine
 @onready var stun_stars: Node3D = get_node_or_null("%StunStars")
+## Point d'entrée UNIQUE des entrées de gameplay (humain local OU bot — voir
+## scripts/player/PlayerInput.gd). Tout le code de gameplay lit `player.input`,
+## jamais le singleton Input directement (exception : le regard humain brut,
+## qui reste dans `_unhandled_input`/`_gamepad_look`, cf. contract-r3.md).
+@onready var input: PlayerInput = %Input
 
 # --- État partagé entre les states ---
 var wish_dir: Vector3 = Vector3.ZERO      ## Direction voulue (monde), normalisée.
@@ -39,6 +50,47 @@ func consume_roll_buffer() -> void:
 @export var fall_limit: float = -40.0   ## Sous cette altitude => respawn.
 var spawn_point: Vector3 = Vector3(0, 2, 0)
 var team: int = 0                        ## Équipe assignée par le serveur.
+## Joueur simulé par le SERVEUR (bot), jamais par un pair réel — répliqué au
+## spawn (spawn only, comme agent_index/team) par GameWorld._spawn_player.
+## Voir `is_local_human()` : un bot a l'autorité réseau du SERVEUR (peer 1,
+## comme l'hôte lui-même quand il joue) mais n'est jamais "l'humain à ce
+## clavier" — c'est cette distinction qui compte pour la caméra/la capture
+## souris/le groupe local_player/le HUD, PAS l'autorité réseau seule.
+var is_bot: bool = false
+## Agent (classe) choisi, assigné par le serveur au spawn (GameWorld._spawn_player)
+## et répliqué une seule fois (SceneReplicationConfig, spawn only). -1 = non
+## assigné (ex. entraînement hors-ligne sans passer par GameWorld) : dans ce
+## cas AbilityController se replie sur AgentDatabase.selected().
+var agent_index: int = -1
+
+## Mouvement figé par le SERVEUR (phase BUY/PREROUND d'un mode à manches —
+## voir RoundMode/GameWorld.set_all_locked). Honoré par _physics_process
+## (même traitement que la mort : gravité seule, pas de state machine).
+var movement_locked: bool = false
+
+## -- Animation (CharacterAnimator, scenes/player/player.tscn) --------------
+## Les pairs DISTANTS ne font PAS tourner la state machine (scripts/player/
+## states/*) : on réplique donc l'ÉTAT D'ANIMATION lui-même, posé par
+## l'AUTORITÉ (propriétaire humain, ou SERVEUR pour un bot) CHAQUE tick
+## physique, plutôt que le nom de state brut — `CharacterAnimator.
+## locomotion_for()` (logique pure) fait le même calcul ici et dans les tests
+## (tests/player/test_character_animator.gd). `anim_state` empaquette la
+## locomotion (bas du corps) + un bit "en rechargement" (haut du corps, voir
+## `_on_weapon_reload_started` : `Weapon.reload_started` n'est émis QUE là où
+## la prédiction tourne, càd exactement le pair où `is_multiplayer_authority()`
+## est vrai — même pair que celui qui calcule `anim_state` ici, contrairement
+## à un simple corps distant qui ne verrait jamais ce signal).
+## Répliqué TOUJOURS (SceneReplicationConfig, player.tscn) — pas "spawn only" :
+## contrairement à agent_index/team, ça change en permanence.
+var anim_state: int = 0
+## Pitch de la tête (radians, copie de `head.rotation.x`) — utilisé par
+## CharacterAnimator pour mélanger Pistol_Aim_Down/Neutral/Up (voir
+## `CharacterAnimator.aim_blend_t`). Répliqué TOUJOURS, comme `anim_state`.
+var aim_pitch: float = 0.0
+var _jump_start_t: float = 0.0
+var _jump_land_t: float = 0.0
+var _reload_t: float = 0.0
+var _prev_state_name: String = ""
 
 # Recul (vrai recoil : déplace la visée, puis récupère).
 var _recoil_target: Vector2 = Vector2.ZERO   # x = pitch (haut), y = yaw
@@ -61,16 +113,33 @@ func _update_recoil(delta: float) -> void:
 
 ## L'autorité multijoueur DOIT être réglée dans _enter_tree (pas _ready), sinon le
 ## MultiplayerSynchronizer ne peut pas traiter le spawn (erreur "no network ID").
-## Nom du nœud = id du peer propriétaire (identique sur tous les pairs). Le
-## mouvement/caméra appartient à ce peer ; la vie (Health) est forcée sur le
-## SERVEUR (peer 1) pour rester autoritaire.
+## Nom du nœud = id du "propriétaire" (identique sur tous les pairs) : pour un
+## HUMAIN, c'est son vrai id de pair réseau. Pour un BOT (id >= BOT_ID_START),
+## il n'existe AUCUN pair réel portant cet id — le bot est simulé par le
+## SERVEUR, dont l'autorité (peer 1) est donc utilisée à la place (contract-r3.md :
+## "Bots are server-owned players... authority 1"). Le mouvement/caméra
+## appartient à cette autorité ; les composants de gameplay (Health, Weapon,
+## Abilities) sont TOUJOURS forcés sur le SERVEUR (peer 1), bot ou humain —
+## voir "Global rules" du contrat Phase 0.
 func _enter_tree() -> void:
 	var owner_id := str(name).to_int()
-	if owner_id > 0:
-		set_multiplayer_authority(owner_id)  # récursif (corps, synchronizer, arme)
-	var hp := get_node_or_null("Health")
-	if hp:
-		hp.set_multiplayer_authority(1)
+	var authority_id := 1 if owner_id >= BOT_ID_START else owner_id
+	if authority_id > 0:
+		set_multiplayer_authority(authority_id)  # récursif (corps, synchronizer...)
+	for gameplay_node in ["Health", "Weapon", "Abilities"]:
+		var n := get_node_or_null(gameplay_node)
+		if n:
+			n.set_multiplayer_authority(1)
+
+## "L'humain à CE clavier" — distinct de `is_multiplayer_authority()`, qui
+## est vraie aussi bien pour l'hôte-joueur QUE pour chaque bot sur le
+## SERVEUR (les deux partagent l'autorité peer 1, voir `_enter_tree`).
+## Caméra active, capture souris, groupe "local_player", ViewModel,
+## PlayerCamera (effets), HUD : tout ce qui n'a de sens que pour l'humain
+## devant l'écran doit utiliser CETTE fonction, jamais `is_multiplayer_authority()`
+## seule (contract-r3.md, "Cross-slice interfaces").
+func is_local_human() -> bool:
+	return is_multiplayer_authority() and not is_bot
 
 func _ready() -> void:
 	if config == null:
@@ -89,23 +158,31 @@ func _ready() -> void:
 
 	state_machine.setup(self)
 
-	# Look cartoon : capsule en couleur plate vive.
-	var mesh := get_node_or_null("Mesh")
-	if mesh:
-		mesh.material_override = Cartoon.mat(Color(1.0, 0.58, 0.28))
+	# Look cartoon (matériau encre + masquage du corps local) : géré par
+	# PlayerLook.gd (R-A), enfant "Look" de cette scène — plus ici.
 
-	# En multijoueur, seul le propriétaire pilote sa caméra + input.
-	var mine := is_multiplayer_authority()
+	# En multijoueur, seul l'HUMAIN LOCAL pilote sa caméra + capture la souris
+	# (un bot partage l'autorité serveur mais n'est "personne devant l'écran").
+	var mine := is_local_human()
 	camera.current = mine
 	if mine:
-		# Vue FPS : on ne rend pas sa propre capsule (la caméra est dedans).
-		if mesh:
-			mesh.visible = false
 		add_to_group("local_player")
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
+	# Rechargement -> bit RELOADING_FLAG de `anim_state` (voir docstring
+	# `anim_state` : `reload_started` n'est émis QUE là où la prédiction
+	# tourne, càd exactement ce pair quand `is_multiplayer_authority()` est
+	# vrai — jamais sur un corps distant, d'où la nécessité de répliquer le
+	# résultat plutôt que le signal lui-même).
+	var w := get_node_or_null("Weapon") as Weapon
+	if w:
+		w.reload_started.connect(_on_weapon_reload_started)
+
+func _on_weapon_reload_started(cfg: WeaponConfig) -> void:
+	_reload_t = cfg.reload_time if cfg else 1.8
+
 func _unhandled_input(event: InputEvent) -> void:
-	if not is_multiplayer_authority():
+	if not is_local_human():
 		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		_look(event.relative)
@@ -117,17 +194,23 @@ func _physics_process(delta: float) -> void:
 	if global_position.y < fall_limit:
 		respawn()
 		return
-	# Mort : on fige le joueur (pas d'input/action) jusqu'au respawn serveur.
+	# Mort OU mouvement verrouillé par le serveur (phase BUY/PREROUND d'un mode
+	# à manches) : on fige le joueur (pas d'input/action) mais la gravité
+	# continue de s'appliquer (pas de flottement en l'air).
 	var hp := get_node_or_null("Health") as Health
-	if hp and hp.is_dead:
+	if (hp and hp.is_dead) or movement_locked:
 		velocity.x = 0.0
 		velocity.z = 0.0
 		if not is_on_floor():
 			velocity.y -= config.gravity * delta
 		move_and_slide()
+		_update_anim_state(delta, hp)
 		return
+	if is_bot:
+		_apply_bot_look()  # AVANT _read_input : wish_dir utilise l'orientation à jour.
+	else:
+		_gamepad_look(delta)
 	_read_input()
-	_gamepad_look(delta)
 	_update_recoil(delta)
 	_update_timers(delta)
 	state_machine.physics_update(delta)
@@ -135,9 +218,48 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	_check_fall_stun()
 	_was_on_floor = is_on_floor()
+	_update_anim_state(delta, hp)
 
-## Visée à la manette (stick droit). Gelée si un menu est ouvert.
+## Calcule `anim_state`/`aim_pitch` (répliqués — voir leur docstring) à partir
+## de l'état de la state machine LOCALE. Appelé sur les DEUX branches de
+## _physics_process (mort/verrouillé inclus, pour que `anim_state` reflète
+## bien DEAD même figé) — jamais côté pair distant (tout `_physics_process`
+## est déjà gardé par `is_multiplayer_authority()`).
+func _update_anim_state(delta: float, hp: Health) -> void:
+	var sname := state_machine.current_name if state_machine else ""
+	if sname == "Air" and _prev_state_name != "Air" and velocity.y > 0.5:
+		_jump_start_t = CharacterAnimator.JUMP_START_DUR
+	if _prev_state_name == "Air" and sname != "Air" and sname != "Roll":
+		_jump_land_t = CharacterAnimator.JUMP_LAND_DUR
+	_jump_start_t = maxf(_jump_start_t - delta, 0.0)
+	_jump_land_t = maxf(_jump_land_t - delta, 0.0)
+	_reload_t = maxf(_reload_t - delta, 0.0)
+
+	var dead := hp != null and hp.is_dead
+	var interacting := input != null and input.pickup_held and not dead
+	var loco := CharacterAnimator.locomotion_for(sname, horizontal_speed(), interacting, dead,
+		_jump_start_t, _jump_land_t)
+	anim_state = CharacterAnimator.pack_anim_state(loco, _reload_t > 0.0)
+	aim_pitch = head.rotation.x
+	_prev_state_name = sname
+
+## Applique le regard d'un BOT (BotBrain écrit `input.look_delta`, en radians,
+## AVANT ce tick — voir process_physics_priority sur PlayerInput/BotBrain).
+## Même formule que `_look()` (mouse look humain), sans multiplicateur de
+## sensibilité : BotBrain fournit déjà un delta en radians borné par tick.
+func _apply_bot_look() -> void:
+	var d: Vector2 = input.look_delta
+	if d == Vector2.ZERO:
+		return
+	rotate_y(-d.x)
+	head.rotate_x(-d.y)
+	head.rotation.x = clamp(head.rotation.x, deg_to_rad(-89), deg_to_rad(89))
+
+## Visée à la manette (stick droit). Gelée si un menu est ouvert. HUMAIN
+## LOCAL uniquement (jamais un bot : lit le périphérique réel de CETTE machine).
 func _gamepad_look(delta: float) -> void:
+	if not is_local_human():
+		return
 	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		return
 	var rx := Input.get_joy_axis(0, JOY_AXIS_RIGHT_X)
@@ -185,20 +307,18 @@ func _maybe_stun(fall_height: float) -> void:
 #  ENTRÉES
 # ------------------------------------------------------------------
 func _read_input() -> void:
-	# Si la souris est libérée (menu pause/options ouvert), on ignore les entrées.
-	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
-		input_vector = Vector2.ZERO
-		wish_dir = Vector3.ZERO
-		return
-	input_vector = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	# `input` (PlayerInput) porte déjà le gating "souris relâchée => tout à
+	# zéro" pour un humain (voir PlayerInput.gather_from_devices) ; un bot n'a
+	# pas ce concept, ses champs viennent de BotBrain.
+	input_vector = input.move
 	# Direction voulue relative à l'orientation du joueur (yaw sur le body).
 	var basis_dir := (global_transform.basis * Vector3(input_vector.x, 0.0, input_vector.y))
 	wish_dir = Vector3(basis_dir.x, 0.0, basis_dir.z).normalized()
-	if Input.is_action_just_pressed("jump"):
+	if input.jump_pressed:
 		_jump_buffer_timer = config.jump_buffer_time
 	# Appuyer sur "dive" EN L'AIR mémorise une roulade d'atterrissage (anti-stun).
 	# Plus on tombe vite (chute haute), plus la fenêtre est large => plus facile.
-	if Input.is_action_just_pressed("dive") and not is_on_floor():
+	if input.dive_pressed and not is_on_floor():
 		var fall_speed: float = max(-velocity.y, 0.0)
 		var f: float = clampf(fall_speed / config.land_roll_fast_speed, 0.0, 1.0)
 		_roll_buffer_timer = lerpf(config.land_roll_window, config.land_roll_window_max, f)
@@ -215,16 +335,63 @@ func respawn() -> void:
 	if state_machine:
 		state_machine.transition_to("Idle")
 
-## Respawn réseau : le SERVEUR appelle ceci sur le PROPRIÉTAIRE (rpc_id) pour le
-## téléporter — nécessaire car le mouvement est client-autoritaire (le serveur ne
-## peut pas changer directement la position d'un autre pair).
-@rpc("any_peer", "call_local", "reliable")
-func net_respawn(pos: Vector3) -> void:
+## Téléportation effective (respawn) — factorisée pour être appelée SOIT par
+## `net_respawn` (RPC, joueur distant), SOIT directement par `server_respawn`
+## (joueur simulé ICI : hôte ou bot — voir plus bas). Ne valide RIEN elle-même :
+## les deux appelants ont déjà établi la confiance (RPC vérifiée / appel serveur direct).
+func _do_respawn(pos: Vector3) -> void:
 	spawn_point = pos
 	velocity = Vector3.ZERO
 	global_position = pos
 	if state_machine:
 		state_machine.transition_to("Idle")
+
+## Respawn réseau : le SERVEUR appelle ceci sur le PROPRIÉTAIRE DISTANT
+## (rpc_id) pour le téléporter — nécessaire car le mouvement est
+## client-autoritaire (le serveur ne peut pas changer directement la position
+## d'un autre pair). Le nœud racine a l'autorité du PROPRIÉTAIRE (pas du
+## serveur) : "any_peer" est donc nécessaire pour que le serveur puisse
+## émettre cet appel, mais on doit alors vérifier nous-même l'expéditeur
+## (sinon un client pourrait se téléporter lui-même).
+## RÉSERVÉ aux propriétaires DISTANTS (id de pair réel) : un BOT n'en a
+## aucun — `rpc_id(bot_id, ...)` ne délivrerait à personne — voir
+## `server_respawn`, que GameWorld appelle à la place pour l'hôte et les bots
+## (contract-r3.md : "Server-side request wrappers must use the player's
+## owner id when the server simulates that player itself... never blindly
+## multiplayer.get_unique_id()" — même motif, dans l'autre sens : ici c'est
+## un PUSH serveur, pas une requête, mais la même distinction bot/pair réel s'applique).
+@rpc("any_peer", "call_local", "reliable")
+func net_respawn(pos: Vector3) -> void:
+	if multiplayer.get_remote_sender_id() != 1:
+		return
+	_do_respawn(pos)
+
+## Respawn d'un joueur simulé ICI (hôte-joueur ou BOT, qui partagent
+## l'autorité serveur — voir `is_local_human`) : appel DIRECT, sans RPC (pas
+## de pair réel à qui l'envoyer pour un bot). Appelé par GameWorld.
+func server_respawn(pos: Vector3) -> void:
+	if not multiplayer.is_server() or not is_multiplayer_authority():
+		return
+	_do_respawn(pos)
+
+## Effectif — factorisé, voir `_do_respawn` / `server_respawn`.
+func _do_set_locked(locked: bool) -> void:
+	movement_locked = locked
+
+## Verrouille/déverrouille le mouvement (RoundMode : phase BUY/PREROUND d'un
+## mode à manches, via GameWorld.set_all_locked). Même motif que `net_respawn` :
+## RÉSERVÉ aux propriétaires DISTANTS ; voir `server_set_locked` pour l'hôte/les bots.
+@rpc("any_peer", "call_local", "reliable")
+func net_set_locked(locked: bool) -> void:
+	if multiplayer.get_remote_sender_id() != 1:
+		return
+	_do_set_locked(locked)
+
+## Verrouillage d'un joueur simulé ICI (hôte-joueur ou bot) : appel DIRECT.
+func server_set_locked(locked: bool) -> void:
+	if not multiplayer.is_server() or not is_multiplayer_authority():
+		return
+	_do_set_locked(locked)
 
 # ------------------------------------------------------------------
 #  HELPERS DE MOUVEMENT (utilisés par les states)

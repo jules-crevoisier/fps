@@ -18,14 +18,14 @@ func physics_update(delta: float) -> void:
 		transition_to("Air")
 		return
 	# Relâcher Ctrl => se relever (si rien au-dessus).
-	if not Input.is_action_pressed("crouch") and not player.is_blocked_above():
+	if not player.input.crouch_held and not player.is_blocked_above():
 		player.set_crouching(false)
 		_stand()
 
 func _stand() -> void:
 	if player.input_vector == Vector2.ZERO:
 		transition_to("Idle")
-	elif Input.is_action_pressed("walk"):
+	elif player.input.walk_held:
 		transition_to("Walk")
 	else:
 		transition_to("Sprint")

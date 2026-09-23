@@ -64,7 +64,7 @@ func physics_update(delta: float) -> void:
 		return
 
 	# CANCEL : relâcher Ctrl pendant le slide => on se relève en gardant l'élan.
-	if not Input.is_action_pressed("crouch"):
+	if not player.input.crouch_held:
 		_keep_momentum()
 		_exit_to_ground()
 		return
@@ -82,12 +82,12 @@ func _keep_momentum() -> void:
 func _exit_to_ground() -> void:
 	player.set_crouching(false)
 	# Ctrl encore tenu => on s'accroupit (crouch en maintien : relâcher relève).
-	if Input.is_action_pressed("crouch"):
+	if player.input.crouch_held:
 		transition_to("Crouch")
 		return
 	if player.input_vector == Vector2.ZERO:
 		transition_to("Idle")
-	elif Input.is_action_pressed("walk"):
+	elif player.input.walk_held:
 		transition_to("Walk")
 	else:
 		transition_to("Sprint")

@@ -25,7 +25,7 @@ func _stand() -> void:
 	player.set_crouching(false)
 	if player.input_vector == Vector2.ZERO:
 		transition_to("Idle")
-	elif Input.is_action_pressed("walk"):
+	elif player.input.walk_held:
 		transition_to("Walk")
 	else:
 		transition_to("Sprint")

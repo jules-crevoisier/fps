@@ -32,13 +32,13 @@ func _land() -> void:
 		transition_to("Roll")
 		return
 	# Atterrir crouch maintenu + assez vite => slide-hop.
-	if config.slide_hop_enabled and Input.is_action_pressed("crouch") \
+	if config.slide_hop_enabled and player.input.crouch_held \
 			and player.horizontal_speed() >= config.slide_min_speed:
 		transition_to("Slide")
 		return
 	if player.input_vector == Vector2.ZERO:
 		transition_to("Idle")
-	elif Input.is_action_pressed("walk"):
+	elif player.input.walk_held:
 		transition_to("Walk")
 	else:
 		transition_to("Sprint")

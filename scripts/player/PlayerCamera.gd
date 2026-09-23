@@ -4,6 +4,8 @@
 ## PlayerController parent. À mettre sur le Camera3D.
 extends Camera3D
 
+const INK_POST := preload("res://scripts/core/InkPost.gd")
+
 @export var player_path: NodePath
 var player: PlayerController
 var config: MovementConfig
@@ -32,10 +34,17 @@ func _ready() -> void:
 	if player:
 		config = player.config
 		fov = Settings.fov
+		if player.is_local_human():
+			# Post-traitement "encre" (contours d'arête plein écran) : SEULE la
+			# caméra de l'humain local le porte — pas de coût pour les autres pairs
+			# (ni pour un bot, qui n'a pas d'écran).
+			var post := INK_POST.new()
+			post.name = "InkPost"
+			add_child(post)
 	_base_local_pos = position
 
 func _process(delta: float) -> void:
-	if player == null or not player.is_multiplayer_authority():
+	if player == null or not player.is_local_human():
 		return
 	_update_fov(delta)
 	# Pendant la roulade, le spin pilote la rotation X (on saute tilt + bob).
@@ -62,7 +71,7 @@ func _update_roll(delta: float) -> void:
 
 func _update_fov(delta: float) -> void:
 	# Visée (ADS) : zoom au FOV de l'arme courante. Prioritaire sur tout le reste.
-	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and Input.is_action_pressed("aim"):
+	if player.input.aim_held:
 		var w := player.get_node_or_null("Weapon")
 		var aim_target: float = w.current_aim_fov() if w and w.has_method("current_aim_fov") else 55.0
 		fov = lerp(fov, aim_target, 16.0 * delta)
