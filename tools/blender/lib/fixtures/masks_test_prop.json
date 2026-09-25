@@ -1,0 +1,17 @@
+{
+  "smooth_normal": true,
+  "ao": false,
+  "curvature": false,
+  "masks": true,
+  "color_attributes": [
+    "masks"
+  ],
+  "custom_attributes": [
+    "_smooth_normal"
+  ],
+  "file": "masks_test_prop.glb",
+  "objects": [
+    "MasksTestProp"
+  ],
+  "tris": 44
+}

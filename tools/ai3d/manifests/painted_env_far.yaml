@@ -1,0 +1,75 @@
+# =====================================================================================
+# tools/ai3d/manifests/painted_env_far.yaml
+# ART-98 (docs/art/WASTELAND_V4_ART_PLAN.md §4 "Canyon, falaises et fond" — « Terrasse
+# nord (+6 m, hors-jeu) : la ville haute, avec 7 coques Tripo réutilisées en LOD lointain
+# (1 500 tris, manifeste tools/ai3d/manifests/painted_env_far.yaml), dont les orientations
+# sont sur le plan annoté » + docs/research/img/wasteland_v4_art_zones.png, bandeau du
+# haut « TERRASSE NORD (+6 m, hors-jeu) : "ville haute" — coques Tripo réutilisées sans
+# collision, LOD 1 500 tris »). Réutilise EN LOD LOINTAIN — via ai_import_painted.py,
+# JAMAIS ai_restyle.py (voir painted_env.yaml, même dossier, pour pourquoi) — les 4
+# mêmes coques déjà importées « peinture conservée » d'ART-82/83
+# (assets/models/props/wasteland/tripo/wl_{saloon,fuel_store,garage,shack}.glb), un
+# troisième réemploi (R8 du plan d'art ne s'applique QU'à l'espace jouable : « grappes
+# Tripo libres » explicitement permises hors-jeu, §5 tableau « Densités »). SOURCE : le
+# .glb DÉJÀ décimé/nettoyé d'ART-82/83 (pas le brut Tripo Studio incoming) — une décimation
+# supplémentaire (6000 tris → 1500) sur un maillage déjà propre est plus rapide et
+# ai_import_painted.py ne modifie jamais son fichier source (import en mémoire).
+#
+# 7 coques (comptage exact du plan annoté, bandeau nord, de l'ouest vers l'est) :
+# garage, saloon, fuel_store, shack, garage, shack, shack — soit garage x2, saloon x1,
+# fuel_store x1, shack x3. Positions/rotations posées par
+# scripts/levels/maps/wasteland_art/ArtRocksBackdrop.gd (hors-jeu, sans collision,
+# jamais dans data()["pieces"] — R9 du plan d'art, "aucun CollisionObject3D ajouté").
+#
+# SCHÉMA — identique à painted_env.yaml (voir son en-tête pour le détail des 6 clés).
+# height_m reprend TEL QUEL la cote déjà retenue pour la coque « proche » de ce même
+# fichier source (painted_env.yaml, ART-82) : la silhouette lointaine garde les mêmes
+# proportions que son homologue jouable, seul le nombre de triangles/la résolution de
+# texture changent (LOD, jamais un nouveau modèle).
+# =====================================================================================
+output_dir: assets/models/props/wasteland/tripo_far
+min_island_ratio: 0.01
+merge_ratio: 0.0005
+assets:
+- id: wl_saloon_far
+  source: assets/models/props/wasteland/tripo/wl_saloon.glb
+  height_m: 8.5
+  budget_tris: 1500
+  texture_size: 512
+  notes: 'Ville haute — silhouette de saloon (grand rectangle tourné, plan annoté, centre du bandeau nord). Même hauteur que le saloon proche (painted_env.yaml, ART-82, 8,5 m) : LOD lointain, pas un autre modèle.'
+- id: wl_fuel_store_far
+  source: assets/models/props/wasteland/tripo/wl_fuel_store.glb
+  height_m: 8.0
+  budget_tris: 1500
+  texture_size: 512
+  notes: 'Ville haute — magasin, juste à l''est du saloon sur le plan annoté. Même hauteur que le magasin proche (painted_env.yaml, ART-82, 8,0 m).'
+- id: wl_garage_far_a
+  source: assets/models/props/wasteland/tripo/wl_garage.glb
+  height_m: 5.0
+  budget_tris: 1500
+  texture_size: 512
+  notes: 'Ville haute — garage ouest (près de la grue, wl_crane_lattice — ArtLandmarks.gd, hors de mon périmètre). Même hauteur que le garage proche (painted_env.yaml, ART-82, 5,0 m).'
+- id: wl_garage_far_b
+  source: assets/models/props/wasteland/tripo/wl_garage.glb
+  height_m: 5.0
+  budget_tris: 1500
+  texture_size: 512
+  notes: 'Ville haute — garage centre-est (2e réemploi, plan annoté), rotation différente du premier (§8 R8 "au moins deux paramètres changés" — appliqué par courtoisie même hors-jeu, où R8 ne s''impose pas).'
+- id: wl_shack_far_a
+  source: assets/models/props/wasteland/tripo/wl_shack.glb
+  height_m: 4.5
+  budget_tris: 1500
+  texture_size: 512
+  notes: 'Ville haute — cabane centre (à l''est du magasin, plan annoté). Même hauteur que la cabane proche (painted_env.yaml, ART-82, 4,5 m).'
+- id: wl_shack_far_b
+  source: assets/models/props/wasteland/tripo/wl_shack.glb
+  height_m: 4.5
+  budget_tris: 1500
+  texture_size: 512
+  notes: 'Ville haute — cabane près du derrick (wl_oil_derrick — ArtLandmarks.gd, hors de mon périmètre), plan annoté.'
+- id: wl_shack_far_c
+  source: assets/models/props/wasteland/tripo/wl_shack.glb
+  height_m: 4.5
+  budget_tris: 1500
+  texture_size: 512
+  notes: 'Ville haute — cabane la plus à l''est (bord du bandeau nord, côté GAS), plan annoté.'

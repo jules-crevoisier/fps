@@ -37,6 +37,23 @@ Le contrat demande que chacune des 10 armes soit "strictement la meilleure" dans
 | Semeuse | Lourde | 3200 | LMG, plus gros chargeur |
 | Percuteur | Fusil | 3150 | DMR, 2 têtes toute distance |
 
+## Munitions par règle (GF-21, docs/research/10_ammo_kits_input.md §2.2/§2.3)
+
+« Réserve manche » (`WeaponConfig.reserve_ammo`) sert au Litige et au Duel/Duo (rechargée à chaque manche, `Inventory.RULE_ROUND`). « Réserve arène » (`WeaponConfig.arena_reserve_ammo`, `Inventory.RULE_ARENA`) sert à la Mêlée et à la Borne — plus généreuse (×5 chargeurs, sauf Semeuse déjà à 300 et Faucheur ×4) car une vie d'arène tient plusieurs affrontements sans repasser par la boutique. L'entraînement (`Inventory.RULE_INFINITE`) n'a pas de colonne : sa réserve est un sentinelle volontairement énorme (aucune session ne peut l'épuiser).
+
+| Arme | Chargeur | Réserve manche | Réserve arène |
+|---|---|---|---|
+| Pistolet | 12 | 60 | 60 |
+| Magnum | 6 | 24 | 30 |
+| Rafale | 32 | 96 | 160 |
+| Marqueur | 20 | 80 | 100 |
+| Ravage | 25 | 75 | 125 |
+| Fracas | 6 | 24 | 30 |
+| Faucheur | 5 | 15 | 20 |
+| Éclair | 26 | 104 | 130 |
+| Semeuse | 100 | 200 | 200 |
+| Percuteur | 12 | 48 | 60 |
+
 ## Pistolet
 
 - Catégorie : Arme de poing (Hitscan)
@@ -149,7 +166,7 @@ Le contrat demande que chacune des 10 armes soit "strictement la meilleure" dans
 
 - Catégorie : Sniper (Sniper)
 - Coût : 4600 crédits
-- Pourquoi : Sniper à lunette : one-shot à la tête sur toute sa portée utile, domine au-delà de 50 m. Sprint-to-fire élevé (350 ms, cf. ROADMAP §4) pour compenser sa puissance.
+- Pourquoi : Sniper à lunette : one-shot à la tête sur toute sa portée utile, domine au-delà de 50 m. Visée (ADS) la plus lente du jeu (0,38 s) et chargeur le plus petit (5 balles) pour compenser sa puissance.
 
 | Distance | TTK corps | TTK tête |
 |---|---|---|
@@ -167,7 +184,7 @@ Le contrat demande que chacune des 10 armes soit "strictement la meilleure" dans
 
 - Catégorie : SMG (Hitscan)
 - Coût : 1650 crédits
-- Pourquoi : SMG « mobilité » : sprint-to-fire et ADS les plus rapides du jeu, portée plus courte que le Rafale. Le pick rush / flank, moins cher.
+- Pourquoi : SMG « mobilité » : ADS le plus rapide des deux SMG (0,13 s contre 0,16 s pour le Rafale), portée plus courte que le Rafale. Le pick rush / flank, moins cher.
 
 | Distance | TTK corps | TTK tête |
 |---|---|---|
@@ -185,7 +202,7 @@ Le contrat demande que chacune des 10 armes soit "strictement la meilleure" dans
 
 - Catégorie : Lourde (Hitscan)
 - Coût : 3200 crédits
-- Pourquoi : Mitrailleuse légère (LMG) : le plus gros chargeur du jeu (100 balles), tir soutenu pour tenir un couloir. Lourde : mouvement et sprint-to-fire pénalisés.
+- Pourquoi : Mitrailleuse légère (LMG) : le plus gros chargeur du jeu (100 balles), tir soutenu pour tenir un couloir. Lourde : le rechargement le plus long du jeu (4,2 s).
 
 | Distance | TTK corps | TTK tête |
 |---|---|---|

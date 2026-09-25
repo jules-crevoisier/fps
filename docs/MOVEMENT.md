@@ -235,8 +235,19 @@ dont la durée est interpolée entre `land_roll_window` et `land_roll_window_max
 
 Effets réactifs au mouvement, sur le `Camera3D` :
 
+- **FOV** (UX-02, docs/research/04_ui_ux.md §2.7/§3.1) : `Settings.fov` est le
+  FOV **HORIZONTAL** à 16:9 (défaut 103°, curseur Options 80-120°, comme
+  Valorant/Overwatch 2) — converti en FOV **vertical** pour `Camera3D.fov`
+  (`keep_aspect = KEEP_HEIGHT`, défaut Godot) via `Settings.hfov_to_vfov` :
+  103° h ⇒ ≈ 70,53° v à 16:9. Les écrans plus larges gagnent du FOV horizontal
+  tout seuls (Hor+, moteur Godot), sans rien recalculer ici.
 - **FOV dynamique** : +`sprint_fov_add` en sprint, +`slide_fov_add` en slide, et
-  bonus de survitesse plafonné à `speed_fov_add`.
+  bonus de survitesse plafonné à `speed_fov_add` — le TOTAL cumulé est
+  plafonné à `PlayerCamera.MAX_DYNAMIC_FOV_BONUS` (5°, cible docs/research/
+  04_ui_ux.md §3.1), quelles que soient les valeurs individuelles ci-dessous,
+  et entièrement désactivable via l'option "Effets de FOV" (`Settings.
+  fov_effects_enabled`, menu Options). Calcul isolé dans la fonction pure
+  `PlayerCamera.dynamic_fov_bonus`.
 - **Tilt** en strafe (désactivé par défaut : `strafe_tilt = 0`).
 - **Head-bob** au sol.
 - **Roulade** : galipette avant (rotation X) pendant `roll_duration`.
@@ -245,9 +256,9 @@ Effets réactifs au mouvement, sur le `Camera3D` :
 | Paramètre | Déf. | Rôle |
 |-----------|------|------|
 | `mouse_sensitivity` | 0.0025 | Sensibilité souris. |
-| `base_fov` | 90 | FOV de base. |
-| `sprint_fov_add` / `slide_fov_add` | 5 / 9 | FOV ajouté en sprint / slide. |
-| `speed_fov_add` | 6 | Bonus FOV de survitesse (max). |
+| `base_fov` | 90 | Champ non utilisé par le calcul de FOV (remplacé par `Settings.fov`, horizontal). |
+| `sprint_fov_add` / `slide_fov_add` | 5 / 9 | FOV ajouté en sprint / slide (avant plafond ±5° cumulé). |
+| `speed_fov_add` | 6 | Bonus FOV de survitesse, max avant plafond cumulé. |
 | `fov_lerp_speed` | 10 | Vitesse d'interpolation du FOV. |
 | `strafe_tilt` / `slide_tilt` | 0 / 0 | Inclinaison caméra (deg). 0 = off. |
 | `bob_amplitude` / `bob_frequency` | 0.025 / 9 | Head-bob. |

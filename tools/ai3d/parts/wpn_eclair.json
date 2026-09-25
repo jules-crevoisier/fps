@@ -1,0 +1,10 @@
+{
+  "_comment": "A3D-13 — boites en metres, repere LOCAL post-scale_m. Axe long = Y (sonde marqueurs) ; Muzzle -Y. scale_m=0.55.",
+  "parts": [
+    {"name": "chargeur_superieur", "box_min": [-0.16, -0.16, 0.14], "box_max": [0.16, 0.16, 0.26]}
+  ],
+  "markers": [
+    {"name": "Muzzle", "position": [0.0, -0.275, 0.10]},
+    {"name": "Foregrip", "position": [0.0, -0.15, 0.05]}
+  ]
+}

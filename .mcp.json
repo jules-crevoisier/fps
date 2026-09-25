@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "blender": {
+      "command": "C:\\Users\\srko\\.local\\bin\\uvx.exe",
+      "args": ["mcp-for-blender"],
+      "env": { "DISABLE_TELEMETRY": "true" }
+    }
+  }
+}

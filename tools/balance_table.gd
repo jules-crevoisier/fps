@@ -22,9 +22,9 @@ const WHY := {
 	"Marqueur": "Fusil semi précis, roi du 30-50 m : gros dégâts par tir, chute de dégâts tardive (35-70 m). Puni le mouvement (viser à l'arrêt).",
 	"Ravage": "Fusil auto polyvalent, meilleur en 15-30 m : équilibre cadence/dégâts/recul, le pick « sûr » qui reste correct partout.",
 	"Fracas": "Pompe : one-shot garanti jusqu'à 4 m avec tous les plombs, quasi inutile au-delà de 15-18 m. Cadence lente, à réserver au close-quarters.",
-	"Faucheur": "Sniper à lunette : one-shot à la tête sur toute sa portée utile, domine au-delà de 50 m. Sprint-to-fire élevé (350 ms, cf. ROADMAP §4) pour compenser sa puissance.",
-	"Éclair": "SMG « mobilité » : sprint-to-fire et ADS les plus rapides du jeu, portée plus courte que le Rafale. Le pick rush / flank, moins cher.",
-	"Semeuse": "Mitrailleuse légère (LMG) : le plus gros chargeur du jeu (100 balles), tir soutenu pour tenir un couloir. Lourde : mouvement et sprint-to-fire pénalisés.",
+	"Faucheur": "Sniper à lunette : one-shot à la tête sur toute sa portée utile, domine au-delà de 50 m. Visée (ADS) la plus lente du jeu (0,38 s) et chargeur le plus petit (5 balles) pour compenser sa puissance.",
+	"Éclair": "SMG « mobilité » : ADS le plus rapide des deux SMG (0,13 s contre 0,16 s pour le Rafale), portée plus courte que le Rafale. Le pick rush / flank, moins cher.",
+	"Semeuse": "Mitrailleuse légère (LMG) : le plus gros chargeur du jeu (100 balles), tir soutenu pour tenir un couloir. Lourde : le rechargement le plus long du jeu (4,2 s).",
 	"Percuteur": "Fusil de précision semi-auto (DMR) : tue en 2 têtes à toute distance comme le Magnum, sans la lunette ni le coût du Faucheur — la précision « milieu de gamme ».",
 }
 
@@ -115,6 +115,25 @@ func _build_markdown() -> String:
 	lines.append("|---|---|---|---|")
 	for c in WeaponDatabase.all():
 		lines.append("| %s | %s | %d | %s |" % [c.weapon_name, WeaponDatabase.category_name(c.category), c.cost, NICHE.get(c.weapon_name, "")])
+	lines.append("")
+	lines.append("## Munitions par règle (GF-21, docs/research/10_ammo_kits_input.md §2.2/§2.3)")
+	lines.append("")
+	lines.append(
+		"« Réserve manche » (`WeaponConfig.reserve_ammo`) sert au Litige et au " +
+		"Duel/Duo (rechargée à chaque manche, `Inventory.RULE_ROUND`). " +
+		"« Réserve arène » (`WeaponConfig.arena_reserve_ammo`, `Inventory." +
+		"RULE_ARENA`) sert à la Mêlée et à la Borne — plus généreuse (×5 " +
+		"chargeurs, sauf Semeuse déjà à 300 et Faucheur ×4) car une vie d'arène " +
+		"tient plusieurs affrontements sans repasser par la boutique. " +
+		"L'entraînement (`Inventory.RULE_INFINITE`) n'a pas de colonne : sa " +
+		"réserve est un sentinelle volontairement énorme (aucune session ne " +
+		"peut l'épuiser)."
+	)
+	lines.append("")
+	lines.append("| Arme | Chargeur | Réserve manche | Réserve arène |")
+	lines.append("|---|---|---|---|")
+	for c in WeaponDatabase.all():
+		lines.append("| %s | %d | %d | %d |" % [c.weapon_name, c.mag_size, c.reserve_ammo, c.arena_reserve_ammo])
 	lines.append("")
 	for c in WeaponDatabase.all():
 		lines.append("## %s" % c.weapon_name)

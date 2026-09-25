@@ -68,6 +68,120 @@ jobs:
           require_tests: false
           fail_on_failure: false
 
+      - name: Sonde de gameplay (gameplay_probe, headless)
+        if: always()
+        env:
+          GODOT_BIN: godot
+        run: |
+          set +e
+          mkdir -p reports/review/gameplay_probe reports/review/logs
+          start_ts=$(date +%s)
+          timed_out=false
+          if ! command -v "$GODOT_BIN" >/dev/null 2>&1; then
+            echo "::warning::binaire Godot introuvable ($GODOT_BIN) — la sonde ne peut pas tourner"
+            : > reports/review/logs/gameplay_probe.log
+            code=127
+          else
+            # Garde-fou de timeout dédié à CETTE étape (indépendant du
+            # timeout-minutes du job) : si la sonde plante en boucle infinie
+            # ou reste bloquée (moteur figé), on la tue proprement au bout de
+            # 120 s au lieu de laisser le job entier consommer son budget de
+            # 15 min sans jamais atteindre les étapes de rapport/gate.
+            timeout --signal=KILL 120 "$GODOT_BIN" --headless --path . -s tools/review/gameplay_probe.gd -- --out=reports/review/gameplay_probe \
+              > >(tee reports/review/logs/gameplay_probe.log) 2>&1
+            code=$?
+            if [ "$code" -eq 124 ] || [ "$code" -eq 137 ]; then
+              timed_out=true
+              echo "::warning::gameplay_probe.gd a dépassé son délai de 120 s — process tué"
+            fi
+          fi
+          end_ts=$(date +%s)
+          duration=$((end_ts - start_ts))
+          echo "Code de sortie de gameplay_probe.gd : $code"
+          echo "$code" > reports/review/gameplay_probe/exit_code.txt
+          # step_status suit exactement le vocabulaire de New-StepResult dans
+          # tools/review/run_review.ps1 (ok | warn | fail | missing | error),
+          # que tools/review/report.py (load_steps/eval_gameplay_probe) sait
+          # déjà interpréter. Ce job CI n'appelle jamais run_review.ps1 (qui
+          # est le seul autre endroit à écrire steps.json), donc sans ce
+          # fichier report.py verrait toujours un statut "missing" pour cette
+          # étape — y compris quand la sonde a tourné et réussi — et un plantage
+          # AVANT écriture de gameplay_probe.json serait indiscernable d'une
+          # sonde absente. Ce steps.json fait le lien entre le code de sortie
+          # observé ici et le gate lu à l'étape suivante.
+          if [ "$code" -eq 0 ]; then step_status=ok; else step_status=fail; fi
+          cat > reports/review/steps.json <<STEPSEOF
+          [
+            {
+              "name": "gameplay_probe",
+              "status": "$step_status",
+              "exit_code": $code,
+              "timed_out": $timed_out,
+              "duration_sec": $duration,
+              "logs": ["logs/gameplay_probe.log"],
+              "note": "",
+              "artifact": "gameplay_probe"
+            }
+          ]
+          STEPSEOF
+          exit 0
+
+      - name: Générer le rapport de review (reports/review)
+        if: always()
+        run: |
+          set +e
+          if ! command -v python3 >/dev/null 2>&1; then
+            if command -v apt-get >/dev/null 2>&1; then
+              apt-get update -qq && apt-get install -y -qq python3 >/dev/null 2>&1
+            elif command -v apk >/dev/null 2>&1; then
+              apk add --no-cache python3 >/dev/null 2>&1
+            fi
+          fi
+          if command -v python3 >/dev/null 2>&1; then
+            python3 tools/review/report.py reports/review
+            echo "Code de sortie de report.py : $?"
+          else
+            echo "python3 indisponible dans le conteneur — pas de summary.json, repli sur le code de sortie brut à l'étape suivante"
+          fi
+          exit 0
+
+      - name: Upload du rapport de review (reports/review)
+        if: always()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: review-report
+          path: reports/review/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Vérifier le gate de la sonde de gameplay
+        if: always()
+        run: |
+          set +e
+          summary="reports/review/summary.json"
+          if [ -f "$summary" ] && command -v python3 >/dev/null 2>&1; then
+            status=$(python3 -c "import json; d=json.load(open('$summary')); print(d.get('sections', {}).get('gameplay_probe', {}).get('status', 'MISSING'))")
+            echo "Statut du gate gameplay_probe (report.py) : $status"
+            # FAIL = la sonde a tourné et signalé une erreur elle-même.
+            # MISSING = report.py n'a trouvé ni entrée de process ("steps.json",
+            # écrit par l'étape précédente) ni gameplay_probe.json exploitable —
+            # ça ne doit JAMAIS passer silencieusement : un plantage avant
+            # écriture du JSON (crash moteur, script cassé, godot introuvable)
+            # doit faire échouer le job au même titre qu'un FAIL explicite.
+            if [ "$status" = "FAIL" ] || [ "$status" = "MISSING" ]; then
+              echo "::error::La sonde de gameplay (gameplay_probe) a échoué ou n'a produit aucun résultat exploitable (statut $status) — voir l'artefact review-report."
+              exit 1
+            fi
+          else
+            code=$(cat reports/review/gameplay_probe/exit_code.txt 2>/dev/null)
+            echo "summary.json indisponible — repli sur le code de sortie brut de gameplay_probe.gd : ${code:-inconnu}"
+            if [ -z "$code" ] || [ "$code" -ne 0 ]; then
+              echo "::error::La sonde de gameplay (gameplay_probe) a échoué ou n'a pas produit de résultat — voir l'artefact review-report."
+              exit 1
+            fi
+          fi
+          exit 0
+
   export:
     name: Export (Windows / Linux / Linux Server)
     needs: tests

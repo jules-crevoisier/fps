@@ -1,0 +1,100 @@
+# =====================================================================================
+# tools/ai3d/manifests/painted_weapons.yaml
+# A3D-20 — remplace les 7 armes bpy en blocs (tools/blender/make_weapons.py) par leur
+# version Tripo Studio « peinture conservée » (assets/incoming/tripo/studio/wpn_*.glb,
+# texture peinte 2048², docs/art/WASTELAND_ART_RESET.md pour la même politique côté
+# environnement), via tools/blender/fit_weapon_painted.py — JAMAIS ai_restyle.py (jette
+# la texture IA) ni un remesh voxel. La géométrie bpy N'EST PAS jetée : chaque source
+# Tripo est ALIGNÉE dessus (axe du canon, longueur, pivot poignée) puis ses empties
+# "Muzzle"/"Foregrip" sont copiées telles quelles depuis l'arme bpy (jamais recalculées)
+# pour que ViewModel.gd/Weapon.gd et les gants (fp_gloves.glb) restent justes sans
+# changement côté Godot au-delà du matériau peint (voir ViewModel._apply_cartoon_materials).
+# L'arme bpy d'origine est sauvegardée sous `backup_dir` avant tout écrasement — c'est
+# ELLE, jamais le fichier courant (qui peut déjà être la version peinte d'un run
+# précédent), qui sert de référence de forme à chaque exécution : idempotent, rejouable.
+#
+# SCHÉMA — un bloc top-level (5 clés communes) + une liste `weapons`, chaque entrée a
+# EXACTEMENT ces 8 clés :
+#   id            str    identifiant, matche assets/models/weapons/<id>.glb (arme bpy)
+#                        et assets/incoming/tripo/studio/wpn_<id>.glb (source peinte)
+#   source        str    chemin du .glb Tripo Studio brut, relatif à la racine du dépôt
+#   budget_tris   int    budget après décimation — plafond dur A3D-20 : <= 8000
+#   texture_size  int    1024 ou 2048 (jamais un agrandissement au-delà de l'original)
+#   flip_muzzle   bool   inverse le sens auto-détecté (extrémité la plus fine = bouche
+#                        du canon, `pick_muzzle_sign`) — réglé à l'œil (turntable/
+#                        fp_shots) UNIQUEMENT si l'arme sort canon-vers-l'arrière
+#   z_offset      float  nudge vertical (m) après alignement — l'origine Tripo Studio
+#                        (sol du tourne-disque, Z=0) n'est qu'une approximation de la
+#                        poignée bpy ; réglé à l'œil, jamais deviné à l'avance
+#   x_offset      float  nudge latéral (m) après alignement, même rationale que z_offset
+#   notes         str    repère visuel court (jamais lu par le script)
+#
+# Sondage A3D-20 (bpy Blender 5.2, sous-process, avant écriture de ce manifeste) : les 10
+# sources Tripo Studio livrées normalisent TOUJOURS leur bbox sur [-0.5, 0.5] le long de
+# l'axe canon-crosse (X pour 6/7 armes, Y pour Ravage — capture tourne-disque tournée) et
+# posent leur base au sol (Z min = 0.0, jamais négatif) : `fit_weapon_painted.py` détecte
+# ces deux invariants lui-même (`longest_axis_index`/assertion sur `bbox_min.z`) plutôt
+# que de les coder en dur par arme — seuls les trois réglages fins ci-dessus (bouche
+# inversée, nudges) restent manuels, comme le `rot_y`/`pos` de BeautyCorner._LANDMARKS.
+weapons_dir: assets/models/weapons
+backup_dir: assets/models/weapons/_bpy
+default_budget_tris: 8000
+default_texture_size: 2048
+
+weapons:
+- id: pistolet
+  source: assets/incoming/tripo/studio/wpn_pistolet.glb
+  budget_tris: 8000
+  texture_size: 2048
+  flip_muzzle: false
+  z_offset: 0.0
+  x_offset: 0.0
+  notes: 'pistolet semi-auto, poignée courte'
+- id: magnum
+  source: assets/incoming/tripo/studio/wpn_magnum.glb
+  budget_tris: 8000
+  texture_size: 2048
+  flip_muzzle: false
+  z_offset: 0.0
+  x_offset: 0.0
+  notes: 'revolver lourd, barillet + canon long'
+- id: rafale
+  source: assets/incoming/tripo/studio/wpn_rafale.glb
+  budget_tris: 8000
+  texture_size: 2048
+  flip_muzzle: false
+  z_offset: 0.0
+  x_offset: 0.0
+  notes: 'SMG, crosse repliee'
+- id: marqueur
+  source: assets/incoming/tripo/studio/wpn_marqueur.glb
+  budget_tris: 8000
+  texture_size: 2048
+  flip_muzzle: false
+  z_offset: 0.0
+  x_offset: 0.0
+  notes: 'fusil de precision, lunette'
+- id: ravage
+  source: assets/incoming/tripo/studio/wpn_ravage.glb
+  budget_tris: 8000
+  texture_size: 2048
+  flip_muzzle: false
+  z_offset: 0.0
+  x_offset: 0.0
+  notes: 'fusil d assaut, chargeur courbe'
+- id: fracas
+  source: assets/incoming/tripo/studio/wpn_fracas.glb
+  budget_tris: 8000
+  texture_size: 2048
+  flip_muzzle: false
+  z_offset: 0.0
+  x_offset: 0.0
+  notes: 'fusil a pompe, canon double'
+- id: faucheur
+  source: assets/incoming/tripo/studio/wpn_faucheur.glb
+  budget_tris: 8000
+  texture_size: 2048
+  flip_muzzle: false
+  z_offset: 0.0
+  x_offset: 0.0
+  notes: 'fusil de precision lourd, lunette + bipied'

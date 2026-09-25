@@ -1,0 +1,119 @@
+# tools/textures/hand_painted.yaml
+#
+# ART-79B -- assignation planche/variante/case -> matiere peinte a la main
+# (Tripo Studio, Nano Banana Pro, 4K, voir assets/incoming/tripo/textures/
+# SOURCES.md) pour tools/textures/make_tileable.py.
+#
+# Chaque planche (A/B/C) a deux variantes (a/b), chacune une grille 2x2 des
+# QUATRE MEMES matieres (meme case haut-gauche/haut-droite/bas-gauche/
+# bas-droite dans les deux variantes -- seul le rendu/eclairage differe
+# entre a et b) -- SOURCES.md :
+#   A : haut-gauche=wood_planks       haut-droite=corrugated_metal
+#       bas-gauche=rust               bas-droite=painted_metal (neutre)
+#   B : haut-gauche=terrain_sable     haut-droite=terrain_terre_battue (ornieres)
+#       bas-gauche=sand_dirt          bas-droite=cracked_concrete
+#   C : haut-gauche=wl_rock_strata    haut-droite=wl_plaster
+#       bas-gauche=asphalt            bas-droite=container_paint (neutre)
+#
+# Choix de variante du lead (a l'oeil, sur les 4K, 2026-09-24) -- copie ici
+# telle quelle : "A-a pour wood_planks, rust, painted_metal ; A-b pour
+# corrugated_metal ; B-a pour terrain_sable, terrain_terre_battue,
+# cracked_concrete ; B-b pour sand_dirt ; C-a pour wl_rock_strata, asphalt ;
+# C-b pour wl_plaster, container_paint."
+#
+# `output` reprend EXACTEMENT les noms de fichiers deja lus par
+# scripts/core/Cartoon.gd (`_PAINTED`) et tools/textures/gen_textures.py
+# (`PAINTED_MATERIALS`/`TERRAINS`) -- aucun code appelant ne change.
+# `grime_output` n'existe que pour les matieres qui ont deja un
+# `*_grime.png` procedural aujourd'hui (meme liste que
+# gen_textures.py::PAINTED_MATERIALS[name]["grime_seed"] non-None) :
+# make_tileable.py le regenere depuis la NOUVELLE albedo peinte (zones
+# sombres floutees), jamais du bruit.
+
+# Racine ou chercher sheet_<A|B|C>_<a|b>.jpg (relatif a la racine du depot,
+# ou absolu). Les tests (tools/textures/tests/test_make_tileable.py)
+# redirigent ceci vers un dossier temporaire de planches synthetiques --
+# jamais ce dossier reel tant que les planches Tripo ne sont pas arrivees.
+sheets_root: assets/incoming/tripo/textures
+
+# Bande de recouvrement pour la coupe a erreur minimale (Notes ART-79B :
+# "10-15 %"), milieu de fourchette.
+overlap_frac: 0.12
+
+materials:
+  wood_planks:
+    sheet: A
+    variant: a
+    cell: top_left
+    output: assets/textures/painted/material_wood_planks_albedo.png
+    grime_output: assets/textures/painted/material_wood_planks_grime.png
+
+  corrugated_metal:
+    sheet: A
+    variant: b
+    cell: top_right
+    output: assets/textures/painted/material_corrugated_metal_albedo.png
+    grime_output: assets/textures/painted/material_corrugated_metal_grime.png
+
+  rust:
+    sheet: A
+    variant: a
+    cell: bottom_left
+    output: assets/textures/painted/material_rust_albedo.png
+
+  painted_metal:
+    sheet: A
+    variant: a
+    cell: bottom_right
+    output: assets/textures/painted/material_painted_metal_albedo.png
+    grime_output: assets/textures/painted/material_painted_metal_grime.png
+
+  terrain_sable:
+    sheet: B
+    variant: a
+    cell: top_left
+    output: assets/textures/painted/terrain_sable_albedo.png
+
+  terrain_terre_battue:
+    sheet: B
+    variant: a
+    cell: top_right
+    output: assets/textures/painted/terrain_terre_battue_albedo.png
+
+  sand_dirt:
+    sheet: B
+    variant: b
+    cell: bottom_left
+    output: assets/textures/painted/material_sand_dirt_albedo.png
+
+  cracked_concrete:
+    sheet: B
+    variant: a
+    cell: bottom_right
+    output: assets/textures/painted/material_cracked_concrete_albedo.png
+    grime_output: assets/textures/painted/material_cracked_concrete_grime.png
+
+  wl_rock_strata:
+    sheet: C
+    variant: a
+    cell: top_left
+    output: assets/textures/wasteland/wl_rock_strata_albedo.png
+
+  wl_plaster:
+    sheet: C
+    variant: b
+    cell: top_right
+    output: assets/textures/wasteland/wl_plaster_albedo.png
+
+  asphalt:
+    sheet: C
+    variant: a
+    cell: bottom_left
+    output: assets/textures/painted/material_asphalt_albedo.png
+
+  container_paint:
+    sheet: C
+    variant: b
+    cell: bottom_right
+    output: assets/textures/painted/material_container_paint_albedo.png
+    grime_output: assets/textures/painted/material_container_paint_grime.png

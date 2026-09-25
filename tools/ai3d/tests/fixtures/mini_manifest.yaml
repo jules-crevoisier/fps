@@ -1,0 +1,60 @@
+# tools/ai3d/tests/fixtures/mini_manifest.yaml
+# Manifeste JOUET pour les tests de run_batch.py — ne PAS confondre avec
+# tools/ai3d/manifests/wave1.yaml (vague réelle, un autre agent l'écrit en
+# parallèle). Couvre les 3 routes et les options coûteuses (quad, low-poly
+# intelligent) pour exercer l'estimation de crédits et la construction de
+# commandes sur chaque chemin.
+
+- id: verrou_v1
+  category: gameplay
+  route: image
+  prompt: "un cadenas de porte robuste, style FPS peint, cel-shading"
+  image_prompt: "concept art, cadenas robuste vu de trois quarts, fond neutre"
+  face_limit: 12000
+  quad: false
+  texture: true
+  smart_lowpoly: false
+  budget_tris: 200000
+  scale_m: 0.18
+  priority: P0
+  notes: "échantillon déjà téléchargé, sert au test --ingest-only"
+
+- id: vif_v1
+  category: gameplay
+  route: text
+  prompt: "un petit drone d'assistance FPS, style peint cel-shading"
+  face_limit: 10000
+  quad: false
+  texture: true
+  smart_lowpoly: false
+  budget_tris: 200000
+  scale_m: 0.35
+  priority: P0
+  notes: "échantillon déjà téléchargé, sert au test --ingest-only"
+
+- id: crate_ammo_test
+  category: prop
+  route: text
+  prompt: "une caisse de munitions métallique cabossée, style FPS peint"
+  face_limit: 4000
+  quad: true
+  texture: true
+  smart_lowpoly: true
+  budget_tris: 800
+  scale_m: 0.8
+  priority: P1
+  notes: "entrée fictive : jamais générée dans les tests (mock), sert à tester quad+smart_lowpoly+multiview"
+
+- id: turret_concept_test
+  category: gameplay
+  route: multiview
+  prompt: "une tourelle automatique hors service, style FPS peint"
+  image_prompt: "tourelle automatique, plans multiples, fond neutre"
+  face_limit: 15000
+  quad: false
+  texture: true
+  smart_lowpoly: false
+  budget_tris: 6000
+  scale_m: 1.1
+  priority: P2
+  notes: "entrée fictive : jamais générée dans les tests (mock), sert à tester la route multiview"

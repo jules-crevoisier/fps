@@ -1,0 +1,1475 @@
+{
+  "tasks": {
+    "OPS-01": {
+      "status": "done",
+      "doing_at": "2026-09-23T19:09:02",
+      "done_at": "2026-09-24T10:34:59"
+    },
+    "OPS-02": {
+      "status": "done",
+      "doing_at": "2026-09-23T19:09:02",
+      "done_at": "2026-09-24T13:36:46",
+      "notes": [
+        "2026-09-24T13:36:46 gameplay_probe livré ; ui_shots + test de régression + correctif round_flow repris par OPS-02B (agent initial arrêté)"
+      ]
+    },
+    "OPS-03": {
+      "status": "done",
+      "doing_at": "2026-09-23T19:09:02",
+      "done_at": "2026-09-24T10:39:23"
+    },
+    "OPS-04": {
+      "status": "done",
+      "doing_at": "2026-09-23T19:09:02",
+      "done_at": "2026-09-23T19:10:40"
+    },
+    "AUD-01": {
+      "status": "done",
+      "doing_at": "2026-09-23T19:09:02",
+      "done_at": "2026-09-24T10:27:04"
+    },
+    "RES-01": {
+      "status": "done",
+      "doing_at": "2026-09-23T19:09:02",
+      "done_at": "2026-09-23T19:18:55"
+    },
+    "RES-02": {
+      "status": "done",
+      "doing_at": "2026-09-23T19:09:02",
+      "done_at": "2026-09-23T19:17:45"
+    },
+    "RES-03": {
+      "status": "done",
+      "doing_at": "2026-09-23T19:09:02",
+      "done_at": "2026-09-23T19:20:00"
+    },
+    "ART-00": {
+      "status": "done",
+      "doing_at": "2026-09-23T19:09:02",
+      "done_at": "2026-09-24T10:34:59"
+    },
+    "LD-01": {
+      "status": "dropped",
+      "dropped_at": "2026-09-23T19:19:23",
+      "reason": "doublon de MV-01 (step-up)"
+    },
+    "A3D-01": {
+      "status": "dropped",
+      "dropped_at": "2026-09-23T19:20:24",
+      "reason": "doublon de ART-00 (la bible de style couvre la 3D)"
+    },
+    "A3D-05": {
+      "status": "dropped",
+      "dropped_at": "2026-09-23T19:20:25",
+      "reason": "doublon de OPS-03 (tools/blender/turntable.py)"
+    },
+    "A3D-06": {
+      "status": "done",
+      "blocked_at": "2026-09-24T10:44:14",
+      "reason": "compte Tripo connecté via tripo-cli (profil default, région ov) mais solde 0 crédit : recharge à faire par l'utilisateur (tripo topup ou console) ; utiliser tripo-cli plutôt qu'un client HTTP maison",
+      "notes": [
+        "2026-09-24T10:44:14 2026-09-24 : tripo-cli 0.5.1 installé (npm, officiel), connecté ; clé stockée par l'outil dans %USERPROFILE%\\.tripo",
+        "2026-09-24T14:56:04 remplacé par tools/ai3d/run_batch.py (tripo-cli, estimation et plafond de crédits, provenance, ingestion + review.html) ; voie Studio via DCC Bridge + bridge_autoexport.py"
+      ],
+      "done_at": "2026-09-24T14:56:04"
+    },
+    "A3D-10": {
+      "status": "dropped",
+      "blocked_at": "2026-09-23T19:20:25",
+      "reason": "l'utilisateur préfère la génération d'images Tripo Studio (qualité) au ComfyUI local",
+      "todo_at": "2026-09-24T10:34:50",
+      "notes": [
+        "2026-09-24T10:34:51 ComfyUI portable AMD installé (C:\\Users\\srko\\AI), SDXL base, serveur 127.0.0.1:8188 — voir docs/AI_TOOLS.md"
+      ],
+      "dropped_at": "2026-09-24T11:53:37"
+    },
+    "A3D-11": {
+      "status": "done",
+      "blocked_at": "2026-09-23T19:20:25",
+      "reason": "optionnel : accord utilisateur pour blender-mcp (exécute du Python arbitraire dans Blender)",
+      "done_at": "2026-09-24T10:34:51",
+      "notes": [
+        "2026-09-24T10:34:51 Fait par le lead le 2026-09-24 : uv + mcp-for-blender, addon activé, .mcp.json projet, docs/AI_TOOLS.md"
+      ]
+    },
+    "GF-04": {
+      "status": "done",
+      "doing_at": "2026-09-24T10:24:35",
+      "done_at": "2026-09-24T10:41:50",
+      "notes": [
+        "2026-09-24T10:41:50 livré, tests combat/player verts ; critère d'intégration physique → OPS-08"
+      ]
+    },
+    "BUG-02": {
+      "status": "done",
+      "doing_at": "2026-09-24T10:24:35",
+      "done_at": "2026-09-24T10:41:50",
+      "notes": [
+        "2026-09-24T10:41:50 livré, test de sérialisation vert ; smoke 2 processus → OPS-08"
+      ]
+    },
+    "BUG-01": {
+      "status": "done",
+      "doing_at": "2026-09-24T10:35:33",
+      "done_at": "2026-09-24T10:41:08"
+    },
+    "BUG-04": {
+      "status": "done",
+      "doing_at": "2026-09-24T10:24:35",
+      "done_at": "2026-09-24T10:41:08"
+    },
+    "TECH-01": {
+      "status": "done",
+      "doing_at": "2026-09-24T10:24:35",
+      "done_at": "2026-09-24T10:41:50",
+      "notes": [
+        "2026-09-24T10:41:51 livré ; preuve DRAW=0 → TECH-02"
+      ]
+    },
+    "BUG-06": {
+      "status": "done",
+      "doing_at": "2026-09-24T10:24:35",
+      "done_at": "2026-09-24T10:41:08"
+    },
+    "ART-17": {
+      "status": "blocked",
+      "blocked_at": "2026-09-24T11:29:35",
+      "reason": "idem ART-11 : personnages humains hero shooter, concepts validés par l'utilisateur d'abord"
+    },
+    "ART-30": {
+      "status": "done",
+      "doing_at": "2026-09-24T16:44:05",
+      "todo_at": "2026-09-24T15:45:30",
+      "done_at": "2026-09-24T18:05:07"
+    },
+    "BOT-02": {
+      "status": "done",
+      "doing_at": "2026-09-24T15:46:02",
+      "todo_at": "2026-09-24T10:41:08",
+      "done_at": "2026-09-24T16:43:30"
+    },
+    "BOT-05": {
+      "status": "done",
+      "doing_at": "2026-09-24T11:01:58",
+      "todo_at": "2026-09-24T10:41:08",
+      "done_at": "2026-09-24T11:31:27"
+    },
+    "BUG-08": {
+      "status": "done",
+      "doing_at": "2026-09-24T11:01:58",
+      "todo_at": "2026-09-24T10:41:08",
+      "done_at": "2026-09-24T11:31:27"
+    },
+    "BUG-09": {
+      "status": "done",
+      "doing_at": "2026-09-24T11:01:58",
+      "todo_at": "2026-09-24T10:41:08",
+      "done_at": "2026-09-24T11:31:27",
+      "notes": [
+        "2026-09-24T11:31:27 ui_shots à rejouer quand OPS-02 livre ui_shots.gd"
+      ]
+    },
+    "ART-01": {
+      "status": "done",
+      "doing_at": "2026-09-24T14:32:18",
+      "todo_at": "2026-09-24T15:45:30",
+      "done_at": "2026-09-24T15:45:44",
+      "notes": [
+        "2026-09-24T15:45:44 Probe + LevelLook livrés ; PASS CHK-01 transféré à ART-05 (palettes, cycle ART-01→ART-05)"
+      ]
+    },
+    "ART-04": {
+      "status": "done",
+      "doing_at": "2026-09-24T14:32:18",
+      "todo_at": "2026-09-24T14:31:51",
+      "done_at": "2026-09-24T15:45:30"
+    },
+    "UX-02": {
+      "status": "done",
+      "doing_at": "2026-09-24T16:44:05",
+      "todo_at": "2026-09-24T14:31:51",
+      "done_at": "2026-09-24T18:05:07"
+    },
+    "BOT-01": {
+      "status": "done",
+      "doing_at": "2026-09-24T14:32:18",
+      "todo_at": "2026-09-24T14:31:51",
+      "done_at": "2026-09-24T15:45:30"
+    },
+    "BUG-07": {
+      "status": "done",
+      "doing_at": "2026-09-24T16:44:05",
+      "todo_at": "2026-09-24T14:31:51",
+      "done_at": "2026-09-24T18:05:07",
+      "notes": [
+        "2026-09-24T18:05:08 Implémenté lors du 1er passage (interrompu à 17:34) ; relance sans changement, 8/8 tests verts"
+      ]
+    },
+    "ART-08": {
+      "status": "done",
+      "doing_at": "2026-09-24T11:01:58",
+      "done_at": "2026-09-24T11:31:27"
+    },
+    "GF-06": {
+      "status": "done",
+      "doing_at": "2026-09-24T11:01:58",
+      "done_at": "2026-09-24T11:31:27"
+    },
+    "BUG-03": {
+      "status": "done",
+      "doing_at": "2026-09-24T11:01:58",
+      "done_at": "2026-09-24T11:31:27"
+    },
+    "ART-11": {
+      "status": "done",
+      "blocked_at": "2026-09-24T11:29:35",
+      "reason": "direction personnages révisée le 2026-09-24 : héros humains façon hero shooter (Valo/Apex), même hitbox ; attendre la nouvelle §4 de la bible et le choix des concepts par l'utilisateur",
+      "todo_at": "2026-09-24T12:05:49",
+      "doing_at": "2026-09-24T12:31:03",
+      "done_at": "2026-09-24T14:08:49"
+    },
+    "GF-07": {
+      "status": "done",
+      "doing_at": "2026-09-24T11:31:45",
+      "done_at": "2026-09-24T12:24:05"
+    },
+    "ART-12": {
+      "status": "done",
+      "doing_at": "2026-09-24T11:31:45",
+      "done_at": "2026-09-24T12:24:05"
+    },
+    "BOT-05B": {
+      "status": "done",
+      "doing_at": "2026-09-24T11:31:45",
+      "done_at": "2026-09-24T12:24:05"
+    },
+    "BOTFIX-03": {
+      "status": "done",
+      "doing_at": "2026-09-24T11:31:45",
+      "done_at": "2026-09-24T12:24:05"
+    },
+    "OPS-06": {
+      "status": "done",
+      "doing_at": "2026-09-24T11:31:45",
+      "done_at": "2026-09-24T12:24:05"
+    },
+    "TECH-02": {
+      "status": "done",
+      "doing_at": "2026-09-24T11:31:45",
+      "done_at": "2026-09-24T12:24:05"
+    },
+    "A3D-08": {
+      "status": "dropped",
+      "dropped_at": "2026-09-24T11:53:24",
+      "reason": "caduque : têtes-objets abandonnées (§4 v3.1), personnages complets via Tripo"
+    },
+    "ART-14": {
+      "status": "done",
+      "doing_at": "2026-09-24T11:53:44",
+      "done_at": "2026-09-24T12:30:15"
+    },
+    "ART-60": {
+      "status": "done",
+      "doing_at": "2026-09-24T11:53:44",
+      "done_at": "2026-09-24T12:30:15"
+    },
+    "OPS-07": {
+      "status": "done",
+      "doing_at": "2026-09-24T11:53:44",
+      "done_at": "2026-09-24T12:30:15"
+    },
+    "A3D-02": {
+      "status": "done",
+      "doing_at": "2026-09-24T11:53:44",
+      "done_at": "2026-09-24T12:30:15"
+    },
+    "TECH-08": {
+      "status": "done",
+      "doing_at": "2026-09-24T13:02:38",
+      "todo_at": "2026-09-24T12:30:15",
+      "done_at": "2026-09-24T13:36:46"
+    },
+    "ART-09": {
+      "status": "done",
+      "doing_at": "2026-09-24T11:53:44",
+      "done_at": "2026-09-24T12:30:15"
+    },
+    "MV-02": {
+      "status": "done",
+      "doing_at": "2026-09-24T12:24:14",
+      "done_at": "2026-09-24T13:02:30"
+    },
+    "GF-11": {
+      "status": "done",
+      "doing_at": "2026-09-24T12:24:14",
+      "done_at": "2026-09-24T13:02:30"
+    },
+    "LD-04": {
+      "status": "done",
+      "doing_at": "2026-09-24T12:24:14",
+      "done_at": "2026-09-24T13:02:30"
+    },
+    "FUN-05": {
+      "status": "done",
+      "doing_at": "2026-09-24T12:24:14",
+      "done_at": "2026-09-24T13:02:30"
+    },
+    "BUG-U01": {
+      "status": "done",
+      "doing_at": "2026-09-24T12:24:14",
+      "done_at": "2026-09-24T13:02:30"
+    },
+    "ART-39": {
+      "status": "done",
+      "doing_at": "2026-09-24T12:24:14",
+      "done_at": "2026-09-24T13:02:30"
+    },
+    "ART-10": {
+      "status": "dropped",
+      "dropped_at": "2026-09-24T12:30:53",
+      "reason": "caduques : personnages v3.1 produits via Tripo puis riggés par ART-11 (rig_tripo_character.py) ; plus de génération procédurale ni de têtes-objets"
+    },
+    "A3D-04": {
+      "status": "dropped",
+      "dropped_at": "2026-09-24T12:30:53",
+      "reason": "caduques : personnages v3.1 produits via Tripo puis riggés par ART-11 (rig_tripo_character.py) ; plus de génération procédurale ni de têtes-objets"
+    },
+    "ART-20": {
+      "status": "done",
+      "doing_at": "2026-09-24T12:31:03",
+      "done_at": "2026-09-24T14:08:49"
+    },
+    "TECH-03": {
+      "status": "done",
+      "doing_at": "2026-09-25T08:43:09",
+      "todo_at": "2026-09-25T08:42:33",
+      "done_at": "2026-09-25T10:18:04"
+    },
+    "A3D-03": {
+      "status": "done",
+      "doing_at": "2026-09-24T12:31:03",
+      "done_at": "2026-09-24T14:08:49"
+    },
+    "A3D-07": {
+      "status": "dropped",
+      "doing_at": "2026-09-24T12:31:03",
+      "todo_at": "2026-09-24T14:08:49",
+      "dropped_at": "2026-09-24T15:08:48",
+      "reason": "Fusionné dans A3D-12 (ai_restyle v2)"
+    },
+    "ART-15": {
+      "status": "done",
+      "doing_at": "2026-09-25T14:24:38",
+      "todo_at": "2026-09-24T14:08:49",
+      "done_at": "2026-09-25T15:11:37"
+    },
+    "BUG-K01": {
+      "status": "done",
+      "doing_at": "2026-09-24T13:02:38",
+      "done_at": "2026-09-24T13:36:46"
+    },
+    "LD-02": {
+      "status": "done",
+      "doing_at": "2026-09-24T14:46:36",
+      "todo_at": "2026-09-24T13:36:46",
+      "done_at": "2026-09-24T15:16:07",
+      "notes": [
+        "2026-09-24T15:16:07 Livré côté code (SpawnPick + 300 scénarios) ; mesure < 5 % des morts à 3 s transférée à LD-03 (cycle LD-02↔LD-03)"
+      ]
+    },
+    "LD-08": {
+      "status": "done",
+      "doing_at": "2026-09-24T14:46:36",
+      "todo_at": "2026-09-24T13:36:46",
+      "done_at": "2026-09-24T15:16:07",
+      "notes": [
+        "2026-09-24T15:16:08 Outil validé ; heatmap PvP à rejouer à la revue de fin de vague (kills 'environnement' seulement pendant la casse des textures Cartoon.gd)"
+      ]
+    },
+    "BUG-K02": {
+      "status": "done",
+      "doing_at": "2026-09-24T13:02:38",
+      "done_at": "2026-09-24T13:36:46"
+    },
+    "BUG-U03": {
+      "status": "done",
+      "doing_at": "2026-09-24T13:02:38",
+      "done_at": "2026-09-24T13:36:46"
+    },
+    "OPS-02B": {
+      "status": "done",
+      "doing_at": "2026-09-24T13:36:57",
+      "done_at": "2026-09-24T14:31:13"
+    },
+    "BUG-24": {
+      "status": "done",
+      "doing_at": "2026-09-24T14:46:36",
+      "todo_at": "2026-09-24T14:31:13",
+      "done_at": "2026-09-24T15:15:39"
+    },
+    "OPS-10": {
+      "status": "done",
+      "doing_at": "2026-09-24T13:36:57",
+      "done_at": "2026-09-24T14:31:13"
+    },
+    "GF-09": {
+      "status": "todo",
+      "doing_at": "2026-09-25T18:39:41",
+      "todo_at": "2026-09-25T18:39:57"
+    },
+    "GF-12": {
+      "status": "done",
+      "doing_at": "2026-09-24T13:36:57",
+      "done_at": "2026-09-24T14:31:13"
+    },
+    "OPS-05": {
+      "status": "done",
+      "doing_at": "2026-09-24T13:36:57",
+      "done_at": "2026-09-24T14:31:13"
+    },
+    "ART-11V": {
+      "status": "done",
+      "doing_at": "2026-09-24T15:09:04",
+      "todo_at": "2026-09-24T15:07:20",
+      "done_at": "2026-09-24T16:13:43"
+    },
+    "GF-10": {
+      "status": "done",
+      "doing_at": "2026-09-24T16:15:29",
+      "todo_at": "2026-09-24T15:07:20",
+      "done_at": "2026-09-24T17:21:58"
+    },
+    "LD-05": {
+      "status": "done",
+      "doing_at": "2026-09-24T14:09:08",
+      "done_at": "2026-09-24T15:07:20"
+    },
+    "LD-09": {
+      "status": "done",
+      "doing_at": "2026-09-24T14:09:08",
+      "done_at": "2026-09-24T15:07:20"
+    },
+    "OPS-09": {
+      "status": "done",
+      "doing_at": "2026-09-24T14:09:08",
+      "done_at": "2026-09-24T15:07:20"
+    },
+    "NAR-01": {
+      "status": "done",
+      "doing_at": "2026-09-24T14:17:10",
+      "done_at": "2026-09-24T14:52:39"
+    },
+    "ART-03": {
+      "status": "done",
+      "doing_at": "2026-09-24T14:32:18",
+      "done_at": "2026-09-24T15:45:30"
+    },
+    "BUG-22": {
+      "status": "done",
+      "doing_at": "2026-09-24T14:32:18",
+      "done_at": "2026-09-24T15:45:30"
+    },
+    "BUG-13": {
+      "status": "done",
+      "doing_at": "2026-09-24T14:46:36",
+      "done_at": "2026-09-24T15:15:39"
+    },
+    "OPS-08": {
+      "status": "done",
+      "doing_at": "2026-09-24T14:46:36",
+      "done_at": "2026-09-24T15:15:39"
+    },
+    "GF-13": {
+      "status": "done",
+      "doing_at": "2026-09-24T14:46:36",
+      "done_at": "2026-09-24T15:15:39"
+    },
+    "ART-13": {
+      "status": "blocked",
+      "blocked_at": "2026-09-24T15:08:54",
+      "reason": "Remplacé par la route Tripo (docs/assets/ASSET_PLAN.md §3.5, vague 1) ; reprendre en repli seulement si Ravage échoue au restyle"
+    },
+    "LD-10": {
+      "status": "done",
+      "doing_at": "2026-09-24T15:09:04",
+      "done_at": "2026-09-24T16:13:43",
+      "notes": [
+        "2026-09-24T16:13:44 col_du_vautour exempté (6,0 s) avec justification écrite dans test_snd_timings.gd ; refonte du plateau est à rouvrir si les tests de jeu le demandent"
+      ]
+    },
+    "A3D-12": {
+      "status": "done",
+      "doing_at": "2026-09-24T15:09:04",
+      "done_at": "2026-09-24T16:13:43"
+    },
+    "NAR-02": {
+      "status": "done",
+      "doing_at": "2026-09-24T15:09:04",
+      "done_at": "2026-09-24T16:13:43"
+    },
+    "A3D-09": {
+      "status": "done",
+      "doing_at": "2026-09-24T21:56:33",
+      "todo_at": "2026-09-24T16:13:43",
+      "done_at": "2026-09-24T23:18:14"
+    },
+    "ART-02": {
+      "status": "done",
+      "doing_at": "2026-09-24T15:46:02",
+      "done_at": "2026-09-24T16:43:30"
+    },
+    "UX-12": {
+      "status": "done",
+      "doing_at": "2026-09-24T15:46:02",
+      "done_at": "2026-09-24T16:43:30"
+    },
+    "GF-03": {
+      "status": "done",
+      "doing_at": "2026-09-24T15:46:02",
+      "done_at": "2026-09-24T16:43:30"
+    },
+    "BUG-25": {
+      "status": "done",
+      "doing_at": "2026-09-24T15:46:02",
+      "done_at": "2026-09-24T16:43:30"
+    },
+    "ART-07": {
+      "status": "done",
+      "doing_at": "2026-09-24T20:28:39",
+      "todo_at": "2026-09-24T20:28:25",
+      "done_at": "2026-09-24T21:56:22",
+      "notes": [
+        "2026-09-24T21:56:23 Implémenté avant ; vérifié par l'agent avec look_probe (CHK-10/11 PASS 8/8) et perf_bench A/B (+0,055 à 0,072 ms)"
+      ]
+    },
+    "A3D-13": {
+      "status": "done",
+      "doing_at": "2026-09-24T16:15:29",
+      "done_at": "2026-09-24T17:21:58",
+      "notes": [
+        "2026-09-24T17:21:59 Runner restyle_wave.py + page de revue livrés ; 0/24 en G3 à cause d'ai_restyle.py → A3D-15"
+      ]
+    },
+    "BUG-11": {
+      "status": "done",
+      "doing_at": "2026-09-24T16:15:29",
+      "done_at": "2026-09-24T17:21:58"
+    },
+    "BUG-12": {
+      "status": "done",
+      "doing_at": "2026-09-24T16:15:29",
+      "done_at": "2026-09-24T17:21:58"
+    },
+    "LD-11": {
+      "status": "done",
+      "doing_at": "2026-09-24T16:15:29",
+      "done_at": "2026-09-24T17:21:58"
+    },
+    "GF-04B": {
+      "status": "done",
+      "doing_at": "2026-09-24T16:15:29",
+      "done_at": "2026-09-24T17:21:58"
+    },
+    "ART-11N": {
+      "status": "dropped",
+      "doing_at": "2026-09-24T16:37:00",
+      "dropped_at": "2026-09-24T17:21:30",
+      "reason": "Fusionnées dans ART-11X (îlots détachés des maillages Tripo, correctif dans le script de rig)"
+    },
+    "ART-11R": {
+      "status": "done",
+      "doing_at": "2026-09-24T16:37:00",
+      "done_at": "2026-09-24T17:21:28",
+      "notes": [
+        "2026-09-24T17:21:29 Manteau 6-8 cm sous le genou (maillage Tripo) accepté : lecture « manteau long » cohérente avec le Palud"
+      ]
+    },
+    "ART-11G": {
+      "status": "dropped",
+      "doing_at": "2026-09-24T16:37:00",
+      "dropped_at": "2026-09-24T17:21:30",
+      "reason": "Fusionnées dans ART-11X (îlots détachés des maillages Tripo, correctif dans le script de rig)"
+    },
+    "ART-11C": {
+      "status": "dropped",
+      "doing_at": "2026-09-24T16:40:53",
+      "dropped_at": "2026-09-24T18:25:17",
+      "reason": "Fusionnée dans ART-11Z (re-rig des 6 agents : repos T-pose d'origine, poids main/cuisse)"
+    },
+    "ART-05": {
+      "status": "done",
+      "doing_at": "2026-09-24T16:44:05",
+      "done_at": "2026-09-24T18:05:07"
+    },
+    "UX-08": {
+      "status": "done",
+      "doing_at": "2026-09-24T16:44:05",
+      "done_at": "2026-09-24T18:05:07"
+    },
+    "BOT-09": {
+      "status": "done",
+      "doing_at": "2026-09-24T16:44:05",
+      "done_at": "2026-09-24T18:05:07"
+    },
+    "OPS-11": {
+      "status": "done",
+      "doing_at": "2026-09-24T18:05:28",
+      "todo_at": "2026-09-24T16:44:19",
+      "done_at": "2026-09-24T19:25:49"
+    },
+    "BUG-26": {
+      "status": "done",
+      "doing_at": "2026-09-24T17:22:15",
+      "done_at": "2026-09-24T18:49:16"
+    },
+    "A3D-15": {
+      "status": "dropped",
+      "doing_at": "2026-09-24T18:49:34",
+      "todo_at": "2026-09-24T22:29:07",
+      "dropped_at": "2026-09-25T05:24:00",
+      "reason": "chaîne restyle abandonnée pour l'environnement et les armes (docs/art/WASTELAND_ART_RESET.md) ; A3D-20 et ART-80 la remplacent"
+    },
+    "ART-11X": {
+      "status": "done",
+      "doing_at": "2026-09-24T17:22:15",
+      "done_at": "2026-09-24T18:49:16"
+    },
+    "UX-05": {
+      "status": "done",
+      "doing_at": "2026-09-24T17:22:15",
+      "done_at": "2026-09-24T18:49:16"
+    },
+    "BUG-10": {
+      "status": "done",
+      "doing_at": "2026-09-24T17:22:15",
+      "done_at": "2026-09-24T18:49:16"
+    },
+    "ART-40": {
+      "status": "done",
+      "doing_at": "2026-09-24T17:22:15",
+      "done_at": "2026-09-24T18:49:16",
+      "notes": [
+        "2026-09-24T18:49:17 Kit VFX livré ; CHK-42 non mesurable par l'outillage actuel -> OPS-12"
+      ]
+    },
+    "ART-11Y": {
+      "status": "dropped",
+      "dropped_at": "2026-09-24T17:36:40",
+      "reason": "Doublon d'ART-11Z (re-rig des 6 agents avec repos T-pose d'origine)"
+    },
+    "ART-06": {
+      "status": "done",
+      "doing_at": "2026-09-24T19:26:02",
+      "todo_at": "2026-09-24T19:25:49",
+      "done_at": "2026-09-24T20:28:23"
+    },
+    "ART-31": {
+      "status": "done",
+      "doing_at": "2026-09-24T19:26:02",
+      "todo_at": "2026-09-24T19:25:49",
+      "done_at": "2026-09-24T20:28:23",
+      "notes": [
+        "2026-09-24T20:28:24 Kit accepté par la vérification ; CHK-32/33/37 bloqués par l'outil style_check -> OPS-13"
+      ]
+    },
+    "UX-01": {
+      "status": "done",
+      "doing_at": "2026-09-24T23:52:00",
+      "todo_at": "2026-09-24T19:25:49",
+      "done_at": "2026-09-25T01:36:47"
+    },
+    "MV-01": {
+      "status": "done",
+      "doing_at": "2026-09-24T18:05:28",
+      "done_at": "2026-09-24T19:25:49"
+    },
+    "BOT-04": {
+      "status": "done",
+      "doing_at": "2026-09-24T18:05:28",
+      "done_at": "2026-09-24T19:25:49"
+    },
+    "ART-11Z": {
+      "status": "done",
+      "doing_at": "2026-09-24T18:49:34",
+      "done_at": "2026-09-24T22:28:44"
+    },
+    "UX-11": {
+      "status": "done",
+      "doing_at": "2026-09-24T18:49:34",
+      "done_at": "2026-09-24T22:28:44"
+    },
+    "ART-41": {
+      "status": "done",
+      "doing_at": "2026-09-24T18:49:34",
+      "done_at": "2026-09-24T22:28:44"
+    },
+    "BOT-13": {
+      "status": "done",
+      "doing_at": "2026-09-24T18:49:34",
+      "done_at": "2026-09-24T22:28:44"
+    },
+    "ART-04B": {
+      "status": "done",
+      "doing_at": "2026-09-24T18:49:34",
+      "done_at": "2026-09-24T22:28:44"
+    },
+    "ART-27": {
+      "status": "done",
+      "doing_at": "2026-09-24T19:26:02",
+      "done_at": "2026-09-24T20:28:23"
+    },
+    "GF-02": {
+      "status": "done",
+      "doing_at": "2026-09-24T19:26:02",
+      "done_at": "2026-09-24T20:28:23"
+    },
+    "UX-06": {
+      "status": "done",
+      "doing_at": "2026-09-24T21:56:33",
+      "todo_at": "2026-09-24T21:56:23",
+      "done_at": "2026-09-24T23:18:14"
+    },
+    "UX-04": {
+      "status": "done",
+      "doing_at": "2026-09-24T20:28:39",
+      "done_at": "2026-09-24T21:56:22"
+    },
+    "BUG-27": {
+      "status": "done",
+      "doing_at": "2026-09-24T20:28:39",
+      "done_at": "2026-09-24T21:56:22"
+    },
+    "ART-32": {
+      "status": "done",
+      "doing_at": "2026-09-24T20:28:39",
+      "done_at": "2026-09-24T21:56:22"
+    },
+    "LD-03": {
+      "status": "done",
+      "doing_at": "2026-09-24T20:28:39",
+      "done_at": "2026-09-24T21:56:22"
+    },
+    "OPS-13": {
+      "status": "blocked",
+      "doing_at": "2026-09-24T21:56:33",
+      "blocked_at": "2026-09-24T23:18:15",
+      "reason": "Mesure pixel des glyphes non fiable sur captures réelles (contraste réel 16:1) ; remplacer plus tard par un lint des couleurs du thème"
+    },
+    "CLEAN-01": {
+      "status": "done",
+      "doing_at": "2026-09-24T21:56:33",
+      "done_at": "2026-09-24T23:18:14"
+    },
+    "ART-11W": {
+      "status": "done",
+      "doing_at": "2026-09-24T22:28:04",
+      "done_at": "2026-09-24T22:28:05"
+    },
+    "ART-70": {
+      "status": "done",
+      "doing_at": "2026-09-24T22:29:36",
+      "done_at": "2026-09-24T23:47:06"
+    },
+    "LD-26": {
+      "status": "done",
+      "doing_at": "2026-09-24T22:29:36",
+      "done_at": "2026-09-24T23:47:32"
+    },
+    "LD-23": {
+      "status": "done",
+      "doing_at": "2026-09-25T01:39:14",
+      "todo_at": "2026-09-24T23:47:33",
+      "done_at": "2026-09-25T02:25:23"
+    },
+    "GF-28": {
+      "status": "done",
+      "doing_at": "2026-09-24T22:29:36",
+      "done_at": "2026-09-24T23:47:06"
+    },
+    "ART-71": {
+      "status": "done",
+      "doing_at": "2026-09-24T22:29:36",
+      "done_at": "2026-09-24T23:47:06"
+    },
+    "ART-76": {
+      "status": "done",
+      "doing_at": "2026-09-24T22:29:36",
+      "done_at": "2026-09-24T23:47:06"
+    },
+    "BUG-28": {
+      "status": "done",
+      "doing_at": "2026-09-24T23:01:02",
+      "done_at": "2026-09-24T23:01:02"
+    },
+    "BOT-21": {
+      "status": "done",
+      "doing_at": "2026-09-24T23:52:00",
+      "todo_at": "2026-09-24T23:51:39",
+      "done_at": "2026-09-25T01:37:53"
+    },
+    "GF-20": {
+      "status": "done",
+      "doing_at": "2026-09-24T23:02:08",
+      "done_at": "2026-09-24T23:48:02"
+    },
+    "BOT-20": {
+      "status": "done",
+      "doing_at": "2026-09-24T23:02:08",
+      "done_at": "2026-09-24T23:48:02"
+    },
+    "ART-73": {
+      "status": "done",
+      "doing_at": "2026-09-24T23:27:02",
+      "done_at": "2026-09-25T00:27:04"
+    },
+    "ART-79": {
+      "status": "done",
+      "doing_at": "2026-09-24T23:27:02",
+      "notes": [
+        "2026-09-25T00:12:30 3 planches générées (180 cr), ids dans SOURCES.md ; téléchargement en attente de l'accord utilisateur ; ensuite : python tools/textures/make_tileable.py --config tools/textures/hand_painted.yaml"
+      ],
+      "done_at": "2026-09-25T15:44:19"
+    },
+    "ART-79B": {
+      "status": "done",
+      "doing_at": "2026-09-24T23:32:49",
+      "done_at": "2026-09-25T00:12:30"
+    },
+    "LD-20": {
+      "status": "done",
+      "doing_at": "2026-09-24T23:52:00",
+      "done_at": "2026-09-25T01:36:47"
+    },
+    "ART-80": {
+      "status": "done",
+      "doing_at": "2026-09-24T23:52:00",
+      "done_at": "2026-09-25T01:36:47"
+    },
+    "GF-21": {
+      "status": "done",
+      "doing_at": "2026-09-24T23:52:00",
+      "done_at": "2026-09-25T01:36:47"
+    },
+    "GF-27": {
+      "status": "done",
+      "doing_at": "2026-09-24T23:52:00",
+      "done_at": "2026-09-25T01:36:47"
+    },
+    "ART-83": {
+      "status": "done",
+      "doing_at": "2026-09-25T00:50:14",
+      "notes": [
+        "2026-09-25T00:50:15 4/8 livrés 2026-09-25 (saloon, cabane, magasin FUEL, garage ; 640 cr) ; suite après validation du coin beauté",
+        "2026-09-25T15:44:18 4 bâtiments livrés (saloon, shack, fuel_store, garage) ; 4 restants abandonnés sur décision coût utilisateur, remplacés par ART-93 v4"
+      ],
+      "done_at": "2026-09-25T15:44:19"
+    },
+    "AGT-01": {
+      "status": "done",
+      "doing_at": "2026-09-25T01:39:14",
+      "done_at": "2026-09-25T02:25:23"
+    },
+    "ART-82": {
+      "status": "done",
+      "doing_at": "2026-09-25T01:39:14",
+      "done_at": "2026-09-25T02:25:23"
+    },
+    "UX-13": {
+      "status": "done",
+      "doing_at": "2026-09-25T01:39:14",
+      "done_at": "2026-09-25T02:25:23"
+    },
+    "LD-21": {
+      "status": "done",
+      "doing_at": "2026-09-25T01:39:14",
+      "done_at": "2026-09-25T02:25:23"
+    },
+    "LD-22": {
+      "status": "done",
+      "doing_at": "2026-09-25T01:39:14",
+      "done_at": "2026-09-25T02:25:23"
+    },
+    "UX-14": {
+      "status": "done",
+      "doing_at": "2026-09-25T02:26:44",
+      "done_at": "2026-09-25T03:21:25"
+    },
+    "LD-24": {
+      "status": "done",
+      "doing_at": "2026-09-25T02:26:44",
+      "done_at": "2026-09-25T03:21:25"
+    },
+    "AGT-03": {
+      "status": "done",
+      "doing_at": "2026-09-25T02:26:44",
+      "done_at": "2026-09-25T03:21:56"
+    },
+    "AGT-04": {
+      "status": "done",
+      "doing_at": "2026-09-25T02:26:44",
+      "done_at": "2026-09-25T03:21:25"
+    },
+    "AGT-05": {
+      "status": "done",
+      "doing_at": "2026-09-25T02:26:44",
+      "done_at": "2026-09-25T03:21:25"
+    },
+    "AGT-06": {
+      "status": "done",
+      "doing_at": "2026-09-25T02:26:44",
+      "done_at": "2026-09-25T03:21:25"
+    },
+    "AGT-07": {
+      "status": "done",
+      "doing_at": "2026-09-25T02:26:44",
+      "done_at": "2026-09-25T03:21:25"
+    },
+    "AGT-08": {
+      "status": "done",
+      "doing_at": "2026-09-25T03:22:24",
+      "todo_at": "2026-09-25T03:21:57",
+      "done_at": "2026-09-25T04:27:08"
+    },
+    "BUG-29": {
+      "status": "done",
+      "doing_at": "2026-09-25T03:22:24",
+      "done_at": "2026-09-25T04:27:08"
+    },
+    "BOT-22": {
+      "status": "done",
+      "doing_at": "2026-09-25T03:22:24",
+      "done_at": "2026-09-25T04:27:08"
+    },
+    "GF-22": {
+      "status": "done",
+      "doing_at": "2026-09-25T03:22:24",
+      "done_at": "2026-09-25T04:27:08"
+    },
+    "BOT-22B": {
+      "status": "done",
+      "doing_at": "2026-09-25T04:27:32",
+      "done_at": "2026-09-25T05:18:57"
+    },
+    "AGT-02": {
+      "status": "done",
+      "doing_at": "2026-09-25T05:20:48",
+      "todo_at": "2026-09-25T05:20:11",
+      "done_at": "2026-09-25T06:57:40"
+    },
+    "BUG-30": {
+      "status": "done",
+      "doing_at": "2026-09-25T05:20:48",
+      "todo_at": "2026-09-25T05:20:11",
+      "done_at": "2026-09-25T06:57:40"
+    },
+    "LD-25": {
+      "status": "done",
+      "doing_at": "2026-09-25T04:27:32",
+      "done_at": "2026-09-25T05:18:57"
+    },
+    "ART-35": {
+      "status": "done",
+      "doing_at": "2026-09-25T04:27:32",
+      "done_at": "2026-09-25T05:18:57"
+    },
+    "BOT-25": {
+      "status": "done",
+      "doing_at": "2026-09-25T05:20:48",
+      "done_at": "2026-09-25T06:57:40"
+    },
+    "BOT-23": {
+      "status": "done",
+      "doing_at": "2026-09-25T05:20:48",
+      "done_at": "2026-09-25T06:57:40"
+    },
+    "BOT-22C": {
+      "status": "done",
+      "doing_at": "2026-09-25T05:20:48",
+      "done_at": "2026-09-25T06:57:40"
+    },
+    "A3D-14": {
+      "status": "dropped",
+      "dropped_at": "2026-09-25T05:23:59",
+      "reason": "remplacé par A3D-20 (armes Tripo peintes, pas restylées)"
+    },
+    "A3D-20": {
+      "status": "done",
+      "doing_at": "2026-09-25T05:24:08",
+      "done_at": "2026-09-25T06:04:32"
+    },
+    "UX-20": {
+      "status": "done",
+      "doing_at": "2026-09-25T05:24:08",
+      "done_at": "2026-09-25T06:04:32"
+    },
+    "FP-01": {
+      "status": "done",
+      "doing_at": "2026-09-25T07:41:19",
+      "done_at": "2026-09-25T09:16:03"
+    },
+    "ART-84": {
+      "status": "done",
+      "doing_at": "2026-09-25T06:06:29",
+      "done_at": "2026-09-25T06:17:09"
+    },
+    "GF-24": {
+      "status": "done",
+      "doing_at": "2026-09-25T06:58:25",
+      "done_at": "2026-09-25T07:58:42"
+    },
+    "LD-27": {
+      "status": "done",
+      "doing_at": "2026-09-25T06:58:25",
+      "notes": [
+        "2026-09-25T07:59:34 Banc livré (tools/bot_bench.gd profil wasteland, seuils §e) ; 4/7 seuils en échec = comportement bots, routés vers BOT-30 après re-mesure du lead"
+      ],
+      "done_at": "2026-09-25T07:59:35"
+    },
+    "ART-34": {
+      "status": "done",
+      "doing_at": "2026-09-25T08:00:03",
+      "todo_at": "2026-09-25T07:59:21",
+      "done_at": "2026-09-25T08:41:34"
+    },
+    "ART-36": {
+      "status": "done",
+      "doing_at": "2026-09-25T08:00:03",
+      "todo_at": "2026-09-25T07:59:21",
+      "done_at": "2026-09-25T08:41:34"
+    },
+    "BOT-24": {
+      "status": "done",
+      "doing_at": "2026-09-25T06:58:25",
+      "done_at": "2026-09-25T07:58:42"
+    },
+    "ART-21": {
+      "status": "dropped",
+      "dropped_at": "2026-09-25T08:00:02",
+      "reason": "props bpy « jouets biseautés » = niveau prototype (verdict art 2026-09-25) ; props et couverts viendront de Tripo peint (ART-74, ART-77) via ai_import_painted"
+    },
+    "AGT-09": {
+      "status": "done",
+      "doing_at": "2026-09-25T08:00:03",
+      "done_at": "2026-09-25T08:41:34"
+    },
+    "UX-10": {
+      "status": "done",
+      "doing_at": "2026-09-25T08:00:03",
+      "done_at": "2026-09-25T08:41:34"
+    },
+    "BOT-30": {
+      "status": "done",
+      "doing_at": "2026-09-25T08:04:46",
+      "notes": [
+        "2026-09-25T09:06:54 2 passes sans effet sur les chiffres (HP 0,2 %, 16-17 buts/min, contact 3,7 s) : cause probablement structurelle ; diagnostic Opus en cours (lead)",
+        "2026-09-25T09:26:45 Clos par le lead : cause racine trouvée (ouïe et poursuite de combat écrasaient le but de mode ; banc démarrait avant le spawn des bots) ; occupation HP 22,5 % -> 84 %, blocage 2,8 % -> 1,4 %. Reste : churn TDM -> BOT-29 ; premier contact et lanes -> layout v4"
+      ],
+      "done_at": "2026-09-25T09:26:45"
+    },
+    "ART-85": {
+      "status": "done",
+      "doing_at": "2026-09-25T08:43:09",
+      "done_at": "2026-09-25T10:18:04"
+    },
+    "ART-86": {
+      "status": "done",
+      "doing_at": "2026-09-25T08:43:09",
+      "done_at": "2026-09-25T10:18:04"
+    },
+    "ART-87": {
+      "status": "done",
+      "doing_at": "2026-09-25T08:43:09",
+      "done_at": "2026-09-25T10:18:04"
+    },
+    "TOOL-01": {
+      "status": "done",
+      "doing_at": "2026-09-25T09:05:47",
+      "done_at": "2026-09-25T09:59:54"
+    },
+    "TOOL-02": {
+      "status": "done",
+      "doing_at": "2026-09-25T09:05:47",
+      "done_at": "2026-09-25T09:59:54"
+    },
+    "FP-02": {
+      "status": "done",
+      "doing_at": "2026-09-25T11:25:33",
+      "todo_at": "2026-09-25T11:25:33",
+      "done_at": "2026-09-25T12:23:11"
+    },
+    "TOOL-02B": {
+      "status": "done",
+      "doing_at": "2026-09-25T10:01:40",
+      "notes": [
+        "2026-09-25T13:12:01 Validation visuelle du lead 2026-09-25 : facettes taillées + strates peintes OK ; sur les grandes falaises la texture lit comme de la maçonnerie (échelle de tuile trop petite) -> à 2x sur les pièces > 4 m lors de la pose en map"
+      ],
+      "done_at": "2026-09-25T13:12:02"
+    },
+    "TOOL-01B": {
+      "status": "done",
+      "doing_at": "2026-09-25T10:01:40",
+      "notes": [
+        "2026-09-25T13:12:01 Validation visuelle du lead 2026-09-25 : bois peint à coups de pinceau, tôle bleue, fût rouille lisibles à 2 m ; OK"
+      ],
+      "done_at": "2026-09-25T13:12:02"
+    },
+    "ART-88": {
+      "status": "done",
+      "doing_at": "2026-09-25T10:18:06",
+      "done_at": "2026-09-25T11:25:32"
+    },
+    "LD-40": {
+      "status": "done",
+      "doing_at": "2026-09-25T10:52:24",
+      "done_at": "2026-09-25T12:02:15"
+    },
+    "LD-41": {
+      "status": "done",
+      "doing_at": "2026-09-25T12:59:10",
+      "todo_at": "2026-09-25T12:59:09",
+      "done_at": "2026-09-25T13:27:06"
+    },
+    "LD-42": {
+      "status": "done",
+      "doing_at": "2026-09-25T12:02:31",
+      "done_at": "2026-09-25T12:58:47"
+    },
+    "ART-89": {
+      "status": "done",
+      "doing_at": "2026-09-25T12:12:54",
+      "done_at": "2026-09-25T12:52:35"
+    },
+    "FP-03": {
+      "status": "done",
+      "doing_at": "2026-09-25T12:23:19",
+      "done_at": "2026-09-25T12:53:35"
+    },
+    "ART-90": {
+      "status": "done",
+      "doing_at": "2026-09-25T12:53:15",
+      "done_at": "2026-09-25T13:17:31"
+    },
+    "LD-43": {
+      "status": "done",
+      "doing_at": "2026-09-25T13:28:28",
+      "notes": [
+        "2026-09-25T15:08:31 Banc v4 hors cibles (couloirs, contact, blocage) -> BOT-31 ; PLAYTEST.md prêt pour le test utilisateur"
+      ],
+      "done_at": "2026-09-25T15:08:31"
+    },
+    "BUG-20": {
+      "status": "done",
+      "doing_at": "2026-09-25T14:24:38",
+      "done_at": "2026-09-25T15:11:37"
+    },
+    "BOT-26": {
+      "status": "done",
+      "doing_at": "2026-09-25T14:24:38",
+      "done_at": "2026-09-25T15:11:37"
+    },
+    "VFX-20": {
+      "status": "done",
+      "doing_at": "2026-09-25T14:24:38",
+      "done_at": "2026-09-25T15:11:37"
+    },
+    "UX-03": {
+      "status": "done",
+      "doing_at": "2026-09-25T14:24:38",
+      "done_at": "2026-09-25T15:11:37"
+    },
+    "GF-23": {
+      "status": "done",
+      "doing_at": "2026-09-25T15:12:02",
+      "todo_at": "2026-09-25T15:12:01",
+      "done_at": "2026-09-25T15:30:17"
+    },
+    "UX-21": {
+      "status": "done",
+      "doing_at": "2026-09-25T14:28:13",
+      "done_at": "2026-09-25T15:11:37"
+    },
+    "ART-91": {
+      "status": "done",
+      "doing_at": "2026-09-25T14:53:01",
+      "done_at": "2026-09-25T16:22:09"
+    },
+    "ART-92": {
+      "status": "done",
+      "doing_at": "2026-09-25T14:53:01",
+      "notes": [
+        "2026-09-25T16:23:10 Lead 2026-09-25 : checkpoint planche 11/11 régénéré ; exception CHK-16 approuvée (joints réels), fond -> TOOL-03. Les aperçus Blender montrent des blocs à matériaux nommés (wood_planks, rust…) sans image : ART-94/95/96 doivent vérifier le rendu peint EN JEU."
+      ],
+      "done_at": "2026-09-25T16:23:11"
+    },
+    "BOT-31": {
+      "status": "done",
+      "doing_at": "2026-09-25T15:45:39",
+      "todo_at": "2026-09-25T15:45:30",
+      "notes": [
+        "2026-09-25T17:23:35 Lead 2026-09-25 : ACCEPTÉ comme progrès (contact ~4x plus rapide : 12,8 / 9,5 s ; couloirs run1 35/21/43 %). Reste : médiane ≤ 9 s stable et Centre ≤ 55 % sur chaque run -> BOT-32 après LD-44/BUG-31 (3 runs moyennés, machine calme). Échecs tests/ai vus pendant la vérif : budget de bake 37 s > 30 s sous charge (14 agents), et décalages navmesh 0,62 m pendant l'édition concurrente de wasteland.gd (LD-44) -> revérifier en fin de vague 35."
+      ],
+      "done_at": "2026-09-25T17:23:37"
+    },
+    "ART-93": {
+      "status": "done",
+      "doing_at": "2026-09-25T15:08:32",
+      "done_at": "2026-09-25T15:50:15"
+    },
+    "ART-72": {
+      "status": "dropped",
+      "dropped_at": "2026-09-25T15:44:18",
+      "reason": "remplacé par le plan d'art v4 (ART-91..100, docs/art/WASTELAND_V4_ART_PLAN.md) : carte v3 retirée, repères Tripo au lieu de bpy"
+    },
+    "ART-73B": {
+      "status": "dropped",
+      "dropped_at": "2026-09-25T15:44:18",
+      "reason": "remplacé par le plan d'art v4 (ART-91..100, docs/art/WASTELAND_V4_ART_PLAN.md) : carte v3 retirée, repères Tripo au lieu de bpy"
+    },
+    "ART-23": {
+      "status": "dropped",
+      "dropped_at": "2026-09-25T15:44:18",
+      "reason": "remplacé par le plan d'art v4 (ART-91..100, docs/art/WASTELAND_V4_ART_PLAN.md) : carte v3 retirée, repères Tripo au lieu de bpy"
+    },
+    "TECH-04": {
+      "status": "done",
+      "doing_at": "2026-09-25T15:45:39",
+      "todo_at": "2026-09-25T15:45:31",
+      "notes": [
+        "2026-09-25T17:23:33 Lead 2026-09-25 : ACCEPTÉ. Contour magenta visible hors occlusion, aucun pixel derrière un mur (captures 01/02). Critère « 2 passes » levé : tests/rendering/test_cartoon_materials.gd et test_outline_normals.gd verrouillent la chaîne à 3 passes ; coût négligeable pour ≤ 8 personnages."
+      ],
+      "done_at": "2026-09-25T17:23:37"
+    },
+    "FUN-01": {
+      "status": "done",
+      "doing_at": "2026-09-25T15:45:39",
+      "todo_at": "2026-09-25T15:45:31",
+      "done_at": "2026-09-25T17:23:37"
+    },
+    "LD-06": {
+      "status": "done",
+      "doing_at": "2026-09-25T15:45:39",
+      "todo_at": "2026-09-25T15:45:31",
+      "done_at": "2026-09-25T17:23:37"
+    },
+    "ART-61": {
+      "status": "done",
+      "doing_at": "2026-09-25T15:45:39",
+      "todo_at": "2026-09-25T15:45:31",
+      "done_at": "2026-09-25T17:23:37"
+    },
+    "NAR-03": {
+      "status": "done",
+      "doing_at": "2026-09-25T15:45:39",
+      "todo_at": "2026-09-25T15:45:31",
+      "done_at": "2026-09-25T17:23:37"
+    },
+    "DOC-02": {
+      "status": "done",
+      "doing_at": "2026-09-25T18:04:41",
+      "todo_at": "2026-09-25T15:45:31",
+      "done_at": "2026-09-25T18:39:40"
+    },
+    "UX-30": {
+      "status": "done",
+      "doing_at": "2026-09-25T16:01:39",
+      "done_at": "2026-09-25T17:13:49"
+    },
+    "LD-44": {
+      "status": "doing",
+      "doing_at": "2026-09-25T19:25:28",
+      "notes": [
+        "2026-09-25T19:17:09 DÉCISION LEAD 2026-09-25 : périmètre élargi à scripts/core/PhysicsLayers.gd et scenes/player/player.tscn pour appliquer le correctif prêt : volumes anti-joueur sur un calque PLAYER_CLIP dédié, que le corps du joueur (et des bots) heurte mais que SHOT_MASK et les grenades ignorent. Le test test_a_shot_ray_passes_through_the_roof_clip_volume doit passer tel quel. En plus : poser visual:false sur les pièces Poste et Diligence (et toute pièce que les skins d'ART-96 recouvrent entièrement) SEULEMENT si ART-96 le demande — sinon ne pas y toucher (ART-96 passe après toi avec wasteland.gd).",
+        "2026-09-25T19:38:31 Vérif lead 20:25 : tests/player/test_stair_step.gd a 4 échecs (_grounded_sprinting_bot : is_on_floor faux) apparus pendant cette vague — probablement le changement de calques de collision dans scenes/player/player.tscn / PhysicsLayers.gd : le sol des tests doit rester détecté. tests/player/test_stair_step.gd DOIT être vert en fin de tâche."
+      ],
+      "todo_at": "2026-09-25T19:25:27"
+    },
+    "ART-96": {
+      "status": "todo",
+      "doing_at": "2026-09-25T16:24:05",
+      "notes": [
+        "2026-09-25T19:17:11 REVUE LEAD (capture 07) : depuis la rue on voit la BOITE BEIGE du greybox avec des planches collées dessus — c'est exactement le « textures n'importe quoi » du playtest utilisateur. Pour Poste et Diligence (et chaque pièce entièrement habillée par ArtCovers) : poser visual:false sur la pièce dans wasteland.gd (support ART-91, collision inchangée) pour que SEUL le skin peint soit visible ; ajuster le skin pour couvrir chaque face exposée à ±10 cm (R7 >= 85 % mesuré). Plans serrés Poste + Diligence obligatoires, sans aucune surface beige de greybox visible."
+      ],
+      "todo_at": "2026-09-25T19:17:13"
+    },
+    "ART-97": {
+      "status": "done",
+      "doing_at": "2026-09-25T16:24:05",
+      "done_at": "2026-09-25T19:17:14"
+    },
+    "ART-98": {
+      "status": "done",
+      "doing_at": "2026-09-25T16:24:05",
+      "done_at": "2026-09-25T19:17:14"
+    },
+    "ART-99": {
+      "status": "doing",
+      "doing_at": "2026-09-25T19:25:28",
+      "notes": [
+        "2026-09-25T19:17:10 DÉCISION LEAD : le code d'ART-99 est livré (passe 1) ; il reste la vue V12 : dans tools/art/data/wasteland_v4_views.json, V12 pos=[9,1.6,2] est DANS un bâtiment — la déplacer sur la Place ouverte (hors de tout volume, vérifier par raycast/overlap) regard vers le nord pour cadrer grue, derrick et château d'eau ; recapturer V1, V2, V5, V12. Aucun autre changement requis si les captures sont bonnes."
+      ],
+      "todo_at": "2026-09-25T19:25:28"
+    },
+    "BUG-31": {
+      "status": "done",
+      "doing_at": "2026-09-25T16:24:05",
+      "done_at": "2026-09-25T19:17:14"
+    },
+    "UX-31": {
+      "status": "done",
+      "notes": [
+        "2026-09-25T17:13:51 Lead après UX-30 : utiliser Comic.*_v4 (signal_color, ink_label, plate_style, title_font_v4…), KitSlantTile, KitSwash (galerie scenes/dev/ui_kit_gallery.tscn). KitSlantTile dessine la raison « désactivé » SOUS la tuile, hors de son rect : réserver la place dans la mise en page. Texte sur jaune = encre, toujours. Lancer gdUnit avec --ignoreHeadlessMode.",
+        "2026-09-25T18:55:05 Lead : accepté (QA OK) ; finitions de la revue visuelle du lead -> UX-36 (HUD) / UX-37 (menu, options, carte unique)."
+      ],
+      "doing_at": "2026-09-25T17:14:04",
+      "done_at": "2026-09-25T18:55:11"
+    },
+    "UX-32": {
+      "status": "done",
+      "notes": [
+        "2026-09-25T17:13:53 Lead après UX-30 : utiliser Comic.*_v4 (signal_color, ink_label, plate_style, title_font_v4…), KitSlantTile, KitSwash (galerie scenes/dev/ui_kit_gallery.tscn). KitSlantTile dessine la raison « désactivé » SOUS la tuile, hors de son rect : réserver la place dans la mise en page. Texte sur jaune = encre, toujours. Lancer gdUnit avec --ignoreHeadlessMode.",
+        "2026-09-25T18:55:07 Lead : accepté (QA OK) ; finitions de la revue visuelle du lead -> UX-36 (HUD) / UX-37 (menu, options, carte unique)."
+      ],
+      "doing_at": "2026-09-25T17:14:04",
+      "done_at": "2026-09-25T18:55:11"
+    },
+    "UX-33": {
+      "status": "done",
+      "notes": [
+        "2026-09-25T17:13:55 Lead après UX-30 : utiliser Comic.*_v4 (signal_color, ink_label, plate_style, title_font_v4…), KitSlantTile, KitSwash (galerie scenes/dev/ui_kit_gallery.tscn). KitSlantTile dessine la raison « désactivé » SOUS la tuile, hors de son rect : réserver la place dans la mise en page. Texte sur jaune = encre, toujours. Lancer gdUnit avec --ignoreHeadlessMode.",
+        "2026-09-25T18:55:09 Lead : accepté (QA OK) ; finitions de la revue visuelle du lead -> UX-36 (HUD) / UX-37 (menu, options, carte unique)."
+      ],
+      "doing_at": "2026-09-25T17:14:04",
+      "done_at": "2026-09-25T18:55:11"
+    },
+    "UX-35": {
+      "status": "done",
+      "notes": [
+        "2026-09-25T17:13:57 Lead après UX-30 : utiliser Comic.*_v4 (signal_color, ink_label, plate_style, title_font_v4…), KitSlantTile, KitSwash (galerie scenes/dev/ui_kit_gallery.tscn). KitSlantTile dessine la raison « désactivé » SOUS la tuile, hors de son rect : réserver la place dans la mise en page. Texte sur jaune = encre, toujours. Lancer gdUnit avec --ignoreHeadlessMode.",
+        "2026-09-25T17:14:00 tests/ui/test_buy_menu.gd a 2 échecs préexistants (« No multiplayer peer is assigned », rachat de loadout) vus pendant UX-30 : diagnostiquer ; corriger si la cause est dans BuyMenu.gd/test_buy_menu.gd, sinon rapporter la cause exacte.",
+        "2026-09-25T18:55:10 Lead : accepté (QA OK) ; finitions de la revue visuelle du lead -> UX-36 (HUD) / UX-37 (menu, options, carte unique)."
+      ],
+      "doing_at": "2026-09-25T17:14:04",
+      "done_at": "2026-09-25T18:55:11"
+    },
+    "UX-34": {
+      "status": "doing",
+      "notes": [
+        "2026-09-25T17:23:51 Lead après UX-30 : utiliser Comic.*_v4 (signal_color, ink_label, plate_style, title_font_v4…), KitSlantTile, KitSwash. Texte sur jaune = encre. gdUnit avec --ignoreHeadlessMode. FUN-01 livré : EndPanel porte déjà le compte à rebours/vote Rejouer — n'en changer que l'habillage ; tests/networking/test_rematch.gd doit rester vert.",
+        "2026-09-25T18:07:06 REVUE LEAD 2026-09-25 (captures 02/03 refusées, 01 OK) — à corriger : (1) Fin : « VICTOIRE »/« DÉFAITE » ENTIER, jamais rogné par la plaque (bande encre pour VICTOIRE signal, bande vital pour DÉFAITE, au-dessus du contenu). (2) Score 118 : chiffre allié en couleur ally, chiffre ennemi en enemy (magenta), tiret paper ; les données de capture doivent être cohérentes (VICTOIRE => allié > ennemi). (3) La spec §6 « Fin » ne contient PAS de liste de joueurs : retirer la liste intégrée (sinon, si un test verrouillé l'exige, l'afficher entière sans barre de défilement ni rognage, 8 joueurs en 1080p ET 720p). (4) Tableau des scores : SUPPRIMER le bandeau pinceau rouge (banni par la direction) ; en-tête = ligne meta 21 « TDM · WASTELAND · PREMIER À 40 » + score 118 ally contre enemy ; lignes 54 px zébrées plate/plate_hi ; colonnes alignées en chiffres tabulaires : portrait 48, nom, É, M, A, score, ping, avec une ligne d'en-têtes de colonnes meta 21 ; retirer « (toi) » (la ligne pleine signal le dit déjà). (5) Mort : vérifier le coin coupé de la carte du tueur (encoche parasite en haut à droite sur 01). (6) Captures 1080p ET 720p avec un 4v4 complet (8 lignes), côte à côte avec la maquette pour la fin.",
+        "2026-09-25T18:28:55 PRÉCISION LEAD : le lead ne traite RIEN de cette tâche en parallèle — les 6 points de la REVUE LEAD ci-dessus sont À TOI, dans tes 3 fichiers (le bandeau BrushHeader de ScoreboardPanel.gd compris). Colonnes : n'afficher que les stats que player_info fournit déjà (É/M, et A si la clé assists existe) — pas de colonne vide ni inventée, pas de modification de GameWorld.gd ; en-têtes de colonnes meta 21 alignés en chiffres tabulaires. Portrait du tueur : garder le glyphe ▼ (agent_index absent), c'est accepté."
+      ],
+      "doing_at": "2026-09-25T18:28:59",
+      "todo_at": "2026-09-25T18:28:57"
+    },
+    "ART-74": {
+      "status": "dropped",
+      "dropped_at": "2026-09-25T18:04:36",
+      "reason": "remplacé par ART-89 (grappes), ART-92 (enseignes) et ART-93 (5 assets v4) ; budget Tripo gardé"
+    },
+    "GF-08": {
+      "status": "done",
+      "doing_at": "2026-09-25T18:04:41",
+      "notes": [
+        "2026-09-25T18:39:38 Lead : accepté (moteur + réglage) ; aucun appelant en jeu -> branchement dans GF-09.",
+        "2026-09-25T18:40:14 Correction : le branchement est la tâche GF-29 (pas GF-09, qui est le réticule dynamique)."
+      ],
+      "done_at": "2026-09-25T18:39:40"
+    },
+    "MV-03": {
+      "status": "done",
+      "doing_at": "2026-09-25T18:04:41",
+      "notes": [
+        "2026-09-25T18:39:39 Lead : accepté pour la partie config/propriété ; branchement Weapon/PlayerController + mise à jour du test Guet (4,8 -> 7 m, décision lead) dans GF-09.",
+        "2026-09-25T18:40:15 Correction : le branchement est la tâche GF-29 (pas GF-09)."
+      ],
+      "done_at": "2026-09-25T18:39:40"
+    },
+    "BOT-03": {
+      "status": "done",
+      "doing_at": "2026-09-25T18:04:41",
+      "done_at": "2026-09-25T18:39:40"
+    },
+    "FUN-08": {
+      "status": "done",
+      "doing_at": "2026-09-25T18:04:41",
+      "done_at": "2026-09-25T18:39:40"
+    },
+    "GF-29": {
+      "status": "done",
+      "doing_at": "2026-09-25T18:40:06",
+      "done_at": "2026-09-25T19:38:06"
+    },
+    "ART-50": {
+      "status": "todo",
+      "notes": [
+        "2026-09-25T18:55:01 Proto : ne revoir que Wasteland, Vif/Verrou, HUD (Cargo Ship hors proto)."
+      ]
+    },
+    "LD-04B": {
+      "status": "todo",
+      "notes": [
+        "2026-09-25T18:55:03 Proto : callouts de Wasteland v4 seulement (Cargo Ship hors proto)."
+      ]
+    },
+    "TECH-09": {
+      "status": "blocked",
+      "blocked_at": "2026-09-25T18:55:19",
+      "reason": "Hors proto : décision utilisateur 2026-09-25 « une seule map finie (Wasteland), le reste plus tard »"
+    },
+    "ART-24": {
+      "status": "blocked",
+      "blocked_at": "2026-09-25T18:55:21",
+      "reason": "Hors proto : décision utilisateur 2026-09-25 « une seule map finie (Wasteland), le reste plus tard »"
+    },
+    "ART-25": {
+      "status": "blocked",
+      "blocked_at": "2026-09-25T18:55:23",
+      "reason": "Hors proto : décision utilisateur 2026-09-25 « une seule map finie (Wasteland), le reste plus tard »"
+    },
+    "ART-26": {
+      "status": "blocked",
+      "blocked_at": "2026-09-25T18:55:25",
+      "reason": "Hors proto : décision utilisateur 2026-09-25 « une seule map finie (Wasteland), le reste plus tard »"
+    },
+    "UX-37": {
+      "status": "doing",
+      "notes": [
+        "2026-09-25T18:57:17 Coordination : SET-01 tourne EN PARALLÈLE et ajoute Settings.MOUSE_SENSITIVITY_DEFAULT (= 0.001) — l'échelle lisible = mouse_sensitivity / MOUSE_SENSITIVITY_DEFAULT ; ne pas modifier Settings.gd (fichier de SET-01) ; si la constante n'existe pas encore quand tu en as besoin, attendre qu'elle apparaisse plutôt que de coder 0.001 en dur."
+      ],
+      "doing_at": "2026-09-25T18:57:20"
+    },
+    "UX-36": {
+      "status": "doing",
+      "doing_at": "2026-09-25T18:57:20"
+    },
+    "SET-01": {
+      "status": "doing",
+      "doing_at": "2026-09-25T18:57:20"
+    },
+    "FP-12": {
+      "status": "doing",
+      "notes": [
+        "2026-09-25T19:27:34 Lead : paint_bake.py a reçu un crochet GPU (tools/blender/lib/gpu_compute.py : Cycles sur la Radeon via HIP, threads CPU plafonnés) — le garder. tests/blender/test_paint_bake.py a 3 échecs PRÉEXISTANTS (TestV2SharpEdges x2, TestV2ProjectedKindTexture::test_chamfer_lightened_after_gltf_roundtrip), identiques sur CPU : les corriger si la cause est dans paint_bake.py, sinon les documenter."
+      ],
+      "doing_at": "2026-09-25T19:27:36"
+    },
+    "FP-11": {
+      "status": "doing",
+      "notes": [
+        "2026-09-25T19:27:35 Lead : un agent de licences ajoute des <arme>.provenance.json à côté des .glb de assets/models/weapons/ ; si tu déplaces un .glb (ex. vers _painted_v1/), déplace sa provenance avec lui et garde python tools/ai3d/licence_check.py sans nouvelle violation."
+      ],
+      "doing_at": "2026-09-25T19:27:36"
+    },
+    "FP-10": {
+      "status": "doing",
+      "notes": [
+        "2026-09-25T19:27:35 Lead : la source CC0 est présente : C:/Users/srko/AppData/Local/Temp/claude/C--Users-srko-Desktop-fps/02e156fb-5e66-4722-9835-071a024d62a9/scratchpad/downloads/ual/ual.glb (aucun téléchargement nécessaire) — la copier dans assets/incoming/quaternius/ual.glb. Rendus Blender : Cycles via tools/blender/lib/gpu_compute.use_gpu_for_cycles si Cycles est utilisé."
+      ],
+      "doing_at": "2026-09-25T19:27:36"
+    },
+    "GF-30": {
+      "status": "doing",
+      "doing_at": "2026-09-25T19:38:06"
+    }
+  }
+}

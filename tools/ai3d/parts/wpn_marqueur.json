@@ -1,0 +1,11 @@
+{
+  "_comment": "A3D-13 — boites en metres, repere LOCAL post-scale_m. Muzzle +X (sonde marqueurs). scale_m=1.07. capuchon = capuchon rouge du viseur-feutre (avant du tube, dessus).",
+  "parts": [
+    {"name": "chargeur", "box_min": [-0.30, -0.09, 0.0], "box_max": [-0.02, 0.09, 0.15]},
+    {"name": "capuchon", "box_min": [0.25, -0.09, 0.22], "box_max": [0.40, 0.09, 0.40]}
+  ],
+  "markers": [
+    {"name": "Muzzle", "position": [0.535, 0.0, 0.15]},
+    {"name": "Foregrip", "position": [0.25, 0.0, 0.05]}
+  ]
+}

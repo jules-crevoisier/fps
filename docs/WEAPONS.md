@@ -16,7 +16,7 @@ Chaque arme est une ressource (`scripts/combat/WeaponConfig.gd`,
 | Identité | `weapon_name`, `weapon_type` (HITSCAN/SHOTGUN/SNIPER), `category`, `cost` |
 | Dégâts | `damage`, `damage_min`, `falloff_start`, `falloff_end`, `headshot_mult` |
 | Tir | `max_range`, `fire_rate`, `automatic`, `spread_hip`, `spread_aim` |
-| Munitions | `mag_size`, `reserve_ammo`, `reload_time` |
+| Munitions | `mag_size`, `reserve_ammo`, `arena_reserve_ammo`, `reload_time` |
 | ADS / Lunette | `aim_fov` (zoom), `aim_speed`, `scoped` (overlay lunette) |
 | Shotgun | `pellets`, `pellet_spread` |
 | Recul | `recoil_vertical`, `recoil_horizontal`, `recoil_recovery`, `recoil_aim_mult` |
@@ -40,6 +40,34 @@ Chaque arme est une ressource (`scripts/combat/WeaponConfig.gd`,
 - **2 slots** (n'importe quelle arme dans chacun), façon CoD.
 - Changement : **1 / 2 / 3**, **molette**, **Y** (manette).
 - Munitions suivies **par arme**.
+- **Chargeur et réserve à zéro** : un premier clic à vide (`dry_fire`) bascule
+  **automatiquement** sur l'autre arme (`Weapon._owner_tick`), sans qu'il soit
+  besoin d'appuyer sur 1/2/molette — même délai que le changement manuel
+  (`SWITCH_DELAY`, 0,25 s).
+
+### Munitions par mode (`Inventory.set_loadout(ids, ammo_rule)`, GF-21)
+
+`GameMode.ammo_rule` fixe QUELLE réserve un loadout charge (docs/research/
+10_ammo_kits_input.md §2.2) :
+
+| Mode | Règle | Réserve chargée | Recharge au respawn |
+|---|---|---|---|
+| Mêlée (TDM) / Borne (Hardpoint) | `"arena"` | `WeaponConfig.arena_reserve_ammo` (§2.3, tableau ci-dessous) | oui, loadout complet (GF-20, `Weapon.server_refill_ammo`) |
+| Litige (SnD) / Duel / Duo | `"round"` | `WeaponConfig.reserve_ammo` (comportement historique, inchangé) | à chaque manche (`RoundMode`, propre à chaque mode concret) |
+| Entraînement (aucune scène de `GameMode`) | `"infinite"` | Réserve volontairement énorme (`Inventory.INFINITE_RESERVE`) | libre, jamais à sec |
+
+`GameMode.ammo_rule` est un champ **calculé** (`"round"` si
+`respawns_immediately() == false`, `"arena"` sinon) : TDM/Hardpoint en
+héritent tels quels, `RoundMode` (SnD/Duel/Duo) l'obtient automatiquement en
+surchargeant déjà `respawns_immediately()`.
+
+**Boutique en arène (§2.6)** : elle ne recharge gratuitement l'inventaire EN
+COURS DE VIE que dans les **10 premières secondes** après le spawn
+(`Weapon.ARENA_BUY_WINDOW`, `arena_buy_allowed` — vérifié côté serveur dans
+`_server_buy`) ; au-delà, un achat ne fait plus que choisir le loadout du
+**prochain** respawn. Le Litige garde sa propre phase d'achat (`buy_phase`),
+le Duel n'a pas de boutique (`DuelMode.server_try_purchase` renvoie faux),
+l'entraînement reste libre.
 
 ---
 
@@ -54,6 +82,24 @@ d'arme** ; le serveur vérifie que c'est bien l'arme en main dans **son** invent
 (autoritaire), que le chargeur et la cadence le permettent, puis refait les rayons
 et applique les dégâts (falloff + headshot, `WeaponMath`). Détail des contrôles :
 [`MULTIPLAYER.md`](MULTIPLAYER.md) §3.
+
+### Zone de tête (headshot)
+
+`WeaponMath.is_headshot` compare le point d'impact au **sommet de la capsule
+courante** (`body_origin_y + body_height`, `body_height` = hauteur COURANTE de la
+cible — debout OU accroupie, `PlayerController.current_height` répliquée serveur)
+**moins `HEAD_SIZE` = 0,40 m** : un impact strictement au-dessus de ce seuil compte
+comme headshot.
+
+- **Debout** (`stand_height` = 1,80 m) : seuil à 1,80 − 0,40 = **1,40 m** (inchangé
+  depuis l'ancien seuil fixe).
+- **Accroupi** (`crouch_height` = 0,90 m) : seuil à 0,90 − 0,40 = **0,50 m**.
+
+Décision du lead (conflit §14 de [`STYLE_BIBLE.md`](STYLE_BIBLE.md)) : la tête garde
+sa **taille réelle** (0,40 m de haut) quelle que soit la posture, plutôt que de
+rétrécir proportionnellement à la capsule — l'approche proportionnelle utilisée
+avant réduisait la bande headshot accroupie à 0,20 m, plus petite qu'une tête.
+`HEAD_SIZE` est une constante absolue, jamais une proportion de `body_height`.
 
 ---
 

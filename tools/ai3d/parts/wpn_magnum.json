@@ -1,0 +1,11 @@
+{
+  "_comment": "A3D-13 — boites en metres, repere LOCAL post-scale_m. Muzzle +X (sonde marqueurs). scale_m=0.38.",
+  "parts": [
+    {"name": "barillet", "box_min": [-0.04, -0.05, 0.02], "box_max": [0.08, 0.05, 0.16]},
+    {"name": "chien", "box_min": [-0.15, -0.05, 0.14], "box_max": [-0.05, 0.05, 0.22]}
+  ],
+  "markers": [
+    {"name": "Muzzle", "position": [0.19, 0.0, 0.10]},
+    {"name": "Foregrip", "position": [0.10, 0.0, 0.03]}
+  ]
+}

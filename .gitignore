@@ -47,3 +47,4 @@ _captures/
 /.probe_debug_out/
 /_verify_*
 /scratchpad_*
+/tools/**/_tmp_*

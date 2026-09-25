@@ -25,10 +25,14 @@
 ## ou CHAR_SHOTS_FAIL puis quitte.
 extends SceneTree
 
-const CHAR_IDS := ["vif", "choc", "roc", "guet", "baume", "verrou"]
+## Roster figé par docs/LORE.md §4.0 ("Le roster et ses liens") : Vanne
+## remplace Roc (Contrôle, Ardente) et Roseau remplace Baume (Soutien,
+## Ligue du Palud) — mêmes rôles, noms de joute mis à jour.
+const CHAR_IDS := ["vif", "choc", "vanne", "guet", "roseau", "verrou"]
 # 3 alliés (bleu), 3 ennemis (rouge par défaut) — cloth recevant la couleur
 # d'équipe (design.md §5 ; Settings.enemy_color=0 -> rouge par défaut).
-const IS_ALLY := {"vif": true, "choc": true, "roc": false, "guet": false, "baume": true, "verrou": false}
+# Continuité des anciens id : Roc (false) -> Vanne, Baume (true) -> Roseau.
+const IS_ALLY := {"vif": true, "choc": true, "vanne": false, "guet": false, "roseau": true, "verrou": false}
 
 const MODEL_DIR := "res://assets/models/characters/"
 const SETTLE_FRAMES := 90
@@ -249,6 +253,12 @@ func _play(anim: AnimationPlayer, name: String) -> bool:
 	return false
 
 
+## Agents Tripo riggés (tools/blender/rig_tripo_character.py, ex. Verrou) :
+## UN SEUL matériau `*_tex`, jamais repeint en aplat (texture 2K déjà peinte —
+## même convention que PlayerLook.gd/model_preview.gd). Testé AVANT le
+## `begins_with(id + "_")` générique ci-dessous : "verrou_tex" le matcherait
+## aussi (et perdrait sa texture en la repeignant en aplat) sans cette
+## priorité.
 func _apply_cartoon_materials(model: Node3D, id: String, is_ally: bool) -> void:
 	var cloth_color: Color = Cartoon.ally_color() if is_ally else Cartoon.enemy_color()
 	for mesh in _find_mesh_instances(model):
@@ -258,7 +268,9 @@ func _apply_cartoon_materials(model: Node3D, id: String, is_ally: bool) -> void:
 		for i in mesh.mesh.get_surface_count():
 			var mat: Material = mesh.mesh.surface_get_material(i)
 			var mat_name: String = mat.resource_name if mat else ""
-			if mat_name == "%s_cloth" % id:
+			if mat_name.ends_with("_tex"):
+				mesh.set_surface_override_material(i, _textured_material(mat))
+			elif mat_name == "%s_cloth" % id:
 				mesh.set_surface_override_material(i, Cartoon.character(cloth_color))
 			elif mat_name.begins_with(id + "_"):
 				# gear/skin/accent : couleur exportée conservée, mais toujours
@@ -266,6 +278,24 @@ func _apply_cartoon_materials(model: Node3D, id: String, is_ally: bool) -> void:
 				var src: BaseMaterial3D = mat as BaseMaterial3D
 				var base_color: Color = src.albedo_color if src else Color.WHITE
 				mesh.set_surface_override_material(i, Cartoon.character(base_color))
+
+
+## Même technique que PlayerLook.gd::_textured_character_material et
+## tools/review/model_preview.gd::_restyle : garde `albedo_texture`, coupe le
+## grain peint (la texture porte déjà le détail). `Cartoon.character()`
+## (plutôt que `character_surface()`) pour garder l'encrage/contour déjà
+## utilisés par le reste de cette planche de capture.
+func _textured_material(src_mat: Material) -> ShaderMaterial:
+	var m := Cartoon.character(Color.WHITE)
+	m.set_shader_parameter("paint_grain_strength", 0.0)
+	var src := src_mat as BaseMaterial3D
+	if src:
+		m.set_shader_parameter("albedo_color", src.albedo_color)
+		if src.albedo_texture != null:
+			m.set_shader_parameter("use_albedo_texture", true)
+			m.set_shader_parameter("use_triplanar", false)
+			m.set_shader_parameter("albedo_texture", src.albedo_texture)
+	return m
 
 
 func _apply_silhouette_material(model: Node3D) -> void:

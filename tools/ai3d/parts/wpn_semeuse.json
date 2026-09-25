@@ -1,0 +1,11 @@
+{
+  "_comment": "A3D-13 — boites en metres, repere LOCAL post-scale_m. Muzzle +X (sonde marqueurs). scale_m=1.15. Tremie/bande cote non confirme individuellement (polarite Y non sondee par marqueur dedie) : boites Y pleine largeur pour ne jamais manquer la piece.",
+  "parts": [
+    {"name": "couvercle_tremie", "box_min": [-0.02, -0.20, 0.06], "box_max": [0.30, 0.20, 0.34]},
+    {"name": "bande", "box_min": [-0.20, -0.20, 0.08], "box_max": [-0.05, 0.20, 0.28]}
+  ],
+  "markers": [
+    {"name": "Muzzle", "position": [0.575, 0.0, 0.20]},
+    {"name": "Foregrip", "position": [0.30, 0.0, 0.05]}
+  ]
+}

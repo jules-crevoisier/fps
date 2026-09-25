@@ -10,7 +10,16 @@ extends SceneTree
 
 const LEVEL := "res://scenes/levels/test_arena.tscn"
 const HOST_TIMEOUT := 16.0
-const CLIENT_TIMEOUT := 22.0  # le client reste connecté jusqu'au verdict de l'hôte
+## Le client doit couper AVANT l'hôte : si l'hôte quitte le premier (process
+## qui se termine), sa déconnexion (`server_disconnected`) fait basculer le
+## client sur le menu principal (voir NetworkManager._on_server_disconnected)
+## en pleine émission/réception RPC, ce qui produit des « Node not found
+## .../Weapon » et des paquets RPC invalides. CLIENT_GRACE laisse le temps au
+## dernier RPC (étape 8) d'atteindre l'hôte, CLIENT_TIMEOUT n'est qu'un filet
+## de sécurité si une étape ne se termine jamais — les deux restent bien en
+## dessous de HOST_TIMEOUT.
+const CLIENT_GRACE := 1.5
+const CLIENT_TIMEOUT := 12.0
 const VALID_SHOTS := 3
 const BURST_SHOTS := 10
 
@@ -20,6 +29,15 @@ var _step: int = 0
 var _step_t: float = 0.0
 var _host_min_health: float = INF
 var _expected_damage: float = 0.0
+## Étape à laquelle le client a fini d'émettre toutes ses actions (-1.0 tant
+## que ce n'est pas encore arrivé) — sert de départ au délai CLIENT_GRACE.
+var _client_finished_t: float = -1.0
+## Dernières stats connues du client, mises à jour à chaque tick hôte tant que
+## son nœud existe — évite de dépendre du nœud client encore présent au
+## moment de l'évaluation finale (il peut avoir coupé la connexion avant).
+var _client_seen: bool = false
+var _client_rejected_shots: int = 0
+var _client_agent_index: int = -1
 
 var _started: bool = false
 
@@ -63,30 +81,42 @@ func _host_tick() -> bool:
 		if me:
 			var hp := me.get_node("Health") as Health
 			_host_min_health = minf(_host_min_health, hp.current_health)
-	if _t < HOST_TIMEOUT:
-		return false
-	var client: Node = null
-	if players:
+		# Capture les stats du client à CHAQUE tick tant que son nœud existe
+		# (comme _host_min_health ci-dessus) : le client coupe volontairement
+		# avant HOST_TIMEOUT (voir CLIENT_GRACE), donc son nœud peut déjà avoir
+		# été libéré (GameWorld._on_player_disconnected) au moment du verdict.
 		for p in players.get_children():
 			if p.name != "1":
-				client = p
-	if client == null:
+				var w := p.get_node_or_null("Weapon") as Weapon
+				if w:
+					_client_seen = true
+					_client_rejected_shots = w.rejected_shots
+					_client_agent_index = int(p.get("agent_index"))
+	if _t < HOST_TIMEOUT:
+		return false
+	if not _client_seen:
 		print("NET_SMOKE_RESULT ok=false reason=no_client")
 		quit(1)
 		return true
-	var w := client.get_node("Weapon") as Weapon
 	var host_hp := (players.get_node("1").get_node("Health") as Health)
 	var damage_taken := host_hp.max_health - _host_min_health
-	var agent_ok: bool = int(client.get("agent_index")) >= 0
+	var agent_ok: bool = _client_agent_index >= 0
 	# 3 tirs valides + 2 en rafale acceptés (burst) ; le reste doit être refusé.
-	var ok := damage_taken > 0.0 and w.rejected_shots >= 2 + (BURST_SHOTS - 2) and agent_ok
+	var ok := damage_taken > 0.0 and _client_rejected_shots >= 2 + (BURST_SHOTS - 2) and agent_ok
 	print("NET_SMOKE_RESULT ok=%s damage_taken=%.1f rejected_shots=%d agent_index=%d" % [
-		ok, damage_taken, w.rejected_shots, int(client.get("agent_index"))])
+		ok, damage_taken, _client_rejected_shots, _client_agent_index])
 	quit(0 if ok else 1)
 	return true
 
 # ---------------------------------------------------------------- CLIENT
 func _client_tick(delta: float) -> bool:
+	# Coupe peu après avoir tout émis (laisse CLIENT_GRACE au dernier RPC pour
+	# atteindre l'hôte) — toujours bien avant HOST_TIMEOUT, pour ne jamais
+	# subir la déconnexion serveur (host qui quitte en premier) en pleine
+	# émission/réception RPC. CLIENT_TIMEOUT n'est qu'un filet de sécurité.
+	if _client_finished_t >= 0.0 and _t - _client_finished_t > CLIENT_GRACE:
+		quit(0)
+		return true
 	if _t > CLIENT_TIMEOUT:
 		quit(0)
 		return true
@@ -139,6 +169,7 @@ func _client_tick(delta: float) -> bool:
 				var hw := host.get_node("Weapon") as Weapon
 				hw.request_fire.rpc_id(1, origin, [Vector3.FORWARD], WeaponDatabase.default_loadout_ids()[0])
 				print("NET_SMOKE_CLIENT sent all steps, expected_valid_damage=%.1f" % _expected_damage)
+				_client_finished_t = _t
 				_next()
 	return false
 

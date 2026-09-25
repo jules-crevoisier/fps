@@ -38,11 +38,25 @@
 ## déjà) : bmesh.ops.{create_cube,create_cone,scale,rotate,translate}, bevel
 ## via bpy.ops.object.modifier_apply sous temp_override, export_scene.gltf
 ## (GLB, export_apply=True, export_yup=True).
+##
+## A3D-03 (migration stylekit) : `add_box`/`add_cyl` sont importés depuis
+## make_weapons.py (copie canonique, plus de duplication byte-à-byte) ; remise
+## à zéro de scène, bevel, lissage "hard-surface", normale de contour
+## (`_smooth_normal` — corrige le contour fendu aux arêtes vives, lu par
+## assets/shaders/ink_outline.gdshader en CUSTOM0) et AO/courbure viennent de
+## `tools/blender/lib/toonkit.py` (A3D-02), comme make_weapons.py.
 import bpy
 import bmesh
 import math
 import os
+import sys
 from mathutils import Matrix, Vector
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib"))
+import toonkit  # noqa: E402
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from make_weapons import add_box, add_cyl  # noqa: E402 -- copie canonique, pas de duplication
 
 GLOVE, CUFF = 0, 1
 SLOT_NAMES = ["glove", "cuff"]
@@ -62,46 +76,6 @@ SLOT_COLORS = {
 OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
 	"assets", "models", "characters")
 OUT_NAME = "fp_gloves"
-
-
-def _clear_scene() -> None:
-	for o in list(bpy.data.objects):
-		bpy.data.objects.remove(o, do_unlink=True)
-	for coll in (bpy.data.meshes, bpy.data.materials):
-		for block in list(coll):
-			if block.users == 0:
-				coll.remove(block)
-
-
-# ---------------------------------------------------------------------------
-# Mêmes helpers que tools/blender/make_weapons.py (travailler sur les verts
-# RENVOYÉS par l'opérateur bmesh, jamais une tranche de bm.faces).
-# ---------------------------------------------------------------------------
-def add_box(bm: bmesh.types.BMesh, size: tuple, center: tuple, mat_idx: int, rot=None) -> list:
-	verts = list(bmesh.ops.create_cube(bm, size=1.0)["verts"])
-	new_faces = list({f for v in verts for f in v.link_faces})
-	bmesh.ops.scale(bm, vec=Vector(size), verts=verts)
-	if rot:
-		axis, deg = rot
-		bmesh.ops.rotate(bm, cent=(0, 0, 0), matrix=Matrix.Rotation(math.radians(deg), 3, axis), verts=verts)
-	bmesh.ops.translate(bm, vec=Vector(center), verts=verts)
-	for f in new_faces:
-		f.material_index = mat_idx
-	return new_faces
-
-
-def add_cyl(bm: bmesh.types.BMesh, radius: float, depth: float, center: tuple, mat_idx: int,
-		segments: int = 10, rot=None, radius2=None) -> list:
-	verts = list(bmesh.ops.create_cone(bm, cap_ends=True, cap_tris=False, segments=segments,
-		radius1=radius, radius2=radius2 if radius2 is not None else radius, depth=depth)["verts"])
-	new_faces = list({f for v in verts for f in v.link_faces})
-	if rot:
-		axis, deg = rot
-		bmesh.ops.rotate(bm, cent=(0, 0, 0), matrix=Matrix.Rotation(math.radians(deg), 3, axis), verts=verts)
-	bmesh.ops.translate(bm, vec=Vector(center), verts=verts)
-	for f in new_faces:
-		f.material_index = mat_idx
-	return new_faces
 
 
 # ---------------------------------------------------------------------------
@@ -131,6 +105,20 @@ def _shift(parts: list, offset: tuple) -> list:
 ## lisibles même à la distance/résolution du viewmodel (itération render,
 ## voir tools/fp_shots.gd — la 1ère passe rendait un bloc informe, écarts
 ## trop fins pour rester visibles une fois ombrés).
+##
+## Le POINT D'ATTACHE (pas la géométrie ci-dessous, inchangée) est corrigé
+## côté ViewModel.gd (`_right_glove_anchor`, tâche FP-02) plutôt qu'ici : le
+## repaint Tripo Studio (A3D-20) a changé la convention d'origine des 7 armes
+## (mesuré par rendu : l'ancienne hypothèse "origine = sommet de poignée,
+## gant pend en Y négatif" ne tient plus partout), mais de façon DIFFÉRENTE
+## pour un pistolet (origine proche du bas réel de la poignée) que pour un
+## fusil à chargeur externe (origine au bout du chargeur, sous la VRAIE
+## poignée) — un simple décalage global ici aurait corrigé l'un en cassant
+## l'autre (constaté : un 2e rendu après un décalage +0,12 uniforme ici
+## améliorait le Pistolet mais faisait remonter le Ravage dans la zone déjà
+## occupée par le gant gauche). Un point d'attache PAR ARME (même
+## méthodologie que `weapon_nudge_for`, mesuré au rendu) résout les deux
+## sans retoucher cette géométrie.
 def parts_glove_r() -> list:
 	parts = [
 		# Paume : couvre le dos de la poignée (côté +Z, vers le tireur).
@@ -217,24 +205,23 @@ def build_glove(name: str, parts_fn, bevel_width: float) -> object:
 				bsdf.inputs["Roughness"].default_value = 0.8
 		obj.data.materials.append(mat)
 
-	mod = obj.modifiers.new("bevel", type='BEVEL')
-	mod.width = bevel_width
-	mod.segments = 2
-	mod.limit_method = 'ANGLE'
-	mod.angle_limit = math.radians(35)
-	bpy.context.view_layer.objects.active = obj
-	with bpy.context.temp_override(object=obj):
-		bpy.ops.object.modifier_apply(modifier=mod.name)
-	obj.data.update()
-	for p in obj.data.polygons:
-		p.use_smooth = False  # facettes nettes façon BD, cohérent avec les armes.
+	# Bevel appliqué, puis lissage "hard-surface" stylekit (remplace l'ancien
+	# `p.use_smooth = False` uniforme) + normale de contour + AO/courbure —
+	# voir le commentaire d'en-tête de fichier (A3D-03), identique à
+	# make_weapons.py.
+	toonkit.add_bevel(obj, width=bevel_width, segments=2, angle_limit_deg=35.0)
+	toonkit.weighted_normals(obj)
+	toonkit.smooth_normal_attrs(obj)
+	toonkit.bake_vertex_ao(obj)
+	toonkit.curvature_edge_mask(obj)
 
-	print(f"GLOVE_MODEL_OK {name} polys={len(obj.data.polygons)}")
+	tris = toonkit.tri_count(obj)
+	print(f"GLOVE_MODEL_OK {name} tris={tris}")
 	return obj
 
 
 def main() -> None:
-	_clear_scene()
+	toonkit.reset_scene()
 	root = bpy.data.objects.new("Gloves", None)
 	root.empty_display_type = 'PLAIN_AXES'
 	bpy.context.scene.collection.objects.link(root)
@@ -244,8 +231,9 @@ def main() -> None:
 		obj = build_glove(name, parts_fn, bevel_width)
 		obj.parent = root
 		objs.append(obj)
-		if len(obj.data.polygons) > 2000:
-			raise RuntimeError(f"{name} dépasse le budget de 2000 tris ({len(obj.data.polygons)})")
+		tris = toonkit.tri_count(obj)
+		if tris > 2000:
+			raise RuntimeError(f"{name} dépasse le budget de 2000 tris ({tris})")
 
 	os.makedirs(OUT_DIR, exist_ok=True)
 	out_path = os.path.join(OUT_DIR, f"{OUT_NAME}.glb")
@@ -259,6 +247,9 @@ def main() -> None:
 		export_apply=True,
 		export_yup=True,
 		export_materials='EXPORT',
+		export_vertex_color='ACTIVE',
+		export_all_vertex_colors=True,
+		export_attributes=True,
 		export_cameras=False,
 		export_lights=False,
 		export_animations=False,

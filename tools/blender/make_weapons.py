@@ -13,11 +13,31 @@
 ## `bpy.ops.object.modifier_apply` sous `temp_override(object=obj)`,
 ## export_scene.gltf(export_format='GLB', export_apply=True, export_yup=True)
 ## (Y-up par défaut, identique à Godot).
+##
+## A3D-03 (migration stylekit) : remise à zéro de scène, bevel, lissage
+## "hard-surface" (normales pondérées), normale moyenne par sommet pour la
+## coque de contour (`_smooth_normal`, corrige le contour fendu aux arêtes
+## vives — docs/research/06_ai_3d_pipeline.md §B3, lu par assets/shaders/
+## ink_outline.gdshader en CUSTOM0) et AO/courbure en couleurs de sommet
+## viennent de `tools/blender/lib/toonkit.py` (A3D-02). `add_box`/`add_cyl`
+## (bmesh partagé + `material_index` posé immédiatement, pas couvert par
+## toonkit qui ne fabrique que des objets uniques) restent ICI : c'est la
+## copie CANONIQUE, importée telle quelle par make_gloves.py (mêmes gabarits
+## d'arme) au lieu d'être dupliquée. L'export reste un appel manuel à
+## `export_scene.gltf` (pas `toonkit.export_glb`, qui suppose que TOUS les
+## objets passés sont des mesh — ici "Muzzle"/"Foregrip" sont des empties),
+## avec les mêmes réglages `export_vertex_color`/`export_attributes` que
+## `toonkit.export_glb` pour que l'AO/courbure/normale lissée sortent bien
+## dans le .glb.
 import bpy
 import bmesh
 import math
 import os
+import sys
 from mathutils import Matrix, Vector
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib"))
+import toonkit  # noqa: E402
 
 BODY, GRIP, METAL, ACCENT = 0, 1, 2, 3
 SLOT_NAMES = ["body", "grip", "metal", "accent"]
@@ -33,15 +53,6 @@ SLOT_COLORS = {
 
 OUT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
 	"assets", "models", "weapons")
-
-
-def _clear_scene() -> None:
-	for o in list(bpy.data.objects):
-		bpy.data.objects.remove(o, do_unlink=True)
-	for coll in (bpy.data.meshes, bpy.data.materials):
-		for block in list(coll):
-			if block.users == 0:
-				coll.remove(block)
 
 
 def add_box(bm: bmesh.types.BMesh, size: tuple, center: tuple, mat_idx: int, rot=None) -> list:
@@ -209,7 +220,7 @@ FOREGRIP_FRACTION = {
 
 
 def build(name: str, parts_fn, bevel_width: float) -> None:
-	_clear_scene()
+	toonkit.reset_scene()
 	bm = bmesh.new()
 	parts, muzzle_pos = parts_fn()
 	for kind, a, center, mat_idx, extra in parts:
@@ -247,17 +258,14 @@ def build(name: str, parts_fn, bevel_width: float) -> None:
 				bsdf.inputs["Roughness"].default_value = 0.75 if slot != "metal" else 0.35
 		obj.data.materials.append(mat)
 
-	mod = obj.modifiers.new("bevel", type='BEVEL')
-	mod.width = bevel_width
-	mod.segments = 2
-	mod.limit_method = 'ANGLE'
-	mod.angle_limit = math.radians(35)
-	bpy.context.view_layer.objects.active = obj
-	with bpy.context.temp_override(object=obj):
-		bpy.ops.object.modifier_apply(modifier=mod.name)
-	obj.data.update()
-	for p in obj.data.polygons:
-		p.use_smooth = False  # facettes nettes façon BD, pas de lissage
+	# Bevel appliqué, puis lissage "hard-surface" stylekit (remplace l'ancien
+	# `p.use_smooth = False` uniforme) + normale de contour + AO/courbure —
+	# voir le commentaire d'en-tête de fichier (A3D-03).
+	toonkit.add_bevel(obj, width=bevel_width, segments=2, angle_limit_deg=35.0)
+	toonkit.weighted_normals(obj)
+	toonkit.smooth_normal_attrs(obj)
+	toonkit.bake_vertex_ao(obj)
+	toonkit.curvature_edge_mask(obj)
 
 	muzzle = bpy.data.objects.new("Muzzle", None)
 	muzzle.empty_display_type = 'PLAIN_AXES'
@@ -290,11 +298,15 @@ def build(name: str, parts_fn, bevel_width: float) -> None:
 		export_apply=True,
 		export_yup=True,
 		export_materials='EXPORT',
+		export_vertex_color='ACTIVE',
+		export_all_vertex_colors=True,
+		export_attributes=True,
 		export_cameras=False,
 		export_lights=False,
 		export_animations=False,
 	)
-	print(f"WEAPON_MODEL_OK {name} polys={len(obj.data.polygons)} -> {out_path}")
+	tris = toonkit.tri_count(obj)
+	print(f"WEAPON_MODEL_OK {name} tris={tris} -> {out_path}")
 
 
 def main() -> None:

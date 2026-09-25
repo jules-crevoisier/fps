@@ -36,15 +36,39 @@
 ## - export_scene.gltf(export_format='GLB', export_apply=True, export_yup=True)
 ##   Y-up par défaut, identique à Godot ; noms de matériaux Blender =
 ##   noms de slot glTF (aucun autre objet actif en mémoire au moment de la
-##   création grâce à _clear_scene() en tête de build(), donc pas de
+##   création grâce à toonkit.reset_scene() en tête de build(), donc pas de
 ##   collision "wood.001" entre deux props qui utilisent le même kind).
+##
+## A3D-03 (migration stylekit) : la remise à zéro de scène, le bevel appliqué,
+## le lissage "hard-surface" (normales pondérées), la normale moyenne par
+## sommet pour la coque de contour (`_smooth_normal`, docs/research/
+## 06_ai_3d_pipeline.md §B3 — corrige le contour fendu aux arêtes vives lu par
+## assets/shaders/ink_outline.gdshader en CUSTOM0), l'AO et la courbure en
+## couleurs de sommet, et l'export .glb + rapport JSON viennent maintenant de
+## `tools/blender/lib/toonkit.py` (A3D-02) au lieu d'être ré-écrits ici. Les
+## helpers propres à ce fichier (add_box/add_cyl/add_strut/add_ring/
+## add_text_merge/add_lattice_tower, le DSL P_*/PROPS, les couleurs de kind
+## KIND_COLORS/KIND_ROUGHNESS/KIND_METALLIC) restent locaux : ils construisent
+## PLUSIEURS pièces dans UN SEUL bmesh partagé avec un `material_index` par
+## face assigné après coup (`kind_index`), un besoin que toonkit (qui ne
+## fabrique que des objets UNIQUES) ne couvre pas — et les noms de kind courts
+## ("corrugated", "wood", "sand"…) sont un vocabulaire différent des tokens
+## longs de toonkit.palette()/_KIND_PRESETS ("corrugated_metal",
+## "wood_planks", "sand_dirt"…, voir scripts/core/Cartoon.gd `_PAINTED_ALIAS`
+## qui fait déjà le pont) : les recoloriser via toonkit changerait le rendu
+## d'aperçu du .glb brut vers du gris de repli, donc `_new_material` reste
+## tel quel.
 import bpy
 import bmesh
 import json
 import math
 import os
+import sys
 
 from mathutils import Matrix, Vector
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib"))
+import toonkit  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Kinds peints (contrat partagé avec Cartoon.painted). Les noms de slot
@@ -87,15 +111,6 @@ SET_CARGO = "cargo_ship"
 
 OUT_ROOT = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
 	"assets", "models", "props")
-
-
-def _clear_scene() -> None:
-	for o in list(bpy.data.objects):
-		bpy.data.objects.remove(o, do_unlink=True)
-	for coll in (bpy.data.meshes, bpy.data.materials, bpy.data.curves):
-		for block in list(coll):
-			if block.users == 0:
-				coll.remove(block)
 
 
 # ---------------------------------------------------------------------------
@@ -1332,7 +1347,7 @@ def _new_material(name: str) -> bpy.types.Material:
 
 
 def build(name: str, parts_fn, bevel_width: float, set_name: str) -> dict:
-	_clear_scene()
+	toonkit.reset_scene()
 	bm = bmesh.new()
 	parts = parts_fn()
 
@@ -1382,37 +1397,23 @@ def build(name: str, parts_fn, bevel_width: float, set_name: str) -> dict:
 	for kind in kinds_used:
 		obj.data.materials.append(_new_material(kind))
 
-	if bevel_width > 0:
-		mod = obj.modifiers.new("bevel", type="BEVEL")
-		mod.width = bevel_width
-		mod.segments = 2
-		mod.limit_method = "ANGLE"
-		mod.angle_limit = math.radians(35)
-		bpy.context.view_layer.objects.active = obj
-		with bpy.context.temp_override(object=obj):
-			bpy.ops.object.modifier_apply(modifier=mod.name)
-	obj.data.update()
-	for poly in obj.data.polygons:
-		poly.use_smooth = False
+	# Bevel appliqué (chunky/BD), puis lissage "hard-surface" stylekit : faces
+	# lissées + arêtes dures par angle (`weighted_normals`, remplace l'ancien
+	# `poly.use_smooth = False` uniforme qui facettait TOUT). `smooth_normal_attrs`
+	# bake ensuite la normale moyenne par sommet (coque de contour continue,
+	# même aux arêtes dures) et les deux bakes vertex-color (AO, courbure)
+	# donnent l'usure/le relief peint attendus par le critère d'acceptation.
+	toonkit.add_bevel(obj, width=bevel_width, segments=2, angle_limit_deg=35.0)
+	toonkit.weighted_normals(obj)
+	toonkit.smooth_normal_attrs(obj)
+	toonkit.bake_vertex_ao(obj)
+	toonkit.curvature_edge_mask(obj)
 
 	out_dir = os.path.join(OUT_ROOT, set_name)
-	os.makedirs(out_dir, exist_ok=True)
 	out_path = os.path.join(out_dir, f"{name}.glb")
-	bpy.ops.object.select_all(action="DESELECT")
-	obj.select_set(True)
-	bpy.ops.export_scene.gltf(
-		filepath=out_path,
-		export_format="GLB",
-		use_selection=True,
-		export_apply=True,
-		export_yup=True,
-		export_materials="EXPORT",
-		export_cameras=False,
-		export_lights=False,
-		export_animations=False,
-	)
+	toonkit.export_glb(out_path, obj, write_report=True)
 
-	tris = sum(max(0, len(poly.vertices) - 2) for poly in obj.data.polygons)
+	tris = toonkit.tri_count(obj)
 	dims = tuple(round(v, 3) for v in obj.dimensions)
 	print(f"PROP_MODEL_OK {name} tris={tris} dims={dims} slots={kinds_used} -> {out_path}")
 	return {"tris": tris, "dims": dims, "slots": kinds_used, "path": out_path}
