@@ -129,6 +129,14 @@ func _reparent_model_to_hand(weapon_id: int = -1) -> void:
 	var rot_deg: Vector3 = grip["rot_deg"]
 	_model.transform = Transform3D(Basis.from_euler(Vector3(deg_to_rad(rot_deg.x), deg_to_rad(rot_deg.y), deg_to_rad(rot_deg.z))), pos)
 
+## Position MONDE du canon (empty "Muzzle" du modèle 3D courant, voir
+## `_on_current_id_changed`) — utilisée par Weapon.gd (GF-06) pour dessiner
+## le traceur d'un tir DISTANT depuis l'arme telle que la voient les AUTRES
+## joueurs (voir Weapon._muzzle_position). Repli sur la position de ce nœud
+## (main droite du corps) si le modèle n'est pas encore chargé.
+func muzzle_global_position() -> Vector3:
+	return _muzzle.global_position if _muzzle else global_position
+
 func _on_remote_fired(_cfg: WeaponConfig, _origin: Vector3, _dirs: Array) -> void:
 	_muzzle_t = MUZZLE_DUR
 	if _muzzle_mesh:
@@ -150,6 +158,11 @@ func _apply_cartoon_materials(model: Node3D) -> void:
 		for i in mesh.mesh.get_surface_count():
 			var mat: Material = mesh.mesh.surface_get_material(i)
 			var name: String = mat.resource_name if mat else ""
+			# Arme Tripo peinte (A3D-20) : même matériau que ViewModel.gd.
+			if name.contains("_painted"):
+				var tex := Cartoon.texture_from_imported_material(mat)
+				mesh.set_surface_override_material(i, Cartoon.painted_texture_prop(tex))
+				continue
 			for slot in palette.keys():
 				if name.ends_with("_%s" % slot):
 					mesh.set_surface_override_material(i, Cartoon.character(palette[slot]))

@@ -2,8 +2,22 @@
 ## Spec (contract-p0.md, Inventory): server-authoritative loadout/ammo/reload
 ## state machine, driven purely by WeaponDatabase.get_by_id. Weapon ids used
 ## below (see WeaponDatabase.PATHS): 0 Pistolet (mag 12, reserve 60, reload 1.5),
-## 1 Magnum (mag 6, reserve 24), 4 Ravage (mag 25, reserve 75, reload 2.5).
+## 1 Magnum (mag 6, reserve 24, arena 30), 4 Ravage (mag 25, reserve 75, arena
+## 125, reload 2.5), 8 Semeuse (reserve == arena == 200).
 ## Each test builds its own Inventory instance; none share state.
+##
+## GF-21 (docs/research/10_ammo_kits_input.md §2.2/§2.3/§2.6) ajoute deux
+## groupes de tests, seul fichier de test possédé par cette tâche :
+##  - la règle de munitions par mode (Inventory.RULE_ROUND/RULE_ARENA/
+##    RULE_INFINITE, `reserve_for`) sur `set_loadout`/`give`/`replace_current`/
+##    `add_into_free` ;
+##  - `Weapon.arena_buy_allowed`, fonction STATIQUE et PURE (aucune dépendance
+##    à une scène ou à un pair réseau) qui porte la fenêtre d'achat de l'arène
+##    — testée ici directement, comme WeaponMath/WeaponFeel/RateLimiter/
+##    ShotValidator le sont dans les autres fichiers de tests/combat/ : la
+##    logique réseau qui l'appelle (`Weapon._server_buy`) reste, elle,
+##    intégration seule (aucun fichier de test dédié à Weapon.gd dans ce
+##    dépôt), la partie décisionnelle testable sans scène en est extraite.
 extends GdUnitTestSuite
 
 
@@ -382,3 +396,89 @@ func test_finish_reload_if_within_refuses_when_not_reloading() -> void:
 	var inv := _with_pistolet()
 	assert_bool(inv.finish_reload_if_within(0.15)).is_false()
 	assert_int(inv.mag[0]).is_equal(12)
+
+
+# ---- GF-21 : règle de munitions par mode (ammo_rule, §2.2/§2.3) ----
+# RULE_ROUND (défaut, sans argument) = réserve des .tres (WeaponConfig.
+# reserve_ammo, comportement HISTORIQUE, voir tous les tests ci-dessus qui
+# n'en passent aucun). RULE_ARENA = réserve élargie (WeaponConfig.
+# arena_reserve_ammo, §2.3). RULE_INFINITE = entraînement (INFINITE_RESERVE).
+# Ravage (id 4) : mag 25, reserve_ammo 75 (.tres), arena_reserve_ammo 125.
+# Magnum (id 1) : mag 6, reserve_ammo 24 (.tres), arena_reserve_ammo 30.
+# Semeuse (id 8) : reserve_ammo == arena_reserve_ammo == 200 (§2.3 : déjà au
+# max, inchangée par la règle).
+
+func test_set_loadout_round_rule_matches_default_and_tres_reserve() -> void:
+	var inv := Inventory.new(2)
+	inv.set_loadout([4, 1], Inventory.RULE_ROUND)
+	assert_int(inv.reserve[0]).is_equal(75)
+	assert_int(inv.reserve[1]).is_equal(24)
+
+
+func test_set_loadout_arena_rule_uses_arena_reserve_ammo() -> void:
+	var inv := Inventory.new(2)
+	inv.set_loadout([4, 1], Inventory.RULE_ARENA)
+	assert_int(inv.mag[0]).is_equal(25)      # le chargeur ne change jamais avec la règle
+	assert_int(inv.reserve[0]).is_equal(125)  # Ravage : ×5 chargeurs (§2.3)
+	assert_int(inv.reserve[1]).is_equal(30)   # Magnum : ×5 chargeurs
+
+
+func test_set_loadout_arena_rule_leaves_already_maxed_weapon_unchanged() -> void:
+	var inv := Inventory.new(1)
+	inv.set_loadout([8], Inventory.RULE_ARENA)  # Semeuse : 200 dans les deux cas
+	assert_int(inv.reserve[0]).is_equal(200)
+
+
+func test_set_loadout_infinite_rule_uses_infinite_reserve_sentinel() -> void:
+	var inv := Inventory.new(1)
+	inv.set_loadout([4], Inventory.RULE_INFINITE)
+	assert_int(inv.reserve[0]).is_equal(Inventory.INFINITE_RESERVE)
+
+
+func test_reserve_for_returns_zero_for_null_config() -> void:
+	assert_int(Inventory.reserve_for(null, Inventory.RULE_ARENA)).is_equal(0)
+
+
+func test_give_on_free_slot_respects_ammo_rule() -> void:
+	var inv := Inventory.new(2)
+	inv.give(4, Inventory.RULE_ARENA)
+	assert_int(inv.reserve[0]).is_equal(125)
+
+
+func test_replace_current_respects_ammo_rule() -> void:
+	var inv := Inventory.new(1)
+	inv.set_loadout([1])  # Magnum, réserve .tres (24) au départ
+	inv.replace_current(4, Inventory.RULE_ARENA)
+	assert_int(inv.reserve[0]).is_equal(125)
+
+
+func test_add_into_free_respects_ammo_rule() -> void:
+	var inv := Inventory.new(2)
+	inv.current = 1  # slot courant vide -> add_into_free l'équipe (branche déjà couverte plus haut)
+	inv.add_into_free(4, Inventory.RULE_ARENA)
+	assert_int(inv.reserve[0]).is_equal(125)
+
+
+# ---- GF-21 : fenêtre d'achat en arène (Weapon.arena_buy_allowed, §2.6) ----
+# Pure et statique (aucune scène/pair réseau requis) : rejet de l'achat arène
+# passé ARENA_BUY_WINDOW (10 s) depuis le spawn — Litige/Duel/entraînement
+# (toute règle != "arena") restent SANS restriction ici (leur propre
+# mécanisme, phase d'achat ou absence de boutique, vit ailleurs).
+
+func test_arena_buy_allowed_true_within_window() -> void:
+	assert_bool(Weapon.arena_buy_allowed(Inventory.RULE_ARENA, 0.0)).is_true()
+	assert_bool(Weapon.arena_buy_allowed(Inventory.RULE_ARENA, 9.99)).is_true()
+
+
+func test_arena_buy_allowed_true_exactly_at_window_boundary() -> void:
+	assert_bool(Weapon.arena_buy_allowed(Inventory.RULE_ARENA, 10.0)).is_true()
+
+
+func test_arena_buy_allowed_false_past_window() -> void:
+	assert_bool(Weapon.arena_buy_allowed(Inventory.RULE_ARENA, 10.01)).is_false()
+	assert_bool(Weapon.arena_buy_allowed(Inventory.RULE_ARENA, 600.0)).is_false()
+
+
+func test_arena_buy_allowed_unrestricted_outside_arena_rule() -> void:
+	assert_bool(Weapon.arena_buy_allowed(Inventory.RULE_ROUND, 600.0)).is_true()
+	assert_bool(Weapon.arena_buy_allowed(Inventory.RULE_INFINITE, 600.0)).is_true()

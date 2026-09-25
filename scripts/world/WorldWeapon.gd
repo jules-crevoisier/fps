@@ -176,7 +176,10 @@ func _check_ground() -> void:
 	var space := get_world_3d().direct_space_state
 	var from := global_position + Vector3(0, 0.4, 0)
 	var to := global_position - Vector3(0, 0.25, 0)
-	var q := PhysicsRayQueryParameters3D.create(from, to)
+	# Masque PhysicsLayers.SHOT_MASK : ignore la fumée (calque VISION, bloque
+	# la vue, pas les corps) — une arme lâchée traversant une fumée en
+	# tombant ne doit pas flotter sur sa surface (docs/audit/bugs.md BUG-06).
+	var q := PhysicsRayQueryParameters3D.create(from, to, PhysicsLayers.SHOT_MASK)
 	q.collide_with_areas = false
 	var hit := space.intersect_ray(q)
 	if not hit.is_empty():

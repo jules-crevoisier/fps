@@ -6,16 +6,41 @@
 ## BESOIN du moteur (raycast physique, navmesh, aire de zone, draw calls —
 ## §5.3 NEW, §5.5 NEW, §5.6, §5.7, §5.10) vivent dans `test_navmesh.gd`.
 ##
+## EXCEPTION (§5.12, revue QA LD-03) : trois tests qui INSTANCIENT
+## `MapSetup` — le bug corrigé par cette revue est dans le câblage
+## `MapSetup -> nœud "SpawnPoints"` (lu par `GameWorld._get_spawn_position`),
+## pas dans les données pures de `Layouts.gd` (§5.11 ci-dessous, déjà
+## vertes) ; `test_navmesh.gd`, seul autre fichier à instancier `MapSetup`
+## pour ses propres besoins moteur, est hors de la liste de fichiers de
+## cette tâche (LD-03 ne possède que `Layouts.gd`/`MapSetup.gd`/ce fichier).
+##
 ## §5 : 1 bornes/décomptes, 2 distance de spawn, 3 (partie pure) ligne de
 ## vue par empreintes, 4 plafonds de sightline par lane, 5 (partie pure)
 ## ratio à vol d'oiseau SnD, 7 (partie pure) alternance des jumeaux dans la
 ## rotation des hardpoints, 8 symétrie ponctuelle des arènes, 9 pentes de
-## rampe / tirants d'air / simulation de saut pour les trous de 8 m.
+## rampe / tirants d'air / simulation de saut pour les trous de 8 m,
+## 11 (LD-03, partie pure) spawns TDM/Hardpoint neutres `tdm_spawns` — bornes,
+## `look`, et ligne de vue par empreintes (comme §5.3) depuis chaque
+## `strong_positions` déclarée, à moins de 20 m à vol d'oiseau (3D), 12
+## (LD-03, revue QA, BESOIN du moteur — exception ci-dessus) câblage réel
+## `MapSetup -> "SpawnPoints"` selon le mode.
 extends GdUnitTestSuite
 
 const MAP_IDS_4V4 := ["port_ferraille", "val_poussiere", "saint_ombre", "col_du_vautour"]
 const ARENA_IDS := ["la_fosse", "le_belvedere"]
 const PALETTE_KEYS := ["floor", "wall", "cover", "platform", "accent"]
+
+## LD-03 (docs/research/03_level_design.md §5 "16-24 points par map") :
+## bornes de décompte des spawns TDM/Hardpoint neutres `tdm_spawns`.
+const TDM_SPAWNS_MIN := 16
+const TDM_SPAWNS_MAX := 24
+
+## LD-03 acceptance : "aucun n'est vu depuis une position forte déclarée à
+## moins de 20 m (rayons 3D)" — rayon à vol d'oiseau, PAS la projection 2D
+## de `_pos2` utilisée par `_line_is_clear` pour la partie "vu" du test
+## (voir §5.3 ci-dessous : même méthode par empreintes que le reste de ce
+## fichier, aucun raycast physique ici).
+const STRONG_POSITION_RADIUS := 20.0
 
 ## `axis` : l'axe des LANES de la map (maps-spec.md §3 "Lanes" — Port/Val/Col
 ## se jouent est-ouest, Saint-Ombre "runs north-south"). L'axe PERPENDICULAIRE
@@ -524,6 +549,305 @@ func test_design_gaps_measure_8_0m_between_the_cited_edges() -> void:
 		var b: Vector3 = gap["b"]
 		var d := Vector2(a.x, a.z).distance_to(Vector2(b.x, b.z))
 		assert_float(d).append_failure_message("%s gap=%.2f" % [id, d]).is_equal_approx(8.0, 0.1)
+
+
+# ======================================================================
+#  §5.13 (LD-06, docs/research/03_level_design.md, "headroom audit on
+#  movement routes") — le long de chaque SLIDE_RAMP, DESIGN_GAP et
+#  escalier (`type == "stairs"`, quelle que soit la map), aucun solide
+#  n'intercepte moins de 3,2 m de dégagement vertical au-dessus du "sol de
+#  la route" (la surface interpolée entre les deux bouts de la rampe/l'
+#  escalier, ou la ligne à hauteur constante d'un DESIGN_GAP), échantillonné
+#  tous les 0,5 m (`_sample_route`). Pure (aucun nœud) : même méthode par
+#  empreintes que le reste de ce fichier (`Kit.piece_footprint`, déjà
+#  utilisée par §5.3/§5.4/§5.9) — la pièce de route elle-même ne peut
+#  jamais s'auto-bloquer (son empreinte descend toujours jusqu'à
+#  `min(start.y, end.y)`, donc son "bottom" est toujours <= tout point
+#  échantillonné SUR elle : voir `_overhead_clearance`, filtre
+#  `bottom <= pos.y`). `HEADROOM_EXCEPTIONS` : dérogations déclarées
+#  (>= 2,4 m), documentées au cas par cas quand la contrainte de conception
+#  qui a fixé la géométrie (ex. LD-11 anti-sightline) rendrait un correctif
+#  à 3,2 m risqué pour une autre régression déjà vérifiée.
+# ======================================================================
+const HEADROOM_CLEARANCE_MIN := 3.2
+const HEADROOM_EXCEPTION_MIN := 2.4
+
+## {"<map_id>:<route>": {"<nom_du_bloqueur>": <dégagement_min_déclaré>}} —
+## voir l'en-tête de section : chaque entrée doit rester >= HEADROOM_EXCEPTION_MIN
+## et porter sa propre justification en commentaire au point d'usage.
+##
+## saint_ombre:TunnelRamp(M) sous TunnelCeiling — mesuré 3,00 m (Layouts.gd
+## `saint_ombre()` : TunnelCeiling bottom=-0,5, TunnelRamp arrive à y=-3,5 —
+## même paire déjà couverte par `test_headroom_under_named_overhead_pieces_
+## is_at_least_2_2m` ci-dessus, qui la juge suffisante à 2,2 m). Le tunnel
+## est un passage bas VOULU (souterrain industriel, docs/research/
+## 03_level_design.md) : rehausser TunnelCeiling à 3,2 m percerait le plafond
+## au ras de TunnelFloor (bottom=-0,5 -> il faudrait descendre le tunnel
+## encore, hors de mon périmètre géométrique déjà calé par LD-02/LD-05/LD-10,
+## tests/maps/test_snd_timings.gd ROTATION_EXEMPTIONS "saint_ombre" ci-dessus).
+## 3,00 m reste largement praticable (> 2x la hauteur d'un joueur debout).
+const HEADROOM_EXCEPTIONS := {
+	"saint_ombre:TunnelRamp": {"TunnelCeiling": 2.4},
+	"saint_ombre:TunnelRampM": {"TunnelCeiling": 2.4},
+}
+
+
+static func _sample_route(a: Vector3, b: Vector3, step: float = 0.5) -> Array:
+	var length := a.distance_to(b)
+	if length < 0.001:
+		return [a]
+	var out: Array = []
+	var n := int(ceil(length / step))
+	for i in range(n + 1):
+		var t := minf(float(i) * step / length, 1.0)
+		out.append(a.lerp(b, t))
+	return out
+
+
+## Dégagement vertical minimal au-dessus de `pos` (le "sol de la route")
+## parmi `pieces`, et le nom de la pièce la plus basse (messages d'échec +
+## clé des exceptions déclarées). `visual_only` (aucune collision réelle)
+## ne compte jamais ; une pièce dont le dessous est SOUS `pos.y` (le sol
+## lui-même, ou la pièce de route en cours d'échantillonnage) n'est jamais
+## "au-dessus", donc jamais comptée — voir l'en-tête de section.
+static func _overhead_clearance(pos: Vector3, pieces: Array) -> Dictionary:
+	var best := INF
+	var best_name := ""
+	for entry in pieces:
+		var piece: Dictionary = entry
+		if bool(piece.get("visual_only", false)):
+			continue
+		var fp := Kit.piece_footprint(piece)
+		var mn: Vector2 = fp["min"]
+		var mx: Vector2 = fp["max"]
+		if pos.x < mn.x or pos.x > mx.x or pos.z < mn.y or pos.z > mx.y:
+			continue
+		var bottom := float(fp["bottom"])
+		if bottom <= pos.y + 0.01:
+			continue
+		var clearance := bottom - pos.y
+		if clearance < best:
+			best = clearance
+			best_name = String(piece.get("name", "?"))
+	return {"clearance": best, "blocker": best_name}
+
+
+## Échantillonne `a` -> `b` tous les 0,5 m et fait échouer l'assertion à la
+## première pièce trop basse (`exception_key` : clé dans `HEADROOM_EXCEPTIONS`).
+func _assert_route_headroom(exception_key: String, a: Vector3, b: Vector3, pieces: Array) -> void:
+	var exceptions: Dictionary = HEADROOM_EXCEPTIONS.get(exception_key, {})
+	for pos in _sample_route(a, b):
+		var result := _overhead_clearance(pos, pieces)
+		var clearance: float = result["clearance"]
+		if clearance == INF:
+			continue
+		var blocker := String(result["blocker"])
+		var floor_min: float = float(exceptions[blocker]) if exceptions.has(blocker) else HEADROOM_CLEARANCE_MIN
+		assert_float(clearance).append_failure_message(
+			"%s @ %s : %.2f m sous %s (attendu >= %.1f m%s)" % [
+				exception_key, pos, clearance, blocker, floor_min,
+				" [exception déclarée]" if exceptions.has(blocker) else ""
+			]
+		).is_greater_equal(floor_min)
+
+
+func test_slide_ramps_keep_3_2m_headroom_along_their_route() -> void:
+	for id in SLIDE_RAMPS.keys():
+		var data := Layouts.data_for(id)
+		var pieces: Array = data["pieces"]
+		for name in (SLIDE_RAMPS[id] as Array):
+			var piece := _piece_by_name(pieces, name)
+			if piece.is_empty():
+				continue  # signalé par test_tabled_slide_ramps_are_11_to_27_degrees_and_at_least_7m_long
+			_assert_route_headroom("%s:%s" % [id, name], piece["start"], piece["end"], pieces)
+
+
+func test_design_gaps_keep_3_2m_headroom_across_the_gap() -> void:
+	for id in DESIGN_GAPS.keys():
+		var data := Layouts.data_for(id)
+		var pieces: Array = data["pieces"]
+		var gap: Dictionary = DESIGN_GAPS[id]
+		_assert_route_headroom("%s:gap" % id, gap["a"], gap["b"], pieces)
+
+
+func test_stairs_keep_3_2m_headroom_along_their_route() -> void:
+	for id in Layouts.MAP_IDS:
+		var data := Layouts.data_for(id)
+		var pieces: Array = data["pieces"]
+		for entry in pieces:
+			var piece: Dictionary = entry
+			if String(piece.get("type", "")) != "stairs":
+				continue
+			var name := String(piece.get("name", "?"))
+			_assert_route_headroom("%s:%s" % [id, name], piece["start"], piece["end"], pieces)
+
+
+# ======================================================================
+#  §5.11 (LD-03) Spawns TDM/Hardpoint neutres — `tdm_spawns` : 16-24 points
+#  par map 4v4, chacun avec un `look`, en bordure de map (mêmes bornes que
+#  les autres marqueurs), invisibles à moins de 20 m (3D) d'une position
+#  forte déclarée (`strong_positions`). R&D garde ses spawns d'équipe
+#  (`spawns`, testé plus haut §5.1/§5.2/§5.3) : cette section ne les touche
+#  jamais, elle ajoute seulement les nouvelles clés.
+# ======================================================================
+func test_4v4_maps_declare_16_to_24_tdm_spawns() -> void:
+	for id in MAP_IDS_4V4:
+		var data := Layouts.data_for(id)
+		var tdm: Array = data.get("tdm_spawns", [])
+		assert_int(tdm.size()).append_failure_message(
+			"%s : %d tdm_spawns (attendu 16-24)" % [id, tdm.size()]
+		).is_between(TDM_SPAWNS_MIN, TDM_SPAWNS_MAX)
+
+
+func test_4v4_tdm_spawns_each_have_a_look() -> void:
+	for id in MAP_IDS_4V4:
+		var data := Layouts.data_for(id)
+		for entry in (data["tdm_spawns"] as Array):
+			var s: Dictionary = entry
+			assert_bool(s.has("look")).append_failure_message("%s spawn %s sans look" % [id, s.get("pos")]).is_true()
+
+
+func test_4v4_tdm_spawns_are_within_bounds() -> void:
+	for id in MAP_IDS_4V4:
+		var data := Layouts.data_for(id)
+		var bounds: Dictionary = data["bounds"]
+		for entry in (data["tdm_spawns"] as Array):
+			var pos: Vector3 = (entry as Dictionary)["pos"]
+			assert_bool(_in_bounds(_pos2(pos), bounds)).append_failure_message("%s tdm_spawn %s" % [id, pos]).is_true()
+
+
+func test_4v4_maps_declare_at_least_one_strong_position() -> void:
+	for id in MAP_IDS_4V4:
+		var data := Layouts.data_for(id)
+		var strong: Array = data.get("strong_positions", [])
+		assert_int(strong.size()).append_failure_message(id).is_greater_equal(1)
+
+
+## Acceptance LD-03 : "aucun n'est vu depuis une position forte déclarée à
+## moins de 20 m (rayons 3D)" — distance à vol d'oiseau (3D, `distance_to`
+## sur les `Vector3` complets), ligne de vue par empreintes 2D (`_line_is_clear`,
+## même méthode pure que §5.3 pour les paires de spawns d'équipe).
+func test_4v4_tdm_spawns_are_not_seen_from_a_strong_position_within_20m() -> void:
+	for id in MAP_IDS_4V4:
+		var data := Layouts.data_for(id)
+		var pieces: Array = data["pieces"]
+		var strong_positions: Array = data.get("strong_positions", [])
+		for entry in (data["tdm_spawns"] as Array):
+			var pos: Vector3 = (entry as Dictionary)["pos"]
+			for strong_pos in strong_positions:
+				var sp := strong_pos as Vector3
+				var d := pos.distance_to(sp)
+				if d >= STRONG_POSITION_RADIUS:
+					continue
+				var clear := _line_is_clear(pos, sp, pieces)
+				assert_bool(clear).append_failure_message(
+					"%s : tdm_spawn %s vu depuis la position forte %s (%.1f m)" % [id, pos, sp, d]
+				).is_false()
+
+
+func test_4v4_r_and_d_team_spawns_are_unchanged_by_tdm_spawns() -> void:
+	for id in MAP_IDS_4V4:
+		var data := Layouts.data_for(id)
+		assert_int((data["spawns"][0] as Array).size()).append_failure_message(id).is_equal(4)
+		assert_int((data["spawns"][1] as Array).size()).append_failure_message(id).is_equal(4)
+
+
+# ======================================================================
+#  §5.12 (LD-03, revue QA) — le CÂBLAGE, pas seulement la donnée : vérifie
+#  que `MapSetup._build_markers` (scripts/levels/maps/MapSetup.gd) pose
+#  bien les `tdm_spawns` SOUS LE NŒUD "SpawnPoints" lui-même en TDM/
+#  Hardpoint. C'est le seul nœud que `GameWorld._get_spawn_position`
+#  retrouve (`spawn_points_root` = "MapSetup/SpawnPoints", fixé par chaque
+#  scène de carte 4v4, hors de mon périmètre) : un nœud frère
+#  "TdmSpawnPoints" séparé (l'ancien câblage) n'est JAMAIS lu par
+#  `GameWorld.gd` (inchangé), donc jamais servi en jeu — bug signalé par la
+#  revue QA LD-03. Ces tests-ci ROMPENT sciemment avec le "aucun nœud,
+#  aucun moteur nécessaire" du reste de ce fichier (voir §5.11 ci-dessus et
+#  l'intro du fichier) : le bug est dans l'arbre de scène construit par
+#  `MapSetup`, invisible à toute assertion sur `Layouts.data_for` seul
+#  (§5.11, déjà toutes vertes avant cette revue) — `test_navmesh.gd`, seul
+#  autre fichier du dépôt à instancier `MapSetup` pour ses propres besoins
+#  moteur, est hors de la liste de fichiers de cette tâche.
+#  `MatchConfig.mode_id` est un `static var` global qui survit entre
+#  fichiers de test dans le même run headless : sauvegardé/restauré à
+#  chaque test pour ne contaminer aucune suite lancée après celle-ci.
+# ======================================================================
+const _MAP_SETUP_OFFSET_STEP := 600.0
+
+
+func _build_map_setup_for_mode(map_id: String, mode_id: String, offset_index: int) -> MapSetup:
+	MatchConfig.mode_id = mode_id
+	var setup := MapSetup.new()
+	setup.map_id = map_id
+	setup.position = Vector3(float(offset_index) * _MAP_SETUP_OFFSET_STEP, 0.0, 0.0)
+	add_child(setup)
+	return setup
+
+
+func _teardown_map_setup(setup: Node) -> void:
+	remove_child(setup)
+	setup.free()
+	await get_tree().physics_frame
+
+
+func test_4v4_tdm_mode_reads_spawn_points_from_the_neutral_tdm_spawns() -> void:
+	var previous_mode := MatchConfig.mode_id
+	var offset := 0
+	for id in MAP_IDS_4V4:
+		var setup := _build_map_setup_for_mode(id, "tdm", offset)
+		offset += 1
+		var root := setup.get_node_or_null("SpawnPoints")
+		assert_object(root).append_failure_message(
+			"%s (TDM) : pas de nœud \"SpawnPoints\" — GameWorld.spawn_points_root ne trouverait rien" % id
+		).is_not_null()
+		var children := (root as Node).get_children()
+		assert_int(children.size()).append_failure_message(
+			"%s (TDM) : \"SpawnPoints\" (celui que GameWorld._get_spawn_position lit réellement) a %d points, attendu 16-24 comme tdm_spawns — les spawns neutres LD-03 ne sont pas câblés jusqu'à ce nœud" % [id, children.size()]
+		).is_between(TDM_SPAWNS_MIN, TDM_SPAWNS_MAX)
+		for child in children:
+			assert_bool(child.has_meta("team")).append_failure_message(
+				"%s (TDM) : le point %s sous \"SpawnPoints\" porte encore une méta \"team\" — il devrait être neutre (choisi par SpawnPick.pick_best pour n'importe quel camp)" % [id, child.name]
+			).is_false()
+		await _teardown_map_setup(setup)
+	MatchConfig.mode_id = previous_mode
+
+
+func test_4v4_hardpoint_mode_reads_spawn_points_from_the_neutral_tdm_spawns() -> void:
+	var previous_mode := MatchConfig.mode_id
+	var offset := 0
+	for id in MAP_IDS_4V4:
+		var setup := _build_map_setup_for_mode(id, "hardpoint", offset)
+		offset += 1
+		var root := setup.get_node_or_null("SpawnPoints")
+		var children := (root as Node).get_children()
+		assert_int(children.size()).append_failure_message(
+			"%s (Hardpoint) : \"SpawnPoints\" a %d points, attendu 16-24" % [id, children.size()]
+		).is_between(TDM_SPAWNS_MIN, TDM_SPAWNS_MAX)
+		await _teardown_map_setup(setup)
+	MatchConfig.mode_id = previous_mode
+
+
+func test_4v4_r_and_d_mode_still_reads_spawn_points_from_the_4_per_team_markers() -> void:
+	var previous_mode := MatchConfig.mode_id
+	var offset := 0
+	for id in MAP_IDS_4V4:
+		var setup := _build_map_setup_for_mode(id, "snd", offset)
+		offset += 1
+		var root := setup.get_node_or_null("SpawnPoints")
+		var children := (root as Node).get_children()
+		assert_int(children.size()).append_failure_message(
+			"%s (R&D) : \"SpawnPoints\" a %d points, attendu 8 (4 par équipe, inchangé — les tdm_spawns ne doivent PAS s'y substituer hors TDM/Hardpoint)" % [id, children.size()]
+		).is_equal(8)
+		var per_team := {0: 0, 1: 0}
+		for child in children:
+			assert_bool(child.has_meta("team")).append_failure_message(
+				"%s (R&D) : le point %s a perdu sa méta \"team\"" % [id, child.name]
+			).is_true()
+			per_team[int(child.get_meta("team"))] += 1
+		assert_int(per_team[0]).append_failure_message(id).is_equal(4)
+		assert_int(per_team[1]).append_failure_message(id).is_equal(4)
+		await _teardown_map_setup(setup)
+	MatchConfig.mode_id = previous_mode
 
 
 # ======================================================================

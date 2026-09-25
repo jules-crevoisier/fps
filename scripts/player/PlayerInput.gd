@@ -19,6 +19,13 @@
 ## inchangée) : `look_delta` n'existe ici que pour les BOTS, qui n'ont ni
 ## souris ni manette et doivent piloter la caméra par du code
 ## (PlayerController._apply_bot_look consomme ce champ).
+##
+## Maintien/bascule (UX-06, Settings.hold_to_crouch/hold_to_aim/hold_to_walk) :
+## `crouch_held`/`aim_held`/`walk_held` passent par `resolve_hold_or_toggle`
+## (pure) plutôt que de suivre directement `Input.is_action_pressed` — voir ce
+## helper pour la sémantique exacte. `crouch_pressed` (déclenche le slide,
+## states/Walk.gd et Sprint.gd) reste le front montant BRUT de la touche,
+## indépendant de ce réglage.
 class_name PlayerInput
 extends Node
 
@@ -51,6 +58,15 @@ var is_bot: bool = false
 var reads_devices: bool = false
 
 var player: PlayerController
+
+## État mémorisé des bascules accroupi/ADS/marche (UX-06,
+## Settings.hold_to_crouch/hold_to_aim/hold_to_walk) — persistant d'une frame
+## à l'autre UNIQUEMENT quand le réglage correspondant est en BASCULE (voir
+## `resolve_hold_or_toggle`) ; jamais lu tant qu'il reste en MAINTIEN (défaut,
+## comportement inchangé).
+var _crouch_toggle_active: bool = false
+var _aim_toggle_active: bool = false
+var _walk_toggle_active: bool = false
 
 const MOVE_ACTIONS := ["move_left", "move_right", "move_forward", "move_back"]
 
@@ -108,13 +124,25 @@ func gather_from_devices() -> void:
 	look_delta = Vector2.ZERO  # le regard humain passe par _unhandled_input/_gamepad_look.
 	jump_pressed = Input.is_action_just_pressed("jump")
 	jump_held = Input.is_action_pressed("jump")
+	# `crouch_pressed` reste le FRONT MONTANT brut de la touche (déclenche le
+	# slide en plein sprint, voir states/Walk.gd et Sprint.gd) quel que soit le
+	# réglage maintien/bascule ci-dessous — seul `crouch_held` (l'état "je suis
+	# accroupi") en dépend (UX-06).
 	crouch_pressed = Input.is_action_just_pressed("crouch")
-	crouch_held = Input.is_action_pressed("crouch")
-	walk_held = Input.is_action_pressed("walk")
+	_crouch_toggle_active = resolve_hold_or_toggle(
+		crouch_pressed, Input.is_action_pressed("crouch"), Settings.hold_to_crouch, _crouch_toggle_active)
+	crouch_held = _crouch_toggle_active
+	var walk_pressed := Input.is_action_just_pressed("walk")
+	_walk_toggle_active = resolve_hold_or_toggle(
+		walk_pressed, Input.is_action_pressed("walk"), Settings.hold_to_walk, _walk_toggle_active)
+	walk_held = _walk_toggle_active
 	dive_pressed = Input.is_action_just_pressed("dive")
 	fire_pressed = Input.is_action_just_pressed("fire")
 	fire_held = Input.is_action_pressed("fire")
-	aim_held = Input.is_action_pressed("aim")
+	var aim_pressed := Input.is_action_just_pressed("aim")
+	_aim_toggle_active = resolve_hold_or_toggle(
+		aim_pressed, Input.is_action_pressed("aim"), Settings.hold_to_aim, _aim_toggle_active)
+	aim_held = _aim_toggle_active
 	reload_pressed = Input.is_action_just_pressed("reload")
 	pickup_pressed = Input.is_action_just_pressed("pickup")
 	pickup_held = Input.is_action_pressed("pickup")
@@ -149,3 +177,37 @@ static func ability_from_presses(c_pressed: bool, q_pressed: bool, e_pressed: bo
 	if ult_pressed:
 		return "X"
 	return ""
+
+## UX-13 (docs/research/10_ammo_kits_input.md §4.2 point 7) : traduit un
+## `Ability.slot` ("C"/"Q"/"E"/"X", identifiant RÉSEAU/bots interne, voir
+## AgentDatabase.SLOTS) vers le NOM D'ACTION InputMap correspondant, celui
+## que `Settings.binding_text`/`KeyLabel.for_action` savent lire pour en
+## tirer le libellé de touche RÉEL (AZERTY/QWERTY). `Ability.slot` reste
+## l'identifiant interne — il ne doit plus jamais être affiché tel quel
+## (AbilityBar/AgentSelectScreen/AgentMenu appellent
+## `KeyLabel.for_action(action_for_slot(slot))`, jamais `slot` seul).
+## Fonction pure : aucune slot inconnue ne doit planter l'appelant, elle
+## retombe sur "" (KeyLabel.for_action("") -> "—" hors headless, comme une
+## touche non liée).
+static func action_for_slot(slot: String) -> String:
+	match slot:
+		"C": return "ability_c"
+		"Q": return "ability_q"
+		"E": return "ability_e"
+		"X": return "ultimate"
+	return ""
+
+## Maintien (`hold_enabled` vrai — comportement brut inchangé, le résultat
+## suit directement `held`) OU bascule (`hold_enabled` faux, UX-06 :
+## Settings.hold_to_crouch/hold_to_aim/hold_to_walk) : un NOUVEL appui
+## (`just_pressed`) inverse l'état mémorisé `toggled` ; relâcher la touche
+## entre deux appuis n'a AUCUN effet — l'action reste active jusqu'au
+## prochain appui, au lieu de suivre l'état brut de la touche. `toggled` est
+## l'état retenu par l'APPELANT d'un appel au précédent (voir
+## `_crouch_toggle_active`/`_aim_toggle_active`/`_walk_toggle_active`) : cette
+## fonction est PURE (aucune dépendance au singleton Input ni à aucun champ
+## d'instance), testée directement dans tests/core/test_settings.gd.
+static func resolve_hold_or_toggle(just_pressed: bool, held: bool, hold_enabled: bool, toggled: bool) -> bool:
+	if hold_enabled:
+		return held
+	return not toggled if just_pressed else toggled

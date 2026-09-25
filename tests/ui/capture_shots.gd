@@ -7,8 +7,16 @@
 ##
 ##   godot --resolution 1920x1080 --path . -s res://tests/ui/capture_shots.gd -- \
 ##       --target=agent_select|buy|end|hud|options|hitmarker_normal|hitmarker_headshot| \
-##                hitmarker_kill|damage_direction|vignette|kill_word|kill_word_headshot \
-##       --out=C:/tmp/shot.png [--wait=90] [--settle=20]
+##                hitmarker_kill|damage_direction|vignette|kill_word|kill_word_headshot| \
+##                killfeed_local \
+##       --out=C:/tmp/shot.png [--wait=90] [--settle=20] [--team=0|1]
+##
+## `--team=` (relance QA UX-01, cibles `end`/`killfeed_local` UNIQUEMENT) :
+## force l'équipe locale affichée (voir GameHUD.debug_force_end/
+## debug_force_killfeed_local, `local_team_override`) — capture les DEUX
+## perspectives (allié/ennemi RELATIF au joueur local) sans devoir spawner un
+## second joueur sur l'autre équipe. Omis (défaut -1) : équipe RÉELLE du
+## joueur local, comportement historique inchangé.
 ##
 ## `--resolution WxH` est un flag MOTEUR natif de Godot (avant `-s`, hors des
 ## arguments utilisateur après `--`) : la fenêtre s'ouvre déjà à cette taille
@@ -25,6 +33,8 @@ var _target: String = ""
 var _out: String = ""
 var _wait_frames: int = 90
 var _settle_frames: int = 20
+## Voir la docstring d'en-tête `--team=` : -1 = équipe réelle du joueur local.
+var _local_team: int = -1
 
 var _inst: Node
 var _frame: int = 0
@@ -41,6 +51,8 @@ func _initialize() -> void:
 			_wait_frames = int(a.get_slice("=", 1))
 		elif a.begins_with("--settle="):
 			_settle_frames = int(a.get_slice("=", 1))
+		elif a.begins_with("--team="):
+			_local_team = int(a.get_slice("=", 1))
 
 func _process(_delta: float) -> bool:
 	if _out.is_empty() or _target.is_empty():
@@ -54,7 +66,7 @@ func _process(_delta: float) -> bool:
 		"buy":
 			return _run_in_match("BuyMenu", "debug_force_open", [])
 		"end":
-			return _run_in_match("HUD", "debug_force_end", [0, 40, 27])
+			return _run_in_match("HUD", "debug_force_end", [0, 40, 27, _local_team])
 		"hud":
 			return _run_in_match_idle()
 		"hitmarker_normal":
@@ -72,7 +84,7 @@ func _process(_delta: float) -> bool:
 		"kill_word_headshot":
 			return _run_in_match("HUD", "debug_force_kill_word", [true])
 		"killfeed_local":
-			return _run_in_match("HUD", "debug_force_killfeed_local", [])
+			return _run_in_match("HUD", "debug_force_killfeed_local", [_local_team])
 	return _fail("cible inconnue : %s" % _target)
 
 func _run_agent_select() -> bool:

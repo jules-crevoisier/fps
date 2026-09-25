@@ -94,3 +94,138 @@ func test_contrast_ratio_enemy_colors_clear_aa_on_panel() -> void:
 	# largement le seuil AA texte large/UI (3:1) sur `panel`.
 	for c in [Comic.ENEMY_MAGENTA, Comic.ENEMY_CITRON]:
 		assert_float(HudFormat.contrast_ratio(c, Comic.PANEL)).is_greater_equal(3.0)
+
+
+# ===========================================================================
+# GF-23 — HUD munitions : états de la réserve, invites RECHARGER/CHANGER
+# D'ARME, toast de ramassage (docs/research/10_ammo_kits_input.md §2.6).
+# ===========================================================================
+
+func test_reserve_state_is_normal_above_one_magazine() -> void:
+	assert_str(HudFormat.reserve_state(90, 25)).is_equal("normal")
+	assert_str(HudFormat.reserve_state(26, 25)).is_equal("normal")
+
+
+func test_reserve_state_is_low_at_one_magazine_or_less() -> void:
+	assert_str(HudFormat.reserve_state(25, 25)).is_equal("low")
+	assert_str(HudFormat.reserve_state(1, 25)).is_equal("low")
+
+
+func test_reserve_state_is_empty_at_zero() -> void:
+	assert_str(HudFormat.reserve_state(0, 25)).is_equal("empty")
+	assert_str(HudFormat.reserve_state(-5, 25)).is_equal("empty")
+
+
+func test_reserve_state_without_mag_size_is_never_low() -> void:
+	# Arme pas encore annoncée (`_mag_size` à 0 dans AmmoPanel) : aucun ratio
+	# calculable, seuls "empty"/"normal" restent possibles.
+	assert_str(HudFormat.reserve_state(0, 0)).is_equal("empty")
+	assert_str(HudFormat.reserve_state(1, 0)).is_equal("normal")
+
+
+func test_format_reserve_label_shows_vide_at_zero() -> void:
+	assert_str(HudFormat.format_reserve_label(0)).is_equal("VIDE")
+	assert_str(HudFormat.format_reserve_label(-3)).is_equal("VIDE")
+
+
+func test_format_reserve_label_matches_format_reserve_above_zero() -> void:
+	assert_str(HudFormat.format_reserve_label(90)).is_equal("/ 90")
+
+
+func test_should_show_reload_prompt_true_when_low_mag_reserve_and_idle() -> void:
+	assert_bool(HudFormat.should_show_reload_prompt(6, 25, 90, 1.5)).is_true()
+	assert_bool(HudFormat.should_show_reload_prompt(0, 25, 90, 3.0)).is_true()
+
+
+func test_should_show_reload_prompt_false_while_mag_above_threshold() -> void:
+	assert_bool(HudFormat.should_show_reload_prompt(10, 25, 90, 3.0)).is_false()
+
+
+func test_should_show_reload_prompt_false_right_after_a_shot() -> void:
+	# "jamais pendant le tir" : la dernière rafale remet le délai à 0 à
+	# chaque coup, donc moins de RELOAD_PROMPT_DELAY (1,5 s) écoulées bloque
+	# l'invite même si le chargeur est bas.
+	assert_bool(HudFormat.should_show_reload_prompt(6, 25, 90, 0.0)).is_false()
+	assert_bool(HudFormat.should_show_reload_prompt(6, 25, 90, 1.49)).is_false()
+
+
+func test_should_show_reload_prompt_false_without_reserve() -> void:
+	assert_bool(HudFormat.should_show_reload_prompt(6, 25, 0, 3.0)).is_false()
+
+
+func test_should_show_reload_prompt_false_without_known_mag_size() -> void:
+	assert_bool(HudFormat.should_show_reload_prompt(0, 0, 90, 3.0)).is_false()
+
+
+func test_should_show_switch_weapon_prompt_true_at_zero_zero() -> void:
+	assert_bool(HudFormat.should_show_switch_weapon_prompt(0, 0)).is_true()
+
+
+func test_should_show_switch_weapon_prompt_false_with_any_ammo_left() -> void:
+	assert_bool(HudFormat.should_show_switch_weapon_prompt(1, 0)).is_false()
+	assert_bool(HudFormat.should_show_switch_weapon_prompt(0, 1)).is_false()
+
+
+func test_format_reload_prompt_uses_real_key_label() -> void:
+	assert_str(HudFormat.format_reload_prompt("R")).is_equal("[R] RECHARGER")
+
+
+func test_format_switch_weapon_prompt_uses_real_key_label() -> void:
+	assert_str(HudFormat.format_switch_weapon_prompt("1")).is_equal("[1] CHANGER D'ARME")
+
+
+func test_next_weapon_action_cycles_to_the_following_slot() -> void:
+	assert_str(HudFormat.next_weapon_action(0, 2)).is_equal("weapon_2")
+	assert_str(HudFormat.next_weapon_action(1, 2)).is_equal("weapon_1")
+
+
+func test_next_weapon_action_falls_back_without_known_inventory() -> void:
+	assert_str(HudFormat.next_weapon_action(0, 0)).is_equal("weapon_2")
+
+
+func test_format_ammo_pickup_toast() -> void:
+	assert_str(HudFormat.format_ammo_pickup_toast(1)).is_equal("+1 ARME")
+	assert_str(HudFormat.format_ammo_pickup_toast(3)).is_equal("+3 ARME")
+
+
+func test_reserve_pickup_magazines_detects_a_full_magazine_added() -> void:
+	# Chargeur INCHANGÉ (6 -> 6) entre les deux appels : seule la réserve a
+	# bougé, signature d'un ramassage réel (`server_add_reserve_mags` ne
+	# touche jamais le chargeur).
+	assert_int(HudFormat.reserve_pickup_magazines(6, 6, 65, 90, 25)).is_equal(1)
+
+
+func test_reserve_pickup_magazines_detects_several_magazines_added() -> void:
+	assert_int(HudFormat.reserve_pickup_magazines(6, 6, 0, 75, 25)).is_equal(3)
+
+
+func test_reserve_pickup_magazines_is_zero_without_previous_state() -> void:
+	# `_mag_prev`/`_reserve_prev` à -1 : premier appel (ou juste après un
+	# VRAI changement d'arme) — jamais un ramassage.
+	assert_int(HudFormat.reserve_pickup_magazines(-1, 6, 90, 90, 25)).is_equal(0)
+	assert_int(HudFormat.reserve_pickup_magazines(6, 6, -1, 90, 25)).is_equal(0)
+
+
+func test_reserve_pickup_magazines_is_zero_when_reserve_did_not_increase() -> void:
+	assert_int(HudFormat.reserve_pickup_magazines(6, 6, 90, 90, 25)).is_equal(0)
+	assert_int(HudFormat.reserve_pickup_magazines(6, 6, 90, 65, 25)).is_equal(0)
+
+
+func test_reserve_pickup_magazines_is_zero_without_known_mag_size() -> void:
+	assert_int(HudFormat.reserve_pickup_magazines(6, 6, 0, 90, 0)).is_equal(0)
+
+
+func test_reserve_pickup_magazines_is_zero_when_the_magazine_also_changed() -> void:
+	# Respawn/resynchro serveur (`Weapon._server_respawn_reset`) : mag ET
+	# réserve remplis ENSEMBLE — jamais un ramassage, même si la réserve a
+	# bien augmenté (sinon chaque réapparition afficherait « +N ARME »).
+	assert_int(HudFormat.reserve_pickup_magazines(0, 25, 0, 90, 25)).is_equal(0)
+
+
+func test_reserve_pickup_magazines_rounds_to_the_nearest_magazine_when_capped() -> void:
+	# Ramassage plafonné par `Inventory.reserve_for` (réserve déjà proche du
+	# plafond) : moins d'un chargeur plein ajouté, arrondi au plus proche
+	# plutôt qu'un « +1 » trompeur pour un delta négligeable.
+	assert_int(HudFormat.reserve_pickup_magazines(6, 6, 90, 94, 25)).is_equal(0)
+	assert_int(HudFormat.reserve_pickup_magazines(6, 6, 90, 100, 25)).is_equal(0)
+	assert_int(HudFormat.reserve_pickup_magazines(6, 6, 78, 100, 25)).is_equal(1)

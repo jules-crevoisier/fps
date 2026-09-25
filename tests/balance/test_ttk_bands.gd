@@ -171,9 +171,10 @@ func test_semeuse_has_the_largest_magazine_lmg_niche() -> void:
 
 
 func test_eclair_has_the_fastest_mobility_among_smgs() -> void:
-	# Niche de l'Éclair : SMG "mobilité" — pret a tirer plus vite apres sprint et
-	# visee (ADS) plus rapide que le Rafale (l'autre SMG).
+	# Niche de l'Éclair : SMG "mobilité" — visee (ADS) plus rapide que le Rafale
+	# (l'autre SMG). Le sprint est automatique et sans délai de tir pour toutes
+	# les armes (BUG-K01 : sprint_to_fire retiré, mécanique inopérante), donc
+	# seul l'ADS distingue encore les deux SMG sur cet axe.
 	var eclair := _cfg("Éclair")
 	var rafale := _cfg("Rafale")
-	assert_float(eclair.sprint_to_fire).is_less(rafale.sprint_to_fire)
 	assert_float(eclair.ads_time).is_less(rafale.ads_time)

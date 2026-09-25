@@ -1,7 +1,8 @@
 ## ComicBurst.gd
-## Halo derrière une onomatopée (design.md §11 : Protest Revolution "for
-## onomatopoeia only") — étoile pinceau rouge/charcoal UNIQUEMENT ce contexte
-## (mot-bruit de kill, KillWordBurst.gd). Jamais ailleurs dans le HUD/menus.
+## Halo derrière une onomatopée (docs/STYLE_BIBLE.md §9.4 "Confirmation de
+## kill" : mot-bruit en Bangers, Comic.font_onomatopoeia()) — étoile pinceau
+## rouge/charcoal UNIQUEMENT ce contexte (mot-bruit de kill, KillWordBurst.gd).
+## Jamais ailleurs dans le HUD/menus.
 class_name ComicBurst
 extends Control
 

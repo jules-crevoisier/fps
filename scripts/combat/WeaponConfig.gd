@@ -41,7 +41,19 @@ enum Category { SIDEARM, SMG, RIFLE, SHOTGUN, SNIPER, HEAVY, MELEE }
 
 @export_group("Munitions")
 @export var mag_size: int = 30
+## Réserve « manche » : valeur historique des .tres, utilisée par les modes à
+## manches (Litige/Duel — `Inventory.RULE_ROUND`, docs/research/
+## 10_ammo_kits_input.md §2.2) et par tout appelant qui ne précise pas de
+## règle de munitions. Rechargée à chaque manche (RoundMode), jamais en cours
+## de manche : ne pas confondre avec `arena_reserve_ammo` ci-dessous.
 @export var reserve_ammo: int = 120
+## Réserve « arène » (Mêlée/Borne — `Inventory.RULE_ARENA`, §2.3) : ×5
+## chargeurs par rapport à `reserve_ammo`, sauf la Semeuse (déjà 300, valeur
+## inchangée) et le Faucheur (×4, sniper à un coup). Plus généreuse que la
+## réserve de manche car une vie d'arène doit tenir plusieurs affrontements
+## sans repasser par la boutique (contrairement à une manche du Litige,
+## rechargée à chaque round).
+@export var arena_reserve_ammo: int = 120
 @export var reload_time: float = 1.8
 
 @export_group("Visée (ADS)")
@@ -82,16 +94,22 @@ enum Category { SIDEARM, SMG, RIFLE, SHOTGUN, SNIPER, HEAVY, MELEE }
 @export var pattern_shots: int = 0
 
 @export_group("Dispersion en mouvement")
-## Dispersion (deg) ajoutée à spread_hip/spread_aim quand le joueur se déplace
-## (marche ou course). Les armes fines de contact bougent bien, les armes de
-## précision punissent le mouvement.
+## Dispersion (deg) ajoutée à spread_hip/spread_aim quand le joueur se déplace,
+## de façon CONTINUE selon sa vitesse (façon Valorant, MV-02) : voir
+## WeaponFeel.move_spread_deg (0 sous `move_spread_deadzone`, plein à la
+## vitesse de sprint, via smoothstep — plus de tout-ou-rien booléen). Les armes
+## fines de contact bougent bien, les armes de précision punissent le mouvement.
 @export var move_spread_add: float = 0.0
+## Fraction de la vitesse de sprint (0-1) sous laquelle bouger n'ajoute AUCUNE
+## dispersion (zone morte façon Valorant : marcher lentement reste précis).
+@export_range(0.0, 1.0) var move_spread_deadzone: float = 0.3
+## Multiplicateur appliqué à la dispersion de mouvement pendant une glissade
+## (slide) : le corps est instable, la pénalité est majorée.
+@export var slide_spread_mult: float = 1.3
 ## Dispersion (deg) ajoutée quand le joueur est en l'air (saut/chute).
 @export var air_spread_add: float = 0.0
 
 @export_group("Pénalités de mouvement (temps avant tir)")
-## Délai (s) avant de pouvoir tirer après un sprint.
-@export var sprint_to_fire: float = 0.15
 ## Délai (s) avant de pouvoir tirer après une glissade (slide). Référence
 ## commune ≈ 0.38 s (docs/ROADMAP.md §4).
 @export var slide_to_fire: float = 0.38

@@ -93,3 +93,67 @@ static func for_map(map_id: String) -> Array:
 ## `map_id`, or `{}` for any id this slice doesn't cover.
 static func surface_kinds(map_id: String) -> Dictionary:
 	return _SURFACE_KINDS.get(map_id, {})
+
+## TECH-08 (docs/research/07_godot_tech.md §C3, backlog acceptance "les
+## répétitions de plus de 8 exemplaires passent en MultiMesh") : seuil
+## STRICTEMENT au-dessus duquel un groupe d'entrées identiques (même prop,
+## même teinte, même `collide`) doit fusionner en UN `PropCatalog.place_many`
+## plutôt que N appels `PropCatalog.place` isolés. Volontairement distinct du
+## seuil générique de `PropCatalog.place_many()` (>= 3, verrouillé par
+## `tests/maps/test_propcatalog.gd` pour le groupage des cartes DE BASE
+## Wasteland/Cargo Ship dans `MapSetup._build_props`) : le dressing des six
+## cartes repeintes reste en entrées isolées jusqu'à 8 répétitions du même
+## prop — la lisibilité par entrée prime tant que le nombre de draws reste
+## modeste — et ne fusionne qu'au-delà.
+const MULTIMESH_THRESHOLD := 8
+
+## Regroupe `entries` (le format `for_map()` : {prop, pos, rot_y, collide,
+## tint?}) par (prop, teinte, collide). Renvoie {"singles": Array[entrée
+## d'origine], "batches": Array[{prop, tint, collide, transforms:
+## Array[Transform3D]}]} : un groupe de plus de `MULTIMESH_THRESHOLD`
+## exemplaires part en "batches" (prêt pour `PropCatalog.place_many`), le
+## reste (petits groupes ET singletons) reste en "singles", INCHANGÉ (mêmes
+## dictionnaires que `for_map()`, jamais reconstruits) pour ne rien perdre du
+## contrat existant consommé par `MapSetup._build_dressing`. Fonction PURE :
+## une entrée sans "tint" vaut `Color.WHITE` (même repli que
+## `MapSetup._build_dressing`/`PropCatalog.place`), une entrée sans "collide"
+## vaut `true` (même repli que `for_map()`'s propre contrat, voir
+## `tests/maps/test_dressing.gd`).
+static func group_entries(entries: Array) -> Dictionary:
+	var keys: Array = []
+	var counts: Dictionary = {}
+	for entry in entries:
+		var e: Dictionary = entry
+		var tint: Color = e.get("tint", Color.WHITE)
+		var collide := bool(e.get("collide", true))
+		var key := "%s|%s|%s" % [String(e["prop"]), tint.to_html(), collide]
+		keys.append(key)
+		counts[key] = int(counts.get(key, 0)) + 1
+
+	var batch_meta: Dictionary = {}       # key -> {prop, tint, collide}
+	var batch_transforms: Dictionary = {} # key -> Array[Transform3D]
+	var batch_order: Array = []
+	var singles: Array = []
+	for i in entries.size():
+		var e: Dictionary = entries[i]
+		var key: String = keys[i]
+		if int(counts[key]) > MULTIMESH_THRESHOLD:
+			if not batch_meta.has(key):
+				batch_meta[key] = {"prop": String(e["prop"]), "tint": e.get("tint", Color.WHITE), "collide": bool(e.get("collide", true))}
+				batch_transforms[key] = []
+				batch_order.append(key)
+			var rot_y: float = float(e.get("rot_y", 0.0))
+			(batch_transforms[key] as Array).append(Transform3D(Basis(Vector3.UP, deg_to_rad(rot_y)), e["pos"] as Vector3))
+		else:
+			singles.append(e)
+
+	var batches: Array = []
+	for key in batch_order:
+		var meta: Dictionary = (batch_meta[key] as Dictionary).duplicate()
+		meta["transforms"] = batch_transforms[key]
+		batches.append(meta)
+	return {"singles": singles, "batches": batches}
+
+## Raccourci pour `group_entries(for_map(map_id))` — voir sa doc.
+static func batches_for_map(map_id: String) -> Dictionary:
+	return group_entries(for_map(map_id))

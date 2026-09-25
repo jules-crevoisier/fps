@@ -1,10 +1,27 @@
 ## PerfOverlay.gd  (Autoload : "Perf")
 ## Overlay de performance : fps, temps d'image, "1% low" (~10 s glissantes via
 ## FrameStats), appels de dessin / objets / primitives (RenderingServer), tick
-## physique et ping RTT côté client. Masqué par défaut, F3 bascule l'affichage
-## (traité en _unhandled_input pour ne jamais voler les touches de gameplay).
-## Le texte n'est reformaté que quelques fois par seconde et seulement quand
-## l'overlay est visible : aucune allocation par frame hors de ce texte.
+## physique et ping RTT côté client, et les 5 moniteurs de compilation de
+## pipelines (RenderingServer.RenderingInfo, docs/research/07_godot_tech.md
+## §C2 : CANVAS/MESH/SURFACE/DRAW/SPECIALIZATION). Masqué par défaut, F3
+## bascule l'affichage (traité en _unhandled_input pour ne jamais voler les
+## touches de gameplay). Le texte n'est reformaté que quelques fois par
+## seconde et seulement quand l'overlay est visible : aucune allocation par
+## frame hors de ce texte.
+##
+## Les 5 compteurs de pipelines sont CUMULATIFS depuis le démarrage du moteur
+## (« will only increase and never go down », doc officielle RenderingServer) :
+## l'overlay affiche donc leur valeur brute, pas un delta. Un DRAW qui
+## progresse pendant une partie déjà chargée signale un trou dans le
+## préchauffage (ShaderWarmup, TECH-01) ; voir scripts/levels/Benchmark.gd
+## pour le seuil d'échec basé sur le delta pendant la mesure.
+##
+## Réglage `Settings.show_perf_overlay` (UX-06, docs/research/04_ui_ux.md
+## §2.7 "afficher FPS et réseau") — relance QA n°3 : ce réglage était mort,
+## seul F3 bascule l'affichage. `apply_show_perf_overlay()` le rend vivant :
+## appelée par `_ready()` (démarrage) ET par OptionsMenu à chaque bascule de
+## la case (voir OptionsMenu._build_render), sans redémarrage. F3 reste par
+## ailleurs un bascule manuel indépendant (voir `_unhandled_input`).
 extends CanvasLayer
 
 const REFRESH_INTERVAL := 0.25 ## secondes entre deux mises à jour du texte
@@ -23,7 +40,18 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_stats = FrameStats.new(HISTORY_CAPACITY)
 	_build_label()
-	visible = false
+	apply_show_perf_overlay()
+
+## Applique `Settings.show_perf_overlay` (UX-06, relance QA n°3) : lu au
+## démarrage (ci-dessus, au lieu du `visible = false` fixe d'avant) et rappelé
+## par OptionsMenu à chaque bascule de la case "Afficher FPS / réseau" — sans
+## redémarrage. F3 (`_unhandled_input`) reste un bascule manuel indépendant,
+## qui peut ensuite masquer/montrer l'overlay par-dessus cette valeur de base.
+func apply_show_perf_overlay() -> void:
+	_showing = Settings.show_perf_overlay
+	visible = _showing
+	if _showing:
+		_refresh_left = 0.0
 
 func _build_label() -> void:
 	_label = Label.new()
@@ -66,11 +94,31 @@ func _format_text(delta: float) -> String:
 	var primitives := RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_PRIMITIVES_IN_FRAME)
 	var physics_hz := Engine.physics_ticks_per_second
 	var lines := PackedStringArray([
-		"FPS %.0f (%.2f ms)  1%% low %.0f" % [avg_fps, frame_ms, low1],
+		"FPS %.0f (%.2f ms)  1%% low %.0f  ·  Limite %s" % [avg_fps, frame_ms, low1, _fps_limit_text()],
 		"Draw calls %d  Objects %d  Prims %d" % [draw_calls, objects, primitives],
 		"Physics %d Hz%s" % [physics_hz, _ping_suffix()],
+		_pipeline_line(),
 	])
 	return "\n".join(lines)
+
+## Libellé de la limite d'images actuelle (UX-06, Settings.fps_limit,
+## acceptance "la limite d'images est visible dans PerfOverlay") — "illimitée"
+## pour 0, sinon le nombre d'images/seconde tel quel.
+func _fps_limit_text() -> String:
+	return "illimitée" if Settings.fps_limit == 0 else str(Settings.fps_limit)
+
+## Ligne des 5 moniteurs de compilation de pipelines (valeurs cumulées,
+## jamais remises à zéro). Un seul appel RenderingServer par compteur, comme
+## les 3 lignes ci-dessus : pas de nouvel objet alloué par frame.
+func _pipeline_line() -> String:
+	var canvas := RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_PIPELINE_COMPILATIONS_CANVAS)
+	var mesh := RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_PIPELINE_COMPILATIONS_MESH)
+	var surface := RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_PIPELINE_COMPILATIONS_SURFACE)
+	var draw_pipelines := RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_PIPELINE_COMPILATIONS_DRAW)
+	var specialization := RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_PIPELINE_COMPILATIONS_SPECIALIZATION)
+	return "Pipelines CANVAS %d  MESH %d  SURFACE %d  DRAW %d  SPECIALIZATION %d" % [
+		canvas, mesh, surface, draw_pipelines, specialization,
+	]
 
 ## " · ping <n> ms" quand on est connecté en tant que client ENet ; sinon "".
 func _ping_suffix() -> String:

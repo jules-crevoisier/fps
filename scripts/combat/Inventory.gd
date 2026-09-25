@@ -8,6 +8,24 @@ extends RefCounted
 
 const EMPTY := -1
 
+## Règle de munitions (GameMode.ammo_rule, docs/research/10_ammo_kits_input.md
+## §2.2) : quelle réserve `set_loadout`/`give`/`add_into_free`/`replace_current`
+## doivent charger. "round" (par défaut, comportement HISTORIQUE inchangé) =
+## réserve de manche (`WeaponConfig.reserve_ammo`) : Litige/Duel, et tout
+## appelant qui ne précise rien. "arena" = réserve élargie de l'arène
+## (`WeaponConfig.arena_reserve_ammo`, §2.3) : Mêlée/Borne. "infinite" =
+## entraînement.
+const RULE_ROUND := "round"
+const RULE_ARENA := "arena"
+const RULE_INFINITE := "infinite"
+## Réserve « infinie » de l'entraînement : un sentinelle volontairement énorme
+## plutôt qu'un cas particulier dans `tick()`/`start_reload()` — à cette
+## échelle (des dizaines de milliers de rechargements), aucune session
+## d'entraînement ne peut l'épuiser, et tout le reste de la machine à états
+## (transfert reserve -> mag, `reserve <= 0` refusant un rechargement...) reste
+## un chemin de code UNIQUE, déjà testé, pour les trois règles.
+const INFINITE_RESERVE := 999999
+
 var slots: Array[int] = []
 var mag: Array[int] = []
 var reserve: Array[int] = []
@@ -27,16 +45,30 @@ func _init(slot_count: int = 2) -> void:
 	reloading = false
 	reload_left = 0.0
 
-## Remplit les slots dans l'ordre (ids en trop ignorés), chargeur/réserve
-## pleins, équipe le premier slot non vide (0 si aucun), annule un rechargement.
-func set_loadout(ids: Array[int]) -> void:
+## Réserve à charger pour `c` sous la règle `ammo_rule` (RULE_ROUND/RULE_ARENA/
+## RULE_INFINITE ci-dessus). `0` si `c` est nul (slot vide/id inconnu).
+static func reserve_for(c: WeaponConfig, ammo_rule: String) -> int:
+	if c == null:
+		return 0
+	match ammo_rule:
+		RULE_ARENA:
+			return c.arena_reserve_ammo
+		RULE_INFINITE:
+			return INFINITE_RESERVE
+		_:
+			return c.reserve_ammo
+
+## Remplit les slots dans l'ordre (ids en trop ignorés), chargeur plein et
+## réserve selon `ammo_rule` (RULE_ROUND par défaut, comportement historique
+## inchangé), équipe le premier slot non vide (0 si aucun), annule un rechargement.
+func set_loadout(ids: Array[int], ammo_rule: String = RULE_ROUND) -> void:
 	for i in slots.size():
 		if i < ids.size():
 			var id: int = ids[i]
 			slots[i] = id
 			var c := WeaponDatabase.get_by_id(id)
 			mag[i] = c.mag_size if c else 0
-			reserve[i] = c.reserve_ammo if c else 0
+			reserve[i] = reserve_for(c, ammo_rule)
 		else:
 			slots[i] = EMPTY
 			mag[i] = 0
@@ -64,9 +96,10 @@ func free_slot() -> int:
 			return i
 	return -1
 
-## Range dans un slot libre (chargeur/réserve pleins). Équipe seulement si le
-## slot COURANT était vide. Renvoie l'index du slot rempli, -1 si plein.
-func add_into_free(id: int) -> int:
+## Range dans un slot libre (chargeur plein, réserve selon `ammo_rule`).
+## Équipe seulement si le slot COURANT était vide. Renvoie l'index du slot
+## rempli, -1 si plein.
+func add_into_free(id: int, ammo_rule: String = RULE_ROUND) -> int:
 	var slot := free_slot()
 	if slot == -1:
 		return -1
@@ -74,33 +107,34 @@ func add_into_free(id: int) -> int:
 	var c := WeaponDatabase.get_by_id(id)
 	slots[slot] = id
 	mag[slot] = c.mag_size if c else 0
-	reserve[slot] = c.reserve_ammo if c else 0
+	reserve[slot] = reserve_for(c, ammo_rule)
 	if was_current_empty:
 		current = slot
 	return slot
 
 ## Remplace l'arme EN MAIN. Renvoie l'id déplacé (EMPTY si le slot était vide).
-## Chargeur/réserve pleins pour la nouvelle arme, annule un rechargement en cours.
-func replace_current(id: int) -> int:
+## Chargeur plein et réserve selon `ammo_rule` pour la nouvelle arme, annule un
+## rechargement en cours.
+func replace_current(id: int, ammo_rule: String = RULE_ROUND) -> int:
 	var displaced := current_id()
 	var c := WeaponDatabase.get_by_id(id)
 	slots[current] = id
 	mag[current] = c.mag_size if c else 0
-	reserve[current] = c.reserve_ammo if c else 0
+	reserve[current] = reserve_for(c, ammo_rule)
 	reloading = false
 	reload_left = 0.0
 	return displaced
 
 ## Donne une arme : slot libre si possible (et l'équipe), sinon remplace
 ## l'arme en main. Renvoie l'id déplacé (EMPTY si un slot libre a été utilisé).
-func give(id: int) -> int:
+func give(id: int, ammo_rule: String = RULE_ROUND) -> int:
 	var slot := free_slot()
 	if slot == -1:
-		return replace_current(id)
+		return replace_current(id, ammo_rule)
 	var c := WeaponDatabase.get_by_id(id)
 	slots[slot] = id
 	mag[slot] = c.mag_size if c else 0
-	reserve[slot] = c.reserve_ammo if c else 0
+	reserve[slot] = reserve_for(c, ammo_rule)
 	current = slot
 	reloading = false
 	reload_left = 0.0

@@ -1,6 +1,9 @@
 ## JumpPadAbility — pose un tremplin au sol qui propulse vers le haut quiconque
 ## marche dessus. Position calculée côté SERVEUR (raycast au sol le long
-## d'`aim_dir` validé, borné à `throw_range`) ; objet répliqué à tous
+## d'`aim_dir` validé, borné à `throw_range`, masque PhysicsLayers.SHOT_MASK
+## et joueurs exclus : le rayon de pose ignore la fumée (bloque la vue, pas
+## les balles) et n'accepte que le décor, jamais la tête d'un joueur —
+## docs/audit/bugs.md BUG-06) ; objet répliqué à tous
 ## (AbilityController.cast_jump_pad). La poussée n'est appliquée QUE par la
 ## machine du joueur concerné (mouvement local-autoritaire, cf. contract-p0.md).
 extends Ability
@@ -26,9 +29,32 @@ func activate_server(player: PlayerController, aim_dir: Vector3) -> void:
 	flat = flat.normalized()
 	var above := player.global_position + flat * throw_range + Vector3(0, 1.0, 0)
 	var space := player.get_world_3d().direct_space_state
-	var q := PhysicsRayQueryParameters3D.create(above, above + Vector3(0, -4.0, 0))
-	q.exclude = [player.get_rid()]
-	q.collide_with_areas = false
-	var hit := space.intersect_ray(q)
+	var hit := ground_hit(space, above, above + Vector3(0, -4.0, 0), _exclude_all_players(player))
 	var pos: Vector3 = hit.position if not hit.is_empty() else player.global_position + flat * throw_range
 	ctrl.cast_jump_pad(pos, duration, boost)
+
+## Rayon de pose au sol : masque PhysicsLayers.SHOT_MASK (ignore la fumée,
+## calque VISION) ET exclut tous les joueurs (pas seulement le lanceur) — un
+## tremplin ne doit accepter que le décor, jamais atterrir sur la tête d'un
+## joueur (docs/audit/bugs.md BUG-06). Statique et exposé pour être testable
+## directement (tests/agents/test_ability_rays.gd).
+static func ground_hit(space: PhysicsDirectSpaceState3D, from: Vector3, to: Vector3, exclude: Array[RID]) -> Dictionary:
+	var q := PhysicsRayQueryParameters3D.create(from, to, PhysicsLayers.SHOT_MASK)
+	q.exclude = exclude
+	q.collide_with_areas = false
+	return space.intersect_ray(q)
+
+## Exclut le lanceur ET tous les autres joueurs de la scène (RID physique) —
+## voir ground_hit ci-dessus.
+static func _exclude_all_players(player: PlayerController) -> Array[RID]:
+	var rids: Array[RID] = [player.get_rid()]
+	var players_root := player.get_parent()
+	if players_root == null:
+		return rids
+	for child in players_root.get_children():
+		if child == player:
+			continue
+		var body := child as CharacterBody3D
+		if body:
+			rids.append(body.get_rid())
+	return rids

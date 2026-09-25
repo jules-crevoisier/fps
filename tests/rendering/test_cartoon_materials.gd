@@ -194,18 +194,21 @@ func test_character_surface_uses_flat_color_no_triplanar() -> void:
 	assert_that(m.get_shader_parameter("use_albedo_texture")).is_not_equal(true)
 
 
-func test_character_surface_grain_varies_by_kind_within_six_percent() -> void:
+## STYLE_BIBLE.md v3.1 §4.2/§5.3 « aucun grain » + CHK-27 : `_CHARACTER_GRAIN`
+## passe à 0 pour tous les kinds (le détail vient de la géométrie ou d'un
+## décalque, jamais d'un bruit) — remplace l'ancienne variation par kind
+## (0,02-0,06) de l'ère ART-02.
+func test_character_surface_grain_is_zero_for_every_kind() -> void:
 	var skin := Cartoon.character_surface(&"skin", Color.WHITE)
 	var gear := Cartoon.character_surface(&"gear", Color.WHITE)
-	assert_float(skin.get_shader_parameter("paint_grain_strength")).is_less(gear.get_shader_parameter("paint_grain_strength"))
-	assert_float(gear.get_shader_parameter("paint_grain_strength")).is_less_equal(0.06)
+	assert_float(skin.get_shader_parameter("paint_grain_strength")).is_equal_approx(0.0, 0.001)
+	assert_float(gear.get_shader_parameter("paint_grain_strength")).is_equal_approx(0.0, 0.001)
 
 
-func test_character_surface_unknown_kind_gets_a_safe_default_grain() -> void:
+func test_character_surface_unknown_kind_gets_zero_grain() -> void:
 	var m := Cartoon.character_surface(&"unknown_slot", Color.WHITE)
 	var grain: float = m.get_shader_parameter("paint_grain_strength")
-	assert_float(grain).is_greater(0.0)
-	assert_float(grain).is_less_equal(0.06)
+	assert_float(grain).is_equal_approx(0.0, 0.001)
 
 
 # ------------------------------------------------------- apply_team_outline()

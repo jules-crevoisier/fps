@@ -62,6 +62,58 @@ static var _loaded := false
 static var _scene_cache: Dictionary = {}  # chemin -> PackedScene (ou null si absent)
 static var _mesh_cache: Dictionary = {}    # nom manifeste -> Mesh (extrait une fois, pour le MultiMesh)
 
+## TECH-08 (docs/research/07_godot_tech.md §C3) : rôle gameplay d'un prop —
+## « cover » bloque la vue/les tirs (jamais de visibility range) ou « decor »
+## petit décor sans rôle en jeu (bouteilles, câbles, déchets, panneaux —
+## admissible au fade). Classification par NOM MANIFESTE résolu (après
+## ALIASES), croisée avec plusieurs sources :
+##  - .orchestrator/maps-spec-v2.md §3.1 (colonne "Role") : "visual, thin"
+##    pour tyre_stack, bollard (ligne "tyre_stack / bollard") et power_pole
+##    (ligne "pipe_run / power_pole", qui couvre aussi pipe_run -> alias
+##    pipe_straight, également classé "decor" ci-dessous) ;
+##  - pipe_valve (alias de pipe_manifold) N'EST PAS sourcé par cette même
+##    ligne "visual, thin" : le spec classe pipe_manifold "skin" (ligne
+##    "tank_horizontal / tank_skid / pipe_manifold -> skin, tank farm", §3.1),
+##    comme les skins EXCLUS ci-dessous. Il reste "decor" ici par décision de
+##    ce chantier (tuyauterie fine posée seule, jamais sur un couvert Kit,
+##    toujours `collide=false` — voir LeBelvedereDressing.gd), pas par
+##    citation du spec ;
+##  - shop_sign N'APPARAÎT PAS dans la table §3.1 : c'est un prop du
+##    manifeste réel (assets/models/props/manifest.json) sans équivalent dans
+##    le spec, utilisé comme doublure de "panneau de façade" par
+##    ValPoussiereDressing.gd (son propre commentaire : "shop_sign (an actual
+##    manifest prop) stands in for 'sign boards'"), toujours posé
+##    `collide=false` ;
+##  - le commentaire "décor pur, jamais dans l'espace praticable" de
+##    scripts/levels/maps/layouts/wasteland.gd (fouillis de rue déjà groupé
+##    en MultiMesh par MapSetup._build_props) pour junk_pile, scrap_sheets,
+##    cable_spool, bottle_crates, tyre_ground, fence_broken, street_lamp,
+##    wires_catenary, life_ring, lashing_bar, rock_small.
+## Volontairement EXCLUS malgré un rôle "visual" au spec : les skins posés sur
+## une géométrie Kit déjà collidable (water_tower/gantry_crane = "dress",
+## corrugated_shed, sedan_wreck = "skin") resteraient un volume invisible qui
+## bloque encore la vue si on les fait disparaître — jamais de fade dessus.
+## `wooden_crate`/`oil_drum` (alias crate_2/crate_low/crate_stack et
+## barrel_cluster) restent "cover" : le spec les classe couvert, et
+## `barrel`/`oil_drum` sert de couvert bas dans plusieurs mises en place.
+## Repli "cover" pour tout nom absent de cette liste : un prop non classifié
+## ne doit jamais disparaître au loin.
+const _DECOR_MANIFEST_NAMES: Dictionary = {
+	"tyre_stack": true, "bollard": true, "power_pole": true,
+	"pipe_straight": true, "pipe_valve": true, "shop_sign": true,
+	"life_ring": true, "lashing_bar": true, "junk_pile": true,
+	"scrap_sheets": true, "cable_spool": true, "bottle_crates": true,
+	"tyre_ground": true, "fence_broken": true, "street_lamp": true,
+	"wires_catenary": true, "rock_small": true,
+}
+
+## Portée de la visibility range du décor (07_godot_tech.md §C3 "Fade
+## Disabled avec hystérésis") : bascule nette (pas de fondu alpha, plus cher
+## qu'un couvert normal) à `_DECOR_VISIBILITY_END` mètres, avec une marge
+## `_DECOR_VISIBILITY_HYSTERESIS` pour ne pas scintiller pile au bord.
+const _DECOR_VISIBILITY_END := 45.0
+const _DECOR_VISIBILITY_HYSTERESIS := 5.0
+
 static func _ensure_loaded() -> void:
 	if _loaded:
 		return
@@ -88,20 +140,34 @@ static func names() -> PackedStringArray:
 			out.append(k)
 	return out
 
-## {name, manifest_name, path, size (w,h,d), cover, thin, collision, slots}.
-## `manifest_name`/`path` vides si aucun `.glb` n'existe pour ce nom (repli
-## boîte peinte — `place()` reste sans erreur, `size` vaut alors 1x1x1).
+## Rôle gameplay (« cover » ou « decor », voir `_DECOR_MANIFEST_NAMES`
+## ci-dessus) du nom de prop `prop` (spec OU manifeste — même résolution
+## ALIASES que `info()`). Un nom sans `.glb` retombe aussi sur "cover" : le
+## repli boîte n'a aucune raison de disparaître au loin.
+static func role(prop: String) -> String:
+	_ensure_loaded()
+	var manifest_name := String(ALIASES.get(prop, prop))
+	return "decor" if _DECOR_MANIFEST_NAMES.has(manifest_name) else "cover"
+
+## {name, manifest_name, path, size (w,h,d), role, cover, thin, collision,
+## slots}. `manifest_name`/`path` vides si aucun `.glb` n'existe pour ce nom
+## (repli boîte peinte — `place()` reste sans erreur, `size` vaut alors
+## 1x1x1). `role` : "cover"/"decor" (TECH-08, voir `role()`) ; `cover` reste
+## un bool dérivé (`role != "decor"`) pour ne pas casser un éventuel lecteur
+## de l'ancien champ (toujours `true` avant TECH-08, jamais lu ailleurs dans
+## le dépôt — vérifié par grep sur `info(...)["cover"]`).
 static func info(prop: String) -> Dictionary:
 	_ensure_loaded()
 	var manifest_name := String(ALIASES.get(prop, prop))
+	var prop_role := role(prop)
 	var entry: Dictionary = _manifest.get(manifest_name, {})
 	if entry.is_empty():
-		return {"name": prop, "manifest_name": "", "path": "", "size": Vector3.ONE, "cover": true, "thin": false, "collision": [], "slots": []}
+		return {"name": prop, "manifest_name": "", "path": "", "size": Vector3.ONE, "role": prop_role, "cover": prop_role != "decor", "thin": false, "collision": [], "slots": []}
 	var fp: Dictionary = entry.get("footprint", {})
 	var size := Vector3(float(fp.get("w", 1.0)), float(fp.get("h", 1.0)), float(fp.get("d", 1.0)))
 	return {
 		"name": prop, "manifest_name": manifest_name, "path": String(entry.get("path", "")),
-		"size": size, "cover": true, "thin": bool(entry.get("thin", false)),
+		"size": size, "role": prop_role, "cover": prop_role != "decor", "thin": bool(entry.get("thin", false)),
 		"collision": (entry.get("collision", []) as Array), "slots": (entry.get("slots", []) as Array),
 	}
 
@@ -151,6 +217,19 @@ static func _paint_slots(inst: Node, tint: Color, tints: Dictionary = {}) -> voi
 	for c in inst.get_children():
 		_paint_slots(c, tint, tints)
 
+## Applique la visibility range decor (fade Disabled + hystérésis, voir les
+## constantes ci-dessus) à UNE instance visuelle (`MeshInstance3D` ou
+## `MultiMeshInstance3D`, toutes deux `GeometryInstance3D`). N'est appelé que
+## sous double garde (voir `place()`/`place_many()`) : le prop est catalogué
+## "decor" ET cette pose précise ne collide pas — un "decor" posé avec
+## `collide=true` (ex. les piles de pneus de La Fosse, couvert réel malgré un
+## rôle catalogue "decor") ne passe JAMAIS ici, conformément à la règle §C3
+## "jamais sur un objet qui bloque la vue ou les tirs".
+static func _apply_decor_fade(vi: GeometryInstance3D) -> void:
+	vi.visibility_range_end = _DECOR_VISIBILITY_END
+	vi.visibility_range_end_margin = _DECOR_VISIBILITY_HYSTERESIS
+	vi.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_DISABLED
+
 static func _add_box_collision(parent: Node3D, size: Vector3, center: Vector3, nm: String = "Col") -> void:
 	var body := StaticBody3D.new()
 	body.name = nm
@@ -188,11 +267,23 @@ static func place(parent: Node3D, prop: String, pos: Vector3, rot_y_deg: float =
 	root.rotation.y = deg_to_rad(rot_y_deg)
 	parent.add_child(root)
 
+	# TECH-08 : double garde avant toute visibility range (voir
+	# `_apply_decor_fade` ci-dessus) — un couvert (`role() == "cover"`) n'est
+	# jamais concerné, et un "decor" posé AVEC collision (La Fosse pose ses
+	# piles de pneus `collide=true` comme couvert de coin réel malgré un rôle
+	# catalogue "decor") reste visible à toute distance.
+	var fade := not collide and String(data["role"]) == "decor"
+
 	var packed := _load_scene(String(data["path"]))
 	if packed != null:
 		var inst := packed.instantiate()
 		root.add_child(inst)
 		_paint_slots(inst, tint, tints)
+		if fade:
+			var meshes: Array = []
+			_find_mesh_instances(inst, meshes)
+			for m in meshes:
+				_apply_decor_fade(m as GeometryInstance3D)
 		if collide:
 			# ATTENTION à l'ordre : "size" du manifeste est [w,d,h] (même ordre
 			# que "footprint" — voir tools/blender/make_props.py::_bbox_collision),
@@ -221,6 +312,8 @@ static func place(parent: Node3D, prop: String, pos: Vector3, rot_y_deg: float =
 		mesh.mesh = bm
 		mesh.position = Vector3(0, use_size.y * 0.5, 0)
 		mesh.material_override = Cartoon.world(tint)
+		if fade:
+			_apply_decor_fade(mesh)
 		root.add_child(mesh)
 		if collide:
 			_add_box_collision(root, use_size, Vector3(0, use_size.y * 0.5, 0))
@@ -274,6 +367,11 @@ static func place_many(parent: Node3D, prop: String, transforms: Array, tint: Co
 	var slots: Array = data["slots"]
 	if not slots.is_empty():
 		mmi.material_override = Cartoon.painted_for_slot(String(slots[0]), tint)
+	# TECH-08 : même double garde que `place()` — un batch "decor" posé sans
+	# collision reçoit la visibility range, jamais un batch "cover" ni un
+	# batch "decor" posé `collide=true` (couvert réel malgré le rôle catalogue).
+	if not collide and String(data["role"]) == "decor":
+		_apply_decor_fade(mmi)
 	parent.add_child(mmi)
 	if collide:
 		var size: Vector3 = data["size"]

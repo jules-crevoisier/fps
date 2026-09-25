@@ -31,10 +31,10 @@ radius = 0.4
 height = 1.8
 
 [sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_1"]
-properties/0/path = NodePath(".:position")
+properties/0/path = NodePath(".:net_position")
 properties/0/spawn = true
 properties/0/replication_mode = 1
-properties/1/path = NodePath(".:rotation")
+properties/1/path = NodePath(".:net_rotation_y")
 properties/1/spawn = true
 properties/1/replication_mode = 1
 properties/2/path = NodePath(".:velocity")
@@ -55,8 +55,19 @@ properties/6/replication_mode = 1
 properties/7/path = NodePath(".:aim_pitch")
 properties/7/spawn = true
 properties/7/replication_mode = 1
+properties/8/path = NodePath(".:is_crouching")
+properties/8/spawn = true
+properties/8/replication_mode = 1
+properties/9/path = NodePath(".:current_height")
+properties/9/spawn = true
+properties/9/replication_mode = 1
+properties/10/path = NodePath(".:net_tick")
+properties/10/spawn = true
+properties/10/replication_mode = 1
 
 [node name="Player" type="CharacterBody3D"]
+collision_layer = 1
+collision_mask = 33
 script = ExtResource("1_ctrl")
 config = ExtResource("2_cfg")
 
@@ -85,7 +96,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
 
 [node name="Camera3D" type="Camera3D" parent="Head"]
 unique_name_in_owner = true
-fov = 90.0
+fov = 70.53
 script = ExtResource("3_cam")
 
 [node name="ViewModel" type="Node3D" parent="Head/Camera3D"]

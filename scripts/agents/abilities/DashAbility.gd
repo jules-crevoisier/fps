@@ -1,7 +1,7 @@
 ## DashAbility — ruée rapide dans une direction (mouvement pur, prédiction
 ## propriétaire : pas d'effet serveur au-delà du décompte de charges/cooldown).
 ## Paramètres exportés pour permettre plusieurs variantes réutilisant la même
-## logique (Ruée de Vif, Charge de Choc, Piquet de Roc — voir AgentDatabase).
+## logique (Ruée de Vif, Charge de Choc, Piquet de Vanne — voir AgentDatabase).
 extends Ability
 
 ## Vitesse horizontale imprimée (m/s).

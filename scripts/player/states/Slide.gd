@@ -80,6 +80,15 @@ func _keep_momentum() -> void:
 	player.velocity.z *= config.slide_keep
 
 func _exit_to_ground() -> void:
+	# Plafond bas au-dessus de la tête => impossible de se relever sans passer
+	# dans le décor (BUG-08). On reste accroupi (le state Crouch se chargera
+	# de relever dès que `is_blocked_above()` redevient faux) et on NE touche
+	# PAS `is_crouching` ici : `_exit_to_ground` ne doit jamais laisser la
+	# capsule commencer à grandir vers `stand_height` pendant qu'un obstacle
+	# la surplombe.
+	if player.is_blocked_above():
+		transition_to("Crouch")
+		return
 	player.set_crouching(false)
 	# Ctrl encore tenu => on s'accroupit (crouch en maintien : relâcher relève).
 	if player.input.crouch_held:

@@ -68,6 +68,7 @@ func _begin_new_round() -> void:
 func _enter_buy_phase() -> void:
 	_on_new_round()
 	_set_world_locked(true)
+	_clear_round_props()
 	_respawn_all_for_round()
 	_after_round_respawn()
 	_push_round_state()
@@ -168,6 +169,17 @@ func _respawn_all_for_round() -> void:
 	var world := get_tree().get_first_node_in_group("match")
 	if world and world.has_method("respawn_all_for_round"):
 		world.respawn_all_for_round()
+
+## Vide le groupe "round_props" (murs/fumées/tremplins/pièges/marqueurs posés
+## par AbilityController, voir sa doc d'en-tête) avant de respawn les joueurs
+## pour la manche : sinon un objet posé pendant la manche précédente
+## survivrait dans la suivante (BUG-03). Appelé au passage en phase d'achat
+## (chaque nouvelle manche) ET indirectement au reset de match
+## (reset_match() -> _enter_buy_phase()).
+func _clear_round_props() -> void:
+	var world := get_tree().get_first_node_in_group("match")
+	if world and world.has_method("clear_round_props"):
+		world.clear_round_props()
 
 ## SnD/Duel : on attend la prochaine manche, pas de respawn immédiat.
 func respawns_immediately() -> bool:

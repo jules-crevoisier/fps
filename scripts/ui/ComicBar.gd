@@ -4,6 +4,16 @@
 ## (0..1), trait 1 px `rule`, graduations tous les 1/`ticks` (pastilles sans
 ## segmenter le remplissage). Rectangle droit — design.md v2 n'a plus de barres
 ## inclinées (grammaire "brush", pas "comic panel biseauté").
+##
+## ART-35 (HUD v3) : revu contre STYLE_BIBLE v3 §8.3/§8.6 et CHK-32, CHK-33,
+## CHK-34, CHK-35, CHK-40 -- aucun changement de comportement nécessaire ici.
+## Ce composant est générique et sans état de jeu propre (ni taille de police,
+## ni marge de sécurité, ni hexagone qui lui soit propre) ; la vie basse en
+## pinceau (< 30 %, HealthPanel.update_health) pilote déjà `fill_color`/
+## `border_color` via les `@export` ci-dessous, et les munitions basses
+## (AmmoPanel.update_ammo) sont un texte seul, sans ComicBar. Les règles de
+## taille/marge/couleur d'agent (CHK-32/33/34/40) sont posées par les
+## panneaux qui instancient ce contrôle (HealthPanel, RoundPanel), pas ici.
 class_name ComicBar
 extends Control
 

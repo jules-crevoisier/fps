@@ -23,10 +23,6 @@ Sfx="*res://scripts/core/Audio.gd"
 Look="*res://scripts/core/LevelLook.gd"
 Boot="*res://scripts/networking/ServerBoot.gd"
 
-[audio]
-
-buses/default_bus_layout="res://default_bus_layout.tres"
-
 [display]
 
 window/size/viewport_width=1920
@@ -35,6 +31,10 @@ window/size/window_width_override=1280
 window/size/window_height_override=800
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/gdUnit4/plugin.cfg", "res://addons/smooth_normals/plugin.cfg")
 
 [gui]
 
@@ -249,13 +249,8 @@ menu_tab_next={
 [physics]
 
 3d/physics_engine="Jolt Physics"
-common/physics_ticks_per_second=60
 
 [rendering]
 
 rendering_device/driver.windows="d3d12"
 environment/defaults/default_clear_color=Color(0.45, 0.72, 0.95, 1)
-
-[editor_plugins]
-
-enabled=PackedStringArray("res://addons/gdUnit4/plugin.cfg")

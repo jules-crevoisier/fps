@@ -17,6 +17,13 @@ extends Resource
 ## Vitesse max accroupi.
 @export var crouch_speed: float = 3.2
 
+@export_group("Visée (ADS)")
+## Multiplicateur de vitesse en visée (ADS), façon Valorant (MV-02) : pendant
+## qu'on vise, la vitesse cible retombe à `walk_speed` × ce multiplicateur —
+## le sprint automatique est de facto "suspendu" (voir Sprint.gd/Walk.gd,
+## WeaponFeel.ads_move_speed). < 1 = on vise mieux à l'arrêt/en marchant.
+@export_range(0.0, 1.0) var ads_move_mult: float = 0.7
+
 @export_group("Réactivité sol (CoD-like)")
 ## Accélération au sol en m/s^2 (HAUT = démarrage instantané, très réactif).
 @export var ground_accel: float = 85.0
@@ -105,13 +112,23 @@ extends Resource
 ## Active le stun à l'atterrissage d'une chute trop haute.
 @export var stun_enabled: bool = true
 ## En dessous de cette hauteur de chute (m), aucun stun.
-@export var fall_min_height: float = 4.0
+@export var fall_min_height: float = 6.0
 ## Hauteur de chute (m) à partir de laquelle le stun est maximal.
 @export var fall_max_height: float = 14.0
 ## Durée mini d'un stun quand il se déclenche (s).
 @export var stun_min_time: float = 0.5
-## Durée maxi du stun (s).
-@export var stun_max_time: float = 2.5
+## Durée maxi du stun (s) — MV-03 : adouci de 2,5 s à 0,6 s (docs/research/
+## 01_game_feel.md #16, "perte de contrôle totale en plein combat,
+## frustrante en compétitif") : une perte de contrôle COURTE, jamais assez
+## longue pour décider seule d'un duel.
+@export var stun_max_time: float = 0.6
+## Dispersion (deg) AJOUTÉE au tir pendant le stun (MV-03) : le joueur garde
+## la main — vise et tire — mais moins précisément qu'à l'accoutumée, plutôt
+## que le freeze total d'avant. Consommée par Weapon.gd/WeaponFeel.gd (calcul
+## `total_spread_deg`, hors de mon périmètre de fichiers pour cette tâche :
+## `Weapon._can_act()` doit aussi cesser d'exclure l'état "Stun" pour que ce
+## champ ait un effet — voir le blocage signalé au lead).
+@export var stun_fire_spread_add: float = 3.0
 
 @export_group("Crouch")
 @export var stand_height: float = 1.8
@@ -141,3 +158,22 @@ extends Resource
 @export var bob_amplitude: float = 0.025
 ## Fréquence du head-bob.
 @export var bob_frequency: float = 9.0
+
+@export_group("Marches (step-up/step-down, MV-01)")
+## Hauteur max (m) qu'on peut monter automatiquement en marchant dessus, sans
+## perdre l'élan — `move_and_slide()` seul ne monte JAMAIS les marches (une
+## marche est un mur vertical pour lui, proposition Godot #2751,
+## docs/research/01_game_feel.md §2.7) : voir `StairStep.try_step_up`,
+## appelée par PlayerController juste avant son `move_and_slide()` du tick.
+## Au-delà de cette hauteur, la marche redevient un mur normal (bloque).
+@export var max_step_up: float = 0.4
+## Hauteur max (m) qu'on peut descendre en marchant sans jamais transiter par
+## l'état "Air" (un bord d'escalier resterait sinon lu comme une chute, ne
+## serait-ce que pour un tick) — voir `StairStep.try_step_down`, appelée
+## juste après le `move_and_slide()` du tick.
+@export var max_step_down: float = 0.4
+## Durée (s) du lissage caméra du saut vertical brut causé par un step-up/
+## step-down (décroissance exponentielle de `PlayerController.
+## _head_step_offset` : après ce délai, il ne reste plus qu'environ 1/e
+## (~37 %) du décalage d'origine).
+@export var stair_step_smooth_time: float = 0.08

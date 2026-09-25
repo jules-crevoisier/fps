@@ -2,7 +2,7 @@
 ## Répliqué : le mur est spawné sur TOUS les pairs (visible/bloquant pour tous).
 ## Construit UNIQUEMENT côté serveur, depuis SA propre vue de la transform du
 ## joueur (anti-triche : le client ne choisit plus ni la taille ni la position).
-## Paramètres exportés pour permettre plusieurs variantes (Mur de Roc, Mur
+## Paramètres exportés pour permettre plusieurs variantes (Mur de Vanne, Mur
 ## d'assaut de Choc, Rempart de Verrou, Forteresse — voir AgentDatabase).
 extends Ability
 

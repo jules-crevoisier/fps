@@ -1,8 +1,9 @@
 ## test_hit_feedback.gd
-## Spec (contract-r4a.md "R4-FX — acceptance" #1-#4, design.md §8/§10) : helpers
-## PURS des retours de combat — variante de hitmarker, fenêtre de correspondance
-## kill, angle de la flèche de dégâts, courbe de fondu, choix du mot-bruit,
-## position hors zone centrale, vignette de vie basse.
+## Spec (contract-r4a.md "R4-FX — acceptance" #1-#4, design.md §8/§10, GF-07) :
+## helpers PURS des retours de combat — variante de hitmarker, agrégation des
+## plombs d'un tir par cible, empilement des chiffres de dégâts, angle de la
+## flèche de dégâts, courbe de fondu, choix du mot-bruit, position hors zone
+## centrale, vignette de vie basse.
 extends GdUnitTestSuite
 
 
@@ -20,21 +21,78 @@ func test_marker_variant_kill_overrides_headshot() -> void:
 	assert_str(HitFeedback.marker_variant(false, true)).is_equal(HitFeedback.MARKER_KILL)
 
 
-# ------------------------------------------------------------ Fenêtre kill <-> hit_confirmed
-func test_is_kill_hit_true_just_after_kill_logged() -> void:
-	assert_bool(HitFeedback.is_kill_hit(10.05, 10.0)).is_true()
+# ------------------------------------------------------------ Agrégation des plombs (GF-07)
+func test_aggregate_shot_hits_sums_damage_for_same_target() -> void:
+	var hits: Array = []
+	for i in range(12):
+		hits.append({"target": 42, "dmg": 8.0, "headshot": false})
+	var agg := HitFeedback.aggregate_shot_hits(hits)
+	assert_int(agg.size()).is_equal(1)
+	assert_int(agg[0]["target"]).is_equal(42)
+	assert_float(agg[0]["dmg"]).is_equal_approx(96.0, 0.001)
+	assert_bool(agg[0]["headshot"]).is_false()
 
 
-func test_is_kill_hit_false_before_kill_logged() -> void:
-	assert_bool(HitFeedback.is_kill_hit(9.9, 10.0)).is_false()
+func test_aggregate_shot_hits_headshot_true_if_any_pellet_headshot() -> void:
+	var hits: Array = [
+		{"target": 7, "dmg": 10.0, "headshot": false},
+		{"target": 7, "dmg": 20.0, "headshot": true},
+		{"target": 7, "dmg": 10.0, "headshot": false},
+	]
+	var agg := HitFeedback.aggregate_shot_hits(hits)
+	assert_int(agg.size()).is_equal(1)
+	assert_bool(agg[0]["headshot"]).is_true()
+	assert_float(agg[0]["dmg"]).is_equal_approx(40.0, 0.001)
 
 
-func test_is_kill_hit_false_outside_window() -> void:
-	assert_bool(HitFeedback.is_kill_hit(10.9, 10.0)).is_false()
+func test_aggregate_shot_hits_separates_distinct_targets_in_order() -> void:
+	var hits: Array = [
+		{"target": 5, "dmg": 5.0, "headshot": false},
+		{"target": 9, "dmg": 7.0, "headshot": false},
+		{"target": 5, "dmg": 5.0, "headshot": false},
+	]
+	var agg := HitFeedback.aggregate_shot_hits(hits)
+	assert_int(agg.size()).is_equal(2)
+	assert_int(agg[0]["target"]).is_equal(5)
+	assert_float(agg[0]["dmg"]).is_equal_approx(10.0, 0.001)
+	assert_int(agg[1]["target"]).is_equal(9)
+	assert_float(agg[1]["dmg"]).is_equal_approx(7.0, 0.001)
 
 
-func test_is_kill_hit_false_when_no_kill_pending() -> void:
-	assert_bool(HitFeedback.is_kill_hit(10.0, -1.0)).is_false()
+func test_aggregate_shot_hits_empty_for_no_hits() -> void:
+	assert_array(HitFeedback.aggregate_shot_hits([])).is_empty()
+
+
+# ------------------------------------------------------------ Empilement des chiffres (GF-07)
+func test_should_stack_damage_true_within_window() -> void:
+	assert_bool(HitFeedback.should_stack_damage(0.0)).is_true()
+	assert_bool(HitFeedback.should_stack_damage(0.1)).is_true()
+	assert_bool(HitFeedback.should_stack_damage(HitFeedback.DAMAGE_STACK_WINDOW)).is_true()
+
+
+func test_should_stack_damage_false_outside_window() -> void:
+	assert_bool(HitFeedback.should_stack_damage(HitFeedback.DAMAGE_STACK_WINDOW + 0.01)).is_false()
+	assert_bool(HitFeedback.should_stack_damage(5.0)).is_false()
+
+
+func test_should_stack_damage_false_when_negative() -> void:
+	assert_bool(HitFeedback.should_stack_damage(-0.1)).is_false()
+
+
+func test_damage_stack_scale_is_normal_for_first_hit() -> void:
+	assert_float(HitFeedback.damage_stack_scale(1)).is_equal_approx(1.0, 0.001)
+
+
+func test_damage_stack_scale_grows_with_stack_count() -> void:
+	var one := HitFeedback.damage_stack_scale(1)
+	var two := HitFeedback.damage_stack_scale(2)
+	var three := HitFeedback.damage_stack_scale(3)
+	assert_bool(two > one).is_true()
+	assert_bool(three > two).is_true()
+
+
+func test_damage_stack_scale_caps_out() -> void:
+	assert_float(HitFeedback.damage_stack_scale(100)).is_equal_approx(HitFeedback.DAMAGE_STACK_SCALE_MAX, 0.001)
 
 
 # ------------------------------------------------------------ Angle de la flèche de dégâts

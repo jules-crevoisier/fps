@@ -22,6 +22,11 @@ func physics_update(delta: float) -> void:
 		_stand()
 
 func _stand() -> void:
+	# Plafond bas au-dessus de la tête => rester accroupi (BUG-08) plutôt que
+	# de se relever dans le décor ; Crouch relèvera dès que ce sera dégagé.
+	if player.is_blocked_above():
+		transition_to("Crouch")
+		return
 	player.set_crouching(false)
 	if player.input_vector == Vector2.ZERO:
 		transition_to("Idle")

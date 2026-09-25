@@ -27,6 +27,11 @@ signal server_started
 signal connection_failed
 signal connection_succeeded
 signal server_lost
+## Émis côté CLIENT une fois la config de partie du serveur reçue et déjà
+## appliquée à MatchConfig (voir _client_apply_server_decision) — AVANT
+## `connection_succeeded`, donc `received_scene` est déjà utilisable quand ce
+## dernier arrive (voir BUG-02, docs/audit/bugs.md).
+signal match_config_received(mode_id: String, map_id: String, scene: String)
 
 const DEFAULT_PORT: int = 7777
 const DEFAULT_IP: String = "127.0.0.1"
@@ -49,6 +54,14 @@ var match_token_secret: String = ""
 ## handshake d'authentification (voir _on_peer_authenticating).
 var _pending_player_id: String = ""
 var _pending_token: String = ""
+
+## Config de partie reçue du serveur pendant l'authentification (voir
+## _client_apply_server_decision) — "" tant qu'aucune réponse acceptée n'est
+## arrivée. Lu par MainMenu._start_game() : le CLIENT charge CETTE scène,
+## jamais celle de sa propre sélection locale (voir BUG-02, docs/audit/bugs.md).
+var received_mode_id: String = ""
+var received_map_id: String = ""
+var received_scene: String = ""
 
 ## Accès robuste au gestionnaire réseau, indépendant de l'autoload.
 ## Le retrouve à /root/Net (autoload) ou le crée s'il n'existe pas.
@@ -88,6 +101,9 @@ func host(port: int = DEFAULT_PORT, max_players: int = MAX_PLAYERS) -> Error:
 func join(ip: String = DEFAULT_IP, port: int = DEFAULT_PORT, player_id: String = "", token: String = "") -> Error:
 	_pending_player_id = player_id
 	_pending_token = token
+	received_mode_id = ""
+	received_map_id = ""
+	received_scene = ""
 	peer = ENetMultiplayerPeer.new()
 	var err := peer.create_client(ip, port)
 	if err != OK:
@@ -158,11 +174,27 @@ func _on_auth_data(peer_id: int, payload: PackedByteArray) -> void:
 func _server_validate_and_reply(peer_id: int, payload: PackedByteArray) -> void:
 	var reason := _server_validation_reason(payload)
 	if reason == "":
-		multiplayer.send_auth(peer_id, JSON.stringify({"ok": true}).to_utf8_buffer())
+		var reply := build_accept_payload(MatchConfig.mode_id, MatchConfig.map_id)
+		multiplayer.send_auth(peer_id, JSON.stringify(reply).to_utf8_buffer())
 		multiplayer.complete_auth(peer_id)
 	else:
 		multiplayer.send_auth(peer_id, JSON.stringify({"ok": false, "reason": reason}).to_utf8_buffer())
 		_disconnect_rejected_peer(peer_id)
+
+## Réponse d'authentification ACCEPTÉE construite côté SERVEUR : mode_id,
+## map_id et la scène déjà résolue (MatchConfig.resolve_scene) de la partie
+## EN COURS sur CE serveur — jamais rien qui vienne du pair qui se connecte.
+## Fonction pure (testable sans pair réseau réel, voir
+## tests/networking/test_match_config_sync.gd) : c'est la correction de
+## BUG-02 (docs/audit/bugs.md), où le client chargeait sa propre sélection
+## locale au lieu de celle de l'hôte.
+static func build_accept_payload(mode_id: String, map_id: String) -> Dictionary:
+	return {
+		"ok": true,
+		"mode_id": mode_id,
+		"map_id": map_id,
+		"scene": MatchConfig.resolve_scene(mode_id, map_id),
+	}
 
 ## Un `disconnect_peer` immédiat peut devancer, sur certains transports, le
 ## paquet `send_auth` du motif de refus juste au-dessus (observé en
@@ -191,6 +223,9 @@ func _server_validation_reason(payload: PackedByteArray) -> String:
 	return ""
 
 ## Côté CLIENT : réponse du serveur (voir _server_validate_and_reply). Sur
+## acceptation, applique mode_id/map_id/scène transmis par le serveur à
+## MatchConfig AVANT de compléter l'authentification (donc avant que la
+## scène du menu ne change — voir MainMenu._start_game / BUG-02) ; sur
 ## refus, on mémorise juste le motif — c'est le serveur qui coupe la
 ## connexion (déclenche `peer_authentication_failed`, voir
 ## _on_peer_authentication_failed).
@@ -200,9 +235,31 @@ func _client_apply_server_decision(payload: PackedByteArray) -> void:
 		return
 	var d := data as Dictionary
 	if bool(d.get("ok", false)):
+		var config := parse_accept_payload(d)
+		received_mode_id = str(config.get("mode_id", ""))
+		received_map_id = str(config.get("map_id", ""))
+		received_scene = str(config.get("scene", ""))
+		if received_mode_id != "":
+			MatchConfig.set_mode(received_mode_id)
+			MatchConfig.map_id = received_map_id
+		if received_scene == "" and received_mode_id != "":
+			received_scene = MatchConfig.resolve_scene(received_mode_id, received_map_id)
+		match_config_received.emit(received_mode_id, received_map_id, received_scene)
 		multiplayer.complete_auth(1)
 	else:
 		last_disconnect_reason = str(d.get("reason", DEFAULT_REJECT_REASON))
+
+## Extrait (mode_id, map_id, scène) d'une réponse d'authentification
+## ACCEPTÉE du serveur (voir build_accept_payload) — chaîne vide pour tout
+## champ absent ou du mauvais type, jamais une erreur GDScript : `data` est
+## un JSON externe désérialisé, potentiellement forgé ou tronqué. Fonction
+## pure (voir tests/networking/test_match_config_sync.gd).
+static func parse_accept_payload(data: Dictionary) -> Dictionary:
+	return {
+		"mode_id": str(data.get("mode_id", "")),
+		"map_id": str(data.get("map_id", "")),
+		"scene": str(data.get("scene", "")),
+	}
 
 ## L'authentification échoue avant `peer_connected` (version/jeton refusés,
 ## ou coupure pendant le handshake). Ce signal arrive AUSSI côté serveur pour

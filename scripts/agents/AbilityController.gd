@@ -33,6 +33,11 @@ var agent: AgentConfig
 var _owner_state: AbilityState
 ## Copie autoritaire, uniquement instanciée côté SERVEUR.
 var _server_state: AbilityState
+## Effets de statut (StatusEffects.gd) : mêmes rôles/pattern que
+## _owner_state/_server_state ci-dessus (copie prédictive chez le
+## propriétaire, copie autoritaire côté serveur, corrigée par `_push_status`).
+var _owner_status: StatusEffects
+var _server_status: StatusEffects
 ## Suivi "hors-combat" (soin de base) — alimenté par Health.damaged côté
 ## SERVEUR uniquement (voir `_ready`, guard `has_signal`).
 var _out_of_combat := OutOfCombatTracker.new()
@@ -44,13 +49,20 @@ func _ready() -> void:
 		return
 	if player != null and player.is_multiplayer_authority():
 		_owner_state = AbilityState.new(agent.abilities)
+		_owner_status = StatusEffects.new()
 	if multiplayer.is_server():
 		_server_state = AbilityState.new(agent.abilities)
+		_server_status = StatusEffects.new()
 		var hp := player.get_node_or_null("Health") as Health
 		# Health.damaged est ajouté par R-B1 (contract-r2.md) : peut ne pas
 		# encore exister selon l'ordre de chargement des slices -> guard.
 		if hp and hp.has_signal("damaged"):
 			hp.damaged.connect(_on_damaged)
+		# Passif (docs/research/10_ammo_kits_input.md §3.5) : hook de spawn,
+		# une fois par vie. Toujours gardé par `agent.passive != null` (agent
+		# sans passif = repli sûr, rien n'est appelé).
+		if agent.passive:
+			agent.passive.on_spawn(player)
 
 func _on_damaged(_amount: float, _attacker_id: int) -> void:
 	_out_of_combat.mark_damaged(Time.get_ticks_msec() / 1000.0)
@@ -71,11 +83,70 @@ func _resolve_agent() -> AgentConfig:
 func _physics_process(delta: float) -> void:
 	if agent == null:
 		return
+	var active := _tick_active()
+	_sync_ult_charge_rate()
 	if _server_state:
-		_server_state.tick(delta)
+		_server_state.tick(delta, active)
 	if _owner_state:
-		_owner_state.tick(delta)
+		_owner_state.tick(delta, active)
 		_handle_input()
+	# Statuts (StatusEffects) : décomptés en continu, indépendamment de
+	# `active` -- un ralentissement/verrou de saut en cours continue d'expirer
+	# même mort ou hors phase LIVE (contrairement aux charges/à l'ultime, qui
+	# doivent rester gelés -- BUG-04/BUG-03).
+	if _server_status:
+		_server_status.tick(delta)
+	if _owner_status:
+		_owner_status.tick(delta)
+
+## true si les charges/l'ultime doivent avancer CE tick (BUG-04 : plafond
+## d'ultime ≤ 0,1 pt/s à condition de ne PAS charger mort ou hors phase
+## active ; BUG-03 : précise "hors phase active" comme "hors phase LIVE").
+## Faux si le joueur est mort. Dans un mode à manches (RoundMode, qui expose
+## `round_phase` — voir sa doc d'en-tête), faux hors phase LIVE (achat/résultat
+## de manche). Les modes d'arène (TDM/Hardpoint, sans `round_phase`) et
+## l'absence de mode (training, terrain hors ligne) restent actifs en continu,
+## comme avant BUG-03.
+func _tick_active() -> bool:
+	if player == null:
+		return false
+	var hp := player.get_node_or_null("Health") as Health
+	if hp and hp.is_dead:
+		return false
+	var mode := get_tree().get_first_node_in_group("game_mode")
+	if mode == null:
+		return true
+	var phase = mode.get("round_phase")
+	if phase == null:
+		return true
+	return int(phase) == RoundState.Phase.LIVE
+
+## §3.4 (AGT-02, docs/research/10_ammo_kits_input.md) : en mode à MANCHES
+## (Litige/Duel-Duo -- RoundMode, détecté par le même duck typing que
+## `_tick_active` ci-dessus sur `round_phase`) le gain continu d'ultime doit
+## être NUL, remplacé par le bonus fixe pose/désamorçage
+## (GameWorld.charge_ult_for_objective, câblé par SnDMode._do_plant/_do_defuse,
+## hors de ce fichier). En arène (TDM/Hardpoint) ou hors mode (entraînement),
+## le taux par défaut de AbilityState (AbilityState.DEFAULT_ULT_CHARGE_RATE)
+## reste inchangé. Appliqué aux DEUX copies (autoritaire ET prédictive) :
+## sinon la copie prédictive du propriétaire continuerait de progresser
+## localement en Litige jusqu'à la prochaine correction serveur (une
+## activation de capacité), et le HUD afficherait un ultime qui se charge
+## seul avant de se faire rattraper en arrière.
+func _sync_ult_charge_rate() -> void:
+	var rate := 0.0 if _is_round_based_mode() else AbilityState.DEFAULT_ULT_CHARGE_RATE
+	if _server_state:
+		_server_state.ult_charge_rate = rate
+	if _owner_state:
+		_owner_state.ult_charge_rate = rate
+
+## Vrai si le mode de jeu courant est un mode À MANCHES (RoundMode : SnD,
+## Duel/Duo), faux pour une arène (TDM/Hardpoint) ou l'absence de mode --
+## même duck typing que `_tick_active` (`round_phase`, exposé SEULEMENT par
+## RoundMode, jamais par GameMode/TDMMode).
+func _is_round_based_mode() -> bool:
+	var mode := get_tree().get_first_node_in_group("game_mode")
+	return mode != null and mode.get("round_phase") != null
 
 ## Lit `player.input.ability_pressed` ("" ou "C"/"Q"/"E"/"X" — voir
 ## PlayerInput.gd, déjà gaté "souris capturée" pour un humain local ; un bot
@@ -162,15 +233,20 @@ func _server_activate(sender_id: int, i: int, aim_dir: Vector3) -> void:
 		return
 	var owner_id := str(player.name).to_int()
 	if sender_id != owner_id:
+		_push_state(owner_id)  # refus (usurpation) : resynchronise quand même le vrai propriétaire.
 		return
 	if not _abilities_enabled():
+		_push_state(owner_id)  # refus (capacités désactivées, ex. Duel/Duo) : corrige la prédiction.
 		return
 	var hp := player.get_node_or_null("Health") as Health
 	if hp and hp.is_dead:
+		_push_state(owner_id)  # refus (mort pendant l'appui, BUG-05) : sinon "en recharge" jusqu'à 22 s.
 		return
 	if not AimValidator.is_valid(aim_dir):
+		_push_state(owner_id)  # refus (visée invalide) : resynchronise.
 		return
 	if i < 0 or i >= agent.abilities.size():
+		_push_state(owner_id)  # refus (index hors bornes) : resynchronise.
 		return
 	var ab: Ability = agent.abilities[i]
 	if not ab.can_activate_server(player):
@@ -188,6 +264,19 @@ func server_add_ult(points: float) -> void:
 	if not multiplayer.is_server() or player == null or _server_state == null:
 		return
 	_server_state.add_ult(points)
+	_push_state(str(player.name).to_int())
+
+## Recharge de début de manche (BUG-03/BUG-04) : remet à fond les charges des
+## capacités non-ultime (AbilityState.refill(), sans toucher aux points
+## d'ultime accumulés). Appelé côté SERVEUR par
+## GameWorld.respawn_all_for_round() (déclenché par RoundMode._enter_buy_phase
+## à chaque nouvelle manche), même motif d'appel direct que server_add_ult
+## (on est déjà côté serveur, et _push_state pousse la correction au
+## propriétaire).
+func server_refill() -> void:
+	if not multiplayer.is_server() or player == null or _server_state == null:
+		return
+	_server_state.refill()
 	_push_state(str(player.name).to_int())
 
 func _push_state(owner_id: int) -> void:
@@ -210,6 +299,117 @@ func _sync_state(d: Dictionary) -> void:
 		_owner_state.apply_dict(d)
 
 # ======================================================================
+#  PASSIF (docs/research/10_ammo_kits_input.md §3.5) -- hooks serveur
+# ======================================================================
+
+## Notifie le passif de cet agent qu'il vient de réaliser une ÉLIMINATION
+## (SERVEUR). Point d'entrée pour un futur appelant (ex. GameWorld._record_kill
+## via `ab.has_method("server_on_kill")`, même patron que `server_add_ult` --
+## GameWorld.gd n'est pas possédé par ce contrat, le câblage reste à faire).
+func server_on_kill(victim_id: int) -> void:
+	if not multiplayer.is_server() or agent == null or agent.passive == null:
+		return
+	agent.passive.on_kill(player, victim_id)
+
+## Idem pour une ASSISTANCE (voir AssistTracker.assists_for_kill).
+func server_on_assist(victim_id: int) -> void:
+	if not multiplayer.is_server() or agent == null or agent.passive == null:
+		return
+	agent.passive.on_assist(player, victim_id)
+
+# ======================================================================
+#  RELANCE / CHARGES OCTROYÉES (AbilityState.grant_charge/arm) -- appelées
+#  par un passif ou une capacité concrète (ex. Mèche courte / Faux départ de
+#  Vif), toujours côté SERVEUR, avec la même correction propriétaire que
+#  server_add_ult/server_refill.
+# ======================================================================
+
+## Octroie une charge supplémentaire (plafonnée) à la capacité `i` de CE
+## joueur, côté SERVEUR, puis pousse la correction au propriétaire.
+func server_grant_charge(i: int) -> void:
+	if not multiplayer.is_server() or player == null or _server_state == null:
+		return
+	_server_state.grant_charge(i)
+	_push_state(str(player.name).to_int())
+
+## Arme la capacité `i` pour une fenêtre de relance, côté SERVEUR, puis pousse
+## la correction au propriétaire (voir AbilityState.arm).
+func server_arm(i: int, window: float) -> void:
+	if not multiplayer.is_server() or player == null or _server_state == null:
+		return
+	_server_state.arm(i, window)
+	_push_state(str(player.name).to_int())
+
+# ======================================================================
+#  STATUTS (StatusEffects) -- applications côté SERVEUR, poussées au
+#  propriétaire EN <= 1 TICK (appel DIRECT si le joueur est simulé ICI --
+#  hôte/bot, RPC ciblée sinon -- même patron que `_push_state`).
+# ======================================================================
+
+## Multiplicateur de vitesse au sol (ex. Glu de Verrou : 0.5 pendant 1.5 s).
+func server_apply_speed_mult(mult: float, duration: float) -> void:
+	if not multiplayer.is_server() or player == null or _server_status == null:
+		return
+	_server_status.apply_speed_mult(mult, duration)
+	_push_status(str(player.name).to_int())
+
+## Verrou de saut (ex. Glu : "ne peut ni sauter, ni glisser, ni plonger").
+func server_apply_jump_lock(duration: float) -> void:
+	if not multiplayer.is_server() or player == null or _server_status == null:
+		return
+	_server_status.apply_jump_lock(duration)
+	_push_status(str(player.name).to_int())
+
+## Multiplicateur GÉNÉRIQUE de durée de contrôle subi, en plus du passif de
+## l'agent (voir `_resolve_cc_duration`, net_apply_stun, net_apply_flash).
+func server_apply_cc_mult(mult: float, duration: float) -> void:
+	if not multiplayer.is_server() or player == null or _server_status == null:
+		return
+	_server_status.apply_cc_mult(mult, duration)
+	_push_status(str(player.name).to_int())
+
+func _push_status(owner_id: int) -> void:
+	if _server_status == null:
+		return
+	# Même motif que `_push_state` : appel DIRECT si le joueur est simulé ICI
+	# (hôte-joueur ou bot, autorité serveur partagée -- voir
+	# PlayerController.is_local_human), RPC ciblée sinon. C'est ce chemin,
+	# synchrone dans les deux cas (appel direct immédiat, ou RPC "reliable"
+	# envoyée sans attendre), qui pousse le statut au propriétaire EN <= 1
+	# TICK après son application côté serveur.
+	if player and player.is_multiplayer_authority():
+		if _owner_status:
+			_owner_status.apply_dict(_server_status.to_dict())
+	else:
+		_sync_status.rpc_id(owner_id, _server_status.to_dict())
+
+@rpc("authority", "call_local", "reliable")
+func _sync_status(d: Dictionary) -> void:
+	if _owner_status:
+		_owner_status.apply_dict(d)
+
+## Effets de statut EFFECTIFS de ce joueur : copie prédictive côté
+## propriétaire (réactive), copie autoritaire en repli (ex. lecture serveur
+## pour un pair distant, ou avant le tout premier tick) -- même repli que
+## `slot_info()`. Lu par PlayerController (ground_move, can_jump).
+func status() -> StatusEffects:
+	return _owner_status if _owner_status != null else _server_status
+
+## Durée de contrôle EFFECTIVE reçue par CE joueur (victime) : passif de
+## l'agent (ex. Tête de cloche de Choc, -40%) PUIS multiplicateur de statut
+## générique (StatusEffects.cc_mult) -- les deux se combinent par
+## multiplication, jamais un OU exclusif entre les deux mécanismes. Utilisée
+## par net_apply_stun/net_apply_flash ci-dessous, CHEZ LA VICTIME.
+func _resolve_cc_duration(duration: float) -> float:
+	var d := duration
+	if agent and agent.passive:
+		d = agent.passive.modify_cc_duration(d)
+	var st := status()
+	if st:
+		d *= st.cc_mult()
+	return d
+
+# ======================================================================
 #  OBJETS RÉPLIQUÉS (mur, fumée, tremplin, piège) — construits UNIQUEMENT
 #  côté serveur (voir chaque Ability.activate_server), diffusés à TOUS les
 #  pairs (visibles/bloquants partout, serveur inclus). Construits en code
@@ -230,6 +430,19 @@ func _spawn_barrier(pos: Vector3, fwd: Vector3, size: Vector3, duration: float, 
 	if scene == null:
 		return
 	var wall := StaticBody3D.new()
+	wall.add_to_group("round_props")  # BUG-03 : nettoyé au passage en achat / au reset.
+	# Passif Relevé de Vanne (docs/research/10_ammo_kits_input.md §3.3, AGT-05/
+	# AGT-09) : « sa coffreuse mesure les impacts » -- le mur doit donc porter
+	# l'id RÉSEAU de son propriétaire, quel que soit l'agent qui l'a posé (Mur
+	# d'assaut de Choc, Mur/Forteresse de Vanne, Rempart/Bastion de Verrou :
+	# TOUS les murs passent par `cast_barrier`, donc TOUS en héritent) — lu par
+	# Weapon._resolve_ray (scripts/combat/Weapon.gd, AGT-09) pour notifier
+	# `Releve.on_wall_shot` quand un ENNEMI tire dedans. `self.player` ici EST
+	# le propriétaire de CE nœud AbilityController (celui qui a appelé
+	# `cast_barrier`), jamais le tireur -- même distinction que partout
+	# ailleurs dans ce fichier (`_server_activate`, `_spawn_stun_trap`...).
+	if player:
+		wall.set_meta("wall_owner_id", str(player.name).to_int())
 	var col := CollisionShape3D.new()
 	var box := BoxShape3D.new()
 	box.size = size
@@ -260,6 +473,7 @@ func _spawn_smoke(pos: Vector3, radius: float, duration: float, color: Color) ->
 	# Calque VISION uniquement : bloque les regards (raycasts de vue des bots)
 	# mais ni les corps (masque joueur = calque 1) ni les balles (SHOT_MASK).
 	var body := StaticBody3D.new()
+	body.add_to_group("round_props")  # BUG-03 : nettoyé au passage en achat / au reset.
 	body.collision_layer = PhysicsLayers.VISION
 	body.collision_mask = 0
 	var col := CollisionShape3D.new()
@@ -302,6 +516,7 @@ func _spawn_jump_pad(pos: Vector3, duration: float, boost: float) -> void:
 	if scene == null:
 		return
 	var pad := Area3D.new()
+	pad.add_to_group("round_props")  # BUG-03 : nettoyé au passage en achat / au reset.
 	var col := CollisionShape3D.new()
 	var shape := CylinderShape3D.new()
 	shape.radius = 1.1
@@ -345,6 +560,7 @@ func _spawn_stun_trap(pos: Vector3, owner_team: int, trap_duration: float, stun_
 	if scene == null:
 		return
 	var trap := Area3D.new()
+	trap.add_to_group("round_props")  # BUG-03 : nettoyé au passage en achat / au reset.
 	var col := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
 	shape.size = Vector3(1.4, 0.15, 1.4)
@@ -398,22 +614,27 @@ func _spawn_stun_trap(pos: Vector3, owner_team: int, trap_duration: float, stun_
 
 ## Reçu par la VICTIME d'un piège étourdissant ou d'une Déferlante : fait
 ## transitionner son propre state_machine vers "Stun" (contract-r2.md :
-## "victim's owner receives transition_to('Stun', {'duration': d})").
+## "victim's owner receives transition_to('Stun', {'duration': d})"). Durée
+## passée à travers `_resolve_cc_duration` (passif de l'agent + StatusEffects.
+## cc_mult DE LA VICTIME, docs/research/10_ammo_kits_input.md §3.5 -- ex.
+## Tête de cloche de Choc, -40% sur l'étourdissement subi).
 @rpc("authority", "call_local", "reliable")
 func net_apply_stun(duration: float) -> void:
 	if player and player.state_machine:
-		player.state_machine.transition_to("Stun", {"duration": duration})
+		player.state_machine.transition_to("Stun", {"duration": _resolve_cc_duration(duration)})
 
 ## Reçu par la VICTIME d'un Éblouissement : écran blanc papier qui s'estompe
 ## sur `duration` (<= 1,5 s), CanvasLayer construite ici (contract-r2.md :
-## "a CanvasLayer you create from your scripts").
+## "a CanvasLayer you create from your scripts"). Durée passée à travers
+## `_resolve_cc_duration`, même motif que net_apply_stun ci-dessus.
 @rpc("authority", "call_local", "reliable")
 func net_apply_flash(duration: float) -> void:
 	if player == null:
 		return
+	var d := _resolve_cc_duration(duration)
 	if player.is_bot:
 		# Un bot ébloui ne voit plus rien pendant la durée (BotBrain lit ce méta).
-		player.set_meta("blinded_until", Time.get_ticks_msec() / 1000.0 + duration)
+		player.set_meta("blinded_until", Time.get_ticks_msec() / 1000.0 + d)
 		return
 	if not player.is_local_human():
 		return  # l'écran blanc n'a de sens que chez la victime elle-même.
@@ -426,8 +647,21 @@ func net_apply_flash(duration: float) -> void:
 	layer.add_child(rect)
 	player.get_tree().root.add_child(layer)
 	var tw := layer.create_tween()
-	tw.tween_property(rect, "modulate:a", 0.0, duration)
+	tw.tween_property(rect, "modulate:a", 0.0, d)
 	tw.tween_callback(layer.queue_free)
+
+## Reçu CHEZ LE PROPRIÉTAIRE d'une victime REPOUSSÉE (mouvement client-
+## autoritaire, contract-p0.md : le serveur ne peut pas changer directement la
+## vélocité d'un pair distant) : ajoute l'impulse `v` (m/s) à la vélocité
+## COURANTE, jamais un `set` qui écraserait le mouvement en cours ce tick
+## (docs/research/10_ammo_kits_input.md §3.5, ex. Tape-la-cloche de Choc,
+## AGT-03). Même patron d'appel que net_apply_stun : la capacité concrète fait
+## l'appel DIRECT si la victime est simulée ICI (hôte/bot), une RPC ciblée
+## (`net_apply_impulse.rpc_id(victim_owner_id, v)`) sinon.
+@rpc("authority", "call_local", "reliable")
+func net_apply_impulse(v: Vector3) -> void:
+	if player:
+		player.velocity += v
 
 ## Diffuse les positions révélées (RevealAbility/RenewalAbility) UNIQUEMENT
 ## aux coéquipiers du lanceur (RPC ciblée par joueur, pas de broadcast global
@@ -462,6 +696,7 @@ func net_show_markers(marks: Array, duration: float) -> void:
 	for m in marks:
 		var pos: Vector3 = m
 		var label := Label3D.new()
+		label.add_to_group("round_props")  # BUG-03 : nettoyé au passage en achat / au reset.
 		label.text = "!"
 		label.modulate = Color(0.95, 0.93, 0.88)
 		label.outline_modulate = Color(0.1, 0.08, 0.06)

@@ -22,12 +22,16 @@
 ## On se rend donc invisible dès qu'on n'est plus la caméra RÉELLEMENT active
 ## du viewport (`Viewport.get_camera_3d()`), pas seulement `Camera3D.current`.
 ##
-## v2 (design.md §5) : le contour d'encre du décor (silhouettes, plus de
-## hachure/crête — voir ink_edges.gdshader) prend sa couleur d'encre sur
-## Cartoon.INK et sa teinte de brume lointaine sur la carte courante
-## (Cartoon.map_palette(MatchConfig.map_id)["sky_horizon"], §4 « Fog: the
-## horizon colour ... it also tints far outlines »), rafraîchies au même
-## sondage basse fréquence que `Settings.ink_edges`.
+## v3 (docs/STYLE_BIBLE.md §7.4, tâche ART-07) : le contour d'encre du décor
+## (silhouette par profondeur + plis par normale — voir ink_edges.gdshader)
+## prend sa couleur d'encre sur Cartoon.INK et sa teinte de brume lointaine
+## sur la carte courante (Cartoon.map_palette(MatchConfig.map_id)
+## ["sky_horizon"]) — le shader mélange les deux vers cette teinte au même
+## rythme que le brouillard monde de LevelLook (§6.3/§7.4 : 40 → 150 m),
+## rafraîchies au même sondage basse fréquence que `Settings.ink_edges`. Les
+## largeurs/opacités de silhouette et les paramètres de pli (angle, largeur,
+## fondu, opacité) restent des défauts du shader — ce script ne pilote QUE
+## `enabled`/`ink_color`/`haze_color`, comme en v2.
 class_name InkPost
 extends MeshInstance3D
 

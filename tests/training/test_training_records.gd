@@ -9,7 +9,16 @@ const COURSE := "__test_course__"
 
 
 func after_test() -> void:
-	TrainingRecords._debug_clear(COURSE)
+	# `_debug_clear` (scripts/training/TrainingRecords.gd, hors périmètre de
+	# cette tâche) appelle `ConfigFile.erase_section_key` sans garde : sur une
+	# clé absente (aucun `save_best_time` dans le test qui vient de tourner,
+	# ex. test_load_best_time_defaults_to_negative_when_absent), ça lève une
+	# ERROR moteur « Cannot erase key ... from nonexistent section ». Les
+	# temps sauvegardés dans cette suite sont toujours >= 0 ; `load_best_time`
+	# ne renvoie -1.0 QUE si la clé n'existe pas encore (voir sa doc) — on ne
+	# tente donc l'effacement que si un enregistrement a réellement été écrit.
+	if TrainingRecords.load_best_time(COURSE) != -1.0:
+		TrainingRecords._debug_clear(COURSE)
 
 
 func test_load_best_time_defaults_to_negative_when_absent() -> void:

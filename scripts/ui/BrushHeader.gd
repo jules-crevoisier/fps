@@ -1,12 +1,26 @@
 ## BrushHeader.gd
-## Bandeau pinceau sec réutilisable (design.md §11 "Brush bar") : barre rouge
-## aux bords déchiquetés avec une queue sèche de 64 px qui déborde du panneau,
-## titre blanc en capitales italiques (Comic.title_label). Se dévoile de
-## gauche à droite en 250 ms (Comic.DUR_REVEAL) ; mouvement réduit -> fondu
-## seul, pas de balayage (design.md §13).
+## Bandeau pinceau sec réutilisable (STYLE_BIBLE v3 §8.2 jeton `brush`,
+## §8.1 règle 10) : barre rouge aux bords déchiquetés avec une queue sèche de
+## 64 px qui déborde du panneau, titre blanc en capitales italiques
+## (Comic.title_label). Se dévoile de gauche à droite en 250 ms
+## (Comic.DUR_REVEAL) ; mouvement réduit -> fondu seul, pas de balayage
+## (STYLE_BIBLE v3 §8.2 "Mouvement").
+##
+## La queue (`_draw_tail`) est peinte depuis `assets/ui/brush/dry_tail.png` —
+## plusieurs mèches de pinceau sec DISJOINTES, de largeur/opacité décroissantes
+## et de bords irréguliers (générées procéduralement, graine fixe) — jamais une
+## seule forme continue qui se referme en pointe symétrique : c'est
+## exactement ce dernier profil (un aileron lisible comme une nageoire) que
+## STYLE_BIBLE v3 nomme « la queue en poisson actuelle » et fait supprimer
+## (§8.2 jeton `brush`, §8.1 règle 10 « a l'air d'un bug », §10 anti-patterns
+## Interface, ART-31/CHK-38).
 ## Usage : `var h := BrushHeader.new(); h.title = "07. WASTELAND"; add_child(h)`.
 class_name BrushHeader
 extends Control
+
+## Texture blanche à alpha (mèches de pinceau sec) teintée à `Comic.BRUSH` au
+## dessin — voir la note de classe ci-dessus.
+const DRY_TAIL_TEXTURE := preload("res://assets/ui/brush/dry_tail.png")
 
 @export var title: String = "":
 	set(v):
@@ -97,25 +111,14 @@ func _ragged_bar(w: float) -> PackedVector2Array:
 		pts.append(Vector2(x, size.y + n * 0.5))
 	return pts
 
-## Queue sèche (design.md §11 "bleeding off the panel with a 64 px dry tail") :
-## déborde à droite de la barre pleine, s'amenuisant et se déchirant vers rien.
+## Queue sèche (STYLE_BIBLE v3 §8.2 jeton `brush` : "fin sèche à droite,
+## 64 px") : déborde à droite de la barre pleine. Texture (mèches disjointes,
+## voir note de classe) étirée sur le rectangle de la queue et teintée
+## `Comic.BRUSH` — plus de polygone unique qui se referme en pointe
+## symétrique (l'ancienne "queue en poisson", supprimée).
 func _draw_tail(w: float) -> void:
 	var tail_w := minf(tail_px, maxf(size.y * 1.4, 24.0))
 	if tail_w <= 1.0:
 		return
-	var pts := PackedVector2Array()
-	var steps := 7
-	for i in steps + 1:
-		var t := float(i) / float(steps)
-		var x := w + tail_w * t
-		var wobble := 0.55 + 0.45 * sin(t * 9.0 + float(_shape_seed % 11))
-		var half := size.y * 0.5 * (1.0 - t) * wobble
-		pts.append(Vector2(x, size.y * 0.5 - half))
-	for i in range(steps, -1, -1):
-		var t := float(i) / float(steps)
-		var x := w + tail_w * t
-		var wobble := 0.55 + 0.45 * cos(t * 7.0 + float(_shape_seed % 13))
-		var half := size.y * 0.5 * (1.0 - t) * wobble
-		pts.append(Vector2(x, size.y * 0.5 + half))
-	if pts.size() >= 3:
-		draw_colored_polygon(pts, Comic.BRUSH)
+	var rect := Rect2(Vector2(w, 0.0), Vector2(tail_w, size.y))
+	draw_texture_rect(DRY_TAIL_TEXTURE, rect, false, Comic.BRUSH)

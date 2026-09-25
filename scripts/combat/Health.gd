@@ -12,6 +12,13 @@ signal respawned()
 ## Dégâts effectivement appliqués (serveur uniquement) : utilisé par GameWorld
 ## pour charger l'ultime de l'ATTAQUANT (`amount * 0.05`, voir contract-r2.md).
 signal damaged(amount: float, attacker_id: int)
+## GF-10 "Réaction visible de la cible" : émis sur TOUS les pairs (contrairement
+## à `damaged`, serveur uniquement) à chaque dégât confirmé encaissé par CE
+## joueur — écouté par PlayerLook (flash du mesh, blanc/rouge selon `headshot`)
+## et CharacterAnimator (recul additif du haut du corps). Diffusé par
+## `_notify_hit_reaction` (voir plus bas), même schéma que `_sync_health`/
+## `_notify_death`.
+signal hit_reaction(headshot: bool)
 ## PROPRIÉTAIRE uniquement (contract-r4a.md "R4-FX" #2) : position MONDE de la
 ## source des dégâts, pour la flèche de direction du HUD (HitFeedback.gd).
 ## Absent (dégâts sans attaquant identifiable, ex. DamageZone) => pas émis.
@@ -52,8 +59,11 @@ func _physics_process(delta: float) -> void:
 # ---- API SERVEUR (appeler uniquement sur le serveur) ----
 
 ## Inflige des dégâts. `attacker_id` = peer de l'attaquant (0 = environnement).
-## Sans effet pendant une protection de spawn (`spawn_protection`).
-func apply_damage(amount: float, attacker_id: int = 0) -> void:
+## `headshot` (GF-10, défaut false pour les appelants qui ne le calculent pas
+## encore, ex. KillVolume/DamageZone) choisit la couleur du flash de hit
+## diffusé par `hit_reaction` — n'affecte ni les dégâts ni la mort. Sans effet
+## pendant une protection de spawn (`spawn_protection`).
+func apply_damage(amount: float, attacker_id: int = 0, headshot: bool = false) -> void:
 	if not multiplayer.is_server() or is_dead or amount <= 0.0:
 		return
 	if _protection_left > 0.0:
@@ -62,6 +72,7 @@ func apply_damage(amount: float, attacker_id: int = 0) -> void:
 	_set_health(current_health - amount)
 	damaged.emit(amount, attacker_id)
 	_push_damage_direction(amount, attacker_id)
+	_notify_hit_reaction.rpc(headshot)
 	if current_health <= 0.0:
 		_die(attacker_id)
 
@@ -146,6 +157,13 @@ func _sync_health(value: float, dead: bool) -> void:
 func _notify_death(killer_id: int) -> void:
 	is_dead = true
 	died.emit(killer_id)
+
+## GF-10 : diffuse le flash/flinch cosmétique à TOUS les pairs — même schéma
+## que `_sync_health`/`_notify_death` (`call_local` : le serveur se l'applique
+## aussi à lui-même s'il joue l'hôte).
+@rpc("authority", "call_local", "reliable")
+func _notify_hit_reaction(headshot: bool) -> void:
+	hit_reaction.emit(headshot)
 
 @rpc("authority", "call_local", "reliable")
 func _notify_respawn() -> void:
