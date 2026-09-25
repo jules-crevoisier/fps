@@ -1,0 +1,102 @@
+# =====================================================================================
+# tools/ai3d/manifests/weapon_repaint.yaml -- FP-12
+# Zones forcees par boite (etape 2 de tools/blender/repaint_weapon.py, doc
+# docs/research/12_viewmodel_v2.md §3.4) pour poser les accents du STYLE_BIBLE.md §5.2
+# aux bons endroits de chaque arme, en plus du rappel de palette global (etape 1, OKLab,
+# tout le texel).
+#
+# Provenance des boites : JAMAIS devinees. Mesurees en echantillonnant la couleur de
+# CHAQUE SOMMET des .glb actuels (assets/models/weapons/<id>.glb, la texture Tripo deja
+# peinte, lue via son UV0) et en repartant la bbox des sommets dont la couleur est deja
+# proche d'un accent/materiau attendu (rouge, laiton, creme, orange...) -- meme principe
+# que weapon_blueprint.py (FP-11) : mesure sur l'asset reel, jamais un nombre choisi a
+# l'oeil. Script de mesure jetable (non livre, scratchpad de la tache).
+#
+# SCHEMA -- un bloc top-level (4 cles communes) + `weapons`, chaque entree :
+#   id             str   identifiant, matche assets/models/weapons/<id>.glb
+#   boxes          list  zones forcees, chacune :
+#     part         str   repere court (jamais lu par le script, juste le rapport)
+#     target       str   "material:<enamel_steel|wood|brass|enamel_cream>" ou
+#                        "accent:<red|orange|yellow|teal|paper>" -- cles de
+#                        docs/style/tokens.json `color.weapon_materials`
+#     box_min/max  [x,y,z] en METRES, coordonnees LOCALES du maillage actuel (repere de
+#                        assets/models/weapons/<id>.glb : X = largeur/gauche-droite,
+#                        Y = hauteur depuis le bas de la poignee (0), Z = axe du canon,
+#                        Z NEGATIF = vers la bouche). Une face du maillage est dans la
+#                        boite si son CENTROIDE (moyenne de ses 3 sommets) y tombe --
+#                        `repaint_weapon.py::faces_in_box`.
+#
+# Seules les 3 armes de l'acceptance (Ravage garde-main rouge, Fracas tromblon laiton,
+# Pistolet carcasse creme) sont VERIFIEES par tests/acceptance ; les 4 autres portent
+# quand meme une boite (mesuree, pas devinee) pour respecter STYLE_BIBLE.md §5.1 regle 4
+# ("un accent emaille par arme") de facon coherente sur les 7 armes.
+tokens_path: docs/style/tokens.json
+weapons_dir: assets/models/weapons
+out_dir: assets/textures/weapons
+texture_res: 2048
+
+weapons:
+- id: pistolet
+  boxes:
+    - part: bague_bouche
+      target: 'accent:red'
+      box_min: [-0.06, 0.14, -0.29]
+      box_max: [0.06, 0.27, -0.235]
+    - part: carcasse
+      target: 'material:enamel_cream'
+      box_min: [-0.04, 0.0, -0.235]
+      box_max: [0.04, 0.27, 0.06]
+
+- id: magnum
+  boxes:
+    - part: barillet_laiton
+      target: 'material:brass'
+      box_min: [-0.03, 0.085, -0.105]
+      box_max: [0.03, 0.16, -0.035]
+    - part: barillet_case_rouge
+      target: 'accent:red'
+      box_min: [0.0, 0.085, -0.105]
+      box_max: [0.03, 0.16, -0.035]
+    - part: barillet_case_creme
+      target: 'material:enamel_cream'
+      box_min: [-0.03, 0.085, -0.105]
+      box_max: [0.0, 0.16, -0.035]
+
+- id: rafale
+  boxes:
+    - part: chargeur_manivelle
+      target: 'accent:orange'
+      box_min: [-0.08, 0.0, -0.30]
+      box_max: [0.09, 0.33, -0.11]
+
+- id: marqueur
+  boxes:
+    - part: viseur_feutre
+      target: 'accent:red'
+      box_min: [-0.045, 0.22, -0.51]
+      box_max: [0.045, 0.365, 0.04]
+
+- id: ravage
+  boxes:
+    - part: garde_main
+      target: 'accent:red'
+      box_min: [-0.04, 0.10, -0.41]
+      box_max: [0.02, 0.32, -0.195]
+
+- id: fracas
+  boxes:
+    - part: tromblon
+      target: 'material:brass'
+      box_min: [-0.06, 0.13, -0.52]
+      box_max: [0.07, 0.27, -0.34]
+    - part: cartouches
+      target: 'accent:red'
+      box_min: [-0.07, 0.16, -0.07]
+      box_max: [-0.03, 0.235, 0.07]
+
+- id: faucheur
+  boxes:
+    - part: lunette
+      target: 'material:brass'
+      box_min: [-0.09, 0.23, -0.02]
+      box_max: [-0.01, 0.32, 0.27]

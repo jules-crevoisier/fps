@@ -86,6 +86,13 @@ func _ready() -> void:
 	offset_left = Comic.SAFE_MARGIN
 	offset_top = Comic.SAFE_MARGIN
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# REVUE LEAD 2026-09-25T20:37 (« la minimap Wasteland déborde de son
+	# cadre ») -- filet de sécurité VISUEL en plus du rognage géométrique de
+	# `_draw()` (`footprint_screen_rect`/`positions_in_range` ci-dessus, qui
+	# fait le vrai travail testable) : même patron que AgentSelectScreen.gd/
+	# CrosshairEditor.gd (`clip_contents = true`, la fabrique déjà en place
+	# dans ce dépôt pour "jamais dessiner hors du rect d'un Control").
+	clip_contents = true
 	_plate_style = Comic.plate_style(Comic.plate_color(), Comic.CHAMFER_PX_MINIMAP)
 	resized.connect(queue_redraw)
 
@@ -133,6 +140,55 @@ static func footprints_in_range(footprints: Array, origin_xz: Vector2, radius_m:
 		)
 		if closest.distance_to(origin_xz) <= radius_m:
 			out.append(fp)
+	return out
+
+## REVUE LEAD 2026-09-25T20:37 (capture 01_hud_wasteland_1080p.jpg, « la
+## minimap Wasteland déborde de son cadre ... plan dessiné en bas à droite,
+## hors du carré noir ») : `footprints_in_range` ci-dessus ne garde QUE les
+## empreintes dont le point le plus proche est dans le rayon -- une empreinte
+## RETENUE (un long mur qui longe le joueur, cf. sa docstring) peut quand même
+## s'étendre BIEN AU-DELÀ du rayon sur son autre axe, et donc déborder du
+## cadre carré une fois projetée. Cette fonction ROGNE le rectangle MONDE à la
+## fenêtre carrée `[origin_xz - radius_m, origin_xz + radius_m]` (même rayon
+## que `footprints_in_range`, même fenêtre que `px_per_meter`/`to_map_point`
+## projettent exactement sur `[0, panel_size]`) AVANT toute projection --
+## jamais après (roder après projection perdrait l'échelle mètres/px). Un
+## `Rect2` sans aire (`has_area()` faux, empreinte entièrement hors fenêtre
+## malgré `footprints_in_range` — ne peut arriver qu'à la marge flottante
+## près) doit être ignoré par l'appelant, jamais dessiné.
+static func clip_rect_to_view(rect: Rect2, origin_xz: Vector2, radius_m: float) -> Rect2:
+	var view := Rect2(origin_xz - Vector2(radius_m, radius_m), Vector2(radius_m, radius_m) * 2.0)
+	return rect.intersection(view)
+
+## Rectangle ÉCRAN (px, prêt pour `draw_rect`) d'une empreinte -- ROGNE
+## d'abord le rectangle MONDE à la fenêtre visible (`clip_rect_to_view`) PUIS
+## le projette (`to_map_point`) : le rectangle rendu ne dépasse donc jamais
+## `[0, panel_size]` des deux côtés, quelle que soit la taille réelle de
+## l'empreinte (REVUE LEAD ci-dessus). `Rect2()` (aire nulle) si l'empreinte
+## rognée est vide -- l'appelant (`_draw()`) doit ignorer ce cas via
+## `has_area()`.
+static func footprint_screen_rect(world_rect: Rect2, origin_xz: Vector2, radius_m: float, px_per_m: float, center: Vector2) -> Rect2:
+	var clipped := clip_rect_to_view(world_rect, origin_xz, radius_m)
+	if not clipped.has_area():
+		return Rect2()
+	var origin := Vector3(origin_xz.x, 0.0, origin_xz.y)
+	var p0 := center + to_map_point(Vector3(clipped.position.x, 0.0, clipped.position.y), origin, px_per_m)
+	var p1 := center + to_map_point(Vector3(clipped.end.x, 0.0, clipped.end.y), origin, px_per_m)
+	return Rect2(p0, p1 - p0).abs()
+
+## Filtre alliés/ennemis (`Vector3`, XZ) à la MÊME fenêtre carrée que les
+## empreintes (`footprints_in_range`/`clip_rect_to_view`) — REVUE LEAD
+## 2026-09-25T20:37 : sans ce filtre, un allié/ennemi au-delà du rayon affiché
+## se dessinait quand même (`_draw()` parcourait `_allies`/`_enemies` SANS
+## aucun culling), potentiellement hors du cadre 240 px — même défaut que les
+## empreintes, corrigé de la même façon (un point hors fenêtre ne se dessine
+## simplement plus, plutôt que d'être re-projeté/clampé sur le bord).
+static func positions_in_range(positions: Array, origin_xz: Vector2, radius_m: float) -> Array:
+	var out: Array = []
+	for entry in positions:
+		var v: Vector3 = entry
+		if Vector2(v.x, v.z).distance_to(origin_xz) <= radius_m:
+			out.append(v)
 	return out
 
 ## Point MONDE (XZ) -> point minimap (px), recentré sur `origin` (le joueur),
@@ -228,13 +284,19 @@ func _draw() -> void:
 	var origin_xz := Vector2(_player_pos.x, _player_pos.z)
 	for entry in footprints_in_range(_footprints, origin_xz, VIEW_RADIUS_M):
 		var fp: Dictionary = entry
-		var rect: Rect2 = fp["rect"]
-		var p0 := center + to_map_point(Vector3(rect.position.x, 0.0, rect.position.y), _player_pos, px_per_m)
-		var p1 := center + to_map_point(Vector3(rect.end.x, 0.0, rect.end.y), _player_pos, px_per_m)
-		draw_rect(Rect2(p0, p1 - p0).abs(), _KIND_COLOR.get(String(fp["kind"]), Comic.RULE))
-	for a in _allies:
+		# REVUE LEAD 2026-09-25T20:37 -- `footprint_screen_rect` ROGNE le
+		# rectangle monde à la fenêtre visible AVANT projection (voir sa
+		# docstring) : jamais le rectangle brut de `fp["rect"]` projeté tel
+		# quel, qui pouvait déborder du cadre 240 px pour une empreinte longue.
+		var screen_rect := footprint_screen_rect(fp["rect"], origin_xz, VIEW_RADIUS_M, px_per_m, center)
+		if screen_rect.has_area():
+			draw_rect(screen_rect, _KIND_COLOR.get(String(fp["kind"]), Comic.RULE))
+	# Même rognage pour les glyphes alliés/ennemis (REVUE LEAD ci-dessus) --
+	# `positions_in_range` : un point hors de la fenêtre visible ne se dessine
+	# simplement plus, jamais projeté hors cadre.
+	for a in positions_in_range(_allies, origin_xz, VIEW_RADIUS_M):
 		_draw_glyph(center + to_map_point(a as Vector3, _player_pos, px_per_m), Comic.ALLY, "●")
-	for e in _enemies:
+	for e in positions_in_range(_enemies, origin_xz, VIEW_RADIUS_M):
 		_draw_glyph(center + to_map_point(e as Vector3, _player_pos, px_per_m), Comic.enemy_color(), "▼")
 	_draw_player_arrow(center)
 

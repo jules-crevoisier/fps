@@ -76,10 +76,15 @@ var _fire_clock: FireClock
 var _switch_cooldown: float = 0.0
 ## Sensation d'arme (R3-IN#4, WeaponFeel.gd) : index du tir courant dans le
 ## spray (motif de recul fixe puis aléatoire), et temps écoulé depuis la fin
-## d'une glissade/d'un plongeon (INF tant que l'action n'a jamais eu lieu). Le
-## sprint est automatique et n'impose plus de délai (BUG-K01).
+## d'un plongeon (INF tant que l'action n'a jamais eu lieu). Le sprint est
+## automatique et n'impose plus de délai (BUG-K01). La glissade n'a PLUS de
+## délai propre (GF-30, retour joueur 2026-09-25 : « on ne peut pas tirer
+## quand on slide, c'est un peu dérangeant ») : aucune horloge `_since_slide`
+## n'est donc tenue ici — voir `_owner_tick` (`WeaponFeel.fire_delay_left`
+## reçoit `INF` pour son paramètre glissade, son sentinel "pas de pénalité")
+## et `_fire_local` (la dispersion de glissade, elle, reste appliquée via
+## `sliding`, indépendante de cette horloge).
 var _spray_shot_index: int = 0
-var _since_slide: float = INF
 var _since_dive: float = INF
 
 # ---- Autorité serveur (une instance par joueur, vit sur ce nœud) ----
@@ -118,6 +123,23 @@ const GUNFIRE_MEMORY_MAX := 64
 ## (scripts/ai/BotBrain.gd, `_hear_gunfire`/nouveau `_hear_impacts`).
 static var recent_impacts: Array = []
 const IMPACT_MEMORY_MAX := 64
+
+## Remise à zéro des deux bus statiques ci-dessus (BUG-33 : `recent_gunfire`/
+## `recent_impacts` sont STATIQUES, donc partagés par TOUTE la durée de vie du
+## processus — en jeu, un même processus serveur enchaîne plusieurs matchs
+## (voir GameMode.reset_match) sans jamais recharger Weapon.gd, et en test un
+## seul processus gdUnit4 enchaîne toutes les suites d'un dossier (même
+## schéma que `BotPerception.reset_team_reports`, voir sa docstring). Sans
+## remise à zéro, un tir/impact simulé par une suite reste "récent" (filtré
+## par horloge murale, `BotPerception.HEAR_EVENT_MEMORY_S` = 1 s) pour
+## quiconque interroge le bus dans la seconde qui suit — assez pour qu'une
+## suite plus tard dans le MÊME run hérite d'entrées qu'elle n'a jamais
+## produites. Purement additif : aucune lecture existante (`BotBrain.
+## _hear_gunfire`/`_hear_impacts`, `tools/bot_bench.gd`) n'est modifiée, et un
+## bus déjà vide au moment de l'appel ne change rien au comportement en jeu.
+static func reset_buses() -> void:
+	recent_gunfire.clear()
+	recent_impacts.clear()
 
 ## Chemin du modèle 3D (.glb, voir tools/blender/make_weapons.py) pour un id
 ## d'arme — déduit du nom de fichier .tres dans WeaponDatabase.PATHS (même
@@ -267,13 +289,15 @@ func _owner_tick(delta: float) -> void:
 	if _inv.tick(delta):
 		_emit_local()  # rechargement prédit terminé
 
-	# Sensation d'arme (R3-IN#4) : délais avant de pouvoir tirer après une
-	# glissade/un plongeon — voir WeaponFeel.fire_delay_left. Le sprint est
-	# AUTOMATIQUE dès qu'on bouge (docs/MOVEMENT.md) : c'est la course normale,
-	# on doit pouvoir y tirer (avec la dispersion de mouvement) — aucun délai
-	# (BUG-K01 : sprint_to_fire/_since_sprint retirés, mécanique inopérante).
+	# Sensation d'arme (R3-IN#4) : délai avant de pouvoir tirer après un
+	# plongeon — voir WeaponFeel.fire_delay_left. Le sprint est AUTOMATIQUE dès
+	# qu'on bouge (docs/MOVEMENT.md) : c'est la course normale, on doit pouvoir
+	# y tirer (avec la dispersion de mouvement) — aucun délai (BUG-K01 :
+	# sprint_to_fire/_since_sprint retirés, mécanique inopérante). La glissade
+	# NE bloque PLUS le tir (GF-30, retour joueur 2026-09-25) : plus d'horloge
+	# `_since_slide` à tenir ici, seule la dispersion de glissade s'applique
+	# encore (voir `sliding` dans `_fire_local`).
 	var sm := player.state_machine.current_name
-	_since_slide = 0.0 if sm == "Slide" else _since_slide + delta
 	_since_dive = 0.0 if sm == "Dive" else _since_dive + delta
 
 	var can_act := _can_act()
@@ -285,7 +309,10 @@ func _owner_tick(delta: float) -> void:
 			_start_reload_predicted()
 
 	var c := WeaponDatabase.get_by_id(_inv.current_id())
-	var move_blocked := c != null and WeaponFeel.fire_delay_left(c, _since_slide, _since_dive) > 0.0
+	# GF-30 : `INF` pour le paramètre glissade (sentinel "action jamais
+	# survenue" de `fire_delay_left`, voir sa docstring) — seul le plongeon
+	# peut encore bloquer le tir.
+	var move_blocked := c != null and WeaponFeel.fire_delay_left(c, INF, _since_dive) > 0.0
 	var trigger := false
 	if can_act and c != null and not _inv.reloading and _switch_cooldown <= 0.0 and not move_blocked:
 		trigger = player.input.fire_held if c.automatic else player.input.fire_pressed

@@ -1275,21 +1275,25 @@
       "done_at": "2026-09-25T17:13:49"
     },
     "LD-44": {
-      "status": "doing",
+      "status": "done",
       "doing_at": "2026-09-25T19:25:28",
       "notes": [
         "2026-09-25T19:17:09 DÉCISION LEAD 2026-09-25 : périmètre élargi à scripts/core/PhysicsLayers.gd et scenes/player/player.tscn pour appliquer le correctif prêt : volumes anti-joueur sur un calque PLAYER_CLIP dédié, que le corps du joueur (et des bots) heurte mais que SHOT_MASK et les grenades ignorent. Le test test_a_shot_ray_passes_through_the_roof_clip_volume doit passer tel quel. En plus : poser visual:false sur les pièces Poste et Diligence (et toute pièce que les skins d'ART-96 recouvrent entièrement) SEULEMENT si ART-96 le demande — sinon ne pas y toucher (ART-96 passe après toi avec wasteland.gd).",
-        "2026-09-25T19:38:31 Vérif lead 20:25 : tests/player/test_stair_step.gd a 4 échecs (_grounded_sprinting_bot : is_on_floor faux) apparus pendant cette vague — probablement le changement de calques de collision dans scenes/player/player.tscn / PhysicsLayers.gd : le sol des tests doit rester détecté. tests/player/test_stair_step.gd DOIT être vert en fin de tâche."
+        "2026-09-25T19:38:31 Vérif lead 20:25 : tests/player/test_stair_step.gd a 4 échecs (_grounded_sprinting_bot : is_on_floor faux) apparus pendant cette vague — probablement le changement de calques de collision dans scenes/player/player.tscn / PhysicsLayers.gd : le sol des tests doit rester détecté. tests/player/test_stair_step.gd DOIT être vert en fin de tâche.",
+        "2026-09-25T20:27:06 Lead : ACCEPTÉ. Toits bas + calque PLAYER_CLIP livrés (masque joueur 33 = WORLD + PLAYER_CLIP, SHOT_MASK sans PLAYER_CLIP). L'échec de tests/player/test_stair_step.gd n'est pas causé par LD-44 (le bot n'est déjà plus au sol au départ du test) -> BUG-32."
       ],
-      "todo_at": "2026-09-25T19:25:27"
+      "todo_at": "2026-09-25T19:25:27",
+      "done_at": "2026-09-25T20:27:07"
     },
     "ART-96": {
-      "status": "todo",
-      "doing_at": "2026-09-25T16:24:05",
+      "status": "done",
+      "doing_at": "2026-09-25T20:27:42",
       "notes": [
-        "2026-09-25T19:17:11 REVUE LEAD (capture 07) : depuis la rue on voit la BOITE BEIGE du greybox avec des planches collées dessus — c'est exactement le « textures n'importe quoi » du playtest utilisateur. Pour Poste et Diligence (et chaque pièce entièrement habillée par ArtCovers) : poser visual:false sur la pièce dans wasteland.gd (support ART-91, collision inchangée) pour que SEUL le skin peint soit visible ; ajuster le skin pour couvrir chaque face exposée à ±10 cm (R7 >= 85 % mesuré). Plans serrés Poste + Diligence obligatoires, sans aucune surface beige de greybox visible."
+        "2026-09-25T19:17:11 REVUE LEAD (capture 07) : depuis la rue on voit la BOITE BEIGE du greybox avec des planches collées dessus — c'est exactement le « textures n'importe quoi » du playtest utilisateur. Pour Poste et Diligence (et chaque pièce entièrement habillée par ArtCovers) : poser visual:false sur la pièce dans wasteland.gd (support ART-91, collision inchangée) pour que SEUL le skin peint soit visible ; ajuster le skin pour couvrir chaque face exposée à ±10 cm (R7 >= 85 % mesuré). Plans serrés Poste + Diligence obligatoires, sans aucune surface beige de greybox visible.",
+        "2026-09-25T22:07:52 Lead : accepté (plus de boîte beige sous Poste/Diligence) ; diligence lue comme mur de caisses + bande blanche -> ART-103."
       ],
-      "todo_at": "2026-09-25T19:17:13"
+      "todo_at": "2026-09-25T19:17:13",
+      "done_at": "2026-09-25T22:07:53"
     },
     "ART-97": {
       "status": "done",
@@ -1302,12 +1306,14 @@
       "done_at": "2026-09-25T19:17:14"
     },
     "ART-99": {
-      "status": "doing",
+      "status": "done",
       "doing_at": "2026-09-25T19:25:28",
       "notes": [
-        "2026-09-25T19:17:10 DÉCISION LEAD : le code d'ART-99 est livré (passe 1) ; il reste la vue V12 : dans tools/art/data/wasteland_v4_views.json, V12 pos=[9,1.6,2] est DANS un bâtiment — la déplacer sur la Place ouverte (hors de tout volume, vérifier par raycast/overlap) regard vers le nord pour cadrer grue, derrick et château d'eau ; recapturer V1, V2, V5, V12. Aucun autre changement requis si les captures sont bonnes."
+        "2026-09-25T19:17:10 DÉCISION LEAD : le code d'ART-99 est livré (passe 1) ; il reste la vue V12 : dans tools/art/data/wasteland_v4_views.json, V12 pos=[9,1.6,2] est DANS un bâtiment — la déplacer sur la Place ouverte (hors de tout volume, vérifier par raycast/overlap) regard vers le nord pour cadrer grue, derrick et château d'eau ; recapturer V1, V2, V5, V12. Aucun autre changement requis si les captures sont bonnes.",
+        "2026-09-25T20:27:06 Lead : ACCEPTÉ. Consigne V12 du lead impossible (château d'eau au SUD de la Place) : V12 cadre grue + derrick, le château d'eau reste visible depuis d'autres vues. V5 vide (caméra dans un volume, tools/art/v4_shots.gd) -> corrigée dans ART-100."
       ],
-      "todo_at": "2026-09-25T19:25:28"
+      "todo_at": "2026-09-25T19:25:28",
+      "done_at": "2026-09-25T20:27:07"
     },
     "BUG-31": {
       "status": "done",
@@ -1352,14 +1358,16 @@
       "done_at": "2026-09-25T18:55:11"
     },
     "UX-34": {
-      "status": "doing",
+      "status": "done",
       "notes": [
         "2026-09-25T17:23:51 Lead après UX-30 : utiliser Comic.*_v4 (signal_color, ink_label, plate_style, title_font_v4…), KitSlantTile, KitSwash. Texte sur jaune = encre. gdUnit avec --ignoreHeadlessMode. FUN-01 livré : EndPanel porte déjà le compte à rebours/vote Rejouer — n'en changer que l'habillage ; tests/networking/test_rematch.gd doit rester vert.",
         "2026-09-25T18:07:06 REVUE LEAD 2026-09-25 (captures 02/03 refusées, 01 OK) — à corriger : (1) Fin : « VICTOIRE »/« DÉFAITE » ENTIER, jamais rogné par la plaque (bande encre pour VICTOIRE signal, bande vital pour DÉFAITE, au-dessus du contenu). (2) Score 118 : chiffre allié en couleur ally, chiffre ennemi en enemy (magenta), tiret paper ; les données de capture doivent être cohérentes (VICTOIRE => allié > ennemi). (3) La spec §6 « Fin » ne contient PAS de liste de joueurs : retirer la liste intégrée (sinon, si un test verrouillé l'exige, l'afficher entière sans barre de défilement ni rognage, 8 joueurs en 1080p ET 720p). (4) Tableau des scores : SUPPRIMER le bandeau pinceau rouge (banni par la direction) ; en-tête = ligne meta 21 « TDM · WASTELAND · PREMIER À 40 » + score 118 ally contre enemy ; lignes 54 px zébrées plate/plate_hi ; colonnes alignées en chiffres tabulaires : portrait 48, nom, É, M, A, score, ping, avec une ligne d'en-têtes de colonnes meta 21 ; retirer « (toi) » (la ligne pleine signal le dit déjà). (5) Mort : vérifier le coin coupé de la carte du tueur (encoche parasite en haut à droite sur 01). (6) Captures 1080p ET 720p avec un 4v4 complet (8 lignes), côte à côte avec la maquette pour la fin.",
-        "2026-09-25T18:28:55 PRÉCISION LEAD : le lead ne traite RIEN de cette tâche en parallèle — les 6 points de la REVUE LEAD ci-dessus sont À TOI, dans tes 3 fichiers (le bandeau BrushHeader de ScoreboardPanel.gd compris). Colonnes : n'afficher que les stats que player_info fournit déjà (É/M, et A si la clé assists existe) — pas de colonne vide ni inventée, pas de modification de GameWorld.gd ; en-têtes de colonnes meta 21 alignés en chiffres tabulaires. Portrait du tueur : garder le glyphe ▼ (agent_index absent), c'est accepté."
+        "2026-09-25T18:28:55 PRÉCISION LEAD : le lead ne traite RIEN de cette tâche en parallèle — les 6 points de la REVUE LEAD ci-dessus sont À TOI, dans tes 3 fichiers (le bandeau BrushHeader de ScoreboardPanel.gd compris). Colonnes : n'afficher que les stats que player_info fournit déjà (É/M, et A si la clé assists existe) — pas de colonne vide ni inventée, pas de modification de GameWorld.gd ; en-têtes de colonnes meta 21 alignés en chiffres tabulaires. Portrait du tueur : garder le glyphe ▼ (agent_index absent), c'est accepté.",
+        "2026-09-25T19:54:30 Lead : accepté après correction directe du lead — EndPanel n'affiche plus le roster (§6), test ajouté ; titre entier, score allié/ennemi colorés, bandeau rouge retiré du tableau. Colonnes du tableau + captures cohérentes -> UX-40."
       ],
       "doing_at": "2026-09-25T18:28:59",
-      "todo_at": "2026-09-25T18:28:57"
+      "todo_at": "2026-09-25T18:28:57",
+      "done_at": "2026-09-25T19:54:31"
     },
     "ART-74": {
       "status": "dropped",
@@ -1432,44 +1440,164 @@
       "reason": "Hors proto : décision utilisateur 2026-09-25 « une seule map finie (Wasteland), le reste plus tard »"
     },
     "UX-37": {
-      "status": "doing",
+      "status": "done",
       "notes": [
         "2026-09-25T18:57:17 Coordination : SET-01 tourne EN PARALLÈLE et ajoute Settings.MOUSE_SENSITIVITY_DEFAULT (= 0.001) — l'échelle lisible = mouse_sensitivity / MOUSE_SENSITIVITY_DEFAULT ; ne pas modifier Settings.gd (fichier de SET-01) ; si la constante n'existe pas encore quand tu en as besoin, attendre qu'elle apparaisse plutôt que de coder 0.001 en dur."
       ],
-      "doing_at": "2026-09-25T18:57:20"
+      "doing_at": "2026-09-25T18:57:20",
+      "done_at": "2026-09-25T19:46:51"
     },
     "UX-36": {
-      "status": "doing",
-      "doing_at": "2026-09-25T18:57:20"
+      "status": "done",
+      "doing_at": "2026-09-25T18:57:20",
+      "done_at": "2026-09-25T19:46:51"
     },
     "SET-01": {
-      "status": "doing",
-      "doing_at": "2026-09-25T18:57:20"
+      "status": "done",
+      "doing_at": "2026-09-25T18:57:20",
+      "done_at": "2026-09-25T19:46:51"
     },
     "FP-12": {
-      "status": "doing",
+      "status": "done",
       "notes": [
-        "2026-09-25T19:27:34 Lead : paint_bake.py a reçu un crochet GPU (tools/blender/lib/gpu_compute.py : Cycles sur la Radeon via HIP, threads CPU plafonnés) — le garder. tests/blender/test_paint_bake.py a 3 échecs PRÉEXISTANTS (TestV2SharpEdges x2, TestV2ProjectedKindTexture::test_chamfer_lightened_after_gltf_roundtrip), identiques sur CPU : les corriger si la cause est dans paint_bake.py, sinon les documenter."
+        "2026-09-25T19:27:34 Lead : paint_bake.py a reçu un crochet GPU (tools/blender/lib/gpu_compute.py : Cycles sur la Radeon via HIP, threads CPU plafonnés) — le garder. tests/blender/test_paint_bake.py a 3 échecs PRÉEXISTANTS (TestV2SharpEdges x2, TestV2ProjectedKindTexture::test_chamfer_lightened_after_gltf_roundtrip), identiques sur CPU : les corriger si la cause est dans paint_bake.py, sinon les documenter.",
+        "2026-09-25T20:57:19 REVUE LEAD 2026-09-25 (repaint_avant_apres.jpg) — REFUSÉ : l'« après » est quasi identique, le bleu marine reste sur le Ravage, le Pistolet et le Fracas. Critère mesurable sur chaque albédo final : fraction de pixels de teinte 190-250° avec saturation > 0,20 <= 2 % (hors liserés d'équipe éventuels) ; palette cible §5.1 (métal chaud gris-brun, bois, laiton, accent rouille) ; avant/après en rendu ET en swatches de texture, différence évidente à l'œil. Garder le crochet GPU de paint_bake.py.",
+        "2026-09-25T22:05:12 Lead : accepté (plus de bleu saturé) ; métal encore ardoise froid -> FP-12B."
       ],
-      "doing_at": "2026-09-25T19:27:36"
+      "doing_at": "2026-09-25T20:57:20",
+      "done_at": "2026-09-25T22:05:13",
+      "todo_at": "2026-09-25T20:57:19"
     },
     "FP-11": {
-      "status": "doing",
+      "status": "done",
       "notes": [
-        "2026-09-25T19:27:35 Lead : un agent de licences ajoute des <arme>.provenance.json à côté des .glb de assets/models/weapons/ ; si tu déplaces un .glb (ex. vers _painted_v1/), déplace sa provenance avec lui et garde python tools/ai3d/licence_check.py sans nouvelle violation."
+        "2026-09-25T19:27:35 Lead : un agent de licences ajoute des <arme>.provenance.json à côté des .glb de assets/models/weapons/ ; si tu déplaces un .glb (ex. vers _painted_v1/), déplace sa provenance avec lui et garde python tools/ai3d/licence_check.py sans nouvelle violation.",
+        "2026-09-25T20:55:56 Lead : ACCEPTÉ. Le contrôle Python muzzle_tip_dist est tautologique (toujours 0) mais la validation indépendante côté Godot (test_every_v2_model_has_its_muzzle_at_the_frontmost_vertex, 10/10) couvre le critère ; supprimer/réécrire ce contrôle dans FP-19.",
+        "2026-09-25T20:57:18 REVUE LEAD 2026-09-25 (planches FP-11_planches_profil_1/2.jpg) — REFUSÉ, c'est le cœur du retour utilisateur « armes mal placées dans les mains ». Sur ravage, magnum, rafale et faucheur, le repère Grip (= origine 0,0) flotte hors de la poignée (Ravage : ~5 cm à droite de la poignée pistolet ; Magnum : ~5 cm au-dessus du manche ; Rafale : dans la carcasse ; Faucheur : ~8 cm SOUS la crosse) ; Foregrip du Ravage ~8 cm sous le garde-main ; Sight du Magnum ~6 cm au-dessus du canon. Le maillage n'a pas été recalé pour que l'origine tombe SUR la poignée. À faire : pour chaque arme, déplacer le MAILLAGE (pas le repère) pour que l'origine = creux de la main sur la poignée pistolet (haut-arrière de la poignée, dans sa silhouette) ; Foregrip SUR la surface basse du garde-main (fusils) ou main d'appui sur la poignée (pistolets) ; Sight SUR le haut de la mire/du rail ; MagWell à l'entrée du puits de chargeur ; Muzzle au bout du canon. CRITÈRES MESURABLES (ajoutés au test Godot INDÉPENDANT tests/combat/test_weapon_models_v2.gd, relisant le .glb exporté) : distance de Grip à la surface du maillage <= 1,0 cm ET Grip sous le bas de la carcasse ; Foregrip, Sight, MagWell, Eject <= 1,5 cm de la surface. Retirer le contrôle Python tautologique muzzle_tip_dist. Planches de profil régénérées : chaque repère visiblement POSÉ sur la bonne pièce, sinon la tâche n'est pas finie.",
+        "2026-09-25T22:05:13 Lead : ACCEPTÉ après revue des planches (repères posés sur les bonnes pièces). Sight du Magnum 1 cm au-dessus du guidon : accepté."
       ],
-      "doing_at": "2026-09-25T19:27:36"
+      "doing_at": "2026-09-25T20:57:20",
+      "done_at": "2026-09-25T22:05:13",
+      "todo_at": "2026-09-25T20:57:19"
     },
     "FP-10": {
-      "status": "doing",
+      "status": "done",
       "notes": [
-        "2026-09-25T19:27:35 Lead : la source CC0 est présente : C:/Users/srko/AppData/Local/Temp/claude/C--Users-srko-Desktop-fps/02e156fb-5e66-4722-9835-071a024d62a9/scratchpad/downloads/ual/ual.glb (aucun téléchargement nécessaire) — la copier dans assets/incoming/quaternius/ual.glb. Rendus Blender : Cycles via tools/blender/lib/gpu_compute.use_gpu_for_cycles si Cycles est utilisé."
+        "2026-09-25T19:27:35 Lead : la source CC0 est présente : C:/Users/srko/AppData/Local/Temp/claude/C--Users-srko-Desktop-fps/02e156fb-5e66-4722-9835-071a024d62a9/scratchpad/downloads/ual/ual.glb (aucun téléchargement nécessaire) — la copier dans assets/incoming/quaternius/ual.glb. Rendus Blender : Cycles via tools/blender/lib/gpu_compute.use_gpu_for_cycles si Cycles est utilisé.",
+        "2026-09-25T20:57:18 REVUE LEAD 2026-09-25 — REFUSÉ visuellement : le turntable montre deux petites taches NOIRES à ~2 m l'une de l'autre (bbox 2,05 x 2,51 x 2,00 m), aucune texture visible, aucune prise ; fp_hold_sheet.png est coupé en bas et gris. Critères : (1) le GLB exporté a une bbox de bras cohérente avec la pose de tenue (mains à ~40-70 cm devant la caméra, écart des mains <= 45 cm, pas de T-pose) ; (2) la texture peinte est VISIBLE (gants cuir #6B4A2E, manches #BFAE86 : luminance moyenne des pixels de bras > 0,25 sur la capture, jamais noire) ; (3) capture de contrôle dans la caméra FP du jeu (54° vertical, 16:9) : les deux mains tiennent le Ravage (repères v2 de FP-11 si disponibles, sinon un cylindre de poignée) en vue première personne, modes avant-bras ET mains flottantes côte à côte, cadrage lisible (arme + mains dans le tiers droit-bas comme un FPS), plus un gros plan de la main sur la poignée. Encre fine (pas de coque noire qui mange le maillage).",
+        "2026-09-25T22:05:12 Lead : accepté pour le rig/la pose/la texture visible ; qualité des mains insuffisante en gros plan -> FP-10B."
       ],
-      "doing_at": "2026-09-25T19:27:36"
+      "doing_at": "2026-09-25T20:57:20",
+      "done_at": "2026-09-25T22:05:13",
+      "todo_at": "2026-09-25T20:57:19"
     },
     "GF-30": {
+      "status": "done",
+      "doing_at": "2026-09-25T19:38:06",
+      "notes": [
+        "2026-09-25T20:07:29 Lead : accepté ; tests/review/test_fire_every_state.gd et tools/review/gameplay_probe.gd mis à jour par le lead (Slide et Stun = tir permis, décisions GF-29/GF-30) — 12/12 verts."
+      ],
+      "done_at": "2026-09-25T20:07:30"
+    },
+    "UX-38": {
+      "status": "done",
+      "doing_at": "2026-09-25T19:46:51",
+      "done_at": "2026-09-25T20:37:00"
+    },
+    "UX-39": {
+      "status": "done",
+      "doing_at": "2026-09-25T19:46:51",
+      "done_at": "2026-09-25T20:37:00"
+    },
+    "ART-100": {
+      "status": "todo",
+      "notes": [
+        "2026-09-25T20:27:07 Lead : inclure la correction de la vue V5 (capture vide : caméra dans un volume) et vérifier grue/derrick/château d'eau sur l'ensemble des vues V1-V12 (au moins une vue chacun)."
+      ]
+    },
+    "ART-94": {
+      "status": "done",
+      "notes": [
+        "2026-09-25T20:27:41 Lead (playtest utilisateur : « textures n'importe quoi », boîtes beiges du greybox visibles sous l'art) : NE PAS éditer scripts/levels/maps/layouts/wasteland.gd (fichier d'ART-96 dans cette vague). Pour chaque pièce de greybox que tes skins recouvrent ENTIÈREMENT, liste son nom exact dans le rapport sous « visual_false: [...] » — le lead posera visual:false (support ART-91, collision inchangée) en une seule passe après la vague. Tes captures doivent déjà être faites avec ces pièces masquées si possible (surcharge locale temporaire dans ton script de capture, jamais dans wasteland.gd), et ne montrer AUCUNE surface beige de greybox.",
+        "2026-09-25T22:07:51 Lead : accepté ; pas de visual:false sur les bâtiments (le toit et l'intérieur viennent du Kit) — les murs beiges visibles seront peints par ART-101."
+      ],
+      "doing_at": "2026-09-25T20:27:42",
+      "done_at": "2026-09-25T22:07:53"
+    },
+    "ART-95": {
+      "status": "done",
+      "notes": [
+        "2026-09-25T20:27:41 Lead (playtest utilisateur : « textures n'importe quoi », boîtes beiges du greybox visibles sous l'art) : NE PAS éditer scripts/levels/maps/layouts/wasteland.gd (fichier d'ART-96 dans cette vague). Pour chaque pièce de greybox que tes skins recouvrent ENTIÈREMENT, liste son nom exact dans le rapport sous « visual_false: [...] » — le lead posera visual:false (support ART-91, collision inchangée) en une seule passe après la vague. Tes captures doivent déjà être faites avec ces pièces masquées si possible (surcharge locale temporaire dans ton script de capture, jamais dans wasteland.gd), et ne montrer AUCUNE surface beige de greybox.",
+        "2026-09-25T22:07:51 Lead : accepté (revue V3 : façade Hôtel encore en enduit uni -> ART-101)."
+      ],
+      "doing_at": "2026-09-25T20:27:42",
+      "done_at": "2026-09-25T22:07:53"
+    },
+    "BUG-32": {
+      "status": "done",
+      "doing_at": "2026-09-25T20:27:42",
+      "notes": [
+        "2026-09-25T22:07:52 Lead : accepté (cause : _apply_bot_look ne consommait pas look_delta)."
+      ],
+      "done_at": "2026-09-25T22:07:53"
+    },
+    "UX-40": {
+      "status": "done",
+      "notes": [
+        "2026-09-25T20:37:00 Lead (revue UX-39 01_hud_wasteland_1080p.jpg) : la minimap Wasteland déborde de son cadre (plan dessiné en bas à droite, hors du carré noir) : cadrer/échelonner le plan dans les 240 px (160 en 720p) avec coins coupés, clip du contenu, joueur centré ou carte entière selon la spec §5 ; test : aucun point dessiné hors du rect de la minimap."
+      ],
+      "doing_at": "2026-09-25T20:37:01",
+      "done_at": "2026-09-25T21:20:28"
+    },
+    "BUG-33": {
+      "status": "done",
+      "doing_at": "2026-09-25T20:37:01",
+      "notes": [
+        "2026-09-25T21:20:28 Lead : accepté (cause réelle = multiplayer_peer null laissé par une suite voisine ; reset_buses ajouté). Câblage de reset_buses au début de match : à faire dans GATE-01 si utile."
+      ],
+      "done_at": "2026-09-25T21:20:28"
+    },
+    "FP-19": {
+      "status": "todo",
+      "notes": [
+        "2026-09-25T20:55:56 Lead : retirer ou rendre réellement indépendant le contrôle muzzle_tip_dist de tools/blender/rig_weapon_parts.py (tautologique, voir FP-11)."
+      ]
+    },
+    "FP-13": {
       "status": "doing",
-      "doing_at": "2026-09-25T19:38:06"
+      "notes": [
+        "2026-09-25T20:55:57 Lead : chaque assets/models/fp/fp_<arme>.glb mélange bras UAL (CC0) et maillage d'arme Tripo : écrire un fp_<arme>.provenance.json (outil, sources : ual.glb + provenance de l'arme v2, script) pour que python tools/ai3d/licence_check.py reste à 0. Rendus Cycles via tools/blender/lib/gpu_compute. Planche de contact du Ravage OBLIGATOIRE pour la revue utilisateur (7 clips, plusieurs images par clip).",
+        "2026-09-25T22:05:13 Lead : les mains seront remplacées par FP-10B (mêmes os) et le métal réchauffé par FP-12B, en parallèle : la planche Ravage pour l'utilisateur doit être REGÉNÉRÉE avec les mains FP-10B et les textures FP-12B avant d'être montrée (le générateur doit pouvoir être relancé en une commande). Tenir compte du Grip 0,7 cm à droite de l'axe (note FP-11)."
+      ],
+      "doing_at": "2026-09-25T22:05:14"
+    },
+    "BUG-34": {
+      "status": "done",
+      "doing_at": "2026-09-25T21:20:29",
+      "done_at": "2026-09-25T21:28:04"
+    },
+    "FP-10B": {
+      "status": "doing",
+      "doing_at": "2026-09-25T22:05:14"
+    },
+    "FP-12B": {
+      "status": "doing",
+      "doing_at": "2026-09-25T22:05:14"
+    },
+    "LD-45": {
+      "status": "doing",
+      "notes": [
+        "2026-09-25T22:07:51 Lead : tests/maps/test_wasteland_markers.gd a 3 échecs (temps de chemin navmesh) apparus avec la vague toits bas/habillage : les diagnostiquer ; corriger la géométrie dans wasteland.gd si un passage a été bouché/allongé, sinon (changement voulu) justifier et ajuster le seuil en le documentant. Ne toucher à aucun visual:false posé par ART-96."
+      ],
+      "doing_at": "2026-09-25T22:07:53"
+    },
+    "ART-101": {
+      "status": "doing",
+      "doing_at": "2026-09-25T22:07:53"
+    },
+    "ART-103": {
+      "status": "doing",
+      "doing_at": "2026-09-25T22:07:53"
     }
   }
 }

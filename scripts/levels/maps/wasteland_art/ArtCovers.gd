@@ -14,38 +14,73 @@
 ##
 ## Peau, jamais collision (§1 R9, WastelandArt.gd) : chaque pièce ci-dessous
 ## garde la boîte de collision que `Kit.build_piece` a DÉJÀ posée pour
-## `wasteland.gd` (aucune pièce de ce module n'a `"visual":false` — cette
-## bascule touche `wasteland.gd`, hors de mon périmètre de fichiers — donc la
-## boîte peinte plate du Kit reste dessous, TOUJOURS OPAQUE et fermée sur ses
-## 6 faces). La peau DOIT donc dépasser cette boîte, ne serait-ce que de
-## quelques cm, sur CHAQUE face visible : une peau posée pile à la cote de la
-## boîte (ou plus petite) ne "gagne" jamais le test de profondeur contre la
-## boîte opaque qui l'entoure — elle reste invisible de l'extérieur, quel que
-## soit son remplissage R7 mesuré en isolation (une mesure orthographique du
-## SEUL maillage de la peau ne dit rien de ce qui la recouvre une fois posée
-## sur la boîte réelle). C'est le bug relevé en vérification (2026-09-25,
-## ART-96) sur `poste_shell`/`diligence_shell`/`covers_citerne_tank` : ces
-## trois peaux (plus `covers_chateau_cuve`/`covers_cuve_w`, même défaut
-## constaté à l'audit) étaient posées SANS la marge `NUDGE_SCALE` — `_skin_
-## diligence`/`_skin_chateau_eau`/`_skin_citerne`/`_skin_cuve` (fonctions
-## dédiées, jamais passées par `_place_ground`) ne l'appliquaient tout
-## simplement pas, contrairement aux pièces posées via `_place_ground`/
-## `_place_centered` (qui la reçoivent par défaut) — et `poste_shell.glb`
-## était, en plus, cuit à une cote plus petite que sa boîte réelle (7,0×8,4 m
-## en largeur/profondeur pour une boîte 8×9 m), si bien que MÊME la marge de
-## `_place_ground` ne suffisait pas à la faire dépasser. Corrigé ci-dessous :
+## `wasteland.gd`. Deux régimes de rendu coexistent, choisis PIÈCE PAR PIÈCE
+## dans `wasteland.gd` (`_box_novisual`, ART-96, additif à `_box`) :
+##   - **couverts** (CiterneFUEL, CaisseFUEL, CharretteW, etc., §2 "Couverts
+##     et petits volumes" du plan) : pas de `"visual":false`, la boîte peinte
+##     plate du Kit reste TOUJOURS OPAQUE dessous. La peau DOIT donc dépasser
+##     cette boîte, ne serait-ce que de quelques cm, sur CHAQUE face visible :
+##     une peau posée pile à la cote de la boîte (ou plus petite) ne "gagne"
+##     jamais le test de profondeur contre la boîte opaque qui l'entoure et
+##     reste invisible de l'extérieur, quel que soit son remplissage R7
+##     mesuré en isolation (une mesure orthographique du SEUL maillage de la
+##     peau ne dit rien de ce qui la recouvre une fois posée sur la boîte
+##     réelle). `NUDGE_SCALE` (et les marges par-axe des fonctions dédiées)
+##     portent cette marge — technique retenue partout pour cette catégorie
+##     (§8 "Z-fighting" du plan : "face extérieure du Kit laissée dessous").
+##   - **volumes pleins du centre** (Poste, Diligence, ChateauCuve, Pompe,
+##     MuretGouletO/E, les 4 pieds du château) : `wasteland.gd` leur pose
+##     `"visual":false` (correctif de revue, 2026-09-25, capture 07 : « on
+##     voit la BOITE BEIGE du greybox avec des planches collées dessus »
+##     depuis la rue, sur Poste/Diligence — la marge `NUDGE_SCALE` seule ne
+##     garantissait pas de gagner le test de profondeur sur CHAQUE point d'une
+##     façade non plane, seulement sur la boîte englobante). Le Kit ne rend
+##     alors plus RIEN pour ces pièces (collision inchangée, `Kit.gd`
+##     l.1016-1029, ART-91) : la peau ci-dessous est la SEULE géométrie
+##     visible, plus aucun risque de z-fighting — la marge `NUDGE_SCALE`
+##     qu'elles gardent encore n'est plus qu'une sécurité anti-trou (±10 cm
+##     R1), jamais un besoin de gagner un test de profondeur qui n'existe
+##     plus. Vérifié pièce par pièce (AABB composée de chaque instance ici
+##     contre la boîte réelle de `WastelandLayout.data()`, jamais estimé)
+##     avant de poser `visual:false`, voir le rapport de tâche.
+##
+## Bug de fond relevé en vérification (2026-09-25, ART-96) sur `poste_shell`/
+## `diligence_shell`/`covers_citerne_tank`/`covers_chateau_cuve`/
+## `covers_cuve_w` : `_skin_diligence`/`_skin_chateau_eau`/`_skin_citerne`/
+## `_skin_cuve` (fonctions dédiées, jamais passées par `_place_ground`)
+## n'appliquaient PAS la marge `NUDGE_SCALE`, contrairement aux pièces posées
+## via `_place_ground`/`_place_centered` (qui la reçoivent par défaut) — et
+## `poste_shell.glb` était, en plus, cuit à une cote plus petite que sa boîte
+## réelle (7,0×8,4 m en largeur/profondeur pour une boîte 8×9 m). Corrigé :
 ## chaque fonction dédiée applique désormais sa propre marge (uniforme via
 ## `NUDGE_SCALE` quand la peau est déjà pile aux cotes de sa boîte, ou une
 ## `Vector3` par axe calculée contre la boîte RÉELLE — jamais contre la
 ## propre cote naturelle de la peau — quand la peau est plus petite que sa
-## boîte) ; `poste_shell` gagne sa propre fonction `_skin_poste` (avant : un
-## simple appel `_place_ground`, jamais documenté ici) pour porter cette
-## marge par-axe. La peau reste ainsi bâtie pour COUVRIR entièrement la
-## boîte : ras des faces ou légèrement plus grande (jamais plus de 10 cm,
-## R1), jamais coïncidente au micron près pour éviter le z-fighting
-## (§8 "Z-fighting" du plan : "face extérieure du Kit laissée dessous" — la
-## technique retenue partout dans cette passe). `NUDGE_SCALE` porte cette
-## marge, uniforme, sur les pièces "boîte pleine" déjà à la bonne cote.
+## boîte) ; `poste_shell` gagne sa propre fonction `_skin_poste` pour porter
+## cette marge par-axe. Un second bug, plus grave, a été trouvé et corrigé
+## dans `_skin_diligence` en préparant le passage à `visual:false` (ci-
+## dessus) : `diligence_crates.glb` (le module `crate_stack_fit` qui comble
+## le fond de la boîte, derrière `diligence_shell`) a, comme tous les modules
+## `crate_stack_fit` (voir le commentaire de `_place_centered`), son origine
+## locale CENTRÉE sur les 3 axes — jamais À LA BASE. Il était pourtant placé
+## avec `pos.y - size.y * 0.5` (la convention "base", correcte pour
+## `diligence_shell` mais PAS pour ce module) : la moitié du maillage (1,6 m
+## sur 3,2 m de haut) se retrouvait donc enterrée sous le sol, et le sommet
+## visible ne montait qu'à 1,6 m sur les 3,4 m de la boîte — un vrai trou de
+## remplissage (largement sous les 85 % de R7 sur la moitié arrière de la
+## Diligence), invisible tant que la boîte Kit opaque restait dessous, mais
+## qui SERAIT devenu un trou béant (on voit au travers) une fois `visual:
+## false` posé. Corrigé : position Y ramenée au CENTRE de la boîte (`pos.y`,
+## comme `_place_centered` le fait pour les autres modules `crate_stack_fit`)
+## ; l'échelle X passe de `NUDGE_SCALE` uniforme à `shell_x_scale` (le même
+## facteur que `diligence_shell`, calculé contre la largeur RÉELLE de la
+## boîte) — la pile de caisses, comme la coque, ne couvrait que 5,6 m des
+## 6,0 m de large de la boîte, laissant 14,4 cm de vide de chaque côté sur sa
+## tranche de profondeur. Sonde et résultats mesurés (AABB monde contre boîte
+## réelle, les 6 faces) dans le rapport de tâche : combiné coque+caisses,
+## écart ≤ 6,1 cm en X, ≤ 1,9 cm en Z, ≤ 0,2 cm en Y — toujours un DÉBORD
+## (jamais un retrait), donc aucun trou possible, dans la tolérance ±10 cm de
+## R1.
 ##
 ## R9 "les barrières Duel/Duo se filtrent seules" : `data["pieces"]` a DÉJÀ
 ## traversé `WastelandLayout._filter_pieces_for_mode` avant d'arriver ici
@@ -95,10 +130,14 @@ static func apply(parent: Node3D, data: Dictionary) -> void:
 	_skin_poste(parent, by_name)
 	_skin_diligence(parent, by_name)
 	_skin_chateau_eau(parent, by_name)
-	# Pas de marge anti-z-fighting ici (murs déjà ras des faces de la boîte,
-	# toit à débord réduit à 4 cm/côté) : la caméra fixe V5 (tools/art/data/
+	# Pas de marge sur Pompe (murs déjà ras des faces de la boîte, toit à
+	# débord réduit à 4 cm/côté) : la caméra fixe V5 (tools/art/data/
 	# wasteland_v4_views.json) n'a que 0,4 m de dégagement au sud de cette
-	# boîte précise, inutile d'y grignoter encore avec `NUDGE_SCALE`.
+	# boîte précise, inutile d'y grignoter encore avec `NUDGE_SCALE`. Sans
+	# objet pour le z-fighting de toute façon : "Pompe"/"MuretGouletO/E"
+	# portent `"visual":false` (wasteland.gd, voir l'en-tête du fichier),
+	# couverture vérifiée AABB-contre-boîte avant ce bascule (rapport de
+	# tâche) — le module ci-dessous est déjà la SEULE géométrie rendue.
 	_place_ground(parent, by_name, "Pompe", SKINS_DIR + "covers_pompe.glb", false)
 	_place_ground(parent, by_name, "MuretGouletO", SKINS_DIR + "covers_muret_goulet.glb")
 	_place_ground(parent, by_name, "MuretGouletE", SKINS_DIR + "covers_muret_goulet.glb")
@@ -299,10 +338,9 @@ static func _skin_poste(parent: Node3D, by_name: Dictionary) -> void:
 ## `wl_diligence` ajustée, ART-92 : étirement 14,4 %/14,1 % en largeur/
 ## profondeur, 0 % en hauteur — les 3 dans le contrat ≤ 15 %) occupe
 ## `[-2,5 ; +0,55]` des 5 m de profondeur de la boîte (2,5 → -0,975 de son
-## propre centre) ; `diligence_crates.glb` (pile ajustée EXACTEMENT au
-## reliquat, `crate_stack_fit(5.6 ; 3.2 ; 1.95)`) comble le reste,
-## `[+0,55 ; +2,5]` (centre +1,525) — la somme des deux profondeurs
-## (3,05 + 1,95) vaut exactement 5 m, aucun jour.
+## propre centre) ; `diligence_crates.glb` (pile `crate_stack_fit(5.6 ; 3.2 ;
+## 1.95)`) comble le reste, `[+0,55 ; +2,5]` (centre +1,525) — la somme des
+## deux profondeurs (3,05 + 1,95) vaut exactement 5 m, aucun jour.
 ##
 ## Correctif vérification (2026-09-25) : la coque `diligence_shell` (5,6 m de
 ## large) reste SOUS les 6 m de large de la boîte `Diligence` — un défaut
@@ -316,6 +354,31 @@ static func _skin_poste(parent: Node3D, by_name: Dictionary) -> void:
 ## `6,0 × NUDGE_SCALE = 6,12 m`, soit 6 cm de dépassement par côté — dans la
 ## tolérance ±10 cm de R1, jamais retouché sur Y/Z pour ne pas perturber le
 ## partage de profondeur avec `diligence_crates` juste au-dessus.
+##
+## Second correctif, posé en préparant `"visual":false` sur "Diligence"
+## (`wasteland.gd`, voir l'en-tête de ce fichier) : `diligence_crates.glb`
+## est un module `crate_stack_fit`, donc son origine locale est CENTRÉE sur
+## les 3 axes (même convention que `_place_centered`, voir son commentaire) —
+## JAMAIS à la base. Il était pourtant placé avec `pos.y - size.y * 0.5` (la
+## convention "base", correcte pour `diligence_shell` juste au-dessus, mais
+## fausse ici) : la moitié du maillage (1,6 m sur 3,2 m de haut) partait sous
+## le sol, le sommet visible ne montant qu'à 1,6 m sur les 3,4 m de la boîte
+## — un vrai déficit de remplissage sur la moitié arrière (sous les 85 % de
+## R7), resté invisible tant que la boîte Kit opaque restait dessous, mais
+## qui aurait ouvert un trou béant une fois la boîte cachée. `crates.position.
+## y` passe donc à `pos.y` (le CENTRE de la boîte, comme `_place_centered` le
+## fait pour tous les autres modules `crate_stack_fit`) : le maillage,
+## centré, couvre alors `[0,07 ; 3,33]` sur les 3,4 m de la boîte (mesuré),
+## dans la tolérance ±10 cm de R1. Même correctif en X que `shell_x_scale`
+## ci-dessus (le même défaut d'étirement à 5,6 m sur 6,0 m de boîte s'applique
+## à la pile) : `crates.scale` passe d'un `NUDGE_SCALE` uniforme (qui ne
+## touchait pas le déficit de largeur, laissant 14,4 cm de vide de chaque
+## côté) à `Vector3(shell_x_scale, NUDGE_SCALE, NUDGE_SCALE)` — X aligné sur
+## la largeur réelle de la boîte, Y/Z gardent la marge uniforme d'origine
+## (le partage de profondeur avec la coque n'en dépend pas, lui reste
+## inchangé). Mesuré (AABB monde du composite coque+caisses contre la boîte
+## réelle) : écart ≤ 6,1 cm en X, ≤ 1,9 cm en Z, ≤ 0,2 cm en Y, toujours un
+## DÉBORD — jamais un trou, dans la tolérance ±10 cm de R1.
 const _DILIGENCE_BOX_WIDTH_M := 6.0
 const _DILIGENCE_SHELL_NATURAL_WIDTH_M := 5.6
 static func _skin_diligence(parent: Node3D, by_name: Dictionary) -> void:
@@ -331,9 +394,11 @@ static func _skin_diligence(parent: Node3D, by_name: Dictionary) -> void:
 			_paint_tree(shell)
 		var crates := _instance(SKINS_DIR + "diligence_crates.glb")
 		if crates != null:
-			crates.position = Vector3(pos.x, pos.y - (p["size"] as Vector3).y * 0.5, pos.z + 1.525)
+			# Origine CENTRÉE (crate_stack_fit) : `pos.y`, jamais `pos.y -
+			# size.y * 0.5` (voir le correctif ci-dessus).
+			crates.position = Vector3(pos.x, pos.y, pos.z + 1.525)
 			crates.rotation.y = float(p.get("rot_y", 0.0))
-			crates.scale = Vector3.ONE * NUDGE_SCALE
+			crates.scale = Vector3(shell_x_scale, NUDGE_SCALE, NUDGE_SCALE)
 			parent.add_child(crates)
 			_paint_tree(crates)
 	)

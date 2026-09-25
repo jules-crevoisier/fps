@@ -131,13 +131,19 @@ const MAP_GRID_VISIBLE_H := MAP_CARD_HEIGHT * 2.0 + Comic.SP_1
 ## en v3).
 const NAV_X := 120.0
 const NAV_WIDTH := 640.0
-## Mesuré (UX-32, capture 1080p) : JOUER (118 px) + résumé + le panneau
-## « Partie personnalisée » replié + AGENTS/ARSENAL/OPTIONS/QUITTER (66 px)
-## tiennent sur ~700 px avec un espacement `Comic.SP_3` — `NAV_TOP` laisse
-## une marge confortable sous la plaque « carte courante » (bas-gauche,
-## ancrée à `Comic.SAFE_MARGIN` du bas) pour qu'ELLE NE RECOUVRE JAMAIS
-## QUITTER, la dernière entrée de la pile.
-const NAV_TOP := 120.0
+## Mesuré (UX-38, capture 1080p, APRÈS le correctif `_finalize_swash_host_
+## size()` ci-dessous — le bug qu'il corrige sous-dimensionnait le host de
+## JOUER d'environ 100 px, ce qui masquait à tort tout le budget vertical
+## manquant ici) : JOUER (118 px, host réel ~186 px avec pinceau + anneau de
+## focus) + résumé + le panneau « Partie personnalisée » replié (qui réserve
+## sa hauteur même replié, ses enfants masqués compris) + AGENTS/ARSENAL/
+## OPTIONS/QUITTER (66 px) tiennent sur ~765 px avec un espacement
+## `Comic.SP_3` — `NAV_TOP` (jeton `Comic.SAFE_MARGIN`, même marge que la
+## plaque joueur en haut à droite) laisse une marge confortable sous la
+## plaque « carte courante » (bas-gauche, ancrée à `Comic.SAFE_MARGIN` du
+## bas) pour qu'ELLE NE RECOUVRE JAMAIS QUITTER, la dernière entrée de la pile
+## (~32 px de marge à 1080p).
+const NAV_TOP := Comic.SAFE_MARGIN
 const NAV_SEPARATION := Comic.SP_3
 const MAP_PLATE_WIDTH := 460.0
 const PLAYER_PLATE_WIDTH := 300.0
@@ -307,7 +313,15 @@ func _build_world() -> void:
 ## IMAGE_ASPECT`, jamais l'aspect de la caméra : une texture étirée à un
 ## aspect différent du sien déformerait la rue peinte).
 const _BACKDROP_IMAGE := "res://assets/ui/menu/wasteland_grand_rue.jpg"
-const _BACKDROP_IMAGE_ASPECT := 1280.0 / 800.0
+## UX-38 (retour lead 2026-09-25, §1) : recadré depuis une NOUVELLE capture
+## `tools/map_shots.gd` (vue nommée "grand_rue", lue jamais modifiée ; voir
+## reports/checkpoints/2026-09-25_UX-38/) — la capture UX-37 collait un
+## accessoire de décor à texture fissurée sur toute la moitié droite du cadre
+## (« gros bloc à texture de béton fissuré étirée collé à la caméra »),
+## recadré ici à 760x800 (`grand_rue.png`, x 0-760) pour ne garder que la rue,
+## les façades peintes, le ciel et le repère (grue + réservoir) — jamais cet
+## accessoire.
+const _BACKDROP_IMAGE_ASPECT := 760.0 / 800.0
 const _BACKDROP_DISTANCE := 20.0
 const _BACKDROP_MARGIN := 1.25
 const _BACKDROP_HEIGHT_Y := 2.3  # centré sur la hauteur de la caméra (voir _build_world).
@@ -315,7 +329,18 @@ const _BACKDROP_HEIGHT_Y := 2.3  # centré sur la hauteur de la caméra (voir _b
 ## AVANT dans `_build_world()`) : FOV vertical de la caméra du lobby, dupliqué
 ## ici une seule fois plutôt que de réordonner `_build_world()` — DOIT rester
 ## égal à `_cam.fov`, posé juste après dans `_build_world()`.
-const _CAM_FOV_DEG := 50.0
+##
+## UX-38 (retour lead §1 « agent à taille héroïque, ~70 % de la hauteur
+## d'écran ») : mesuré à 50° (v3/UX-37), l'agent Tripo (~1,8 m) n'occupait
+## qu'un quart de la hauteur d'écran à sa distance de caméra actuelle — une
+## FOV resserrée grossit l'agent SANS toucher un seul autre paramètre de
+## scène : le fond (`_build_backdrop()`, ci-dessus) recalcule déjà la taille
+## de son quad à partir de CETTE MÊME constante (`tan(fov/2)`), donc il reste
+## TOUJOURS cadré pile sur le bord de caméra, quelle que soit la FOV — seul
+## l'agent (une géométrie 3D à taille RÉELLE fixe, contrairement au quad du
+## fond qui s'auto-ajuste) grossit à l'écran. Vérifié en capture 1080p
+## (reports/checkpoints/2026-09-25_UX-38/) : ~73 % de la hauteur d'écran à 21°.
+const _CAM_FOV_DEG := 21.0
 
 func _build_backdrop() -> void:
 	var cam_to_plane := _BACKDROP_DISTANCE + 7.6  # 7.6 == Camera3D.position.z, fixé ci-dessous.
@@ -366,7 +391,16 @@ func _refresh_lobby_characters() -> void:
 ## Instancie assets/models/characters/<id>.glb, joue "Idle", recolore chaque
 ## slot matériau via `Cartoon.character(color, AGENT_INK_OUTLINE_PX, ...)`
 ## (même convention de suffixe que tools/character_shots.gd : "<id>_<slot>").
-func _load_character_model(agent: AgentConfig) -> Node3D:
+##
+## `selected` (UX-38, tests/ui/test_agent_portraits.gd) : `_refresh_lobby_
+## characters()` n'appelle JAMAIS cette fonction qu'avec le défaut (`true`) —
+## un seul agent, toujours le choisi, reste affiché dans la vitrine (UX-32,
+## voir la docstring de `_apply_character_materials`). Le paramètre existe
+## pour garder une signature à deux arguments STABLE avec ces tests (qui
+## vérifient qu'un modèle chargé `selected=false` garde sa texture peinte mais
+## désature sa teinte) : utile si un futur écran affiche plusieurs modèles
+## côte à côte (ex. sélection 3D multi-agents), sans dupliquer cette fonction.
+func _load_character_model(agent: AgentConfig, selected: bool = true) -> Node3D:
 	var id := agent.agent_name.to_lower()
 	var path := "%s%s.glb" % [CHAR_MODEL_DIR, id]
 	if not ResourceLoader.exists(path):
@@ -381,7 +415,7 @@ func _load_character_model(agent: AgentConfig) -> Node3D:
 	var anim := _find_typed(root, "AnimationPlayer") as AnimationPlayer
 	if anim:
 		_play_idle(anim)
-	_apply_character_materials(root, id, agent.color)
+	_apply_character_materials(root, id, agent.color, selected)
 	return root
 
 ## `Animation.has_animation("Idle")` ne couvre que la bibliothèque "" (globale) ;
@@ -406,11 +440,18 @@ func _play_idle(anim: AnimationPlayer) -> void:
 ## _apply_cartoon_materials) et garde `albedo_texture` au lieu de le jeter :
 ## `character()`/`character_surface()` posent `albedo_color` comme un
 ## MULTIPLICATEUR de la texture (`ink_toon.gdshader` `base *= tex_color`),
-## donc blanc = texture inchangée. UX-32 : toujours pleine couleur + contour
-## 4 px (`Cartoon.character()`, PUBLIQUE) — un seul agent affiché, toujours
-## le choisi, plus de branche « voisin désaturé » (v3, supprimée avec les
-## podiums).
-func _apply_character_materials(model: Node3D, id: String, accent_color: Color) -> void:
+## donc blanc = texture inchangée. UX-32 : la vitrine du menu (`_refresh_
+## lobby_characters()`) affiche toujours pleine couleur + contour 4 px
+## (`Cartoon.character()`, PUBLIQUE) — un seul agent affiché, toujours le
+## choisi, plus de podiums voisins. `selected` (UX-38) reste néanmoins
+## honoré ici (jamais un paramètre mort : `Color.WHITE`/`accent_color` restent
+## la texture/le slot INCHANGÉS quand `selected` est vrai, exactement le
+## comportement UX-32 par défaut) — un modèle chargé `selected=false` désature
+## sa teinte vers `Comic.paper_dim_color()` SANS jamais perdre sa texture
+## peinte (`use_albedo_texture` reste vrai), pour un futur écran à plusieurs
+## modèles (voir la docstring de `_load_character_model`).
+func _apply_character_materials(model: Node3D, id: String, accent_color: Color, selected: bool = true) -> void:
+	var dim := Comic.paper_dim_color()
 	for mesh in _find_mesh_instances(model):
 		if mesh.mesh == null:
 			continue
@@ -420,7 +461,8 @@ func _apply_character_materials(model: Node3D, id: String, accent_color: Color) 
 			var mat_name: String = mat.resource_name if mat else ""
 			var base: BaseMaterial3D = mat as BaseMaterial3D
 			if mat_name.ends_with("_tex"):
-				var textured := Cartoon.character(Color.WHITE, AGENT_INK_OUTLINE_PX, Color(0, 0, 0, 0), mesh.mesh)
+				var tex_tint := Color.WHITE if selected else dim
+				var textured := Cartoon.character(tex_tint, AGENT_INK_OUTLINE_PX, Color(0, 0, 0, 0), mesh.mesh)
 				if base and base.albedo_texture != null:
 					textured.set_shader_parameter("use_albedo_texture", true)
 					textured.set_shader_parameter("use_triplanar", false)
@@ -431,7 +473,7 @@ func _apply_character_materials(model: Node3D, id: String, accent_color: Color) 
 				continue
 			var slot := mat_name.substr(id.length() + 1)
 			var exported_color: Color = base.albedo_color if base else Color.WHITE
-			var tint := accent_color if slot == "cloth" else exported_color
+			var tint := (accent_color if slot == "cloth" else exported_color) if selected else dim
 			mesh.set_surface_override_material(i, Cartoon.character(tint, AGENT_INK_OUTLINE_PX, Color(0, 0, 0, 0), mesh.mesh))
 
 func _find_mesh_instances(node: Node) -> Array:
@@ -502,7 +544,9 @@ func _build_nav(parent: Control) -> void:
 	parent.add_child(col)
 
 	_host_btn = _build_host_button()
-	col.add_child(_wrap_with_swash(_host_btn, _host_btn.text))
+	var host := _wrap_with_swash(_host_btn, _host_btn.text)
+	col.add_child(host)
+	_finalize_swash_host_size(host, _host_btn)
 
 	_play_summary = Comic.body_label_v4("", Comic.SIZE_28, Comic.paper_dim_color())
 	col.add_child(_play_summary)
@@ -519,21 +563,25 @@ func _build_nav(parent: Control) -> void:
 
 ## Débordement visuel qui n'entre JAMAIS dans `get_minimum_size()` (marge de
 ## style peinte, pas de layout) : l'anneau de focus manette (`_nav_focus_
-## style()`, `expand_margin_*` + `STROKE_FOCUS`) déborde du bouton. JOUER a le
-## focus PAR DÉFAUT au démarrage (`_focus_play`, appelé depuis `_ready()`),
-## donc cet anneau est TOUJOURS visible sur la toute première capture du menu
-## — sans en réserver l'espace ici, son bord bas mord sur le résumé juste en
-## dessous (retour lead 2026-09-25, §2 : « texte superposé sous JOUER »).
-## `+ Comic.SP_1` : marge de sécurité, au cas où l'ombre dure du bouton
-## (`Comic.SHADOW_HARD_OFFSET`, jamais comptée non plus par `get_minimum_
-## size()`) déborderait elle aussi de quelques px.
-const _SWASH_HOST_BLEED_PX := Comic.FOCUS_RING_OFFSET_PX + float(Comic.STROKE_FOCUS) + float(Comic.SP_1)
+## style()`, `expand_margin_*`) déborde du bouton de EXACTEMENT `FOCUS_RING_
+## OFFSET_PX` (un `StyleBoxFlat` dessine son trait à l'INTÉRIEUR du rectangle
+## déjà étendu par `expand_margin_*` — `STROKE_FOCUS`, l'épaisseur du trait,
+## ne rajoute donc rien au-delà) ; `SHADOW_HARD_OFFSET.y` couvre l'ombre dure
+## du texte (`shadow_offset_y`), qui déborde pareillement sans jamais compter
+## dans `get_minimum_size()`. JOUER a le focus PAR DÉFAUT au démarrage
+## (`_focus_play`, appelé depuis `_ready()`), donc cet anneau est TOUJOURS
+## visible sur la toute première capture du menu — sans en réserver l'espace
+## ici, son bord bas mord sur le résumé juste en dessous (retour lead
+## 2026-09-25, §2 : « texte superposé sous JOUER »).
+const _SWASH_HOST_BLEED_PX := Comic.FOCUS_RING_OFFSET_PX + Comic.SHADOW_HARD_OFFSET.y
 
 ## Enveloppe `control` (déjà construit par l'appelant) d'un `KitSwash`
 ## DERRIÈRE lui — même montage que `KitSwash.wrap(label: Label)` (UX-30),
 ## généralisé à un `Control` quelconque (ici un `Button`, pour garder JOUER
 ## cliquable/focalisable nativement) : jamais un second swash ailleurs dans
-## ce fichier (critère d'acceptation « un seul swash »).
+## ce fichier (critère d'acceptation « un seul swash »). Le dimensionnement
+## final (`_finalize_swash_host_size`) reste à faire par l'appelant APRÈS
+## `add_child` — voir sa docstring.
 func _wrap_with_swash(control: Control, seed_text: String) -> Control:
 	var host := Control.new()
 	host.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -547,10 +595,25 @@ func _wrap_with_swash(control: Control, seed_text: String) -> Control:
 	host.add_child(swash)
 	control.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	host.add_child(control)
+	return host
+
+## Réserve la hauteur du `host` (swash + `control` + débordement du focus,
+## §2 ci-dessus) — DOIT être appelée APRÈS que `host` (donc `control`) est
+## entré dans l'arbre : `control.get_minimum_size()`, juste après sa
+## construction et ses overrides de police (`_build_host_button`) mais AVANT
+## `add_child`, renvoie encore l'ancienne taille minimale du thème par défaut
+## (mesuré : (125, 58) au lieu de (419, 158) pour JOUER, SIZE_118) — la propagation
+## du thème (`NOTIFICATION_THEME_CHANGED`) qui recalcule le cache de taille
+## minimale d'un `Button` n'a lieu qu'à l'entrée dans l'arbre. Un `host` sous-
+## dimensionné laissait l'anneau de focus (bleed 4 px) déborder de PLUS de
+## 50 px sous JOUER (la propre taille minimale du bouton, 158 px, dépassant
+## alors les 104 px réservés par `host` — un `Control` `PRESET_FULL_RECT` dont
+## la taille minimale dépasse celle de son parent grandit au-delà, ici vers le
+## bas) — jusque dans le résumé juste en dessous (retour lead 2026-09-25, §2).
+func _finalize_swash_host_size(host: Control, control: Control) -> void:
 	var swash_pad := Vector2(KitSwash.PAD_X, KitSwash.PAD_Y) * 2.0
 	var focus_bleed := Vector2(0.0, _SWASH_HOST_BLEED_PX * 2.0)  # anneau déborde en haut ET en bas.
 	host.custom_minimum_size = control.get_minimum_size() + swash_pad + focus_bleed
-	return host
 
 ## Anneau de focus manette v4 (direction §4.6 « focus manette : contour
 ## paper 3 px décalé de 4 px, lisible même sur un élément choisi ») — jamais
@@ -608,18 +671,20 @@ func _build_host_button() -> Button:
 
 ## Entrée de la pile secondaire (AGENTS/ARSENAL/OPTIONS/QUITTER, direction v4
 ## §4.1 « titres et labels en capitales italiques », §4.6 états) — capitales
-## italiques papier 66 px, zéro fond au repos, plate_hi au survol/pressé,
-## anneau papier au focus manette. `focus_mode = ALL` : atteignable clavier
-## ET manette (critère d'acceptation), `UiFx.press` pour le retour tactile
-## standard du kit (autocollant qui s'écrase, §4.7).
-func _build_nav_item(text: String, on_press: Callable) -> Button:
+## italiques papier 66 px par défaut, zéro fond au repos, plate_hi au survol/
+## pressé, anneau papier au focus manette. `focus_mode = ALL` : atteignable
+## clavier ET manette (critère d'acceptation), `UiFx.press` pour le retour
+## tactile standard du kit (autocollant qui s'écrase, §4.7). `size` :
+## réutilisé à `Comic.SIZE_37` pour « Terrain d'entraînement (solo) » (UX-38,
+## retour lead §3 « ligne de pile 37 » — remplace son cadre rouge v3).
+func _build_nav_item(text: String, on_press: Callable, size: int = Comic.SIZE_66) -> Button:
 	var b := Button.new()
 	b.text = text.to_upper()
 	b.flat = true
 	b.focus_mode = Control.FOCUS_ALL
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	b.add_theme_font_override("font", Comic.title_font_v4())
-	b.add_theme_font_size_override("font_size", Comic.SIZE_66)
+	b.add_theme_font_size_override("font_size", size)
 	b.add_theme_color_override("font_color", Comic.paper_color())
 	b.add_theme_color_override("font_hover_color", Comic.paper_color())
 	b.add_theme_color_override("font_focus_color", Comic.paper_color())
@@ -745,12 +810,15 @@ func _build_play_extra_panel() -> VBoxContainer:
 
 	box.add_child(HSeparator.new())
 
-	var train_btn := Button.new()
-	train_btn.text = "Terrain d'entraînement (solo)"
-	train_btn.custom_minimum_size = Vector2(0, 46)
-	train_btn.pressed.connect(_on_training)
+	# UX-38 (retour lead 2026-09-25, §3) : « Terrain d'entraînement (solo) »
+	# gardait le cadre rouge v3 (`Button.new()` nu, thème par défaut du
+	# projet) — passé en ligne de pile v4 (`_build_nav_item`, même grammaire
+	# que AGENTS/ARSENAL/OPTIONS/QUITTER : capitales italiques papier, zéro
+	# fond au repos), à `Comic.SIZE_37` (§3 « ligne de pile 37 ») plutôt que
+	# 66 : action secondaire, jamais au même poids que JOUER/la pile
+	# principale.
+	var train_btn := _build_nav_item("Terrain d'entraînement (solo)", _on_training, Comic.SIZE_37)
 	box.add_child(train_btn)
-	UiFx.press(train_btn)
 
 	_status = ComicPanel.new()
 	_status.bg_color = Comic.PANEL_HI
@@ -1203,22 +1271,49 @@ func _resolve_start_scene() -> String:
 ## Dégradé horizontal (encre -> transparent, direction v4 §6) posé sous toute
 ## la 2D pour garder le texte papier lisible sur la 3D, sans jamais de boîte
 ## pleine derrière (§5 règle 1, même principe étendu au menu).
+##
+## UX-38 (retour lead 2026-09-25, §2 « bandes verticales sur toute la moitié
+## gauche ») : l'ancienne version peignait le dégradé en 24 `draw_rect` à plat
+## côte à côte (un ruban d'alpha CONSTANT par tranche) — chaque tranche est
+## une bande visible à l'œil, exactement le défaut signalé. Remplacé par une
+## VRAIE texture de dégradé (`GradientTexture2D`, interpolée en continu par le
+## GPU entre les points du `Gradient`), dessinée en un seul `draw_texture_
+## rect` : aucun palier d'alpha, un flou de valeur lisse du bord gauche
+## jusqu'à transparent (direction §6 « dégradé lisse »).
 class InkGradient extends Control:
+	var _gradient_tex: GradientTexture2D
+
 	func _ready() -> void:
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		resized.connect(queue_redraw)
+		_build_gradient_texture()
+
+	## Une seule colonne de dégradé (`width` 2 px, suffisant pour une rampe
+	## purement horizontale — Godot interpole le `Gradient` en continu à
+	## l'échantillonnage, pas seulement à ses points de contrôle) étirée par
+	## `draw_texture_rect` sur toute la largeur du fondu : c'est cette
+	## interpolation GPU, jamais un pas discret peint à la main, qui supprime
+	## les bandes.
+	func _build_gradient_texture() -> void:
+		var ink := Comic.ink_color()
+		var grad := Gradient.new()
+		grad.colors = PackedColorArray([Color(ink.r, ink.g, ink.b, 0.86), Color(ink.r, ink.g, ink.b, 0.0)])
+		grad.offsets = PackedFloat32Array([0.0, 1.0])
+		var tex := GradientTexture2D.new()
+		tex.gradient = grad
+		tex.fill = GradientTexture2D.FILL_LINEAR
+		tex.fill_from = Vector2(0.0, 0.0)
+		tex.fill_to = Vector2(1.0, 0.0)
+		tex.width = 2
+		tex.height = 2
+		_gradient_tex = tex
 
 	func _draw() -> void:
-		if size.x <= 0.0 or size.y <= 0.0:
+		if size.x <= 0.0 or size.y <= 0.0 or _gradient_tex == null:
 			return
-		var ink := Comic.ink_color()
 		var fade_w := size.x * 0.62
-		var steps := 24
-		for i in steps:
-			var t0 := float(i) / float(steps)
-			var t1 := float(i + 1) / float(steps)
-			var a := lerpf(0.86, 0.0, t0)
-			draw_rect(Rect2(fade_w * t0, 0.0, fade_w * (t1 - t0) + 1.0, size.y), Color(ink.r, ink.g, ink.b, a))
+		draw_texture_rect(_gradient_tex, Rect2(0.0, 0.0, fade_w, size.y), false)
 
 ## ---------------------------------------------------------------- Vignette de carte
 ## Miniature procédurale posée dans la moitié haute d'un `KitCard` de carte

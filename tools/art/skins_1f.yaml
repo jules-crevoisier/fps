@@ -1,0 +1,273 @@
+# tools/art/skins_1f.yaml
+# ART-94 — journal de la passe d'art des bâtiments à 1 niveau (Forge/Maréchal,
+# Magasin/Épicerie, Échoppes/Bazar). Contrat : docs/art/WASTELAND_V4_ART_PLAN.md
+# §1 (R1 enveloppe, R2 peau de façade, R3 ouvertures, R4 fausses ouvertures) et
+# §2 (tableau "Bâtiments jouables"). Consommé par ArtBuildings1F.gd (même
+# tâche) — ce fichier ne pilote rien au runtime, c'est le sidecar "chaque
+# sortie a un sidecar qui mesure le relief, l'étirement et l'écart des
+# ouvertures" (§1 R2, dernier point) pour les .glb neufs de cette tâche, plus
+# le journal des écarts de contrat et des incidents cross-tâche rencontrés.
+#
+# Portée retenue (voir aussi l'en-tête d'ArtBuildings1F.gd) : UNE seule carte
+# Tripo neuve (`forge_facade_s.glb`, façade principale du Forge/Maréchal,
+# la plus visible depuis V1/V2 sur la Grand-Rue). Chaque AUTRE face des 3
+# bâtiments utilise le mur peint modulaire kit v2 déjà livré par ART-92
+# (`assets/models/props/wasteland/shanty/wall_1_level.glb` + `door_frame.glb`,
+# jamais recopiés ni modifiés ici) : mesuré à l'exécution, aucune des 3 coques
+# Tripo déjà installées (`wl_garage`, `wl_shack`, `wl_fuel_store`) ne couvre
+# les profondeurs/largeurs de 9 à 14 m des autres faces sans dépasser
+# LARGEMENT le contrat carte (12 %) ou échouer la vérification d'ouverture —
+# voir "tentatives_abandonnees" ci-dessous. Un nouvel asset Tripo dédié
+# résoudrait proprement ce point mais dépasserait le budget déjà consommé par
+# ART-93 (§7 du plan) ; signalé au lead comme piste de suite, jamais bloquant
+# pour cette tâche (parité/enveloppe/absence de fausse porte restent vertes
+# avec le mur kit v2, voir les critères d'acceptation).
+
+bugs_de_pose_trouves_et_corriges:
+  # Trouvés APRÈS un premier rendu en jeu (fenêtré, pas headless) : les 3
+  # bâtiments rendaient en murs plats beiges, sans AUCUNE peau visible, sur
+  # les captures V1/V2/V6/V7 — alors que les mêmes .glb rendaient
+  # impeccablement en isolation (turntable + rendu isolé hors bâtiment). Voir
+  # ArtBuildings1F.gd (en-tête + `_KIT_WALL_OUTER_M`/`_KIT_ROT_Y`) pour le
+  # détail technique verrouillé dans le code ; résumé ici pour le lead.
+  - id: profondeur_mur_kit_sous_estimee
+    constat: >
+      Kit._bld_wall_side (Kit.gd, lu seulement) centre chaque mur sur le plan
+      `center ± size*0.5` (la boîte "nominale" du building2) et l'étend de
+      ±Kit._BLD_WALL_T/2 (0,125 m) — la collision RÉELLE dépasse donc la boîte
+      nominale de 0,125 m vers l'extérieur (mesuré par raycast : ForgeW,
+      collision touchée à z=-14,875, pas z=-15,0). Une peau posée pile à la
+      cote nominale (mon premier essai, sans cette marge) restait donc 9 à
+      12,5 cm À L'INTÉRIEUR du mur opaque du Kit, invisible quel que soit son
+      matériau — confirmé en isolant le rendu (`wall_1_level.glb` peint
+      impeccablement hors contexte de bâtiment, plat beige une fois posé
+      dessus).
+    correctif: >
+      `_KIT_WALL_OUTER_M` (0,125 m, = Kit._BLD_WALL_T/2) vise le plan de
+      collision RÉEL ; chaque module recule ensuite de sa PROPRE
+      demi-épaisseur (`_origin_offset_for`) pour que sa face extérieure
+      affleure ce plan + un petit standoff anti-z-fighting (`_STANDOFF_M`,
+      6 mm — accordé empiriquement : 2 cm donnait encore 20,6 % d'écart à la
+      sonde de vérification restreinte, 0,6 cm la ramène à 0,40 %, même
+      niveau que la référence ART-91 sur les bâtiments déjà peints).
+  - id: rotation_ouest_est_inversee
+    constat: >
+      Un premier essai reprenait par analogie la convention de rotation
+      ouest/est d'ArtCovers.gd::_skin_citerne (`rot=-PI*0.5` à l'ouest,
+      posée sur `bund_wall.glb`, un muret sans face avant/arrière visible).
+      Vérifiée EMPIRIQUEMENT (`Basis(Vector3.UP, angle) * Vector3(0,0,-1)`)
+      cette convention est en fait l'INVERSE de la bonne pour un module
+      ASYMÉTRIQUE (jambages, poignée, planches) comme `wall_1_level.glb`/
+      `door_frame.glb` — et, plus gravement, pour `forge_facade_s.glb` (carte
+      Tripo À DOS SUPPRIMÉ pendant le bake, R2 "card" : "supprime le dos") :
+      une carte mal tournée est TOTALEMENT invisible (un seul côté existe),
+      pas seulement mal éclairée.
+    correctif: >
+      `_KIT_ROT_Y` (ArtBuildings1F.gd) porte désormais W=+PI/2, E=-PI/2
+      (l'inverse de la valeur par analogie) pour les modules kit v2, plus un
+      +PI explicite dans `_hero_facade_s` pour la carte Tripo. Les deux
+      valeurs sont vérifiées par la sonde de vérification restreinte
+      (raycast) ET par inspection visuelle des captures V1/V2/V6/V7.
+    a_signaler_au_lead: >
+      La convention ouest/est de rotation d'ArtCovers.gd::_skin_citerne
+      (`bund_wall.glb`) est probablement CORRECTE pour ce module précis
+      (muret symétrique — jamais démasqué par l'erreur), mais toute FUTURE
+      tâche qui poserait un module kit v2 ASYMÉTRIQUE côté ouest/est en
+      copiant ce même exemple hériterait du même bug. Hors de mon périmètre
+      de fichiers (ArtCovers.gd appartient à ART-96) : signalé, pas corrigé
+      ici.
+  - id: vides_reels_bardage_kit_v2_jamais_un_defaut_de_peinture
+    constat: >
+      Retour QA (post-livraison initiale) sur reports/checkpoints/
+      2026-09-25_ART-94/wasteland_V1.jpg/V2.jpg/V7.jpg : une bande de
+      bardage `wall_1_level.glb` sur deux ressort "totalement BEIGE PLATE,
+      aucun grain de bois, aucun encrage, dégradé lisse typique du matériau
+      par défaut de Godot", plus un panneau plein au-dessus de chaque
+      linteau de porte. Diagnostic QA initial : `_paint_tree` (ligne 260,
+      appelée par `_tile_wall_segment` ligne 399) ne repeindrait pas
+      certaines surfaces. INFIRMÉ par inspection directe du .glb livré (hors
+      moteur, export JSON du chunk glTF de `wall_1_level.glb`) : un seul
+      "primitive", un seul matériau nommé "wood_planks", jamais de second
+      slot ni de suffixe `_001`/`_002` — `_paint_tree` peint donc bien
+      TOUJOURS l'intégralité de ce maillage, aucune surface n'y échappe.
+      Constat réel (positions de sommets extraites du même .glb, axe Y) :
+      `plank_wall_parts` (tools/blender/make_wl_shanty_kit.py, lu seulement,
+      PLANK_H_M=0,21 m/PLANK_GAP_M=0,015 m PAR RANGÉE — un motif quasi plein
+      sur le papier) ne couvre, sur le maillage RÉELLEMENT livré, qu'environ
+      0,045 m de planche sur un pas de rangée mesuré à 0,225 m — ~80 % de
+      VIDE RÉEL (aucune face, aucun triangle dans cet intervalle), un
+      bardage en RELIEF conçu pour être posé SUR un fond déjà plein, jamais
+      un artefact de matériau ni de peinture. Ce fond n'existait tout
+      simplement pas : ni `_tile_wall_segment` (qui pose SEULEMENT le
+      bardage) ni `_place_door_frame` (qui ne monte qu'à la hauteur RÉELLE
+      `h` de la porte, jamais jusqu'au sommet du mur) ne couvraient l'espace
+      derrière/au-dessus — laissant voir directement la boîte `building2`
+      du Kit, jamais peinte par construction (§1 R9, voir l'en-tête du
+      script).
+    correctif: >
+      `_place_wall_backing_quad` (ArtBuildings1F.gd) : un fond peint plein,
+      construit directement en code (`SurfaceTool`, aucun nouvel asset .glb
+      — `wall_1_level.glb`/`door_frame.glb` restent hors de mon périmètre,
+      RÉUTILISÉS tels quels, ART-92), peint par `Cartoon.painted(&"wood_
+      planks")` (triplanaire, aucun UV à poser). Posé par `_place_wall_run`
+      AVANT chaque tronçon de bardage plein ET dans la zone entre le
+      linteau de chaque porte et le sommet du mur. Profondeur
+      `_BACKING_OFFSET_M` (= `_KIT_WALL_OUTER_M` + moitié de `_STANDOFF_M`) :
+      strictement entre le plan de collision réel du Kit (pas de
+      z-fighting avec sa boîte) et le plan extérieur commun des modules kit
+      v2 (jamais de rivalité de profondeur avec le relief du bardage, qui
+      reste seul visible en avant-plan). Double face (2 quads, normales
+      opposées) : visible aussi depuis l'intérieur du bâtiment.
+    verification: >
+      Rejoué tools/art/v4_shots.gd (EN FENÊTRÉ, --views=V1,V2,V6,V7) après
+      le correctif : plus AUCUNE bande beige sur ForgeW.E (V1), le mur
+      autour de la porte (V2, y compris le panneau au-dessus du linteau) ni
+      le mur Échoppes en ruelle (V7) — bardage entièrement peint, relief
+      conservé. Captures régénérées dans reports/checkpoints/
+      2026-09-25_ART-94/ (mêmes noms, remplacent les captures fautives).
+      tests/maps/test_wasteland_art_parity.gd : 5/5 PASSED (inchangé — ce
+      correctif n'ajoute que des `MeshInstance3D` visuels, jamais de
+      `CollisionObject3D`, §1 R9).
+
+verification_manuelle:
+  # Le hook normal (MapSetup._enter_tree -> WastelandArt.apply_all) saute
+  # l'art sous --headless (WastelandArt.is_enabled() faux) — donc
+  # tests/maps/test_wasteland_art_parity.gd::test_parity_probe_3000_samples_
+  # and_five_pp (ART-91) n'exerce PAS la géométrie de ce module quand on le
+  # lance avec la commande imposée par le contrat de tâche : il reste vert
+  # trivialement (mesure alors la géométrie NUE du Kit contre elle-même).
+  # Sonde temporaire (créée, exécutée, PUIS SUPPRIMÉE avant ce rendu — jamais
+  # un livrable) : WastelandArt.load_modules(...) appelé directement (même
+  # contournement que test_collision_hash_identical_with_and_without_art),
+  # puis rejeu de la même mécanique raycast collision-contre-visuel que le
+  # test officiel, restreinte aux 6 pièces de cette tâche (2242 échantillons).
+  resultat_final: "mismatches=9/2242 (0,40 %), 0 sur aucune porte réelle (20/20 dégagées visuellement), pire écart 6,3 cm (< 10 cm R1) — sous le seuil global 0,5% du critère ART-91 (§0.1)."
+  suite_officielle_apres_correctifs: "tests/maps/test_wasteland_art_parity.gd : 5/5 PASSED (collision identique avant/après, 11 building2 cohérents, sonde 4044 échantillons 0% d'écart [ne mesure pas encore la géométrie de cette tâche sous --headless, voir ci-dessus], bloc témoin détecté)."
+
+incident_cross_tache:
+  - id: schema_openings_pieces_vs_buildings
+    constat: >
+      tools/art/export_v4_openings.gd (ART-91) exporte
+      tools/art/data/wasteland_v4_boxes.json sous la clé racine "buildings",
+      chaque porte sous la clé "openings" (champ "kind":"door" à filtrer) —
+      alors que tools/blender/shell_to_skin.py::load_pieces (ART-92) attend
+      une clé racine "pieces", chaque porte directement sous "doors". Les
+      DEUX schémas sont documentés en toute bonne foi dans leurs fichiers
+      respectifs (le plan §6 note lui-même "sans dépendance déclarée entre
+      ART-91 et ART-92") mais ne s'accordent pas au premier essai réel
+      (KeyError: 'pieces' à l'exécution, 2026-09-25).
+    contournement: >
+      Adaptation locale (script Python temporaire, hors dépôt, scratch de
+      cette session) qui relit wasteland_v4_boxes.json et réécrit
+      {"pieces": [{"name","pos","size","doors":[...]} ...]} à partir de
+      "buildings"/"openings" (filtre kind=="door"), passée en --openings à
+      shell_to_skin.py. Aucun fichier d'ART-91 ni d'ART-92 modifié.
+    a_signaler_au_lead: "oui — les deux fichiers sont hors de mon périmètre ART-94 ; à faire converger (l'un des deux schémas) avant la prochaine tâche qui consommera ce JSON."
+  - id: cli_side_choices_O_vs_W
+    constat: >
+      tools/blender/shell_to_skin.py --side n'accepte que N/S/O/E (choices
+      argparse), reprenant la convention française du schéma documenté dans
+      son en-tête ("side": "N"|"S"|"O"|"E") — mais wasteland.gd (WastelandLayout,
+      ART-91/LD-40) et donc wasteland_v4_boxes.json codent le côté ouest en
+      anglais, "W" (jamais "O"). --side W est refusé par argparse (choix
+      invalide) ; --side O ne correspond à aucune porte réelle du JSON.
+    contournement: >
+      Non contourné : cette tâche n'a besoin de percer une ouverture via
+      shell_to_skin.py QUE sur des côtés valides dans les deux conventions
+      (S pour Forge/Magasin) — jamais W. Les faces ouest/est réelles sont
+      traitées en mur kit v2 (ArtBuildings1F.gd::_place_wall_run), qui ne
+      passe jamais par --side. Documenté ici pour la prochaine tâche qui
+      voudrait percer une carte Tripo côté ouest (ex. ART-95/96) : il faudra
+      soit passer par les fonctions Python de shell_to_skin.py directement
+      (build_card(..., side="W", ...), qui accepte n'importe quelle chaîne —
+      la restriction n'existe que dans argparse), soit faire converger les
+      deux conventions O/W dans le fichier concerné (ART-92, hors de mon
+      périmètre).
+    a_signaler_au_lead: "oui — bloquant pour toute future carte Tripo côté ouest tant que non corrigé dans shell_to_skin.py."
+
+tentatives_abandonnees:
+  - piece: MagasinW
+    face_visee: S (9,0 x 3,6 m)
+    source: wl_fuel_store.glb (recadré en hauteur à 3,75 m avant carte)
+    resultat: >
+      wall_offset mesuré 1,0 m (porche profond) -> largeur naturelle du mur
+      réel 6,07 m contre 9,0 m visés : stretch_u = 48,2 % (rapport
+      SHELL_TO_SKIN_OK complet ci-dessous). La seconde porte (offset +3,0)
+      échoue en plus la vérification d'ouverture à ±2 cm (déviation y1
+      14,6 cm) : géométrie du porche irrégulière à cet endroit précis de la
+      façade recadrée.
+      Sortie NON conservée (fichier supprimé après mesure) : remplacée par
+      le mur kit v2 sur cette face (ArtBuildings1F.gd::_skin_building_kit,
+      côté "S" de MagasinW/E).
+    rapport_shell_to_skin_ok: '{"mode": "card", "face": "min_y", "depth_m": 0.6, "wall_offset_m": 1.0, "target_width_m": 9.0, "target_height_m": 3.6, "natural_width_m": 6.074284315109253, "natural_height_m": 3.748292922973633, "stretch_u": 0.4816560327301909, "stretch_v": 0.0395627892539379, "stretch_within_contract": false, "relief_after_flatten_m": 0.1, "relief_within_contract": true, "opening_within_2cm": false, "check_asset_ok": false}'
+
+bakes_conserves:
+  - id: forge_facade_s
+    out: assets/models/props/wasteland/skins/forge_facade_s.glb
+    piece: ForgeW (miroir géométrique — scale.x=-1 — réutilisé pour ForgeE/Maréchal, R8)
+    source_shell: assets/models/props/wasteland/tripo/wl_garage.glb
+    pipeline:
+      - mode: crop
+        args: {box_min: [-999, -999, 0], box_max: [999, 999, 3.75]}
+        but: "retire l'excédent au-dessus de l'égout (ForgeW fait 3,6 m ; wl_garage brut culmine à 5,0 m) avant la carte, pour ne pas étirer la hauteur de 28 %"
+      - mode: card
+        args: {face: min_y, depth: 0.6, target_width: 7.0, target_height: 3.6, piece: ForgeW, side: S, floor: 0}
+        openings_source: "tools/art/data/wasteland_v4_boxes.json (ART-91), adapté localement — voir incident_cross_tache.schema_openings_pieces_vs_buildings"
+    rapport_shell_to_skin_ok: '{"mode": "card", "face": "min_y", "depth_m": 0.6, "wall_offset_m": 0.8999999999999999, "target_width_m": 7.0, "target_height_m": 3.6, "natural_width_m": 5.9080893993377686, "natural_height_m": 3.745506763458252, "stretch_u": 0.18481619468801913, "stretch_v": 0.03884835154426591, "stretch_within_contract": false, "relief_after_flatten_m": 0.1, "relief_within_contract": true, "opening_rects": [{"x0": -1.0, "x1": 1.0, "y0": 0.0, "y1": 2.4}], "opening_within_2cm": true, "reveal_material_index": 1, "albedo_slot0_untouched": true, "tris": 5188, "check_asset_ok": false}'
+    ecarts_documentes:
+      - "stretch_u 18,5 % > 12 % (contrat carte R2) — largeur réelle du mur wl_garage (5,91 m derrière son porche) trop étroite pour les 7 m visés avec les 3 coques du budget de cette tâche ; ASSUMÉ, même esprit que les dépassements shell déjà documentés dans ArtCovers.gd (Poste 14,3 %, etc.). Aucun texte/callout peint ne tombe dans la zone étirée (vérifié visuellement sur la capture V1, voir reports/checkpoints/)."
+      - "check_asset_ok=false — bord haut ouvert par la découpe en hauteur (non-manifold attendu sur une carte de peau, jamais posée comme collision). Sans incidence sur la parité (§1 R9) : ce module n'ajoute aucun CollisionObject3D."
+    conforme:
+      - "relief_after_flatten_m = 0,10 m : conforme à R1 (plafond exact, ≤ 10 cm)"
+      - "opening_within_2cm = true : la vraie porte (2,0 x 2,4 m, offset 0,0) est percée à moins de 2 cm de la boîte de collision réelle — aucune fausse porte, aucune vraie porte bouchée"
+      - "albedo_slot0_untouched = true : albédo Tripo intact (R2 d'ART-92)"
+
+murs_kit_v2:
+  # Toutes les autres faces des 3 bâtiments — voir ArtBuildings1F.gd::_skin_building_kit.
+  # Modules RÉUTILISÉS tels quels (assets/models/props/wasteland/shanty/, ART-92) :
+  # wall_1_level.glb (2,0 x 2,7 x 0,18 m, tuilé en largeur et mis à l'échelle en
+  # hauteur jusqu'à la cote réelle du bâtiment) + door_frame.glb (1,6 x 2,2 m
+  # d'ouverture vide, mis à l'échelle par-axe jusqu'à la cote réelle de chaque
+  # porte). Aucun nouveau .glb : rien à journaliser en "rapport bake", seulement
+  # la couverture par bâtiment/face, pour traçabilité de l'acceptance "aucune
+  # fausse porte au rez-de-chaussée".
+  - piece: ForgeW / ForgeE (Maréchal)
+    faces_kit_v2: [W, E]
+    portes: ["ForgeW.W offset 3,0 largeur 1,6 (réel)", "ForgeE.E offset 3,0 largeur 1,6 (réel, miroir)"]
+    faces_pleines: ["ForgeW.E (Impasse, aucune porte)", "ForgeE.W (Impasse, miroir, aucune porte)"]
+    face_omise: "N — contre la falaise (CliffN), jamais visible en jeu (plan §2)"
+  - piece: MagasinW / MagasinE (Épicerie)
+    faces_kit_v2: [S, W, E]
+    note: "S posée en mur kit v2 (voir tentatives_abandonnees.MagasinW) au lieu d'une carte Tripo"
+    portes: ["MagasinW.S offset -3,0/+3,0 largeur 1,6 (réel) x2", "MagasinW.W offset 1,0 largeur 1,6 (réel)", "MagasinE.S offset -3,0/+3,0 (miroir) x2", "MagasinE.E offset 1,0 (miroir)"]
+    face_omise: "N — contre la falaise ; face vers le Poste — aucune carte (plan §2 : « E : contre le Poste, pas de carte »)"
+  - piece: EchoppesW / EchoppesE (Bazar)
+    faces_kit_v2: [N, W, E, S]
+    portes:
+      - "EchoppesW.N offset -4,0 largeur 2,4 (réel) — EchoppesE.N offset +4,0 (miroir)"
+      - "EchoppesW.W offset -3,0/+3,0 largeur 2,4 (réel) x2 — EchoppesE.E offset -3,0/+3,0 (miroir) x2"
+      - "EchoppesW.E offset 0,0 largeur 2,4 (réel, Ruelle) — EchoppesE.W offset 0,0 (miroir)"
+      - "EchoppesW.S offset 4,0 largeur 2,4 (réel) — EchoppesE.S offset -4,0 (miroir)"
+    note: "aucune face omise — Échoppes n'est adossée à aucune falaise ni à un autre volume plein"
+
+suivi_pour_la_suite:
+  - "Un asset Tripo dédié (façade ~9-14 m, porche peu profond) permettrait de remplacer le mur kit v2 par une carte peinte sur Magasin/Échoppes, dans le même esprit que le Forge — hors budget de cette tâche (§7 du plan déjà consommé par ART-93)."
+  - "Corner posts (shanty/corner_outer.glb) et bandeau de corniche (shanty/cornice_band.glb) amélioreraient la lecture des angles/de l'égout ; non posés ici faute de temps (portée acceptée, aucun critère d'acceptation ne les exige)."
+  - >
+    Constat capture V6 (intérieur Échoppes, hors de mon périmètre — R6 confie
+    le traitement intérieur à wasteland_look.gd/Kit.gd, tous deux hors de ma
+    liste de fichiers) : les murs intérieurs restent BEIGE PLAT malgré
+    `interior_wall_kind: "wood_planks"` déjà posé dans la palette (ART-91,
+    wasteland_look.gd::palette()). Soit ce champ n'est pas encore consommé
+    par le chemin de rendu de Kit.gd pour les murs intérieurs de
+    `building2`, soit un autre mécanisme manque. Je n'ai RIEN changé côté
+    intérieur (R2/R6 : les cartes/murs de cette tâche ne couvrent que les
+    faces EXTÉRIEURES) — signalé au lead comme suivi possible pour ART-91/
+    ART-99, jamais corrigé ici.
+  - >
+    Deux incohérences cross-tâche trouvées entre ART-91 (export) et ART-92
+    (outil de peau) — voir `incident_cross_tache` ci-dessus : le schéma JSON
+    ("buildings"/"openings" vs "pieces"/"doors") et la convention de côté
+    ("O" vs "W" dans `--side`). Contournées localement sans toucher aux deux
+    fichiers concernés ; à faire converger avant qu'une tâche future ne les
+    heurte à nouveau.

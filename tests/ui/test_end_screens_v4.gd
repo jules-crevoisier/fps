@@ -66,6 +66,26 @@ func _fake_match() -> _FakeMatch:
 	auto_free(m)
 	return m
 
+## Remonte l'arbre depuis `n` (exclu) jusqu'au premier `ScrollContainer`
+## rencontré, ou `null` s'il n'y en a aucun -- voir le test « CTA jamais
+## poussés hors cadre » plus bas.
+func _first_scroll_container_ancestor(n: Node) -> Node:
+	var p := n.get_parent()
+	while p != null:
+		if p is ScrollContainer:
+			return p
+		p = p.get_parent()
+	return null
+
+## Vrai si `ancestor` est un ancêtre (direct ou indirect) de `n`.
+func _is_descendant_of(n: Node, ancestor: Node) -> bool:
+	var p := n.get_parent()
+	while p != null:
+		if p == ancestor:
+			return true
+		p = p.get_parent()
+	return false
+
 
 # ======================================================================
 #  1. DeathPanel -- titre « REMBALLÉ » (§6, §4.1, §4.3)
@@ -377,10 +397,34 @@ func test_end_panel_score_digits_are_colored_by_team_not_by_victory() -> void:
 
 
 # ======================================================================
-#  12. EndPanel -- REVUE LEAD point 3 : roster entier, sans défilement
+#  12. EndPanel -- REVUE LEAD point 3 : roster entier, CTA jamais poussés
+#      hors cadre
 # ======================================================================
 
-func test_end_panel_roster_shows_all_eight_players_without_a_scroll_container() -> void:
+## Retour vérificateur (3e passage, captures reports/checkpoints/
+## 2026-09-25_UX-34/02_end_*.jpg) -- CETTE assertion a changé : la version
+## précédente exigeait `ep._list.get_parent() is ScrollContainer` FAUX (« plus
+## AUCUN ScrollContainer, nulle part »), en application stricte de la REVUE
+## LEAD point 3. Mais un test unitaire qui ne vérifie que la PRÉSENCE d'un
+## ScrollContainer ne peut pas détecter qu'une page peut rester scrollée à son
+## sommet par défaut : la capture RÉELLE (rendue, pas seulement testée) d'un
+## roster 4v4 complet a montré REJOUER/MENU hors cadre aux DEUX résolutions
+## malgré cette assertion verte -- exactement le défaut que le vérificateur a
+## signalé. Or VICTOIRE (157 px) + score (118 px) + MVP + 10 lignes de roster
+## + 2 CTA ne tiennent PAS ensemble dans 720 px de haut, même en resserrant
+## les marges au minimum du barème (vérifié en capture, voir le rendu de
+## tâche) -- un fait géométrique, pas un choix. La correction (EndPanel.gd) :
+## SEUL `_list` (le roster) est désormais enveloppé d'un `ScrollContainer`
+## (`size_flags_vertical = EXPAND_FILL`, reçoit le reste de la hauteur sous
+## les éléments FIXES de la carte) -- VICTOIRE/score/MVP/bandeau de revanche/
+## REJOUER/MENU restent des enfants de taille FIXE, donc TOUJOURS entièrement
+## visibles, jamais rognés ni poussés hors cadre, quelle que soit la taille du
+## roster. Le roster reste ENTIER dans l'arbre (`_list.get_child_count()` ci-
+## dessous, jamais tronqué) ; seule sa PRÉSENTATION peut nécessiter un
+## défilement LOCAL, borné au roster seul -- ce que cette suite vérifie
+## explicitement (REJOUER/MENU ne sont JAMAIS descendants de ce
+## ScrollContainer, quel qu'il soit).
+func test_end_panel_roster_shows_all_eight_players_and_cta_stay_outside_any_roster_scroll() -> void:
 	var ep := _end_panel()
 	var match_node := _fake_match()
 	var info := {}
@@ -392,11 +436,35 @@ func test_end_panel_roster_shows_all_eight_players_without_a_scroll_container() 
 	ep.show_result(1, 4, 6, match_node, 1)
 
 	assert_int(ep._list.get_child_count()).append_failure_message(
-		"REVUE LEAD point 6 : les 8 joueurs d'un 4v4 complet (+ 2 en-têtes d'équipe) doivent tous apparaître"
+		"REVUE LEAD point 6 : les 8 joueurs d'un 4v4 complet (+ 2 en-têtes d'équipe) doivent tous apparaître, jamais tronqués"
 	).is_equal(10)
-	assert_bool(ep._list.get_parent() is ScrollContainer).append_failure_message(
-		"REVUE LEAD point 3 : plus de ScrollContainer autour de _list -- jamais de barre de défilement ni de rognage"
+
+	var roster_scroll := _first_scroll_container_ancestor(ep._list)
+	if roster_scroll != null:
+		assert_bool(_is_descendant_of(ep._replay_button, roster_scroll)).append_failure_message(
+			"retour vérificateur (3e passage) : un ScrollContainer autour du SEUL roster est acceptable (le contenu entier y reste accessible), mais REJOUER ne doit JAMAIS s'y trouver -- il resterait hors cadre par défaut, exactement le défaut signalé sur les captures 02_end_*.jpg"
+		).is_false()
+		assert_bool(_is_descendant_of(ep._menu_button, roster_scroll)).append_failure_message(
+			"même règle pour MENU"
+		).is_false()
+		assert_bool(_is_descendant_of(ep._score_row, roster_scroll)).append_failure_message(
+			"même règle pour le score 118 -- toujours visible, jamais dans la zone défilante"
+		).is_false()
+
+
+func test_end_panel_does_not_display_the_roster() -> void:
+	# Décision lead (UI_DIRECTION_BL3 §6 « Fin ») : pas de liste de joueurs à
+	# l'écran de fin ; `_list` reste peuplé pour les contrats de données.
+	var ep := _end_panel()
+	var match_node := _fake_match()
+	match_node.player_info = {1: {"name": "Joueur 1", "team": 1, "kills": 3, "deaths": 1, "is_bot": false}}
+	ep.show_result(1, 40, 27, match_node, 1)
+	var roster_scroll := _first_scroll_container_ancestor(ep._list)
+	assert_object(roster_scroll).is_not_null()
+	assert_bool(roster_scroll.visible).append_failure_message(
+		"l'écran de fin n'affiche pas le roster (le tableau des scores le montre)"
 	).is_false()
+	assert_int(ep._list.get_child_count()).is_greater(0)
 
 
 # ======================================================================
@@ -412,6 +480,10 @@ func test_scoreboard_has_no_brush_header() -> void:
 	).is_equal(0)
 
 
+## UX-40 (revue lead 03_scoreboard_1080p.jpg) : `_columns_header` n'est plus
+## une chaîne unique (`.text`) -- CAMP/NOM/É/(A) sont désormais des `Label`
+## enfants indépendants (voir ScoreboardPanel._add_column_child), donc ce
+## test lit leurs `.text` un par un plutôt qu'une égalité de chaîne globale.
 func test_scoreboard_columns_header_shows_available_stats_only() -> void:
 	var sb := _scoreboard()
 	var match_node := _fake_match()
@@ -421,18 +493,106 @@ func test_scoreboard_columns_header_shows_available_stats_only() -> void:
 
 	sb.refresh(match_node, 0)
 
-	assert_str(sb._columns_header.text).append_failure_message(
+	var header_texts: Array = []
+	for c in sb._columns_header.get_children():
+		header_texts.append((c as Label).text)
+	assert_array(header_texts).append_failure_message(
 		"REVUE LEAD point 4 : CAMP/NOM/É/M seulement -- pas de colonne A/SCORE/PING inventée sans donnée"
-	).is_equal("CAMP   NOM   É   M")
+	).is_equal(["CAMP", "NOM", "É", "M"])
 
 	match_node.player_info = {
 		1: {"name": "Joueur 1", "team": 0, "kills": 1, "deaths": 0, "assists": 2, "is_bot": false},
 	}
 	sb.refresh(match_node, 0)
 
-	assert_str(sb._columns_header.text).append_failure_message(
+	header_texts.clear()
+	for c in sb._columns_header.get_children():
+		header_texts.append((c as Label).text)
+	assert_array(header_texts).append_failure_message(
 		"la colonne A doit apparaître dès qu'un joueur porte réellement la clé `assists`"
-	).is_equal("CAMP   NOM   É   M   A")
+	).is_equal(["CAMP", "NOM", "É", "M", "A"])
+
+
+## UX-40 (revue lead 03_scoreboard_1080p.jpg point 4 « plus aucune lettre
+## répétée par ligne ») : le texte PROPRE d'une ligne joueur ne porte plus que
+## le camp et le nom -- É/M/(A) vivent dans des labels enfants dédiés (voir
+## `test_scoreboard_kill_and_death_digits_are_horizontally_aligned_with_their_
+## column_header` ci-dessous), jamais concaténés au texte principal.
+func test_scoreboard_row_text_holds_only_camp_and_name_never_the_stat_letters() -> void:
+	var sb := _scoreboard()
+	var match_node := _fake_match()
+	match_node.player_info = {
+		2: {"name": "Vif", "team": 1, "kills": 7, "deaths": 2, "is_bot": false},
+	}
+
+	sb.refresh(match_node, 0)  # équipe 1 => ennemie pour un local en équipe 0.
+
+	var row: Label = null
+	for c in sb._list.get_children():
+		var l := c as Label
+		if not (l.text.begins_with("●") or l.text.begins_with("▼")):
+			row = l
+	assert_object(row).append_failure_message("préalable du test : une ligne joueur attendue").is_not_null()
+	assert_str(row.text).append_failure_message(
+		"REVUE LEAD point 4 (UX-40) : la ligne ne porte plus que le camp et le nom -- plus aucune lettre É/M répétée, les chiffres vivent dans des colonnes enfants dédiées"
+	).is_equal("   ▼   Vif")
+
+
+## UX-40, critère d'acceptation : « Colonnes alignées vérifiées par test (x
+## des chiffres = x de leur en-tête ± 4 px) » -- `ScoreboardPanel._add_row_stat`
+## et `_add_column_child` posent leurs labels aux MÊMES constantes `_COL_*_X`
+## (voir la note de tête de fichier de ScoreboardPanel.gd), donc leur
+## `global_position.x` doit coïncider, quelle que soit la longueur du nom
+## affiché au-dessus (police NOM proportionnelle -- exactement le défaut que
+## l'ancien padding par espaces ne pouvait pas garantir).
+func test_scoreboard_kill_and_death_digits_are_horizontally_aligned_with_their_column_header() -> void:
+	var sb := _scoreboard()
+	var match_node := _fake_match()
+	match_node.player_info = {
+		1: {"name": "Un nom de joueur assez long pour tester", "team": 0, "kills": 3, "deaths": 15, "is_bot": false},
+	}
+
+	sb.refresh(match_node, 0)
+
+	var header_kills: Label = null
+	var header_deaths: Label = null
+	for c in sb._columns_header.get_children():
+		var l := c as Label
+		if l.text == "É":
+			header_kills = l
+		elif l.text == "M":
+			header_deaths = l
+	assert_object(header_kills).append_failure_message("préalable : en-tête É introuvable").is_not_null()
+	assert_object(header_deaths).append_failure_message("préalable : en-tête M introuvable").is_not_null()
+
+	var row: Label = null
+	for c in sb._list.get_children():
+		var l := c as Label
+		if not (l.text.begins_with("●") or l.text.begins_with("▼")):
+			row = l
+	assert_object(row).append_failure_message("préalable du test : une ligne joueur attendue").is_not_null()
+
+	var row_kills: Label = null
+	var row_deaths: Label = null
+	for c in row.get_children():
+		var l := c as Label
+		if l.text == "3":
+			row_kills = l
+		elif l.text == "15":
+			row_deaths = l
+	assert_object(row_kills).append_failure_message(
+		"le chiffre de kills doit être un label enfant de la ligne, jamais dans son texte principal"
+	).is_not_null()
+	assert_object(row_deaths).append_failure_message(
+		"le chiffre de morts doit être un label enfant de la ligne, jamais dans son texte principal"
+	).is_not_null()
+
+	assert_float(row_kills.global_position.x).append_failure_message(
+		"critère UX-40 : x du chiffre É == x de son en-tête ± 4 px"
+	).is_equal_approx(header_kills.global_position.x, 4.0)
+	assert_float(row_deaths.global_position.x).append_failure_message(
+		"critère UX-40 : x du chiffre M == x de son en-tête ± 4 px"
+	).is_equal_approx(header_deaths.global_position.x, 4.0)
 
 
 func test_scoreboard_row_text_never_repeats_toi() -> void:

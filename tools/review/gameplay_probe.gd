@@ -30,11 +30,11 @@
 ##  |         |             | un sprint (sprint_to_fire retiré, BUG-K01)               |
 ##  | Crouch  | OK          | aucune restriction                                       |
 ##  | Air     | OK          | saut/chute : aucune restriction                          |
-##  | Slide   | BLOQUÉ      | _since_slide reste figé à 0 tant que sm == "Slide"       |
-##  |         |             | (WeaponFeel.fire_delay_left avec slide_to_fire > 0)       |
+##  | Slide   | OK          | GF-30 (playtest 2026-09-25) : tir en glissade permis,     |
+##  |         |             | dispersion de glissade (WeaponFeel.move_spread_deg)       |
 ##  | Dive    | BLOQUÉ      | Weapon._can_act() exclut "Dive" explicitement            |
 ##  | Roll    | BLOQUÉ      | Weapon._can_act() exclut "Roll" (roulade = pas d'action)  |
-##  | Stun    | BLOQUÉ      | Weapon._can_act() exclut "Stun"                          |
+##  | Stun    | OK          | GF-29/MV-03 : stun adouci, tir avec +3° de dispersion     |
 ##
 ##  Pas d'état "ADS" ni "ladder"/"mantle" dans ce projet (voir
 ##  scripts/player/states/*.gd) : "ads" est testé séparément (modificateur du
@@ -325,7 +325,7 @@ func _run_fire_state_checks() -> void:
 	await _reset_player()
 	await _enter_sprint()
 	await _enter_slide_from_sprint()
-	await _check_fire_in_state("Slide", true, "glissade active (restriction voulue)")
+	await _check_fire_in_state("Slide", false, "glissade active : tir permis (GF-30)")
 
 	await _reset_player()
 	await _enter_air()
@@ -343,7 +343,7 @@ func _run_fire_state_checks() -> void:
 	await _reset_player()
 	await _enter_stun_via_fall()
 	if _player.state_machine.current_name == "Stun":
-		await _check_fire_in_state("Stun", true, "étourdissement de chute (restriction voulue)")
+		await _check_fire_in_state("Stun", false, "étourdissement de chute : tir permis, +3° (GF-29)")
 	else:
 		_add_check("fire_in_state:Stun", false, "état Stun jamais atteint après une grosse chute (timeout)")
 

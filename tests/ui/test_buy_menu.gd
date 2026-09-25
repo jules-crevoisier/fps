@@ -38,6 +38,43 @@ class FakeEconomyMode extends Node:
 
 var _next_offset_index := 0
 
+## Isolation entre suites (BUG-33) : deux fuites d'état STATIQUE/GLOBAL,
+## invisibles quand ce fichier tourne SEUL (voir tools/test.sh
+## res://tests/ui/test_buy_menu.gd), qui ne se révèlent que lorsque TOUT
+## tests/ui s'enchaîne dans le MÊME processus gdUnit4 :
+##  1. `multiplayer.multiplayer_peer` (SceneTree, processus entier) : une
+##     suite voisine (ex. tests/ui/test_end_screens_v4.gd, tests/ui/
+##     test_team_relative.gd, même précaution qu'ici) peut le laisser à
+##     `null` après son propre `after_test()` -- ou l'avoir toujours laissé
+##     `null` si elle ne le sauvegarde pas. Un pair `null` (au lieu du
+##     `OfflineMultiplayerPeer` par défaut de Godot, voir la docstring de
+##     `GameMode._is_authoritative`) fait échouer `multiplayer.
+##     get_unique_id()` (Godot journalise "No multiplayer peer is assigned")
+##     et donc `player.is_multiplayer_authority()` -- exactement la garde
+##     d'entrée de `Weapon.buy()`. Conséquence observée SANS ce correctif :
+##     `weapon.buy(id)` n'a plus aucun effet (le garde-fou renvoie tôt), donc
+##     `rebuy_restores_the_previous_rounds_loadout_after_dying_down_to_the_pistol`
+##     et `rebuy_shows_a_warning_with_the_missing_amount_when_credits_are_short`
+##     échouent seulement en suite complète -- jamais seuls.
+##  2. `Weapon.recent_gunfire`/`Weapon.recent_impacts` (bus statiques serveur,
+##     BOT-03) : voir `Weapon.reset_buses()`, tests/combat/
+##     test_weapon_static_buses.gd. Aucun test de CE fichier ne les lit
+##     encore, mais une future suite qui ferait tirer/toucher un bot réel
+##     (`_local_bot_player()` a un vrai `BotBrain` actif, voir sa docstring)
+##     hériterait sinon d'entrées "récentes" laissées par une suite
+##     PRÉCÉDENTE du même run -- remis à zéro ici par précaution symétrique.
+var _saved_multiplayer_peer: MultiplayerPeer
+
+func before_test() -> void:
+	_saved_multiplayer_peer = multiplayer.multiplayer_peer
+	if multiplayer.multiplayer_peer == null:
+		multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	Weapon.reset_buses()
+
+func after_test() -> void:
+	multiplayer.multiplayer_peer = _saved_multiplayer_peer
+	Weapon.reset_buses()
+
 
 func _menu() -> CanvasLayer:
 	var m: CanvasLayer = BUY_MENU_SCRIPT.new()

@@ -574,7 +574,7 @@ BAKE_UV_LAYER = "paint_bake_uv"
 
 
 def ensure_uv(obj, margin_px: float = DEFAULT_MARGIN_PX, res: int = DEFAULT_RES,
-		bake_uv_name: str = BAKE_UV_LAYER) -> bool:
+		bake_uv_name: str = BAKE_UV_LAYER, keep_uv: bool = False) -> bool:
 	"""Cree TOUJOURS une UV FRAICHE et DEDIEE a la cuisson (`bake_uv_name`,
 	Smart UV Project, marge `margin_px` px a la resolution `res`), puis
 	retire toute UV preexistante. BOGUE CONSTATE v1 (`wall_1_level.glb`) :
@@ -582,9 +582,25 @@ def ensure_uv(obj, margin_px: float = DEFAULT_MARGIN_PX, res: int = DEFAULT_RES,
 	PARTAGENT la meme region UV, une grande partie du carre [0,1] vide)
 	donnait une cuisson a moitie NOIRE. Une UV unique et sans chevauchement
 	est une PRECONDITION de toute cuisson par texel. Renvoie True si l'objet
-	portait deja une UV (informatif pour le rapport)."""
+	portait deja une UV (informatif pour le rapport).
+
+	`keep_uv=True` (FP-12, "surcouches cuites sur l'UV0 existante") : ne
+	re-deplie JAMAIS -- RENOMME la couche UV active existante en
+	`bake_uv_name` (coordonnees inchangees a l'octet pres, seul le NOM change,
+	pour que `_bake_emit`/`bpy.ops.object.bake(uv_layer=BAKE_UV_LAYER)` la
+	trouve) et retire les autres couches. Sans UV preexistante il n'y a rien a
+	garder : repli silencieux sur le Smart UV Project habituel (un objet sans
+	UV ne peut de toute facon pas satisfaire "hash de l'UV0 inchange")."""
 	me = obj.data
 	had_uv_before = len(me.uv_layers) > 0
+	if keep_uv and had_uv_before:
+		bake_layer = me.uv_layers.active or me.uv_layers[0]
+		bake_layer.name = bake_uv_name
+		bake_layer.active_render = True
+		me.uv_layers.active = bake_layer
+		for other in [l for l in me.uv_layers if l.name != bake_uv_name]:
+			me.uv_layers.remove(other)
+		return had_uv_before
 	bake_layer = me.uv_layers.new(name=bake_uv_name)
 	me.uv_layers.active = bake_layer
 	bake_layer.active_render = True
@@ -826,11 +842,17 @@ def image_stats(image) -> dict:
 	return {"luma": luma, "linear_rgb": tuple(float(c) for c in linear.reshape(-1, 3).mean(axis=0))}
 
 
-def _slot_base(mat, kind: str) -> dict:
+def _slot_base(mat, kind: str, base_texture_override: str = None) -> dict:
 	"""Base peinte d'un slot (etape 4a de l'en-tete) : `{"mode", "image",
 	"path", "recolor", "target_luma"}` -- "existing" (image deja posee sur le
-	slot), "texture" (texture du kind) ou "recolor" (detail peint recolore a
-	`palette(kind)`, facteur lineaire par canal dans "recolor")."""
+	slot, ou `base_texture_override` -- FP-12 -- si fourni, prioritaire sur
+	l'image deja posee : c'est le but explicite de l'appelant de la
+	remplacer), "texture" (texture du kind) ou "recolor" (detail peint
+	recolore a `palette(kind)`, facteur lineaire par canal dans "recolor")."""
+	if base_texture_override is not None:
+		image = load_texture_image(base_texture_override)
+		return {"mode": "existing", "image": image, "path": base_texture_override, "recolor": None,
+			"target_luma": image_stats(image)["luma"]}
 	existing = _material_image_node(mat)
 	if existing is not None:
 		path = bpy.path.abspath(existing.filepath) if existing.filepath else existing.name
@@ -1155,12 +1177,14 @@ def _calibrate_and_bake(obj, image, masks: dict, gain_nodes: list, gains: list, 
 
 
 def bake_object_texture(obj, res: int, bake_margin_px: int, samples: int, seed, hue_max_deg: float,
-		palette_kind, image_name: str, margin_px: float = DEFAULT_MARGIN_PX) -> dict:
+		palette_kind, image_name: str, margin_px: float = DEFAULT_MARGIN_PX,
+		keep_uv: bool = False, base_texture_override: str = None) -> dict:
 	"""Peint `obj` : etapes 1 a 6 de l'en-tete. Renvoie le rapport de
 	l'objet (`slots` : kind, base, luminances cible/cuite, gain ; iles ;
 	pixels corriges par la garde de teinte) -- ne construit PAS le nom final
-	du materiau (`output_material_name`, appele par l'orchestrateur)."""
-	had_uv_before = ensure_uv(obj, margin_px=margin_px, res=res)
+	du materiau (`output_material_name`, appele par l'orchestrateur).
+	`keep_uv`/`base_texture_override` : FP-12, voir `ensure_uv`/`_slot_base`."""
+	had_uv_before = ensure_uv(obj, margin_px=margin_px, res=res, keep_uv=keep_uv)
 	uv_islands = compute_uv_face_islands(obj)
 	mesh_islands = compute_mesh_islands(obj)
 	bevel_faces = compute_bevel_faces(obj)
@@ -1178,7 +1202,7 @@ def bake_object_texture(obj, res: int, bake_margin_px: int, samples: int, seed, 
 		stored_kind = mat.get("toonkit_kind") if mat is not None else None
 		mat_name = mat.name if mat is not None else "__none__"
 		kind = resolve_kind(mat_name, stored_kind, palette_kind)
-		base = _slot_base(mat, kind)
+		base = _slot_base(mat, kind, base_texture_override=base_texture_override)
 		bake_mat, img_node, gain_node = _build_bake_material(
 			f"__paint_bake_src_{obj.name}_{slot_index}", base, tuple(obj.scale))
 		for n in bake_mat.node_tree.nodes:
@@ -1316,7 +1340,14 @@ def paint_bake(in_path: str, out_path: str, res: int = DEFAULT_RES, palette_kind
 		margin_px: float = DEFAULT_MARGIN_PX, bake_margin_px: int = DEFAULT_BAKE_MARGIN_PX,
 		samples: int = DEFAULT_SAMPLES, seed=DEFAULT_SEED, hue_max_deg: float = DEFAULT_HUE_MAX_DEG,
 		skip_turntable: bool = False, turntable_views: int = 8, turntable_size: int = 512,
-		turntable_out_dir: str = None) -> dict:
+		turntable_out_dir: str = None, keep_uv: bool = False, base_texture_override: str = None) -> dict:
+	"""`keep_uv`/`base_texture_override` (FP-12, doc 12 §3.4 : "surcouches
+	paint_bake cuites sur l'UV0 existante") : ne re-deplient jamais l'UV de
+	`in_path` (`ensure_uv(keep_uv=True)`) et, si `base_texture_override` est
+	donne, cuisent par-dessus CE fichier plutot que la texture deja posee sur
+	le materiau importe (`_slot_base`) -- voir l'en-tete de
+	`repaint_weapon.py` pour pourquoi ce script-la ne les appelle PAS par
+	defaut."""
 	if res not in ALLOWED_RES:
 		raise ValueError(f"paint_bake: --res {res} hors de {ALLOWED_RES}")
 
@@ -1340,7 +1371,8 @@ def paint_bake(in_path: str, out_path: str, res: int = DEFAULT_RES, palette_kind
 		bake_report = bake_object_texture(
 			obj, res=res, bake_margin_px=bake_margin_px, samples=samples,
 			seed=f"{seed}:{stem}", hue_max_deg=hue_max_deg, palette_kind=palette_kind,
-			image_name=image_name, margin_px=margin_px)
+			image_name=image_name, margin_px=margin_px, keep_uv=keep_uv,
+			base_texture_override=base_texture_override)
 		final_name = output_material_name(stem, obj_index, len(mesh_objs))
 		obj.data.materials[0].name = final_name
 		bake_report["object"] = obj.name
@@ -1401,6 +1433,12 @@ def parse_args():
 	p.add_argument("--size", dest="size", type=int, default=512)
 	p.add_argument("--turntable-out-dir", dest="turntable_out_dir", default=None,
 		help="dossier de base pour les captures avant/apres (defaut : a cote de --out)")
+	p.add_argument("--keep-uv", dest="keep_uv", action="store_true",
+		help="FP-12 : ne re-deplie jamais -- cuit sur l'UV0 de --in telle quelle (renomme la "
+			"couche existante au lieu d'un Smart UV Project ; repli habituel si --in n'a aucune UV)")
+	p.add_argument("--base-texture", dest="base_texture", default=None,
+		help="FP-12 : cuit par-dessus ce PNG/JPG plutot que la texture deja posee sur le materiau "
+			"importe de --in (voir _slot_base) -- un slot par objet est suppose (armes FP)")
 	return p.parse_args(argv)
 
 
@@ -1418,6 +1456,8 @@ def main() -> None:
 			samples=args.samples, seed=args.seed, hue_max_deg=args.hue_max_deg,
 			skip_turntable=args.skip_turntable, turntable_views=args.views, turntable_size=args.size,
 			turntable_out_dir=os.path.abspath(args.turntable_out_dir) if args.turntable_out_dir else None,
+			keep_uv=args.keep_uv,
+			base_texture_override=os.path.abspath(args.base_texture) if args.base_texture else None,
 		)
 	except (ValueError, RuntimeError) as exc:
 		print(f"PAINT_BAKE_FAIL {exc}")

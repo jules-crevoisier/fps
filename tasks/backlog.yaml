@@ -6605,6 +6605,7 @@ tasks:
     - scripts/levels/maps/layouts/wasteland.gd
     - tests/maps/test_wasteland.gd
     - reports/stuck_probe/
+    - tests/maps/test_wasteland_markers.gd
     reads:
     - docs/research/11_wasteland_v4_layout.md
     - scripts/levels/maps/Kit.gd
@@ -7045,3 +7046,303 @@ tasks:
       (capture masque) ; rendu du monde identique à ± 1 % de pixels (capture avant/après sur la même vue) ; ombres
       inchangées ; test vert. captures: [mur avant/après, Faucheur et Fracas] dans reports/checkpoints/2026-09-25_FP-20/'
     source: docs/research/12_viewmodel_v2.md
+
+  # --- revue lead UX-36/37 (2026-09-25)
+  - id: UX-38
+    epic: E5
+    priority: P0
+    size: M
+    model: sonnet
+    agent: builder
+    title: Menu v4 — cadrage de la Grand-Rue, plus de bandes verticales, bouton entraînement v4, BrushHeader retiré
+      partout, tests portraits/achat
+    depends_on:
+    - UX-37
+    files:
+    - scripts/ui/MainMenu.gd
+    - assets/ui/menu/
+    - scripts/ui/ArsenalMenu.gd
+    - scripts/ui/BuyMenu.gd
+    - scripts/ui/CrosshairEditor.gd
+    - tests/ui/test_main_menu.gd
+    - tests/ui/test_agent_portraits.gd
+    - tests/ui/test_buy_menu.gd
+    reads:
+    - docs/UI_DIRECTION_BL3.md
+    - docs/ui_mockups/bl3_menu.png
+    - tools/map_shots.gd
+    - reports/checkpoints/2026-09-25_UX-37/menu_1080p.jpg
+    notes: 'Revue lead de reports/checkpoints/2026-09-25_UX-37/menu_1080p.jpg : (1) le fond montre un gros bloc à
+      texture de béton fissuré étirée collé à la caméra, et Vif minuscule devant : recadrer comme la maquette — vue
+      de la Grand-Rue avec façades peintes, ciel et un repère (grue/château d''eau) visibles, agent à droite à taille
+      héroïque (~70 % de la hauteur d''écran) ; régénérer l''image de fond depuis la VRAIE carte avec la couche d''art
+      (tools/map_shots.gd en fenêtré, vue choisie et justifiée) ; (2) BANDES VERTICALES sur toute la moitié gauche
+      (dégradé d''encre fait de bandes) : dégradé lisse (GradientTexture2D ou shader), aucune bande visible ; (3)
+      le bouton « Terrain d''entraînement (solo) » garde un style v3 (cadre rouge) : le passer en style v4 (plaque
+      ou ligne de pile 37) ; le cadre de focus blanc de JOUER ne doit pas chevaucher le texte de résumé ; (4) supprimer
+      BrushHeader (bandeau pinceau rouge, banni) dans ArsenalMenu, BuyMenu et CrosshairEditor : titre en encre 66
+      comme OPTIONS ; (5) tests/ui/test_agent_portraits.gd et test_buy_menu.gd sont rouges (`_load_character_model`
+      : signature invalide après UX-32/37) : aligner l''appelant ou le test sur la signature réelle sans affaiblir
+      ce qui est vérifié.'
+    acceptance: 'Capture menu 1080p + 720p à côté de bl3_menu.png : Grand-Rue lisible, agent héroïque, zéro bande,
+      zéro chevauchement ; plus aucun BrushHeader dans scripts/ui (grep) ; tests/ui entièrement verts ; captures arsenal
+      + achat v4.'
+    source: lead 2026-09-25 (revue UX-37)
+  - id: UX-39
+    epic: E5
+    priority: P0
+    size: S
+    model: sonnet
+    agent: builder
+    title: Minimap vide sur Wasteland v4 + capture HUD réellement sur Wasteland habillée
+    depends_on:
+    - UX-36
+    files:
+    - scripts/ui/hud/Minimap.gd
+    - tests/ui/test_minimap.gd
+    - tools/review/ui_shots.gd
+    reads:
+    - scripts/levels/maps/layouts/wasteland.gd
+    - scripts/levels/maps/wasteland_art/WastelandArt.gd
+    - reports/checkpoints/2026-09-25_UX-36/01_hud_wasteland_1080p.jpg
+    notes: 'Revue lead de reports/checkpoints/2026-09-25_UX-36/01_hud_wasteland_1080p.jpg : la minimap n''affiche
+      que la flèche du joueur sur un carré noir (aucun mur, aucune zone) et la scène capturée est une arène grise
+      sans la couche d''art Wasteland. (1) La minimap doit dessiner le plan de Wasteland v4 (volumes du layout vus
+      de dessus, couloirs lisibles, HP), avec alliés et ennemis repérés ; (2) ui_shots `hud_wasteland` doit charger
+      la vraie Wasteland habillée (vérifier map_id, la scène chargée et WastelandArt.is_enabled() en fenêtré) ; si
+      le match tombe sur une autre carte, corriger la sélection.'
+    acceptance: 'Test : la minimap de Wasteland contient ≥ 20 volumes dessinés ; capture HUD 1080p + 720p sur la Wasteland
+      habillée (façades peintes visibles) avec minimap lisible ; tests/ui verts.'
+    source: lead 2026-09-25 (revue UX-36)
+  - id: UX-40
+    epic: E5
+    priority: P1
+    size: S
+    model: sonnet
+    agent: builder
+    title: 'Tableau des scores : vraies colonnes alignées (en-têtes au-dessus des chiffres) + captures de fin cohérentes'
+    depends_on:
+    - UX-34
+    - UX-39
+    files:
+    - scripts/ui/hud/ScoreboardPanel.gd
+    - tests/ui/test_end_screens_v4.gd
+    - tools/review/ui_shots.gd
+    - scripts/ui/hud/Minimap.gd
+    - tests/ui/test_minimap.gd
+    reads:
+    - docs/UI_DIRECTION_BL3.md
+    - reports/checkpoints/2026-09-25_UX-34/03_scoreboard_1080p.jpg
+    notes: 'Revue lead de 03_scoreboard_1080p.jpg : les en-têtes « CAMP NOM É M » flottent au-dessus de la plaque
+      sans alignement, et chaque ligne répète « É 3 M 5 ». Faire de vraies colonnes : en-têtes meta 21 DANS la plaque,
+      alignés sur des colonnes de largeur fixe (nom, É, M, A si dispo), chiffres tabulaires centrés sous leur en-tête,
+      plus aucune lettre répétée par ligne ; en-tête « TDM · WASTELAND · PREMIER À 40 » + score 118 allié contre ennemi
+      en haut. ui_shots : données de capture de la fin COHÉRENTES (VICTOIRE => score allié > ennemi, ex. 40–27 ; DÉFAITE
+      => l''inverse) — capturer les deux.'
+    acceptance: Colonnes alignées vérifiées par test (x des chiffres = x de leur en-tête ± 4 px) ; captures tableau
+      + fin VICTOIRE + fin DÉFAITE cohérentes en 1080p ; tests/ui verts.
+    source: lead 2026-09-25 (revue UX-34)
+  - id: BUG-32
+    epic: E1
+    priority: P0
+    size: S
+    model: sonnet
+    agent: builder
+    title: 'Régression : bot du test d''escalier plus détecté au sol (tests/player/test_stair_step.gd, 4 échecs)'
+    depends_on: []
+    files:
+    - scripts/player/PlayerController.gd
+    - scripts/ai/BotBrain.gd
+    - scripts/player/StairStep.gd
+    - tests/player/test_stair_step.gd
+    reads:
+    - scenes/player/player.tscn
+    - scripts/core/PhysicsLayers.gd
+    - scripts/ai/BotPerception.gd
+    - docs/MOVEMENT.md
+    notes: '4 échecs dans tests/player/test_stair_step.gd : `_grounded_sprinting_bot` (l. ~354) ne trouve plus le
+      bot au sol après 2 frames physiques + move_and_slide (is_on_floor faux), puis le bot tombe de ~6 m. Les tests
+      passaient à la livraison de MV-01. Suspects dans l''ordre : BOT-03 (BotBrain : nouvelle perception/mémoire,
+      le bot du test est is_bot=true avec un vrai BotBrain), GF-29 (PlayerController : stun de chute conditionné au
+      GameMode, tremblement), LD-44 (player.tscn collision_mask=33 — contient bien WORLD, a priori innocent). Trouver
+      la VRAIE cause par expérience (script de diagnostic temporaire dans tests/, supprimé ensuite), la corriger dans
+      le code de jeu ; ne modifier le test que s''il suppose un comportement que le jeu a volontairement changé (le
+      justifier).'
+    acceptance: tests/player entièrement vert (dont test_stair_step 14/14) ; tests/ai et tests/combat verts ; cause
+      racine écrite dans le rapport (fichier:ligne).
+    source: lead 2026-09-25 (signalé par GF-29 et LD-44)
+  - id: BUG-33
+    epic: E1
+    priority: P1
+    size: S
+    model: sonnet
+    agent: builder
+    title: 'Isolation des tests : bus statiques de Weapon (recent_gunfire/recent_impacts) qui fuient entre suites'
+    depends_on: []
+    files:
+    - scripts/combat/Weapon.gd
+    - tests/ui/test_buy_menu.gd
+    - tests/combat/test_weapon_static_buses.gd
+    reads:
+    - scripts/ai/BotBrain.gd
+    - scripts/ai/BotPerception.gd
+    notes: 'tests/ui/test_buy_menu.gd (rebuy_restores_the_previous_rounds_loadout_after_dying_down_to_the_pistol,
+      rebuy_shows_a_warning_with_the_missing_amount_when_credits_are_short) échouent seulement quand tout tests/ui
+      tourne ensemble, jamais seuls : état statique partagé (BOT-03 a ajouté Weapon.recent_impacts à côté de recent_gunfire).
+      Trouver l''état qui fuit, ajouter une remise à zéro explicite (fonction statique reset_buses() appelée au démarrage
+      d''un match et dans before_test des suites concernées) sans changer le comportement en jeu.'
+    acceptance: tests/ui complet vert deux fois de suite ; tests/combat et tests/ai verts ; test qui prouve que reset
+      vide les bus.
+    source: lead 2026-09-25 (signalé par UX-38)
+  - id: BUG-34
+    epic: E3
+    priority: P0
+    size: S
+    model: sonnet
+    agent: builder
+    title: Points d'angles et de tenue HP des bots hors navmesh (0,62 m) depuis les toits bas v4
+    depends_on:
+    - LD-44
+    files:
+    - scripts/levels/maps/layouts/wasteland_bots.gd
+    reads:
+    - tests/ai/test_wasteland_bot_data.gd
+    - scripts/levels/maps/layouts/wasteland.gd
+    notes: 'tests/ai/test_wasteland_bot_data.gd : test_bot_knowledge_angles_are_on_navmesh_and_reachable_from_both_spawns
+      et test_bot_knowledge_hp_holds_are_on_navmesh_and_reachable_from_both_spawns échouent (décalage 0,62 m > 0,5
+      m) depuis la vague toits bas / habillage. Recaler chaque point fautif sur la navmesh réelle (NavigationServer3D.map_get_closest_point),
+      garder la parité miroir des points, ne pas toucher au test. Même méthode que BUG-31.'
+    acceptance: tests/ai/test_wasteland_bot_data.gd vert ; tests/ai verts ; liste avant/après des points recalés.
+    source: lead 2026-09-25 (signalé par BUG-33)
+
+  # --- revue lead viewmodel v2 vague A (2026-09-25)
+  - id: FP-10B
+    epic: E4
+    priority: P0
+    size: M
+    model: sonnet
+    agent: builder
+    title: Mains FP propres et lisibles en gros plan (fini les poings bosselés à pointes blanches)
+    depends_on:
+    - FP-10
+    files:
+    - tools/blender/fp_rig.py
+    - tools/blender/fp_camera.py
+    - tools/blender/tests/test_fp_rig.py
+    - assets/models/fp/fp_arms*
+    - reports/checkpoints/2026-09-25_FP-10B/
+    reads:
+    - docs/research/12_viewmodel_v2.md
+    - docs/STYLE_BIBLE.md
+    - reports/checkpoints/2026-09-25_FP-10/fp_arms_closeup.png
+    - assets/models/characters/fp_glove_grip.glb
+    - assets/models/characters/fp_glove_support.glb
+    notes: 'Revue lead 2026-09-25 de fp_arms_closeup.png / fp_hold_sheet.png : les mains UAL sont des poings low-poly
+      bosselés, texture « froissée » (bake bruité), avec des POINTES BLANCHES qui percent (géométrie de manchette
+      ou bouts de doigts qui traversent le gant). En vue FP les mains occupent une grande part de l''écran : il faut
+      des gants propres, stylisés, lisibles (référence Far Far West : formes simples et nettes). Garder le squelette
+      UAL et les poids (les animations FP-13 en dépendent : noms et nombre d''os INCHANGÉS). Pistes : subdivision
+      (niveau 1-2) des mains avant bake, lissage des poids, suppression des faces internes/pointes (aucun sommet de
+      manchette hors du volume du gant), doigts un peu plus épais et arrondis (style cartoon), matériau cuir en aplats
+      peints (2-3 tons + quelques traits d''usure, JAMAIS le bruit froissé actuel), encre fine. Comparer côte à côte
+      avec les gants Tripo peints existants (fp_glove_grip/support) en gros plan.'
+    acceptance: 'Mêmes 45 os deform qu''FP-10 (test) ; tris bras <= 9 000 ; aucune pointe (test : aucun sommet de
+      manchette à plus de 3 mm hors de l''enveloppe du gant) ; captures : gros plan main sur poignée + vue FP tenant
+      le Ravage v2 (modes avant-bras et mains flottantes) + comparaison avec les gants Tripo ; rendu propre à l''œil
+      du lead.'
+    source: lead 2026-09-25 (revue FP-10)
+  - id: FP-12B
+    epic: E4
+    priority: P1
+    size: S
+    model: sonnet
+    agent: builder
+    title: Métal des armes en gris-brun CHAUD (plus d'ardoise bleutée) + planche de rendu en gros plan
+    depends_on:
+    - FP-12
+    files:
+    - tools/blender/repaint_weapon.py
+    - tools/ai3d/manifests/weapon_repaint.yaml
+    - assets/textures/weapons/
+    - tools/blender/tests/test_repaint_weapon.py
+    - reports/checkpoints/2026-09-25_FP-12B/
+    reads:
+    - docs/STYLE_BIBLE.md
+    - reports/checkpoints/2026-09-25_FP-12/repaint_textures_avant_apres.jpg
+    notes: 'Revue lead : après FP-12, le métal est un gris ardoise (teinte ~210-220°, saturation faible) qui se lit
+      encore bleu à l''œil sous l''éclairage cel. Cible : métal chaud gris-brun (teinte 20-45°, saturation 0,06-0,18,
+      2 à 3 valeurs), bois brun chaud, laiton, accents rouille ; les panneaux clairs du Pistolet ne doivent pas virer
+      au blanc pur. Critère mesuré : sur chaque albédo, pixels « métal » de teinte 180-260° ET saturation > 0,06 <=
+      2 %. Planche : gros plan 3/4 de chaque arme (pas une vignette lointaine) avant/après.'
+    acceptance: Métrique ci-dessus verte pour les 7 armes ; planche gros plan avant/après ; tests tools/blender verts.
+    source: lead 2026-09-25 (revue FP-12)
+
+  # --- revue lead habillage v4 (2026-09-25)
+  - id: ART-101
+    epic: E4
+    priority: P0
+    size: M
+    model: sonnet
+    agent: builder
+    title: 'Surfaces Wasteland : densité de texels unique (bois, tôle), UV des toits, murs en enduit peint (plus de
+      beige uni)'
+    depends_on:
+    - ART-94
+    - ART-95
+    - ART-96
+    files:
+    - scripts/levels/maps/Kit.gd
+    - scripts/levels/maps/layouts/wasteland_look.gd
+    - tools/blender/make_wl_shanty_kit.py
+    - assets/models/props/wasteland/shanty/
+    - tests/maps/test_kit.gd
+    - reports/checkpoints/2026-09-25_ART-101/
+    reads:
+    - docs/STYLE_BIBLE.md
+    - docs/art/WASTELAND_V4_ART_PLAN.md
+    - assets/textures/painted/
+    - assets/textures/wasteland/
+    notes: 'Revue lead 2026-09-25 des captures ART-94/95/96 (reports/checkpoints/2026-09-25_ART-94/wasteland_V1.jpg,
+      ART-95/ART-95_V3_hotel_south.jpg, ART-96/08_place_v5_apres_correctif.jpg, ART-96/11_diligence_plan_serre_apres_correctif.jpg)
+      — retour utilisateur « les textures c''est n''importe quoi ». Défauts : (1) bois à la mauvaise échelle — caisses
+      et bardages montrent 2 planches par mètre avec des nœuds de 30 cm : fixer UNE densité de texels pour tout le
+      décor (ex. 256 px/m, une planche 15-20 cm) appliquée aux modules du kit shanty ET aux matériaux de Kit.gd ;
+      (2) tôle des toits étirée en traînées orange (projection UV le long de la pente) : UV des toits en projection
+      dans le plan du pan, ondulations perpendiculaires au faîtage, densité identique ; (3) murs greybox en beige
+      UNI (façades latérales, arrières, étages) : matériau d''enduit peint (textures peintes existantes, ex. wl_plaster)
+      + bande de salissure en pied de mur (~40 cm) + arêtes/chaînages d''angle plus foncés + variation de teinte par
+      bâtiment (wasteland_look.gd) ; jamais un aplat uni visible. Aucune collision modifiée (parité art/collision
+      verte).'
+    acceptance: 'Test : densité de texels des matériaux de décor dans ±20 % de la cible ; captures V1, V3, V5, V9
+      avant/après : plus aucun mur beige uni, bois et tôle à l''échelle, toits sans étirement ; test_wasteland_art_parity
+      vert ; tests/maps verts.'
+    source: lead 2026-09-25 (revue ART-94/95/96)
+  - id: ART-103
+    epic: E4
+    priority: P1
+    size: S
+    model: sonnet
+    agent: builder
+    title: Diligence visible (pas un mur de caisses) + bande blanche dans le ciel de la Place
+    depends_on:
+    - ART-96
+    - ART-99
+    files:
+    - scripts/levels/maps/wasteland_art/ArtCovers.gd
+    - scripts/levels/maps/wasteland_art/ArtDressing.gd
+    - scripts/levels/dressing/DressingKit.gd
+    - reports/checkpoints/2026-09-25_ART-103/
+    reads:
+    - docs/art/WASTELAND_V4_ART_PLAN.md
+    - assets/models/props/wasteland/tripo/wl_diligence.glb
+    notes: 'Revue lead 2026-09-25 des captures ART-94/95/96 (reports/checkpoints/2026-09-25_ART-94/wasteland_V1.jpg,
+      ART-95/ART-95_V3_hotel_south.jpg, ART-96/08_place_v5_apres_correctif.jpg, ART-96/11_diligence_plan_serre_apres_correctif.jpg)
+      — retour utilisateur « les textures c''est n''importe quoi ». (1) Depuis la rue, le volume Diligence se lit
+      comme un MUR DE CAISSES géantes : la diligence Tripo (wl_diligence, roues, caisse rouge) doit être la silhouette
+      dominante sur les faces vues depuis les couloirs, les malles/caisses seulement en complément (plan §2 : « diligence
+      collée à une pile de malles »), toujours ±10 cm de la boîte ; (2) une BANDE BLANCHE épaisse traverse le ciel
+      de la Place (08_place_v5) : câble/corde/banderole du DressingKit rendu trop épais ou sans matériau — l''identifier
+      et le corriger (épaisseur réaliste, couleur peinte).'
+    acceptance: 'Captures Place (V5) et plan serré Diligence avant/après : diligence reconnaissable, plus de bande
+      blanche ; tests/levels et parité art verts.'
+    source: lead 2026-09-25 (revue ART-96)

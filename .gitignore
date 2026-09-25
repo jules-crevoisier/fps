@@ -48,3 +48,4 @@ _captures/
 /_verify_*
 /scratchpad_*
 /tools/**/_tmp_*
+/tests/**/_diag_*

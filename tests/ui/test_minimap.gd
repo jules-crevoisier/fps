@@ -101,6 +101,91 @@ func test_footprints_in_range_of_empty_array_is_empty() -> void:
 	assert_array(Minimap.footprints_in_range([], Vector2.ZERO, 100.0)).is_empty()
 
 
+# ================================================ clip_rect_to_view / footprint_screen_rect / positions_in_range
+# REVUE LEAD 2026-09-25T20:37 (capture 01_hud_wasteland_1080p.jpg, « la
+# minimap Wasteland déborde de son cadre ... plan dessiné en bas à droite,
+# hors du carré noir ») : `footprints_in_range` (culling par rayon, ci-dessus)
+# garde une empreinte dès que son point le plus proche du joueur est dans le
+# rayon -- mais un LONG mur qui longe le joueur peut quand même s'étendre bien
+# au-delà de ce rayon sur son autre axe, et donc déborder du cadre 240 px une
+# fois projeté SANS rognage. Ces tests verrouillent le rognage géométrique
+# (jamais un test de rendu -- voir la doc de classe "Fonctions PURES...
+# testables sans nœud").
+
+func test_clip_rect_to_view_shrinks_a_rect_that_extends_past_the_radius_on_one_axis() -> void:
+	# Même géométrie qu'un long mur Wasteland (des dizaines de mètres) qui
+	# longe le joueur de près sur Z (-1..1) : rogné à la fenêtre carrée de
+	# rayon 28 m sur X, inchangé sur Z (déjà dans la fenêtre).
+	var world_wall := Rect2(Vector2(-1000.0, -1.0), Vector2(2000.0, 2.0))
+	var clipped := Minimap.clip_rect_to_view(world_wall, Vector2.ZERO, Minimap.VIEW_RADIUS_M)
+
+	assert_vector(clipped.position).is_equal_approx(Vector2(-Minimap.VIEW_RADIUS_M, -1.0), Vector2.ONE * 0.001)
+	assert_vector(clipped.end).is_equal_approx(Vector2(Minimap.VIEW_RADIUS_M, 1.0), Vector2.ONE * 0.001)
+
+
+func test_clip_rect_to_view_leaves_a_rect_already_inside_the_window_untouched() -> void:
+	var room := Rect2(Vector2(-2.0, -3.0), Vector2(4.0, 6.0))
+	var clipped := Minimap.clip_rect_to_view(room, Vector2.ZERO, Minimap.VIEW_RADIUS_M)
+
+	assert_vector(clipped.position).is_equal_approx(room.position, Vector2.ONE * 0.001)
+	assert_vector(clipped.size).is_equal_approx(room.size, Vector2.ONE * 0.001)
+
+
+func test_clip_rect_to_view_is_empty_when_entirely_outside_the_window() -> void:
+	var far_away := Rect2(Vector2(500.0, 500.0), Vector2(10.0, 10.0))
+	var clipped := Minimap.clip_rect_to_view(far_away, Vector2.ZERO, Minimap.VIEW_RADIUS_M)
+
+	assert_bool(clipped.has_area()).append_failure_message(
+		"un rectangle entièrement hors fenêtre doit rogner à une aire nulle -- jamais dessiné"
+	).is_false()
+
+
+func test_footprint_screen_rect_of_an_oversized_footprint_never_exceeds_the_panel() -> void:
+	# Régression EXACTE de la REVUE LEAD : une empreinte bien plus grande que
+	# la fenêtre visible (mur long) ne doit jamais produire un rectangle écran
+	# qui déborde du panneau [0, SIZE_PX] x [0, SIZE_PX], quel que soit le
+	# joueur ou la carte.
+	var px_per_m := Minimap.px_per_meter(Minimap.SIZE_PX, Minimap.VIEW_RADIUS_M)
+	var center := Vector2(Minimap.SIZE_PX, Minimap.SIZE_PX) * 0.5
+	var world_wall := Rect2(Vector2(-1000.0, -1.0), Vector2(2000.0, 2.0))
+
+	var screen := Minimap.footprint_screen_rect(world_wall, Vector2.ZERO, Minimap.VIEW_RADIUS_M, px_per_m, center)
+
+	assert_bool(screen.has_area()).is_true()
+	assert_float(screen.position.x).append_failure_message(
+		"critère UX-40/minimap : aucun point dessiné hors du rect de la minimap (bord gauche)"
+	).is_greater_equal(-0.01)
+	assert_float(screen.position.y).is_greater_equal(-0.01)
+	assert_float(screen.end.x).append_failure_message(
+		"critère UX-40/minimap : aucun point dessiné hors du rect de la minimap (bord droit)"
+	).is_less_equal(Minimap.SIZE_PX + 0.01)
+	assert_float(screen.end.y).is_less_equal(Minimap.SIZE_PX + 0.01)
+
+
+func test_footprint_screen_rect_is_empty_for_a_footprint_entirely_outside_the_view() -> void:
+	var px_per_m := Minimap.px_per_meter(Minimap.SIZE_PX, Minimap.VIEW_RADIUS_M)
+	var center := Vector2(Minimap.SIZE_PX, Minimap.SIZE_PX) * 0.5
+	var far_away := Rect2(Vector2(500.0, 500.0), Vector2(10.0, 10.0))
+
+	var screen := Minimap.footprint_screen_rect(far_away, Vector2.ZERO, Minimap.VIEW_RADIUS_M, px_per_m, center)
+
+	assert_bool(screen.has_area()).is_false()
+
+
+func test_positions_in_range_excludes_a_position_beyond_the_radius() -> void:
+	var positions: Array = [Vector3(1.0, 0.0, 1.0), Vector3(500.0, 0.0, 500.0)]
+	var near := Minimap.positions_in_range(positions, Vector2.ZERO, Minimap.VIEW_RADIUS_M)
+
+	assert_int(near.size()).append_failure_message(
+		"un allié/ennemi au-delà du rayon affiché ne doit jamais être dessiné -- même défaut que les empreintes non rognées"
+	).is_equal(1)
+	assert_vector(near[0] as Vector3).is_equal_approx(Vector3(1.0, 0.0, 1.0), Vector3.ONE * 0.001)
+
+
+func test_positions_in_range_of_empty_array_is_empty() -> void:
+	assert_array(Minimap.positions_in_range([], Vector2.ZERO, Minimap.VIEW_RADIUS_M)).is_empty()
+
+
 # ================================================ to_map_point / px_per_meter (pures)
 
 func test_to_map_point_translates_and_scales_from_player_origin() -> void:
@@ -235,6 +320,15 @@ func test_minimap_uses_a_chamfered_plate_matching_the_v4_minimap_chamfer() -> vo
 	assert_int(style.corner_radius_bottom_right).is_equal(0)
 
 
+func test_minimap_clips_its_contents_to_its_own_rect() -> void:
+	# REVUE LEAD 2026-09-25T20:37 -- filet de sécurité VISUEL en plus du
+	# rognage géométrique testé ci-dessus (`footprint_screen_rect`/
+	# `positions_in_range`) : même fabrique que AgentSelectScreen.gd/
+	# CrosshairEditor.gd (`clip_contents = true`).
+	var mm := _minimap()
+	assert_bool(mm.clip_contents).is_true()
+
+
 func test_minimap_shows_a_fixed_north_label() -> void:
 	# §5 « ... « N » » -- repère fixe, la carte elle-même ne pivote jamais
 	# (voir doc de classe de Minimap.gd).
@@ -264,6 +358,30 @@ func test_minimap_set_layout_can_be_called_again_on_map_change() -> void:
 	assert_int(mm.footprint_count()).is_equal(4)
 	mm.set_layout([])
 	assert_int(mm.footprint_count()).is_equal(0)
+
+
+# ================================================ Wasteland v4 (UX-39, retour lead 2026-09-25)
+# Revue de reports/checkpoints/2026-09-25_UX-36/01_hud_wasteland_1080p.jpg :
+# la minimap n'affichait que la flèche du joueur sur un carré noir -- la
+# vraie cause était `tools/review/ui_shots.gd` qui chargeait
+# `scenes/levels/tdm_map.tscn` (Map = CompMapBuilder, une arène placeholder
+# qui ignore MatchConfig.map_id et ne pose donc jamais de nœud
+# "nav_region"/MapSetup) au lieu de `scenes/levels/maps/wasteland.tscn` (la
+# VRAIE scène, MapSetup.map_id="wasteland" -- voir le correctif dans ce
+# fichier) : `GameHUD._acquire_map_setup` ne trouvait donc jamais de
+# MapSetup et `Minimap.set_layout` n'était jamais appelée. Ce test verrouille
+# le critère d'acceptation côté données (Minimap.gd est une fonction PURE,
+# testable sans charger la scène 3D) : `WastelandLayout.data()["pieces"]`
+# (LD-40, scripts/levels/maps/layouts/wasteland.gd) produit bien >= 20
+# empreintes sol/mur/couvert une fois passées par `footprints_from_pieces` --
+# indépendamment du bug de sélection de scène, réel mais hors de cette
+# fonction pure (corrigé dans tools/review/ui_shots.gd).
+func test_minimap_set_layout_wasteland_v4_has_at_least_20_footprints() -> void:
+	var mm := _minimap()
+	mm.set_layout(WastelandLayout.data().get("pieces", []))
+	assert_int(mm.footprint_count()).append_failure_message(
+		"%d empreintes -- attendu >= 20 (bâtiments/murs/couverts de Wasteland v4, deux moitiés + centre)" % mm.footprint_count()
+	).is_greater_equal(20)
 
 
 # ================================================ LocationLabel (état vide, mise à jour de zone)

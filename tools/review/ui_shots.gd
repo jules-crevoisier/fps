@@ -69,6 +69,26 @@ extends SceneTree
 
 const MAIN_MENU_SCENE := "res://scenes/ui/main_menu.tscn"
 const MATCH_SCENE := "res://scenes/levels/tdm_map.tscn"
+## UX-39 (retour lead 2026-09-25, checkpoint 01_hud_wasteland_1080p.jpg) --
+## `_shot_wasteland_hud` DOIT charger cette scène, jamais `MATCH_SCENE` :
+## `MATCH_SCENE` pointe vers un nœud "Map" = `CompMapBuilder` (arène CoD
+## générée par code, palette Port-Ferraille codée en dur, docstring
+## "Géométrie placeholder") qui IGNORE `MatchConfig.map_id` -- forcer
+## `MatchConfig.map_id = "wasteland"` n'y change donc rigoureusement rien,
+## la carte réellement affichée à l'écran reste toujours la même arène
+## grise SANS le moindre nœud "MapSetup"/"nav_region", quel que soit le
+## map_id demandé. Cette scène-ci (`scenes/levels/maps/wasteland.tscn`) est
+## la VRAIE carte : "MapSetup" (`scripts/levels/maps/MapSetup.gd`,
+## `map_id = "wasteland"` déjà fixé dans le fichier .tscn) y construit la
+## géométrie réelle de `WastelandLayout.data()` (LD-40) PUIS
+## `WastelandArt.apply_all` (peau peinte, sautée seulement en headless -- ce
+## process tourne toujours FENÊTRÉ, voir la docstring de tête) et pose le
+## nœud de groupe "nav_region" que `GameHUD._acquire_map_setup` cherche pour
+## appeler `Minimap.set_layout` -- exactement la scène chargée par le
+## serveur réel pour `map_id="wasteland"` (voir
+## `ServerBoot._resolve_map_scene` -> `MapCatalog.get_by_id("wasteland")
+## ["scene"]`, même chemin), jamais une scène de revue distincte du jeu réel.
+const WASTELAND_MATCH_SCENE := "res://scenes/levels/maps/wasteland.tscn"
 ## ART-31 (relance QA) : galerie de démonstration du kit de composants
 ## autocollant (BrushHeader + Charbon/Autocollant/Hexagone, KitStates §8.4) —
 ## capturée comme un écran autonome de plus, exactement comme menu/sélection
@@ -336,19 +356,43 @@ func _shot_match_screens() -> void:
 	inst.free()
 	await _wait_physics(4)
 
-## UX-36 (retour lead 2026-09-25) — HUD EN MATCH sur la carte Wasteland
-## SPÉCIFIQUEMENT : `_shot_match_screens()` ci-dessus utilise la carte PAR
-## DÉFAUT du mode TDM (`MapCatalog.default_for("tdm")` -> "port_ferraille",
-## jamais Wasteland, `MatchConfig.map_id` y reste ""), donc aucune capture
-## précédente ne montrait la seule carte du proto que le lead garde pour
-## l'instant (décision produit hors de mon périmètre). Lance un DEUXIÈME match
-## TDM+bots dédié, `MatchConfig.map_id` forcé à "wasteland", pour produire la
-## capture "à côté de bl3_hud.png" exigée par le contrat -- sans toucher au
-## reste du pipeline ci-dessus (pause/achat/tableau des scores/mort/fin
-## restent sur la carte par défaut). "bots actifs" : `allow_bot_fill` (même
-## réglage que `_shot_match_screens`) ; "arme en main" : le joueur hôte spawn
-## avec son loadout par défaut équipé, comme dans tout match réel, aucun
-## crochet supplémentaire nécessaire ici.
+## UX-36 (retour lead 2026-09-25) puis UX-39 (2e retour, même capture) — HUD
+## EN MATCH sur la carte Wasteland SPÉCIFIQUEMENT : `_shot_match_screens()`
+## ci-dessus utilise la carte PAR DÉFAUT du mode TDM (`MapCatalog.
+## default_for("tdm")`), jamais forcément Wasteland selon la config du
+## catalogue, donc aucune capture précédente ne montrait à coup sûr la seule
+## carte du proto que le lead garde pour l'instant (décision produit hors de
+## mon périmètre). Lance un DEUXIÈME match TDM+bots dédié pour produire la
+## capture "hud_wasteland" exigée par le contrat -- sans toucher au reste du
+## pipeline ci-dessus (pause/achat/tableau des scores/mort/fin restent sur la
+## carte par défaut).
+##
+## UX-39 (correctif du VRAI bug, diagnostiqué depuis reports/checkpoints/
+## 2026-09-25_UX-36/01_hud_wasteland_1080p.jpg -- minimap = flèche seule sur
+## carré noir, décor = arène grise générique) : cette fonction chargeait
+## `MATCH_SCENE` (`scenes/levels/tdm_map.tscn`) comme `_shot_match_screens()`
+## ci-dessus -- mais le nœud "Map" de CETTE scène porte `CompMapBuilder.gd`
+## ("Géométrie placeholder", palette Port-Ferraille codée en dur), qui
+## IGNORE totalement `MatchConfig.map_id` et ne pose donc AUCUN nœud
+## "MapSetup"/groupe "nav_region". Forcer `MatchConfig.map_id = "wasteland"`
+## juste en-dessous n'avait donc aucun effet observable : la scène affichée
+## restait toujours la même arène CompMapBuilder générique (d'où le décor
+## sans art Wasteland), et `GameHUD._acquire_map_setup` (qui cherche un
+## `MapSetup` via le groupe "nav_region") ne trouvait jamais rien -- donc
+## `Minimap.set_layout()` n'était jamais appelée (d'où le carré noir).
+## `WASTELAND_MATCH_SCENE` (`scenes/levels/maps/wasteland.tscn`, voir sa
+## docstring) est la VRAIE scène Wasteland (même scène que le serveur réel
+## charge pour `map_id="wasteland"`, `ServerBoot._resolve_map_scene`) : son
+## "MapSetup" lit son propre `map_id="wasteland"` (fixé dans le .tscn,
+## indépendant de `MatchConfig.map_id`) pour construire la géométrie réelle
+## PUIS `WastelandArt.apply_all` (peau peinte, sautée seulement en headless
+## -- ce process tourne toujours FENÊTRÉ) et pose le nœud "nav_region" que la
+## minimap attend. `MatchConfig.map_id = "wasteland"` reste posé ci-dessous
+## par cohérence (lu par d'autres systèmes, ex. `BotSpots.load_for_map`),
+## mais n'est plus ce qui sélectionne la scène. "bots actifs" :
+## `allow_bot_fill` (même réglage que `_shot_match_screens`) ; "arme en
+## main" : le joueur hôte spawn avec son loadout par défaut équipé, comme
+## dans tout match réel, aucun crochet supplémentaire nécessaire ici.
 func _shot_wasteland_hud() -> void:
 	if _failed:
 		return
@@ -357,9 +401,9 @@ func _shot_wasteland_hud() -> void:
 	MatchConfig.bots_enabled = true
 	MatchConfig.team_size = 1
 
-	var packed := load(MATCH_SCENE) as PackedScene
+	var packed := load(WASTELAND_MATCH_SCENE) as PackedScene
 	if packed == null:
-		_fail("scène introuvable : %s" % MATCH_SCENE)
+		_fail("scène introuvable : %s" % WASTELAND_MATCH_SCENE)
 		return
 	var inst := packed.instantiate()
 	if inst.get("agent_select") != null:
@@ -371,7 +415,7 @@ func _shot_wasteland_hud() -> void:
 
 	var player := await _wait_for_local_player(8.0)
 	if player == null:
-		_fail("joueur hôte jamais spawné sur wasteland dans %s" % MATCH_SCENE)
+		_fail("joueur hôte jamais spawné sur wasteland dans %s" % WASTELAND_MATCH_SCENE)
 		return
 	var hp := player.get_node_or_null("Health") as Health
 	if hp != null:

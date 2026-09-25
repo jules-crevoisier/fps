@@ -27,6 +27,14 @@
 ## +stun_fire_spread_add pendant l'état "Stun", MovementConfig.
 ## stun_fire_spread_add). Testés dans tests/player/test_camera_shake_wiring.gd
 ## (fichier possédé par GF-29).
+## Étendu par GF-30 (retour joueur 2026-09-25 : « on ne peut pas tirer quand
+## on slide, c'est un peu dérangeant ») : `fire_delay_left` reste inchangée
+## (fonction pure, toujours capable de calculer un délai de glissade) mais
+## n'est plus appelée avec un vrai temps de glissade par Weapon.gd — voir sa
+## docstring ci-dessous et Weapon._owner_tick. La glissade ne bloque donc plus
+## le tir ; sa dispersion (`move_spread_deg` avec `sliding=true`) continue de
+## s'appliquer, inchangée. Testé dans tests/combat/test_slide_fire.gd (fichier
+## possédé par GF-30).
 class_name WeaponFeel
 extends RefCounted
 
@@ -125,7 +133,15 @@ static func ads_move_speed(base_speed: float, aiming: bool, ads_move_mult: float
 ## pas de pénalité). Le sprint est automatique (docs/MOVEMENT.md) et n'impose
 ## plus de délai (BUG-K01 : sprint_to_fire retiré, mécanique inopérante). Le
 ## délai le plus contraignant des deux domine (slide_to_fire/dive_to_fire) ;
-## jamais négatif.
+## jamais négatif. Fonction PURE et générique, inchangée par GF-30 (retour
+## joueur 2026-09-25 : « on ne peut pas tirer quand on slide, c'est un peu
+## dérangeant ») : c'est son SEUL appelant, `Weapon._owner_tick`, qui ne tient
+## plus d'horloge `_since_slide` réelle et lui passe désormais toujours `INF`
+## pour `since_slide` (le sentinel "pas de pénalité" déjà documenté
+## ci-dessus) — `slide_to_fire` (WeaponConfig) n'a donc plus aucun effet
+## observable en jeu, mais reste calculable ici pour qui appellerait cette
+## fonction avec un vrai temps de glissade (tests, outils). Le plongeon garde
+## son délai (`dive_to_fire`) sans changement.
 static func fire_delay_left(c: WeaponConfig, since_slide: float, since_dive: float) -> float:
 	var left := 0.0
 	left = maxf(left, c.slide_to_fire - since_slide)

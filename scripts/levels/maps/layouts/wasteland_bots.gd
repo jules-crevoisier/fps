@@ -191,8 +191,14 @@ static func _hp_zone_entries() -> Dictionary:
 		"P1": [
 			Vector3(-6.0, _GROUND_Y, -1.0),  # porte ouest du Wagon
 			Vector3(6.0, _GROUND_Y, -1.0),   # porte est du Wagon
-			Vector3(-3.0, _GROUND_Y, 0.5),   # porte sud-ouest du Wagon
-			Vector3(3.0, _GROUND_Y, 0.5),    # porte sud-est du Wagon
+			# BUG-34 : recalé depuis Vector3(-3.0, _GROUND_Y, 0.5) — la vague
+			# toits bas a ajouté un débord de toit au-dessus du seuil sud-ouest
+			# du Wagon, qui pousse la navmesh praticable vers le sud à cet
+			# endroit (elle ne suit plus z=0.5 mais recule jusqu'à z=-0.12),
+			# d'où l'écart de 0,62 m mesuré. Sonde réelle (NavigationServer3D.
+			# map_get_closest_point) : (-3.0, 0.5, 0.5) -> (-2.98, 0.5, -0.12).
+			Vector3(-2.98, _GROUND_Y, -0.12),  # porte sud-ouest du Wagon
+			Vector3(2.98, _GROUND_Y, -0.12),   # porte sud-est du Wagon (miroir)
 		],
 		"P2": [
 			Vector3(-11.5, _GROUND_Y, -19.0),  # porte sud-ouest du Magasin
@@ -338,8 +344,10 @@ static func _bk_angles() -> Array:
 		# --- Wagon (zone P1), 4 portes. ---------------------------------------
 		{"pos": Vector3(-6.0, _GROUND_Y, -1.0), "dir": Vector3(-1, 0, 0)},
 		{"pos": Vector3(6.0, _GROUND_Y, -1.0), "dir": Vector3(1, 0, 0)},
-		{"pos": Vector3(-3.0, _GROUND_Y, 0.5), "dir": Vector3(0, 0, 1)},
-		{"pos": Vector3(3.0, _GROUND_Y, 0.5), "dir": Vector3(0, 0, 1)},
+		# BUG-34 : recalé, même sonde que _hp_zone_entries()["P1"] ci-dessus
+		# (débord de toit bas au-dessus du seuil sud du Wagon).
+		{"pos": Vector3(-2.98, _GROUND_Y, -0.12), "dir": Vector3(0, 0, 1)},
+		{"pos": Vector3(2.98, _GROUND_Y, -0.12), "dir": Vector3(0, 0, 1)},
 		# --- Magasin ouest (zone P2), 3 portes. --------------------------------
 		{"pos": Vector3(-11.5, _GROUND_Y, -19.0), "dir": Vector3(0, 0, -1)},
 		{"pos": Vector3(-5.5, _GROUND_Y, -19.0), "dir": Vector3(0, 0, -1)},

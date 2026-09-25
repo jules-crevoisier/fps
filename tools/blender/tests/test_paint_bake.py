@@ -336,6 +336,98 @@ class TestResolveBaseTexture(unittest.TestCase):
 				pb.resolve_base_texture("wood_planks", painted_dir=d, wasteland_dir=d)
 
 
+class TestSlotBaseOverride(unittest.TestCase):
+	"""FP-12 : `_slot_base(mat, kind, base_texture_override=...)` doit
+	prendre le pas sur TOUTE resolution habituelle (image deja posee sur le
+	materiau, bibliotheque par kind) -- c'est le but explicite de l'appelant
+	de remplacer la base. `load_texture_image`/`image_stats` dependent de bpy
+	(chargement reel d'une image Blender) : montes ici en double pour tester
+	la LOGIQUE de priorite sans lancer Blender, comme le reste de cette
+	famille de tests."""
+
+	def test_override_bypasses_material_image_node_and_kind_lookup(self):
+		calls = {"material_image_node": 0, "resolve_base_texture": 0}
+		orig_material_image_node = pb._material_image_node
+		orig_resolve_base_texture = pb.resolve_base_texture
+		orig_load_texture_image = pb.load_texture_image
+		orig_image_stats = pb.image_stats
+		try:
+			def fake_material_image_node(mat):
+				calls["material_image_node"] += 1
+				return None
+			def fake_resolve_base_texture(kind, **kwargs):
+				calls["resolve_base_texture"] += 1
+				raise AssertionError("resolve_base_texture ne doit jamais etre appele quand un override est donne")
+			pb._material_image_node = fake_material_image_node
+			pb.resolve_base_texture = fake_resolve_base_texture
+			pb.load_texture_image = lambda path: f"__fake_image__{path}"
+			pb.image_stats = lambda image: {"luma": 0.42, "linear_rgb": (0.1, 0.1, 0.1)}
+
+			base = pb._slot_base(mat=None, kind="wood_planks", base_texture_override="C:/fake/repainted.png")
+
+			self.assertEqual(base["mode"], "existing")
+			self.assertEqual(base["image"], "__fake_image__C:/fake/repainted.png")
+			self.assertEqual(base["path"], "C:/fake/repainted.png")
+			self.assertIsNone(base["recolor"])
+			self.assertAlmostEqual(base["target_luma"], 0.42)
+			self.assertEqual(calls["material_image_node"], 0)
+			self.assertEqual(calls["resolve_base_texture"], 0)
+		finally:
+			pb._material_image_node = orig_material_image_node
+			pb.resolve_base_texture = orig_resolve_base_texture
+			pb.load_texture_image = orig_load_texture_image
+			pb.image_stats = orig_image_stats
+
+	def test_no_override_falls_through_to_existing_lookup(self):
+		# None (defaut) : le comportement d'origine n'a pas bouge --
+		# `_material_image_node` est bien consulte (`load_texture_image`/bpy
+		# reel a partir de la puisque `mat=None` -> pas d'image existante :
+		# couvert par le pipeline bpy reel ailleurs dans ce fichier, ici on
+		# verifie seulement que le chemin "override" n'est PAS pris).
+		orig_material_image_node = pb._material_image_node
+		calls = {"n": 0}
+		try:
+			def fake_material_image_node(mat):
+				calls["n"] += 1
+				return None
+			pb._material_image_node = fake_material_image_node
+			with self.assertRaises(AttributeError):
+				# `mat=None` force un chargement bpy reel (aucun override) --
+				# leve puisque ce test tourne sans Blender ; la seule chose
+				# verifiee ici est que `_material_image_node` a bien ete
+				# consulte avant d'y arriver (comportement inchange).
+				pb._slot_base(mat=None, kind="flat", base_texture_override=None)
+		finally:
+			pb._material_image_node = orig_material_image_node
+		self.assertEqual(calls["n"], 1)
+
+
+class TestParseArgsKeepUvAndBaseTexture(unittest.TestCase):
+	"""FP-12 : `--keep-uv`/`--base-texture` -- options pures (argparse, pas de
+	bpy) qui alimentent `paint_bake(keep_uv=..., base_texture_override=...)`."""
+
+	def _parse(self, extra_argv):
+		orig_argv = sys.argv
+		try:
+			sys.argv = ["paint_bake.py", "--", "--in", "x.glb", "--out", "y.glb", *extra_argv]
+			return pb.parse_args()
+		finally:
+			sys.argv = orig_argv
+
+	def test_defaults_are_off(self):
+		args = self._parse([])
+		self.assertFalse(args.keep_uv)
+		self.assertIsNone(args.base_texture)
+
+	def test_keep_uv_flag(self):
+		args = self._parse(["--keep-uv"])
+		self.assertTrue(args.keep_uv)
+
+	def test_base_texture_path(self):
+		args = self._parse(["--base-texture", "assets/textures/weapons/ravage_albedo.png"])
+		self.assertEqual(args.base_texture, "assets/textures/weapons/ravage_albedo.png")
+
+
 class TestLuma(unittest.TestCase):
 	def test_rec709_weights(self):
 		self.assertAlmostEqual(pb.srgb_luma((1.0, 1.0, 1.0)), 1.0)

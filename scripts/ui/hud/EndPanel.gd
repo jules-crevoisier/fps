@@ -145,7 +145,7 @@ func _ready() -> void:
 	# superposés (rouge minuscule + jaune géant) sont un doublon visuel que
 	# §6 ne demande pas, jamais un second bandeau derrière le nouveau. Un
 	# `Control` invisible (`visible = false`) sort aussi son créneau du
-	# `VBoxContainer` `wrap` (les Container ignorent les enfants invisibles),
+	# `VBoxContainer` `page` (les Container ignorent les enfants invisibles),
 	# donc aucun espace vide résiduel.
 	_header.visible = false
 	page.add_child(_header)
@@ -303,6 +303,11 @@ func _ready() -> void:
 	list_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	list_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	list_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	# Décision lead 2026-09-25 (UI_DIRECTION_BL3 §6 « Fin » : titre, score, MVP,
+	# REJOUER, MENU — pas de liste) : le roster n'est plus affiché ici, le tableau
+	# des scores (Tab) le montre. `_list` reste peuplé : contrat de données lu par
+	# tests/ui/test_team_relative.gd.
+	list_scroll.visible = false
 	box.add_child(list_scroll)
 
 	_list = VBoxContainer.new()

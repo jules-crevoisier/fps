@@ -69,6 +69,17 @@
 ## (`Weapon.ARENA_BUY_WINDOW`/`arena_buy_allowed`, hors de ce lot de fichiers :
 ## ce panneau ne lit que `GameMode.ammo_rule`, jamais l'horodatage serveur du
 ## spawn).
+##
+## UX-38 (2026-09-25, retour lead §4 « bandeau pinceau rouge à supprimer,
+## titre en encre 66 comme OPTIONS ») : `BrushHeader.gd` (bandeau rouge
+## « pinceau », hors de la liste de fichiers de cette tâche — LU, jamais
+## modifié) est remplacé ici par un simple `Label` v4 (`_title_label`, même
+## patron que OptionsMenu.gd::_title_label — `Comic.title_label_v4`,
+## capitales italiques papier, 66 px) — plus aucun fond pinceau rouge sur cet
+## écran. `_replay_title()` (fondu d'opacité seul, comme MainMenu._fade_in —
+## jamais une translation d'offsets : `_title_label` vit dans `wrap`, un
+## `VBoxContainer`, voir sa docstring) remplace `BrushHeader.replay()`
+## (balayage de gauche à droite, supprimé avec le bandeau lui-même).
 extends CanvasLayer
 
 ## Pile partagée des overlays modaux (Pause/Achat/fin de match, BUG-U01) :
@@ -115,7 +126,7 @@ const CARD_SIZE := Vector2(240.0, 150.0)
 const STACK_ASPECT_THRESHOLD := 0.62
 
 var _panel: Control
-var _header: BrushHeader
+var _title_label: Label
 var _open: bool = false
 var _first_button: Control
 ## Array[Dictionary] {entries: Array[Dictionary]{button, weapon, digit,
@@ -166,7 +177,7 @@ func _ready() -> void:
 	layer = 9
 	_build()
 	_panel.visible = false
-	_header.visible = false
+	_title_label.visible = false
 	var vp := get_viewport()
 	if vp:
 		vp.size_changed.connect(_apply_responsive_layout)
@@ -181,8 +192,8 @@ func _build() -> void:
 	_bg = bg
 
 	# Overlay large (§8.6 : onglets + grille + détail côte à côte), centré :
-	# bandeau pinceau au-dessus du corps (jamais imbriqué dedans, "never
-	# nested" — docs/STYLE_BIBLE.md §8.1 règle 3).
+	# titre v4 au-dessus du corps (jamais imbriqué dedans, "never nested" —
+	# docs/STYLE_BIBLE.md §8.1 règle 3).
 	var wrap := VBoxContainer.new()
 	wrap.add_theme_constant_override("separation", Comic.SP_2)
 	wrap.anchor_left = 0.06; wrap.anchor_right = 0.94
@@ -191,9 +202,10 @@ func _build() -> void:
 	add_child(wrap)
 	_panel = wrap
 
-	_header = BrushHeader.new()
-	_header.title = "Achat — Training (gratuit)"
-	wrap.add_child(_header)
+	# UX-38 : titre v4 SANS bandeau pinceau (remplace `BrushHeader`, rouge) —
+	# capitales italiques papier, 66 px, zéro fond (voir la docstring de tête).
+	_title_label = Comic.title_label_v4("Achat — Training (gratuit)", Comic.SIZE_66, Comic.paper_color())
+	wrap.add_child(_title_label)
 
 	var body_row := BoxContainer.new()
 	body_row.vertical = false
@@ -599,8 +611,8 @@ func _select_category(i: int) -> void:
 func debug_force_open() -> void:
 	_open = true
 	_panel.visible = true
-	_header.visible = true
-	_header.replay()
+	_title_label.visible = true
+	_replay_title()
 	_bg.visible = true
 	add_to_group(MODAL_GROUP)
 	_refresh_labels()
@@ -612,14 +624,27 @@ func _try_open() -> void:
 	_open = true
 	_pending_category = -1
 	_panel.visible = true
-	_header.visible = true
-	_header.replay()
+	_title_label.visible = true
+	_replay_title()
 	_bg.visible = true
 	add_to_group(MODAL_GROUP)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_refresh_labels()
 	if _first_button:
 		_first_button.grab_focus()
+
+## Réapparition du titre (UX-38, remplace `BrushHeader.replay()`, un balayage
+## de gauche à droite maintenant supprimé avec le bandeau lui-même) — fondu
+## d'opacité seul, comme `MainMenu._fade_in` : `_title_label` vit dans `wrap`
+## (un `VBoxContainer`, voir sa docstring de construction), qui réattribue la
+## position/taille de ses enfants à chaque re-tri de mise en page (déclenché
+## par `visible = true` juste avant) — un `Tween` qui animerait `offset_top`/
+## `offset_bottom` partirait donc de valeurs déjà PÉRIMÉES. `modulate:a` seul
+## ne touche ni position ni taille : sûr sur un enfant de `Container`.
+func _replay_title() -> void:
+	_title_label.modulate.a = 0.0
+	var tw := _title_label.create_tween()
+	tw.tween_property(_title_label, "modulate:a", 1.0, Comic.DUR_REDUCED_FADE if Comic.reduced_motion() else Comic.DUR_REVEAL)
 
 func _flash_message(text: String, color: Color = Comic.TEXT) -> void:
 	_locked_label.text = text
@@ -636,7 +661,7 @@ func _close() -> void:
 	_open = false
 	_pending_category = -1
 	_panel.visible = false
-	_header.visible = false
+	_title_label.visible = false
 	_bg.visible = false
 	remove_from_group(MODAL_GROUP)
 	if get_tree().get_nodes_in_group(MODAL_GROUP).is_empty():
@@ -748,7 +773,12 @@ func _owned_ids() -> Array:
 func _refresh_labels() -> void:
 	var economy := _has_economy()
 	var credits: int = int(_mode.my_credits) if economy else -1
-	_header.title = ("Achat — %s" % HudFormat.format_credits(credits)) if economy else "Achat — Training (gratuit)"
+	# `.to_upper()` : `Comic.title_label_v4()` uppercase à la construction (voir
+	# `_build()`), mais un `Label` nu ne le refait pas de lui-même à chaque
+	# `.text =` — répété ici pour ne jamais retomber en casse mixte après un
+	# rafraîchissement (même comportement que `BrushHeader.title`, dont le
+	# setter uppercase à CHAQUE affectation, jamais seulement à la construction).
+	_title_label.text = (("Achat — %s" % HudFormat.format_credits(credits)) if economy else "Achat — Training (gratuit)").to_upper()
 	var owned := _owned_ids()
 	var now := Time.get_ticks_msec() / 1000.0
 	for cat_index in _categories.size():

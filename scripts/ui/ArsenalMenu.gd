@@ -20,6 +20,13 @@
 ## que le gris `PANEL_HI` fixe de la v3) ; « Gratuit » (Pistolet, seule arme à
 ## coût nul) n'apparaît plus que sur sa carte, jamais répété dans le panneau
 ## de détail — voir la même note dans BuyMenu.gd.
+##
+## UX-38 (2026-09-25, retour lead §4 « bandeau pinceau rouge à supprimer,
+## titre en encre 66 comme OPTIONS ») : `BrushHeader.gd` (bandeau rouge
+## « pinceau », hors de la liste de fichiers de cette tâche — LU, jamais
+## modifié) est remplacé ici par un simple `Label` v4 (même patron que
+## OptionsMenu.gd::_title_label, `Comic.title_label_v4`, capitales italiques
+## papier, 66 px) — plus aucun fond pinceau rouge sur cet écran.
 extends Control
 
 signal closed
@@ -71,9 +78,10 @@ func _build() -> void:
 	root.add_theme_constant_override("separation", Comic.SP_2)
 	margin.add_child(root)
 
-	var header := BrushHeader.new()
-	header.title = "Arsenal"
-	root.add_child(header)
+	# UX-38 : titre v4 SANS bandeau pinceau (remplace `BrushHeader`, rouge) —
+	# capitales italiques papier, 66 px, zéro fond (voir la docstring de tête).
+	var title_label := Comic.title_label_v4("Arsenal", Comic.SIZE_66, Comic.paper_color())
+	root.add_child(title_label)
 
 	var back_row := HBoxContainer.new()
 	back_row.add_theme_constant_override("separation", Comic.SP_2)

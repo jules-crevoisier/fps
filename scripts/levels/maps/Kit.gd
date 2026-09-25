@@ -155,9 +155,11 @@ class GeoBatcher:
 ## implicites que Godot posait déjà sur un `StaticBody3D.new()` jamais
 ## touché ; tout appelant existant (aucun ne passe ces deux arguments) garde
 ## donc une collision bit-à-bit inchangée. Seul `roof_clip_volumes` (LD-44,
-## volume `player_clip`) les redéfinit (`layer=mask=PhysicsLayers.WORLD` :
-## voir son commentaire, et celui de `ROOF_PITCH_DEG` ci-dessus pour la
-## raison — `layer=0` casserait la collision avec le joueur).
+## volume `player_clip`) les redéfinit (`layer=mask=PhysicsLayers.PLAYER_CLIP`
+## — calque DÉDIÉ, jamais WORLD : voir son commentaire, et celui de
+## `ROOF_PITCH_DEG` ci-dessus pour la raison — un calque WORLD serait inclus
+## dans `PhysicsLayers.SHOT_MASK` et bloquerait les tirs, ce que la décision
+## lead 2026-09-25 exclut explicitement).
 static func _collision_box(parent: Node3D, xform: Transform3D, size: Vector3, nm: String, layer: int = 1, mask: int = 1) -> StaticBody3D:
 	var body := StaticBody3D.new()
 	body.name = nm

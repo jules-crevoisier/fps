@@ -500,8 +500,32 @@ func _apply_remote_interpolation(delta: float) -> void:
 ## AVANT ce tick — voir process_physics_priority sur PlayerInput/BotBrain).
 ## Même formule que `_look()` (mouse look humain), sans multiplicateur de
 ## sensibilité : BotBrain fournit déjà un delta en radians borné par tick.
+##
+## BUG-32 (régression MV-01/BOT-03, cause racine du bot non détecté au sol
+## dans tests/player/test_stair_step.gd) :
+## `input.look_delta` DOIT être consommé UNE SEULE FOIS puis remis à zéro ICI,
+## exactement comme `event.relative` d'un mouvement souris humain (voir
+## `_look()`) n'est jamais rejoué au tick suivant. En jeu réel ça ne changeait
+## rien (BotBrain, priorité -150, réécrit `look_delta` À CHAQUE tick physique
+## AVANT que PlayerController (priorité par défaut) ne le lise ici — la valeur
+## d'avant est donc toujours fraîche). Mais un test qui avance la physique à la
+## main (`player._physics_process(delta)` en boucle, sans repasser par l'arbre
+## de scène — tests/player/test_stair_step.gd::_grounded_sprinting_bot) ne fait
+## plus tourner BotBrain du tout après la mise en place initiale : sans ce
+## reset, le DERNIER `look_delta` non nul posé par BotBrain (ex. le balayage
+## hors-combat de BotLook, BOT-03) restait appliqué IDENTIQUE à CHAQUE tick
+## suivant, faisant tourner le bot en continu (~0.83°/tick mesuré) jusqu'à le
+## faire dériver hors de la dalle de test (4 m de large) et tomber dans le vide
+## à côté — la chute de ~6 m et le "is_on_floor() faux" observés dans BUG-32
+## n'avaient donc rien à voir avec le step-up/step-down (StairStep) ni avec le
+## stun de chute (GF-29) : le bot ratait purement et simplement la marche/le
+## rebord parce qu'il ne marchait plus tout droit. Ce correctif rend aussi le
+## comportement RÉEL plus robuste : si BotBrain venait un jour à sauter un tick
+## (dé-priorisation, pause), le bot s'arrête de tourner au lieu de partir en
+## vrille avec une valeur périmée.
 func _apply_bot_look() -> void:
 	var d: Vector2 = input.look_delta
+	input.look_delta = Vector2.ZERO
 	if d == Vector2.ZERO:
 		return
 	rotate_y(-d.x)

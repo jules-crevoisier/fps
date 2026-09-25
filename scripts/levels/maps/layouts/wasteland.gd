@@ -80,6 +80,33 @@ static func _box(n: String, x0: float, x1: float, z0: float, z1: float, y0: floa
 		"color_key": _mat_for(role),
 	}
 
+## Variante de `_box` pour une pièce ENTIÈREMENT remplacée par un module
+## d'art (§1 R9 "mise en œuvre" : « Pièce entièrement remplacée : visual:
+## false, collision gardée » ; `Kit.gd` l.1016-1029, ART-91, additif : la
+## collision posée par `Kit.build_piece` reste identique, pos/size/color_key
+## compris — seul son PROPRE rendu bascule vers un `GeoBatcher` jetable, donc
+## la peau peinte du module d'art (`wasteland_art/ArtCovers.gd`, ART-96)
+## devient la SEULE géométrie visible, jamais superposée au brut Kit).
+## Réservé aux volumes du centre où le module d'art couvre déjà CHAQUE face
+## exposée à ±10 cm près (R1) — vérifié pièce par pièce par une sonde dédiée
+## (AABB composée de chaque instance d'`ArtCovers.gd` contre la boîte réelle,
+## jamais estimé) avant d'y toucher, exactement le correctif demandé en revue
+## (2026-09-25, capture 07 : « on voit la BOITE BEIGE du greybox avec des
+## planches collées dessus » depuis la rue, sur Poste/Diligence) : Poste,
+## Diligence, ChateauCuve, Pompe, MuretGouletO/E, les 4 pieds du château.
+## Les « couverts » plus petits (CiterneFUEL, CharretteW, TonneauxW, etc.,
+## §2 du plan) restent SANS ce bascule : `ArtCovers.gd` les habille par la
+## technique `NUDGE_SCALE` déjà en place (le module déborde la boîte Kit pour
+## gagner le test de profondeur) — leur boîte Kit sert alors sciemment de
+## fond neutre sous les ≥ 85 % de remplissage de R7, jamais une coque dédiée
+## sur les 6 faces ; y toucher sans la même vérification risquerait d'ouvrir
+## un vrai trou (ex. une cuve cylindrique dans une boîte carrée) plutôt que
+## de corriger un défaut.
+static func _box_novisual(n: String, x0: float, x1: float, z0: float, z1: float, y0: float, y1: float, role: String = "cover") -> Dictionary:
+	var d := _box(n, x0, x1, z0, z1, y0, y1, role)
+	d["visual"] = false
+	return d
+
 static func _floor_piece(n: String, x0: float, x1: float, z0: float, z1: float, top: float) -> Dictionary:
 	# Épaisseur 2 m, dessus affleurant à `top` — même convention que l'ancien
 	# `Ground` (wasteland_v3.gd) : un sol séparé par plateau/canyon (jamais un
@@ -212,27 +239,56 @@ static func _cliffs() -> Array:
 # ======================================================================
 #  Centre (§9 "Terrain et centre") — jamais mirroré, déjà symétrique.
 # ======================================================================
+## LD-44 (correctif, ne concerne QUE le Wagon) : le Wagon est le seul
+## bâtiment du centre dont le pan de toit `player_clip` sud passe à moins de
+## 12 m d'un AUTRE volume solide (`ChateauCuve`, y 8-12 m, z 3.7-7.3 m, à
+## seulement 3.2 m au sud de l'avant-toit du Wagon, z=0.5 -- voir `_center()`
+## ci-dessous). À `Kit.ROOF_PITCH_DEG` (27°), la normale du pan sud (`up` de
+## `Kit._south_mid_and_up`/`roof_clip_boxes`, inclinée de PILE l'angle du
+## toit par construction) dérive suffisamment vers le sud sur ses 12 m de
+## hauteur (`Kit.ROOF_CLIP_HEIGHT`) pour croiser la cuve du château AVANT
+## d'atteindre sa propre limite -- vérifié en isolant le cas : un rayon
+## SHOT_MASK s'arrêtait sur `ChateauCuve` (calque WORLD, un mur de collision
+## bien réel et volontaire) à (0, 12, 3.937), PAS sur un trou dans
+## `player_clip` -- `test_a_shot_ray_passes_through_the_roof_clip_volume`
+## échouait donc pour "Wagon" seul, alors que `player_clip` lui-même était
+## déjà correct pour les 10 autres bâtiments. Repositionner le Wagon ou
+## `ChateauCuve` casserait soit les coordonnées verrouillées de `P1 Wagon`
+## (docs/research/11_wasteland_v4_layout.md §9, testé ligne « P1 Wagon »
+## ci-dessous) soit l'habillage d'ART-96/99 posé PILE sur la boîte
+## `ChateauCuve` (wasteland_art/ArtCovers.gd, hors de mon périmètre) : seule
+## la pente du Wagon change, jamais sa position/taille ni celles du château.
+## `_WAGON_ROOF_PITCH_DEG` (24°) reste dans la fourchette basse "25-30°" de
+## la décision utilisateur (à 1° près, un écart imperceptible sur un pan de
+## 1.5 m de demi-profondeur) et ramène ce point de croisement sous z=3.7 (le
+## bord de `ChateauCuve`) avec ~0.27 m de marge -- calcul et détail complet
+## dans le rendu de la tâche LD-44. Tous les autres bâtiments du centre et
+## des ailes gardent `Kit.ROOF_PITCH_DEG` (27°) via `_bld()`, inchangé.
+const _WAGON_ROOF_PITCH_DEG := 24.0
+
 static func _center() -> Array:
+	var wagon := _bld("Wagon", -6.0, 6.0, -2.5, 0.5, 3.4, 1,
+		[_door("W"), _door("E"), _door("S", -3.0), _door("S", 3.0)], ["N"], "N", "PP5")
+	wagon["roof_pitch_deg"] = _WAGON_ROOF_PITCH_DEG
 	var out: Array = [
 		_floor_piece("G_PlateauC", -2.0, 2.0, -25.0, 8.0, 0.0),
 		_floor_piece("G_Canyon", -44.0, 44.0, 12.0, 20.0, -2.0),
-		_box("Poste", -4.0, 4.0, -25.0, -16.0, 0.0, 6.4, "solid"),
-		_box("Diligence", -3.0, 3.0, -16.0, -11.0, 0.0, 3.4, "solid"),
-		_bld("Wagon", -6.0, 6.0, -2.5, 0.5, 3.4, 1,
-			[_door("W"), _door("E"), _door("S", -3.0), _door("S", 3.0)], ["N"], "N", "PP5"),
+		_box_novisual("Poste", -4.0, 4.0, -25.0, -16.0, 0.0, 6.4, "solid"),
+		_box_novisual("Diligence", -3.0, 3.0, -16.0, -11.0, 0.0, 3.4, "solid"),
+		wagon,
 		_ramp_piece("Descente", Vector3(0, 0, 8), Vector3(0, -2, 13), 4.0),
-		_box("Pompe", -1.5, 1.5, 5.0, 7.5, 0.0, 2.4, "solid"),
-		_box("MuretGouletO", -2.5, -2.0, 7.5, 12.0, 0.0, 2.0, "wall"),
-		_box("MuretGouletE", 2.0, 2.5, 7.5, 12.0, 0.0, 2.0, "wall"),
-		_box("PiedChateauNO", -2.0, -1.6, 3.8, 4.2, 0.0, 8.0, "leg"),
-		_box("PiedChateauNE", 1.6, 2.0, 3.8, 4.2, 0.0, 8.0, "leg"),
-		_box("PiedChateauSO", -2.0, -1.6, 6.8, 7.2, 0.0, 8.0, "leg"),
-		_box("PiedChateauSE", 1.6, 2.0, 6.8, 7.2, 0.0, 8.0, "leg"),
+		_box_novisual("Pompe", -1.5, 1.5, 5.0, 7.5, 0.0, 2.4, "solid"),
+		_box_novisual("MuretGouletO", -2.5, -2.0, 7.5, 12.0, 0.0, 2.0, "wall"),
+		_box_novisual("MuretGouletE", 2.0, 2.5, 7.5, 12.0, 0.0, 2.0, "wall"),
+		_box_novisual("PiedChateauNO", -2.0, -1.6, 3.8, 4.2, 0.0, 8.0, "leg"),
+		_box_novisual("PiedChateauNE", 1.6, 2.0, 3.8, 4.2, 0.0, 8.0, "leg"),
+		_box_novisual("PiedChateauSO", -2.0, -1.6, 6.8, 7.2, 0.0, 8.0, "leg"),
+		_box_novisual("PiedChateauSE", 1.6, 2.0, 6.8, 7.2, 0.0, 8.0, "leg"),
 		# Cuve du château d'eau (§8 "repère visible de partout") — "sans
 		# échelle" (§9) : aucune rampe n'y mène, Recast ne la relie donc
 		# jamais au sol praticable (même garantie que le pitched roof, par
 		# construction plutôt que par pente).
-		_box("ChateauCuve", -1.8, 1.8, 3.7, 7.3, 8.0, 12.0, "accent"),
+		_box_novisual("ChateauCuve", -1.8, 1.8, 3.7, 7.3, 8.0, 12.0, "accent"),
 	]
 	return out
 

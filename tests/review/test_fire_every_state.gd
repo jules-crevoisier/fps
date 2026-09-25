@@ -1,6 +1,6 @@
 ## test_fire_every_state.gd
 ## Test de régression CI (OPS-02B) : le tir doit rester POSSIBLE dans tous les
-## états de mouvement SAUF Slide/Dive/Roll/Stun (restriction VOULUE — voir
+## états de mouvement SAUF Dive/Roll (restriction VOULUE — voir
 ## Weapon._can_act() et WeaponFeel.fire_delay_left()/_since_slide/_since_dive
 ## dans Weapon._owner_tick). Bug d'origine (retour joueur) : « on ne peut pas
 ## tirer si on ne saute pas » — l'absence d'un filet de test couvrant "tirer
@@ -26,10 +26,10 @@
 ## | Sprint  | OK          | sprint auto (docs/MOVEMENT.md), aucun délai (BUG-K01)   |
 ## | Crouch  | OK          | aucune restriction                                      |
 ## | Air     | OK          | saut : aucune restriction                               |
-## | Slide   | BLOQUÉ      | _since_slide reste à 0 tant que sm == "Slide"           |
+## | Slide   | OK          | GF-30 (playtest 2026-09-25) : tir en glissade, dispersion |
 ## | Dive    | BLOQUÉ      | Weapon._can_act() exclut "Dive" explicitement           |
 ## | Roll    | BLOQUÉ      | Weapon._can_act() exclut "Roll" (roulade = pas d'action)|
-## | Stun    | BLOQUÉ      | Weapon._can_act() exclut "Stun"                         |
+## | Stun    | OK          | GF-29/MV-03 : stun adouci, tir avec +3° de dispersion   |
 extends GdUnitTestSuite
 
 const PLAYER_SCENE := preload("res://scenes/player/player.tscn")
@@ -219,7 +219,7 @@ func test_fire_ok_in_air() -> void:
 #  États BLOQUÉS (restriction voulue)
 # ==========================================================================
 
-func test_fire_blocked_in_slide() -> void:
+func test_fire_ok_in_slide() -> void:
 	var o := _offset()
 	_floor(o)
 	var player := await _grounded_bot(o)
@@ -234,7 +234,7 @@ func test_fire_blocked_in_slide() -> void:
 	await _wait_physics(1)
 	player.input.crouch_pressed = false
 	await _wait_physics(2)
-	await _assert_fire_in_state(player, true, "Slide")
+	await _assert_fire_in_state(player, false, "Slide")
 
 
 func test_fire_blocked_in_dive() -> void:
@@ -266,7 +266,7 @@ func test_fire_blocked_in_roll() -> void:
 
 ## Étourdissement forcé directement (même raison que Roll ci-dessus) — durée
 ## large (2 s) pour ne jamais expirer pendant la fenêtre de tir du check.
-func test_fire_blocked_in_stun() -> void:
+func test_fire_ok_in_stun() -> void:
 	var o := _offset()
 	_floor(o)
 	var player := await _grounded_bot(o)
@@ -274,4 +274,4 @@ func test_fire_blocked_in_stun() -> void:
 	assert_str(player.state_machine.current_name).append_failure_message(
 		"préalable du test : l'étourdissement doit bien être actif"
 	).is_equal("Stun")
-	await _assert_fire_in_state(player, true, "Stun")
+	await _assert_fire_in_state(player, false, "Stun")

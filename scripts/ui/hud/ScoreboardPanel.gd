@@ -33,11 +33,51 @@
 ## peuvent pas être renseignées honnêtement ici (voir le rendu de tâche,
 ## `blocked_on`). Portrait : glyphe de camp agrandi, jamais une image inventée
 ## (voir `_player_row`, même repli que `DeathPanel`).
+##
+## UX-40 (REVUE LEAD, capture reports/checkpoints/2026-09-25_UX-34/
+## 03_scoreboard_1080p.jpg : « les en-têtes CAMP NOM É M flottent au-dessus de
+## la plaque sans alignement, et chaque ligne répète É 3 M 5 ») — VRAIES
+## colonnes désormais : `_columns_header` a rejoint `_body` À L'INTÉRIEUR de
+## `_panel` (voir `_ready()`), et son texte propre reste VIDE — chaque colonne
+## (CAMP/NOM/É/M/A) est un `Label` ENFANT posé en POSITION FIXE (`_COL_*_X`,
+## `_add_column_child`), jamais un padding par espaces dans une police
+## proportionnelle (l'ancien bug : le nom n'a pas une largeur de caractère
+## constante, donc `%-18s` ne produit PAS la même largeur en pixels d'une
+## ligne à l'autre). `_player_row` suit le même principe : son texte propre ne
+## porte plus que « camp + nom », les valeurs É/M/(A) sont des labels enfants
+## (`_add_row_stat`) posés EXACTEMENT aux mêmes `_COL_*_X` que l'en-tête —
+## c'est cette identité de constantes qui aligne les chiffres pixel pour
+## pixel sous leur en-tête (critère UX-40, vérifié par
+## tests/ui/test_end_screens_v4.gd) et qui supprime la lettre répétée par
+## ligne. Ce montage (labels enfants positionnés en `position`/`size` absolus,
+## jamais une ancre ni un Container englobant) reste sûr même lu
+## IMMÉDIATEMENT après `refresh()` sans attendre une image : un `Control` neuf
+## hérite `position == Vector2.ZERO` avant tout tri d'un Container parent, et
+## ni `_columns_header` ni une ligne ne sont eux-mêmes des Container — leurs
+## enfants ne sont donc JAMAIS retriés après coup.
 class_name ScoreboardPanel
 extends Control
 
 ## Hauteur de ligne v4 (§6 « lignes de 54 px zébrées »).
 const ROW_HEIGHT_PX := 54.0
+
+## Hauteur de la ligne d'en-têtes de colonnes (UX-40) — meta 21 + un
+## interligne (`Comic.SP_2`) : volontairement plus basse que `ROW_HEIGHT_PX`,
+## ce n'est qu'un en-tête, jamais une ligne joueur.
+const _COLUMNS_HEADER_HEIGHT_PX := float(Comic.SIZE_21) + float(Comic.SP_2)
+
+## Colonnes v4 (UX-40) — offsets (px, référence 1080p) PARTAGÉS mot pour mot
+## entre `_update_columns_header()` (en-têtes) et `_player_row()`/
+## `_add_row_stat()` (chiffres) : voir la note de tête de fichier. CAMP/NOM :
+## position + alignement GAUCHE, largeur variable (jamais vérifiée pixel pour
+## pixel). É/M/A : position + largeur FIXE `_COL_STAT_W`, alignement CENTRE
+## (§4.1 « chiffres tabulaires centrés sous leur en-tête »).
+const _COL_CAMP_X := 24.0
+const _COL_NAME_X := 96.0
+const _COL_KILLS_X := 470.0
+const _COL_DEATHS_X := 570.0
+const _COL_ASSISTS_X := 670.0
+const _COL_STAT_W := 70.0
 
 ## Libellés de mode courts (UX-34, REVUE LEAD point 4 « en-tête = ligne meta
 ## 21 "TDM · WASTELAND · PREMIER À 40" ») -- `MatchConfig.mode_id`
@@ -60,10 +100,19 @@ var _score_ally_label: Label
 var _score_enemy_label: Label
 ## Ligne d'en-têtes de colonnes meta 21 (point 4 « colonnes alignées ... avec
 ## une ligne d'en-têtes de colonnes meta 21 ») -- HORS de `_list` (contrat
-## verrouillé de `_list`, voir la note de tête de fichier), reconstruite à
-## chaque `refresh()` par `_update_columns_header()` (la colonne A n'apparaît
-## que si `player_info` porte vraiment la clé `assists`).
+## verrouillé de `_list`, voir la note de tête de fichier) mais DANS `_panel`
+## depuis UX-40 (voir `_ready()`) ; son texte propre reste vide, ses colonnes
+## sont des labels enfants (voir la note de tête de fichier). Reconstruite
+## par `_update_columns_header()` SEULEMENT quand `show_assists` change (pas à
+## chaque image comme le reste de `refresh()` -- sa FORME, avec ou sans
+## colonne A, ne dépend que de ça).
 var _columns_header: Label
+## Cache de `_update_columns_header()` (UX-40) -- évite de reconstruire les
+## labels enfants de `_columns_header` à CHAQUE image tant que Tab est
+## maintenu (`refresh()` l'appelle inconditionnellement, contrairement à
+## `_list` qui est déjà protégé par `_last_snapshot` plus bas).
+var _last_show_assists := false
+var _columns_header_built := false
 ## Empreinte texte du dernier `player_info` affiché (id/nom/équipe/kills/morts
 ## triés) + équipe locale — sert uniquement à éviter de reconstruire `_list`
 ## quand rien n'a changé (`refresh()` est appelé chaque image tant que Tab est
@@ -96,8 +145,9 @@ func _ready() -> void:
 	# par la direction) ») -- `BrushHeader` (bandeau `Comic.BRUSH` rouge,
 	# STYLE_BIBLE v3) remplacé par le langage v4 : une ligne meta 21 mode ·
 	# carte · objectif, un score 118 réel (allié/ennemi), une ligne d'en-têtes
-	# de colonnes -- voir `_update_meta_header()`/`_update_score_row()`
-	# ci-dessous, appelées à chaque `refresh()`.
+	# de colonnes DANS la plaque (UX-40, voir plus bas) -- voir
+	# `_update_meta_header()`/`_update_score_row()` ci-dessous, appelées à
+	# chaque `refresh()`.
 	_meta_header = Comic.meta_label_v4("", Comic.SIZE_21, Comic.paper_dim_color())
 	_meta_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_meta_header.custom_minimum_size = Vector2(760, 0)
@@ -113,14 +163,14 @@ func _ready() -> void:
 	_score_enemy_label = Comic.number_label_v4("", Comic.SIZE_118, Comic.enemy_color())
 	_score_row.add_child(_score_enemy_label)
 
-	# En-tête de colonnes (point 4) -- « n'afficher que les stats que
-	# player_info fournit déjà » (précision lead) : CAMP/NOM/É/M toujours,
-	# +A seulement si `assists` existe (voir `_update_columns_header`). Pas de
-	# colonne SCORE/PING inventée -- `player_info` (GameWorld.gd, hors de ma
-	# liste de fichiers) ne les porte pas, voir la note de tête de fichier.
+	# UX-40 (REVUE LEAD 03_scoreboard_1080p.jpg « les en-têtes CAMP NOM É M
+	# flottent au-dessus de la plaque ») -- `_columns_header` n'est PLUS ajouté
+	# à `wrap` (au-dessus de la plaque, l'ancien bug) : construit ici (texte
+	# vide, voir la note de tête de fichier), il rejoint `_body` plus bas, À
+	# L'INTÉRIEUR de `_panel`, juste au-dessus de `_list`.
 	_columns_header = Comic.meta_label_v4("", Comic.SIZE_21, Comic.paper_dim_color())
-	_columns_header.custom_minimum_size = Vector2(760, 0)
-	wrap.add_child(_columns_header)
+	_columns_header.custom_minimum_size = Vector2(760, _COLUMNS_HEADER_HEIGHT_PX)
+	_columns_header.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	# v4 §3 « les contenants ont des coins coupés » -- plaque + ombre dure
 	# portée en enfant, remplace le panneau à coins arrondis v3 (`ComicPanel`,
@@ -153,10 +203,21 @@ func _ready() -> void:
 	Comic.anchor(_panel, Control.PRESET_FULL_RECT)
 	host.add_child(_panel)
 
+	# UX-40 -- `body` (VBoxContainer, séparation 0) est le SEUL enfant direct
+	# de `_panel` : `_columns_header` (en-têtes de colonnes) puis `_list`
+	# (lignes joueur), empilés DANS la plaque -- jamais `_list` posé
+	# directement dans `_panel` comme avant UX-40 (l'en-tête de colonnes
+	# restait alors hors de la plaque, voir le bug revue lead ci-dessus).
+	var body := VBoxContainer.new()
+	body.add_theme_constant_override("separation", 0)
+	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_panel.add_child(body)
+	body.add_child(_columns_header)
+
 	_list = VBoxContainer.new()
 	_list.custom_minimum_size = Vector2(760, 0)
 	_list.add_theme_constant_override("separation", 0)
-	_panel.add_child(_list)
+	body.add_child(_list)
 
 	# `host` (Control nu, voir plus haut) ne remonte JAMAIS sa taille mini
 	# tout seul (ce n'est pas un Container) -- `_panel` (PanelContainer) LUI
@@ -275,21 +336,65 @@ func _any_assists(info: Dictionary) -> bool:
 			return true
 	return false
 
-## En-tête de colonnes meta 21 (point 4) -- CAMP/NOM/É/M toujours, +A
-## seulement si `show_assists` (voir `_any_assists`). Pas de colonne
-## SCORE/PING : `player_info` ne les porte pas (voir la note de tête de
-## fichier).
+## En-tête de colonnes DANS la plaque (UX-40, point 4) -- CAMP/NOM/É/M
+## toujours, +A seulement si `show_assists` (voir `_any_assists`). Pas de
+## colonne SCORE/PING : `player_info` ne les porte pas (voir la note de tête
+## de fichier). Reconstruit SEULEMENT quand `show_assists` change (jamais à
+## chaque image comme le reste de `refresh()` -- voir `_columns_header_built`)
+## : chaque colonne est un `Label` enfant posé en position FIXE (`_COL_*_X`),
+## jamais un padding par espaces dans une chaîne unique (`_columns_header.
+## text` reste vide) -- c'est ce qui permet à `_player_row()` d'aligner ses
+## chiffres pixel pour pixel sur ces mêmes en-têtes.
 func _update_columns_header(show_assists: bool) -> void:
-	var text := "CAMP   NOM   É   M"
+	if _columns_header_built and show_assists == _last_show_assists:
+		return
+	_columns_header_built = true
+	_last_show_assists = show_assists
+	# `remove_child` IMMÉDIAT avant `queue_free()` (jamais `queue_free()` seul,
+	# qui ne détache qu'à la prochaine image de veille) : un appelant qui
+	# relit `_columns_header.get_children()` dans la MÊME image (ex. deux
+	# `refresh()` de suite, comme les tests) verrait sinon les anciens ET les
+	# nouveaux labels cohabiter.
+	for c in _columns_header.get_children():
+		_columns_header.remove_child(c)
+		c.queue_free()
+	_add_column_child(_columns_header, "CAMP", _COL_CAMP_X, 0.0, HORIZONTAL_ALIGNMENT_LEFT)
+	_add_column_child(_columns_header, "NOM", _COL_NAME_X, 0.0, HORIZONTAL_ALIGNMENT_LEFT)
+	_add_column_child(_columns_header, "É", _COL_KILLS_X, _COL_STAT_W, HORIZONTAL_ALIGNMENT_CENTER)
+	_add_column_child(_columns_header, "M", _COL_DEATHS_X, _COL_STAT_W, HORIZONTAL_ALIGNMENT_CENTER)
 	if show_assists:
-		text += "   A"
-	_columns_header.text = text
+		_add_column_child(_columns_header, "A", _COL_ASSISTS_X, _COL_STAT_W, HORIZONTAL_ALIGNMENT_CENTER)
 
-## Ligne joueur v4 (§6, UX-34 REVUE LEAD point 4) : colonnes alignées
-## (portrait/glyphe de camp, nom, É, M, +A si `show_assists`), fond zébré
+## Un en-tête de colonne (UX-40) -- posé en POSITION ABSOLUE (`position`,
+## jamais une ancre) à `x`, sur toute la hauteur de `parent`
+## (`_COLUMNS_HEADER_HEIGHT_PX`, une constante -- jamais lue depuis un rect
+## potentiellement pas encore trié par un Container englobant, voir la note de
+## tête de fichier). `w <= 0.0` (CAMP/NOM) : pas de largeur fixe, alignement
+## GAUCHE naturel, jamais centré sur une largeur inconnue. Police méta v4
+## (`Comic.meta_label_v4`, capitales + approche) -- même famille que l'ancien
+## `_columns_header` à chaîne unique, seulement éclatée en labels indépendants.
+func _add_column_child(parent: Control, text: String, x: float, w: float, align: int) -> Label:
+	var lbl := Comic.meta_label_v4(text, Comic.SIZE_21, Comic.paper_dim_color())
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	lbl.horizontal_alignment = align
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.position = Vector2(x, 0.0)
+	lbl.size = Vector2(w if w > 0.0 else 200.0, _COLUMNS_HEADER_HEIGHT_PX)
+	parent.add_child(lbl)
+	return lbl
+
+## Ligne joueur v4 (§6, UX-34 REVUE LEAD point 4 ; UX-40 REVUE LEAD
+## 03_scoreboard_1080p.jpg « vraies colonnes ... plus aucune lettre répétée ») :
+## le TEXTE PROPRE de la ligne ne porte plus que le camp (glyphe) et le nom
+## (`"   <glyphe>   <nom>"`, MÊME indentation qu'avant l'onglet -- contrat
+## verrouillé de `_list`, point (b), voir la note de tête de fichier) ; É/M/
+## (A) sont désormais des labels ENFANTS posés en colonnes FIXES
+## (`_add_row_stat`, MÊMES `_COL_*_X` que `_update_columns_header`) -- plus
+## aucune lettre "É"/"M" dans le texte d'une ligne, et les chiffres tombent
+## pixel pour pixel sous leur en-tête (critère UX-40). Fond zébré
 ## `plate`/`plate_hi` (voir `_zebra_row_style`) SANS filet -- la ligne locale
 ## (`multiplayer.get_unique_id()`) passe en PLEIN `signal`, texte `ink` (§6
-## « ta ligne pleine signal, texte encre ») ; le suffixe « (toi) » de v3 est
+## « ta ligne pleine signal, texte encre ») ; le suffixe « (toi) » de v3 reste
 ## SUPPRIMÉ (précision lead : la ligne pleine signal le dit déjà, texte
 ## redondant). Portrait : glyphe ●/▼ agrandi à la place d'une vraie image
 ## (comme `DeathPanel._build_killer_card`, voir sa docstring) -- un vrai
@@ -297,16 +402,36 @@ func _update_columns_header(show_assists: bool) -> void:
 ## voir le rendu de tâche UX-34).
 func _player_row(id, p: Dictionary, is_ally: bool, team_color: Color, row_index: int, show_assists: bool) -> Label:
 	var is_local := int(id) == multiplayer.get_unique_id()
-	var row := "   %s   %-18s  É %2d  M %2d" % [Comic.team_glyph(is_ally), str(p.name), int(p.kills), int(p.deaths)]
-	if show_assists:
-		row += "  A %2d" % int(p.get("assists", 0))
+	var text := "   %s   %s" % [Comic.team_glyph(is_ally), str(p.name)]
 	var text_color := Comic.ink_color() if is_local else Comic.paper_color()
-	var lbl := Comic.label(row, Comic.SIZE_28, text_color, Comic.body_font_v4())
+	var lbl := Comic.label(text, Comic.SIZE_28, text_color, Comic.body_font_v4())
 	lbl.custom_minimum_size = Vector2(0.0, ROW_HEIGHT_PX)
 	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	var bg := Comic.signal_color() if is_local else (Comic.plate_color() if row_index % 2 == 0 else Comic.plate_hi_color())
 	lbl.add_theme_stylebox_override("normal", _zebra_row_style(bg))
+	_add_row_stat(lbl, int(p.kills), _COL_KILLS_X, text_color)
+	_add_row_stat(lbl, int(p.deaths), _COL_DEATHS_X, text_color)
+	if show_assists:
+		_add_row_stat(lbl, int(p.get("assists", 0)), _COL_ASSISTS_X, text_color)
 	return lbl
+
+## Un chiffre de colonne (ligne joueur, UX-40) -- MÊME position/largeur que
+## l'en-tête correspondant (`_add_column_child`, colonnes É/M/A), police
+## NOMBRE v4 tabulaire (`Comic.number_label_v4`, §4.1 « chiffres toujours
+## italiques ... tabulaires ») plutôt que la police méta de l'en-tête --
+## jamais mêlé au texte principal de la ligne (voir `_player_row`, REVUE LEAD
+## point 4 « plus aucune lettre répétée »). `size.y = ROW_HEIGHT_PX` (une
+## constante, jamais `row.size.y`, potentiellement pas encore trié par `_list`
+## -- voir la note de tête de fichier) pour centrer verticalement le chiffre
+## dans la ligne quelle que soit la métrique exacte de la police.
+func _add_row_stat(row: Label, value: int, x: float, color: Color) -> void:
+	var lbl := Comic.number_label_v4(str(value), Comic.SIZE_28, color)
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.position = Vector2(x, 0.0)
+	lbl.size = Vector2(_COL_STAT_W, ROW_HEIGHT_PX)
+	row.add_child(lbl)
 
 ## Ligne zébrée inclinée à 12° (§4.3 « boutons/barres/onglets... inclinés »,
 ## `Comic.SLANT_DEG`, même cisaillement que `KitSlantBar._slant_points`) --

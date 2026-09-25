@@ -24,6 +24,13 @@
 ## presse-papiers OS directement — un simple copier-coller marche déjà via le
 ## LineEdit natif, et ça reste utilisable en tête headless/sandbox où le
 ## presse-papiers OS peut être indisponible).
+##
+## UX-38 (2026-09-25, retour lead §4 « bandeau pinceau rouge à supprimer,
+## titre en encre 66 comme OPTIONS ») : `BrushHeader.gd` (bandeau rouge
+## « pinceau », hors de la liste de fichiers de cette tâche — LU, jamais
+## modifié) est remplacé ici par un simple `Label` v4 (même patron que
+## OptionsMenu.gd::_title_label, `Comic.title_label_v4`, capitales italiques
+## papier, 66 px) — plus aucun fond pinceau rouge sur cet écran.
 extends Control
 
 signal closed
@@ -62,9 +69,10 @@ func _build() -> void:
 	root.add_theme_constant_override("separation", 0)
 	margin.add_child(root)
 
-	var header := BrushHeader.new()
-	header.title = "Éditeur de viseur"
-	root.add_child(header)
+	# UX-38 : titre v4 SANS bandeau pinceau (remplace `BrushHeader`, rouge) —
+	# capitales italiques papier, 66 px, zéro fond (voir la docstring de tête).
+	var title_label := Comic.title_label_v4("Éditeur de viseur", Comic.SIZE_66, Comic.paper_color())
+	root.add_child(title_label)
 
 	var header_row := HBoxContainer.new()
 	header_row.add_theme_constant_override("margin_top", Comic.SP_2)

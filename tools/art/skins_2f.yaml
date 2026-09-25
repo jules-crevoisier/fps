@@ -1,0 +1,216 @@
+# tools/art/skins_2f.yaml
+# ART-95 — manifeste de fabrication des peaux "bâtiments à 2 niveaux et Wagon"
+# (docs/art/WASTELAND_V4_ART_PLAN.md §2, §6). Document de traçabilité : NON
+# consommé par le jeu (ArtBuildings2F.gd lit directement
+# tools/art/data/wasteland_v4_boxes.json à l'exécution, §1 R3) — sert de
+# preuve de fabrication (source, mode, cotes, mesures) pour la revue humaine
+# et pour toute reprise ultérieure (ex. ART-93 qui regénérerait wl_saloon_long
+# à une meilleure échelle, voir "deviations" plus bas).
+#
+# Outil : tools/blender/shell_to_skin.py (ART-92, modes card/shell, importé
+# tel quel — aucune ligne modifiée) + tools/blender/make_wl_shanty_kit.py
+# (ART-92/73, fonctions génératrices stairs_fit/door_frame importées telles
+# quelles pour des cotes réelles hors des instances déjà livrées).
+#
+# Convention de recentrage (TOUTES les cartes "card" et la coque "shell" du
+# Wagon) : origine locale = centre de la pièce Wasteland réelle, au sol (Y=0
+# local = base de la boîte). Instanciation : `position = Vector3(pos.x,
+# pos.y - size.y*0.5, pos.z)`, `rotation.y` TOUJOURS 0 (repère Tripo "façade
+# en +Z à rot_y=0", plan §2). Conversion d'axe Blender(Z-up, interne à
+# shell_to_skin.py) -> export glTF/Godot(Y-up), vérifiée par sondage contre
+# les coordonnées réelles de tools/art/data/wasteland_v4_boxes.json (portes
+# Hotel/Banque/SaloonW/E/Wagon, à l'octet près) :
+#   godot.x = blender.x  (aucune inversion)
+#   godot.y = blender.z  (hauteur)
+#   godot.z = -blender.y (donc face Blender min_y -> +Z godot = SUD ;
+#                          max_y -> -Z = NORD ; min_x -> -X = OUEST ;
+#                          max_x -> +X = EST)
+# Un flanc Ouest/Est du même bâtiment (ou d'un bâtiment mirroité, SaloonW-
+# >SaloonE / Hotel->Banque) réutilise la MÊME carte, retournée en place par
+# `scale = Vector3(-1,1,1)` (mirroir géométrique — la seule façon de retourner
+# un seul axe sans échanger la profondeur, une rotation ne suffit pas) ;
+# vérifié aux captures reports/checkpoints/2026-09-25_ART-95/.
+
+skins:
+  hotel_facade_s.glb:
+    source: assets/models/props/wasteland/tripo/wl_saloon.glb
+    mode: card
+    face: min_y   # -> Sud (godot +Z)
+    target_size_m: [10.0, 6.4]   # largeur, hauteur (Hotel/Banque size.x, size.y)
+    reused_by: [Hotel (S), Banque (S)]   # motif de trous symétrique identique, vérifié sur le JSON — même carte, sans miroir
+    stretch_u_pct: 5.4
+    stretch_v_pct: 50.6   # > 12% (R2 card) — voir "deviations"
+    relief_after_flatten_m: 0.10   # <= 0.10 (R1), conforme
+    openings: "2 portes RdC (S, offset ±2.5, w1.6 h2.4) + 3 fenêtres étage (S, offset -3.33/0/+3.33, w1.2 h1.0) — x0/x1 vérifiés <2cm, y1 des fenêtres à 6-9cm (mesure imprécise, hors tolérance R3 stricte). Trou réel (aucune matière de carte) confirmé aux 3 offsets par sonde géométrique (rayon horizontal, script Blender headless) — PAS seulement aux captures fournies : la fenêtre offset 0 (Hôtel/Banque, retour vérificateur 2026-09-25) se voyait pourtant PLATE en jeu malgré ce trou réel, car rien ne la distinguait visuellement du mur Kit qu'on apercevait, seul, tout au fond derrière elle (Hôtel/Banque : stair_side='N' centre la trémie d'escalier de Kit.gd EXACTEMENT sur ce même axe, §1 R4 — voir le commentaire de `ArtBuildings2F._WINDOW_BACKING_DEPTH_M`, pas un défaut de cette carte ni de ce perçage). Corrigé par `ArtBuildings2F._place_window_backing` (fond d'ombre uniforme sur les 22 instances, pas une exception pour ce seul offset) — reproduit fixé en rendu Godot frais, captures V3/hotel_south_close2 à renouveler par la prochaine tâche qui capture la façade Hôtel S."
+    tris: 3469
+    check_asset_ok: false   # non-manifold hérité de wl_saloon.glb source (706 arêtes) — pas introduit par ce script
+
+  hotel_facade_flank.glb:
+    source: assets/models/props/wasteland/tripo/wl_saloon.glb
+    mode: card
+    face: min_x   # cote O/E arbitraire (voir en-tête) — mirroité en place pour l'autre
+    target_size_m: [6.0, 6.4]   # profondeur (size.z), hauteur
+    reused_by: [Hotel (O), Hotel (E, miroir), Banque (O), Banque (E, miroir)]
+    stretch_u_pct: 36.4
+    stretch_v_pct: 14.9
+    relief_after_flatten_m: 0.10
+    openings: "1 porte de balcon étage (offset -2.25, w1.6 h2.4) — x1 vérifié, y1 à 10.8cm (hors tolérance stricte, trou réel)"
+    tris: 3429
+    check_asset_ok: false   # non-manifold hérité de wl_saloon.glb (624 arêtes)
+
+  saloon_facade_n.glb:
+    source: assets/models/props/wasteland/tripo/wl_saloon_long.glb
+    mode: card
+    face: max_y   # -> Nord (godot -Z), façade principale rue
+    target_size_m: [8.0, 6.4]
+    reused_by: [SaloonW (N), SaloonE (N)]
+    stretch_u_pct: 81.5   # >> 12% — voir "deviations" (asset ART-93 sous-échelle)
+    stretch_v_pct: 24.7
+    relief_after_flatten_m: 0.10
+    openings: "1 porte RdC (N, offset 0, w2.4 h2.4, vérifiée <2cm) + 2 fenêtres étage (offset ±2.0, w1.2 h1.0 — x0/x1 exacts, y1 à 12-13cm)"
+    tris: 1002
+    check_asset_ok: false   # non-manifold hérité de wl_saloon_long.glb (13 arêtes)
+
+  saloon_facade_s.glb:
+    source: assets/models/props/wasteland/tripo/wl_saloon_long.glb
+    mode: card
+    face: min_y   # -> Sud (godot +Z), face arrière
+    target_size_m: [8.0, 6.4]
+    reused_by: [SaloonW (S), SaloonE (S)]
+    stretch_u_pct: 82.1
+    stretch_v_pct: 0.02
+    relief_after_flatten_m: 0.10
+    openings: "2 fenêtres RdC (offset ±2.0, w1.2 h1.0 — la fenêtre -2.0 non mesurée, cf. deviations) + 2 fenêtres étage (offset ±2.0 — y0 à 6-7cm, x0/x1 non mesurés)"
+    tris: 1717
+    check_asset_ok: false   # non-manifold hérité de wl_saloon_long.glb (88 arêtes)
+
+  saloon_facade_w.glb:
+    source: assets/models/props/wasteland/tripo/wl_saloon_long.glb
+    mode: card
+    face: min_x   # -> Ouest (godot -X)
+    target_size_m: [16.0, 6.4]
+    reused_by: [SaloonW (O, direct), SaloonE (E, miroir — même décalage -3.0 que SaloonE côté E réel)]
+    stretch_u_pct: 53.9
+    stretch_v_pct: 20.1
+    relief_after_flatten_m: 0.10
+    openings: "1 porte RdC (O, offset -3.0, w2.4 h2.4 — vérifiée <2cm). La porte de balcon étage (O, offset 0) N'EST PAS percée ici : aucune matière solide à cet endroit sur la coque source (sondé, voir deviations) — cadre seul posé par ArtBuildings2F (saloon_door_frame.glb)."
+    tris: 2066
+    check_asset_ok: false   # non-manifold hérité de wl_saloon_long.glb (26 arêtes)
+
+  saloon_facade_e.glb:
+    source: assets/models/props/wasteland/tripo/wl_saloon_long.glb
+    mode: card
+    face: max_x   # -> Est (godot +X)
+    target_size_m: [16.0, 6.4]
+    reused_by: [SaloonW (E, direct), SaloonE (O, miroir — même décalage +4.5 que SaloonE côté O réel)]
+    stretch_u_pct: 53.8
+    stretch_v_pct: 20.1
+    relief_after_flatten_m: 0.10
+    openings: "1 porte RdC (E, offset +4.5, w2.4 h2.4) — NON vérifiée (x0/x1/y0/y1 tous null, cf. deviations, façade PP3/PP4). Porte de balcon étage : idem saloon_facade_w, cadre seul."
+    tris: 2112
+    check_asset_ok: false   # non-manifold hérité de wl_saloon_long.glb (71 arêtes)
+
+  wagon_shell.glb:
+    source: assets/models/props/wasteland/tripo/wl_wagon.glb
+    mode: shell + hollow (évidement 0.16 m) + perçage (4 faces)
+    target_size_m: [12.0, 3.4, 3.0]   # + marge 0.03 m/face (recouvrement anti-z-fighting, cf. ArtCovers.NUDGE_SCALE)
+    stretch_x_pct: 68.3   # >> 15% (R2 shell) — voir "deviations" (asset ART-93 sous-échelle, même défaut que wl_saloon_long)
+    stretch_y_pct: 12.9   # <= 15%, conforme
+    stretch_z_pct: 1.8    # conforme
+    openings: "2 portes bout (O offset0/E offset0, w1.6 h2.4) + 2 portes sud (offset ±3.0, w1.6 h2.4) + 4 fenêtres nord (offset ±1.5/±4.5, w1.2 h1.0) — perçage exécuté sur les 4 faces ; vérification géométrique ±2cm non concluante sur cette coque (source dense/non-manifold), RÉALITÉ visuelle confirmée : reports/checkpoints/2026-09-25_ART-95/wagon_interior.png (trou traversant net, vue extérieure au travers)."
+    tris: 2310
+    check_asset_ok: false   # non-manifold hérité de wl_wagon.glb (5 arêtes) + 1 pièce déconnectée à 3.07m (bogie du wagon, hors périmètre visuel)
+
+  hotel_door_frame.glb:
+    source: "généré (make_wl_shanty_kit.py::door_frame, importé tel quel)"
+    mode: parts (bmesh, kind wood_planks/rust)
+    params: {width: 1.6, height: 2.4, wall_thickness: 0.25, jamb: 0.18}
+    usage: "NON utilisé au final (les portes RdC/étage à 1,6 m ont déjà leur tableau peint via la carte — voir ArtBuildings2F.gd) — construit et vérifié pour une reprise future (ex. Impasse/Passage) si besoin, laissé au dépôt plutôt que jeté."
+    tris: 176
+    check_asset_ok: false   # CHK-16 (pièces jambage/linteau à écart réel de qq mm, catégorie déjà tolérée pour ce kit — voir make_wl_shanty_kit.py SEAM_GAP_M)
+
+  saloon_door_frame.glb:
+    source: "généré (make_wl_shanty_kit.py::door_frame, importé tel quel)"
+    mode: parts
+    params: {width: 2.4, height: 2.4, wall_thickness: 0.25, jamb: 0.18}
+    usage: "Portes de balcon étage (O/E) de SaloonW/E — seul habillage là où aucune carte n'est posée dessous (galerie ouverte, voir saloon_facade_w/e)."
+    tris: 176
+    check_asset_ok: false   # CHK-16, même catégorie tolérée
+
+  saloon_stairs_6m.glb:
+    source: "généré (make_wl_shanty_kit.py::stairs_fit, importé tel quel)"
+    mode: parts
+    params: {width: 1.5, rise: 3.2, run: 6.0}
+    usage: "StairRuelleW/E, StairGalerieW/E (wasteland.gd — cotes exactes run=6.0, vérifiées). StairImpasseW/E et StairPassageW/E réutilisent shanty/stairs_fit.glb existant (run=5.0, déjà aux cotes exactes — aucun nouveau bake)."
+    tris: 1144
+    check_asset_ok: false   # CHK-16, même catégorie tolérée (marches/limons disjoints de qq mm)
+
+  hotel_window_shutters.glb:
+    source: "généré (parts locales : 2 volets + jambages, kind wood_planks)"
+    mode: parts
+    params: {window_w: 1.2, window_h: 1.0}
+    usage: "R4 'volets ouverts = vraie fenêtre' — réutilisé sur LES 5 bâtiments (Hotel, Banque, SaloonW, SaloonE, Wagon : 22 instances, toutes aux mêmes cotes 1,2x1,0 m, vérifié sur le JSON). Cadre + 2 jambages SEULEMENT (aucun panneau central, vérifié en rendu isolé) : un vrai trou, pas un décor plein — sa lisibilité comme cavité dépend donc de ce qu'il y a derrière lui, jamais garanti par cet asset seul (retour vérificateur, fenêtre offset 0 Hôtel/Banque). `ArtBuildings2F._place_window_backing` ajoute maintenant, sur LES 22 instances, un fond d'ombre plat en retrait (0,22 m, sous l'épaisseur du mur Kit) qui rend la cavité lisible par construction, indépendamment de l'intérieur Kit réel à cet endroit."
+    tris: 176
+    check_asset_ok: false   # CHK-16, même catégorie tolérée
+
+deviations:
+  - id: saloon_wagon_source_undersized
+    severity: moyenne (visuel seulement — collision/parité NON affectées, voir ci-dessous)
+    description: >
+      wl_saloon_long.glb et wl_wagon.glb (livrables ART-93, hors de mon
+      périmètre de fichiers) mesurent respectivement ~4.4x10.4x6.4 m et
+      ~7.2x3.5x3.4 m au lieu des cotes visées par leur brief de modélisation
+      (8x16x6.4 et 12x3x3.4, docs/art/WASTELAND_V4_ART_PLAN.md §2) — environ
+      55-70% de la cote longue attendue. Mis à l'échelle EXACTE de la boîte
+      Wasteland réelle (obligatoire pour R1), l'étirement dépasse le contrat
+      d'ART-92 (card <=12%, shell <=15%/32%) : jusqu'à 82% sur les cartes
+      SaloonW/E, 68% sur l'axe long du Wagon. La TEXTURE en paraît étirée sur
+      ces faces (qualité visuelle) ; la COUVERTURE, elle, reste exacte (une
+      carte/coque est TOUJOURS mise à l'échelle de la boîte cible par
+      construction) — `test_wasteland_art_parity.gd` (les 5 PP, 3000+775
+      échantillons) est vert, 0 écart.
+    evidence: "tools/art/skins_2f.yaml (stretch_*_pct ci-dessus) ; reports/checkpoints/2026-09-25_ART-95/ (captures)."
+    fix_options:
+      - "ART-93 (hors de mon périmètre) : régénérer wl_saloon_long/wl_wagon avec un prompt qui CONTRAINT la proportion largeur/hauteur/profondeur demandée (coût Tripo supplémentaire, docs/assets/CREDITS.md)."
+      - "Découpage en travées (R2 'on répète une travée') : remplacer chaque carte unique par 2-3 cartes plus étroites côte à côte, dans le contrat d'étirement — repris par une tâche dédiée si le lead préfère ne pas dépenser plus de crédit Tripo."
+    blocked_on: "décision du lead : crédit Tripo (ART-93) ou découpage en travées — les deux sont hors de mon périmètre de fichiers ART-95."
+
+  - id: saloon_gallery_no_solid_upper_wall
+    severity: basse (comportement voulu, documenté pour éviter une reprise inutile)
+    description: >
+      wl_saloon_long n'a de matière solide plane, sur ses flancs Ouest/Est,
+      qu'au rez-de-chaussée — à l'étage (galerie), la coque y est déjà
+      creuse/en retrait à l'emplacement des portes de balcon (sondé : un
+      évidement + perçage à cet endroit ne trouve aucune arête de bord, avant
+      comme après, sur une coque pourtant fermée partout ailleurs). Ceci
+      correspond au plan (§2 : « la galerie Tripo est retirée et remplacée
+      par le kit » — la galerie est un vide habillé par balcony_railing.glb,
+      jamais un mur Tripo percé). saloon_facade_w/e.glb ne percent donc QUE
+      floor=0 sur ces flancs ; les portes de balcon floor=1 reçoivent
+      uniquement `saloon_door_frame.glb` (cadre), posé par ArtBuildings2F.gd.
+    evidence: "reports/checkpoints/2026-09-25_ART-95/wasteland_V4.png (galerie, garde-corps visible)."
+    blocked_on: "aucun — comportement conforme au plan, pas une régression."
+
+  - id: no_north_wall_hotel_banque
+    severity: basse
+    description: >
+      Le plan (§2) ne décrit un traitement que pour les faces S/O/E de
+      Hotel/Banque — la face Nord n'est skinnée par AUCUNE tâche (ni ART-94,
+      ni ART-95). Le mur Nord reste donc le mur Kit peint par défaut
+      (wasteland_look.gd, hors de mon périmètre), jamais une boîte beige
+      nue — mais pas non plus une peau Tripo dédiée.
+    blocked_on: "aucun — hors du périmètre de toutes les tâches de la vague, pas une régression introduite ici."
+
+# Pièces de greybox ENTIÈREMENT recouvertes par mes peaux (note du lead,
+# 2026-09-25T20:27:41 — pour que le lead pose visual:false en une seule passe
+# après la vague, support ART-91, collision inchangée) :
+visual_false:
+  - SaloonW   # 4 faces (N/S/O/E) couvertes au RdC + N/S à l'étage ; O/E étage
+              # volontairement ouverts (galerie, voir "deviations" ci-dessus)
+              # — un visual:false y est donc CORRECT (pas un trou imprévu).
+  - SaloonE
+  - Wagon     # coque évidée sur les 6 faces (shell, hollow), toutes les
+              # ouvertures réelles percées.
+# Hotel/Banque NE SONT PAS listés : leur face Nord n'a aucune peau (voir
+# "no_north_wall_hotel_banque" ci-dessus) — un visual:false les rendrait
+# invisibles de ce côté (trou dans le vide) au lieu du mur Kit peint actuel.
