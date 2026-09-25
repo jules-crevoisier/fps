@@ -1,0 +1,15 @@
+{
+  "smooth_normal": true,
+  "ao": false,
+  "curvature": false,
+  "masks": false,
+  "color_attributes": [],
+  "custom_attributes": [
+    "_smooth_normal"
+  ],
+  "file": "covers_tonneaux.glb",
+  "objects": [
+    "tonneaux_crate"
+  ],
+  "tris": 936
+}

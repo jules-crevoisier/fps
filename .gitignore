@@ -32,3 +32,18 @@ reports/
 
 # Caches Python (scripts Blender/outils)
 __pycache__/
+
+# Fichiers de travail des agents et aperçus de rendu (régénérables, lourds)
+/scratchpad/
+_captures/
+*_preview/
+*_turntable/
+
+# Références tierces (Pinterest) : jamais publiées — le dépôt est public
+/.orchestrator/refs/pinterest/
+
+# Sorties d'outils et scripts jetables des agents à la racine
+/.ui_shots_out/
+/.probe_debug_out/
+/_verify_*
+/scratchpad_*

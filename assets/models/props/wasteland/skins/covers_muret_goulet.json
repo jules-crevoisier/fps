@@ -1,0 +1,17 @@
+{
+  "smooth_normal": true,
+  "ao": false,
+  "curvature": false,
+  "masks": false,
+  "color_attributes": [
+    "PlankTint"
+  ],
+  "custom_attributes": [
+    "_smooth_normal"
+  ],
+  "file": "covers_muret_goulet.glb",
+  "objects": [
+    "covers_muret_goulet"
+  ],
+  "tris": 4752
+}

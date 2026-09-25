@@ -1,0 +1,111 @@
+{
+  "input": "C:\\Users\\srko\\Desktop\\fps\\assets\\incoming\\tripo\\restyled\\cs_deck_crane.glb.prescaled.glb",
+  "output": "C:\\Users\\srko\\Desktop\\fps\\assets\\incoming\\tripo\\restyled\\cs_deck_crane.glb",
+  "family": "props",
+  "budget_tris": 8000,
+  "final_tris": 7986,
+  "merged_vertices": 3273,
+  "nonmanifold_repair": {
+    "duplicate_faces": 0,
+    "sliver_faces": 0,
+    "remaining_nonmanifold_edges": 2
+  },
+  "removed_isolated_faces": 276,
+  "post_separation_dropped_faces": 0,
+  "post_bevel_dropped_faces": 0,
+  "post_bevel_nonmanifold_repair": {
+    "duplicate_faces": 0,
+    "sliver_faces": 3,
+    "remaining_nonmanifold_edges": 0,
+    "skipped_max_edges": []
+  },
+  "watertight_fix": {
+    "remeshed": false,
+    "remesh_failed": true,
+    "collapsed_to": null,
+    "dropped_kinds": [],
+    "dropped_disconnected_faces": 1587
+  },
+  "slots": [
+    {
+      "original_material": "tripo_mat_20061645",
+      "assigned_kind": "asphalt",
+      "face_count": 99,
+      "avg_delta_e_sample_to_kind": 10.435
+    },
+    {
+      "original_material": "tripo_mat_20061645",
+      "assigned_kind": "container_paint",
+      "face_count": 158,
+      "avg_delta_e_sample_to_kind": 25.606
+    },
+    {
+      "original_material": "tripo_mat_20061645",
+      "assigned_kind": "corrugated_metal",
+      "face_count": 27,
+      "avg_delta_e_sample_to_kind": 13.501
+    },
+    {
+      "original_material": "tripo_mat_20061645",
+      "assigned_kind": "cracked_concrete",
+      "face_count": 166,
+      "avg_delta_e_sample_to_kind": 18.573
+    },
+    {
+      "original_material": "tripo_mat_20061645",
+      "assigned_kind": "dirty_glass",
+      "face_count": 19,
+      "avg_delta_e_sample_to_kind": 29.673
+    },
+    {
+      "original_material": "tripo_mat_20061645",
+      "assigned_kind": "painted_metal",
+      "face_count": 273,
+      "avg_delta_e_sample_to_kind": 4.68
+    },
+    {
+      "original_material": "tripo_mat_20061645",
+      "assigned_kind": "rubber_tire",
+      "face_count": 1,
+      "avg_delta_e_sample_to_kind": 4.245
+    },
+    {
+      "original_material": "tripo_mat_20061645",
+      "assigned_kind": "sand_dirt",
+      "face_count": 1372,
+      "avg_delta_e_sample_to_kind": 20.741
+    },
+    {
+      "original_material": "tripo_mat_20061645",
+      "assigned_kind": "ship_deck",
+      "face_count": 1371,
+      "avg_delta_e_sample_to_kind": 5.992
+    },
+    {
+      "original_material": "tripo_mat_20061645",
+      "assigned_kind": "wood_planks",
+      "face_count": 177,
+      "avg_delta_e_sample_to_kind": 12.532
+    }
+  ],
+  "assigned_kinds": [
+    "asphalt",
+    "container_paint",
+    "corrugated_metal",
+    "cracked_concrete",
+    "dirty_glass",
+    "painted_metal",
+    "rubber_tire",
+    "sand_dirt",
+    "ship_deck",
+    "wood_planks"
+  ],
+  "delta_e_output_to_palette": 0.0,
+  "bevel_class": "landmark",
+  "nodes": [
+    "cs_deck_crane"
+  ],
+  "parts": [],
+  "markers": [],
+  "turntable_contact_sheet": null
+}

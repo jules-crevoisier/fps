@@ -1,0 +1,75 @@
+{
+  "_comment": "A3D-13 — verdict G2 (jugement visuel, docs/assets/ASSET_PLAN.md §2 : forme conforme au concept, pas de membrure fondue, pas de socle parasite). Rempli à la main par l'agent qui a regardé les rapports ai_restyle.json/check.json de chaque sortie réellement produite. Un id absent = aucune sortie exploitable a été produite (l'agent n'a rien pu revoir) : reste 'à revoir' dans index.html, jamais un PASS par défaut. Entrées mises à jour A3D-15 (2026-09-24) après le lot de correctifs ai_restyle.py (transfert de matériau par proximité, clustering d'îlots par proximité, dédoublonnage/éclats non-manifold, budget après biseau) — les verdicts précédents (pré-A3D-15) sur ces mêmes ids étaient basés sur des sorties amputées par le collapse de palette et le treillis fondu, désormais corrigés ; wpn_rafale/wpn_eclair/wpn_semeuse pas encore revus visuellement sous cette version, retirés plutôt que laissés avec une note périmée (repassent en 'à revoir').",
+  "wpn_ravage": {
+    "g2": "PASS",
+    "note": "Silhouette de fusil d'assaut conforme au concept : chargeur courbe + poignée de transport, plaque « 07 » en décalque lisible, couleurs par pièce présentes (rouge accent, gris acier, crème). Aucune membrure fondue, aucun socle parasite. Capture : assets/incoming/tripo/restyled/wpn_ravage_turntable/closeup.png. G3 : PASS (check_asset + bbox OK)."
+  },
+  "wpn_fracas": {
+    "g2": "PASS",
+    "note": "Silhouette de fusil à pompe conforme : évasement du canon raisonnable (anti-pattern « pompe-trompette » évité), crosse et pompe en bois distinctes du corps acier, pompe bien séparée en pièce mobile. Capture : assets/incoming/tripo/restyled/wpn_fracas_turntable/closeup.png. G3 : PASS après repositionnement de la boîte 'pompe' (A3D-15)."
+  },
+  "wpn_pistolet": {
+    "g2": "PASS",
+    "note": "Silhouette de pistolet compact conforme (canon carré, chargeur, pontet, détente), chargeur et culasse bien séparés du corps sans trou visible. Capture : assets/incoming/tripo/restyled/wpn_pistolet_turntable/closeup.png. G3 : PASS (A3D-15) — l'arête non-manifold sur 'culasse' était introduite APRÈS _fill_holes par le biseau/la 2e décimation (jamais visible avant l'export) : corrigée par un filet de réparation finale (ai_restyle.py::_repair_nonmanifold_final, dernier recours borné à 50 arêtes) qui reproduit désormais la même tolérance de ressoudage par position que check_asset.py (1e-4 m) avant de vérifier — l'ancienne note (« non réparable sans risquer la géométrie ») décrivait une tentative de réparation trop précoce dans le pipeline, pas une limite réelle du maillage."
+  },
+  "wl_fuel_billboard": {
+    "g2": "PASS",
+    "note": "Panneau plein jusqu'au sol conforme (cadre crème, corps bleu, soubassement bois) ; le bas du soubassement bois montre une découpe un peu dentelée (mineur, pas une membrure fondue). Capture : assets/incoming/tripo/restyled/wl_fuel_billboard_turntable/closeup.png. G3 : PASS."
+  },
+  "wl_canopy_station": {
+    "g2": "PASS",
+    "note": "Auvent de station-service conforme : toit plat, bandeau bleu/crème, 4 poteaux carrés. Aucun défaut visible. Capture : assets/incoming/tripo/restyled/wl_canopy_station_turntable/closeup.png. G3 : PASS."
+  },
+  "wl_water_tower": {
+    "g2": "PENDING",
+    "note": "Silhouette globalement conforme (cuve tonneau + 4 pieds évasés) ; le toit conique montrait une triangulation irrégulière liée aux 11 arêtes non-manifold introduites par le biseau/la 2e décimation après le nettoyage préventif du maillage brut. G3 : PASS (A3D-15) — corrigé par le filet de réparation finale (ai_restyle.py::_repair_nonmanifold_final) ; à reconfirmer visuellement sur la prochaine planche que le toit ne montre plus de facette croisée. Capture : assets/incoming/tripo/restyled/wl_water_tower_turntable/closeup.png."
+  },
+  "wl_oil_derrick": {
+    "g2": "PENDING",
+    "note": "A3D-15 : le dépassement de budget après biseau est corrigé (DECIMATE_GROUP_MAX_ITERATIONS relevé + passe DISSOLVE de secours rejouable, ai_restyle.py) — l'asset s'exporte désormais sans lever d'exception. MAIS le défaut de fond reste entier et est maintenant visible au lieu d'être masqué par le crash précédent : bbox = 0,92 m sur 10 m attendus (silhouette amputée à ~9 %) et 128 arêtes non-manifold. Cause identifiée avec précision : le treillis brut Tripo sort en PLUSIEURS îlots topologiquement disjoints (jambes/traverses jamais ressoudées) ; `ensure_watertight`/`_drop_floating_islands` (ai_restyle.py) ne garde QUE l'îlot le plus gros par nombre de faces et jette directement chaque autre îlot au-delà d'1 cm — un choix délibéré et NÉCESSAIRE : `check_asset.py::CHK-16` (`_component_groups`) fait exactement la même comparaison directe (jamais de clustering transitif) sur le .glb exporté, donc tout îlot que ai_restyle.py laisserait survivre en le regroupant autrement échouerait quand même CHK-16 (vérifié par une tentative de clustering transitif cette session, abandonnée : elle réparait la silhouette mais faisait échouer CHK-16 avec des dizaines de « pièce déconnectée », sans gagner un seul asset en G3 PASS — voir ai_restyle.py::_drop_floating_islands, historique dans sa docstring). Correction réelle possible seulement HORS de tools/blender/ai_restyle.py : ressouder les jambes du treillis à la source (retouche manuelle Blender, ou nouvelle génération Tripo avec un maillage moins fragmenté) — décision à trancher par le lead, dans le même esprit que l'exemption déjà actée sur wl_crane_lattice."
+  },
+  "wl_crane_lattice": {
+    "g2": "FAIL",
+    "note": "EXEMPTION documentée (A3D-15, voir aussi docs/assets/ASSET_PLAN.md §9 risque #2 « treillis qui fondent ») : le maillage brut Tripo porte 2046 arêtes non-manifold sur son propre treillis (jambes/croisillons du mât et de la flèche), à aires de faces comparables — ni des doublons exacts ni des éclats dégénérés, donc non réparables par ai_restyle.py::_remove_duplicate_faces/_remove_nonmanifold_slivers ni par le filet de réparation finale (A3D-15, ai_restyle.py::_repair_nonmanifold_final — plafonné à 50 arêtes, voir NONMANIFOLD_FINAL_REPAIR_MAX_EDGES, délibérément jamais tenté sur un compte aussi élevé : mutilerait la silhouette). Le remesh voxel global échoue systématiquement à rendre étanche cette topologie sans effondrer le volume (>10 % de perte à toutes les tailles de voxel testées). La hauteur reste elle aussi hors tolérance (bbox 3,15 m pour 16 m attendus) — même cause que wl_oil_derrick (îlots topologiquement disjoints jamais ressoudés, voir sa note) mais ici bien au-delà de tout plafond de réparation automatique raisonnable. Capture jointe au rapport de tâche (contact sheet turntable). Décision recommandée conforme à la parade documentée §9 risque #2 : reprise en bpy (modélisation manuelle) plutôt qu'une nouvelle tentative automatisée — au-delà du périmètre de tools/blender/ai_restyle.py."
+  },
+  "wl_gas_billboard": {
+    "g2": "PENDING",
+    "note": "A3D-15 : le blocage dur (RuntimeError, budget dépassé x4 même après 6 passes de Decimate) est corrigé — DECIMATE_GROUP_MAX_ITERATIONS relevé (6 -> 10) et la passe DISSOLVE de secours rejouable jusqu'à 3 fois par plateau (au lieu d'une seule, ai_restyle.py::DECIMATE_PLANAR_MAX_RETRIES) permettent désormais de tenir le budget de 3000 tris sur la ferme (truss) très biseautée du panneau. Reste un dépassement bbox MARGINAL sur l'axe z : 2,4495 m pour 2,5 m attendus ± 0,05 m (2 %) — manque 0,0005 m, à la limite de la tolérance (probablement le dernier biseau/la dernière passe DISSOLVE qui adoucit légèrement un coin de référence). À reconfirmer visuellement ; un ajustement mineur de tolérance ou une génération Tripo légèrement plus haute suffirait probablement, aucune cause structurelle identifiée ici."
+  },
+  "cs_ship_mast": {
+    "g2": "PENDING",
+    "note": "A3D-15 : l'arête non-manifold est corrigée (filet de réparation finale, ai_restyle.py::_repair_nonmanifold_final). Reste un échec bbox SÉVÈRE, pré-existant et non introduit cette session : 1,46 m mesurés pour 12 m attendus (silhouette amputée à ~88 %). Même cause que wl_oil_derrick (voir sa note détaillée) : le mât + ses instances (crosstrees, radar, échelle) sortent de Tripo en plusieurs îlots disjoints ; `_drop_floating_islands`/`ensure_watertight` (ai_restyle.py) ne gardent QUE l'îlot dominant par nombre de faces car `check_asset.py::CHK-16` exige la même comparaison directe sur le fichier exporté (un clustering transitif ici a été essayé puis abandonné cette session : il répare le bbox mais fait échouer CHK-16 avec des dizaines de « pièce déconnectée » à la place, sans gain net de G3 PASS). Correction réelle hors périmètre de tools/blender/ai_restyle.py (ressoudage manuel ou régénération Tripo plus cohérente) — décision à trancher par le lead."
+  },
+  "cs_deck_crane": {
+    "g2": "PENDING",
+    "note": "A3D-15 : les arêtes non-manifold sont corrigées (filet de réparation finale, ai_restyle.py::_repair_nonmanifold_final). Reste un échec bbox pré-existant et non introduit cette session : 5,55 m mesurés pour 10 m attendus (silhouette amputée à ~45 %, cabine/flèche notamment). Même cause que wl_oil_derrick/cs_ship_mast (voir leurs notes) : plusieurs îlots Tripo disjoints, dont seul le plus gros survit à `_drop_floating_islands` — nécessaire pour rester cohérent avec `check_asset.py::CHK-16` (comparaison directe, jamais transitive). Correction réelle hors périmètre de tools/blender/ai_restyle.py — décision à trancher par le lead."
+  },
+  "wpn_rafale": {
+    "g2": "PENDING",
+    "note": "A3D-15 — NON corrigé : bbox = 0,49 m sur l'axe canon pour 0,64 m attendus (-23 %). Cause identifiée (commune à wpn_marqueur/wpn_faucheur/wpn_semeuse/wpn_eclair, voir leurs notes) : le biseau/la 2e décimation (decimate_group_to_budget) peut faire fondre le pont de matière reliant une extrémité de l'arme au reste, rendant ce morceau topologiquement disjoint ; ai_restyle.py::_drop_floating_islands le jette alors (comparaison directe au plus gros îlot, sans plancher de taille — un plancher a été essayé puis abandonné cette session, voir sa docstring : check_asset.py::CHK-16 rejette de toute façon tout îlot déconnecté à plus d'1 cm, donc le garder ne fait jamais gagner le G3 PASS). Piste non explorée, plus sûre : rendre decimate_group_to_budget moins agressif près des zones fines (COLLAPSE par palier plus progressif) — hors du temps disponible cette session."
+  },
+  "wpn_marqueur": {
+    "g2": "PENDING",
+    "note": "A3D-15 — NON corrigé : bbox = 0,90 m sur l'axe canon pour 1,07 m attendus (-16 %). Même cause que wpn_rafale (voir sa note) : morceau d'extrémité disjoint par le biseau/la décimation, jeté par ai_restyle.py::_drop_floating_islands (nécessaire pour rester cohérent avec check_asset.py::CHK-16, qui rejette tout îlot déconnecté à plus d'1 cm sans notion de taille)."
+  },
+  "wpn_faucheur": {
+    "g2": "PENDING",
+    "note": "A3D-15 — NON corrigé : bbox = 1,00 m sur l'axe canon pour 1,25 m attendus (-20 %). Même cause que wpn_rafale (voir sa note). Les 2 pièces séparées (chargeur/culasse) et les arêtes non-manifold sont, elles, correctement réparées cette session — seul le bbox du corps entier reste affecté."
+  },
+  "wpn_semeuse": {
+    "g2": "PENDING",
+    "note": "A3D-15 — NON corrigé : bbox = 0,88 m sur l'axe canon pour 1,15 m attendus (-24 %, le plus sévère du groupe). Même cause que wpn_rafale (voir sa note)."
+  },
+  "wpn_eclair": {
+    "g2": "PENDING",
+    "note": "A3D-15 — NON corrigé mais MARGINAL : bbox = 0,535 m pour 0,550 m attendus ± 0,011 m (manque 0,0038 m au-delà de la tolérance). Même cause que wpn_rafale (voir sa note) mais l'écart est faible ici — un ajustement mineur de decimate_group_to_budget suffirait probablement à le faire passer, contrairement aux 4 autres du groupe."
+  },
+  "gp_borne": {
+    "g2": "PENDING",
+    "note": "A3D-15 — NON corrigé mais MARGINAL, pré-existant : bbox = 2,543 m pour 2,600 m attendus ± 0,052 m (manque 0,0054 m au-delà de la tolérance, ~2,2 % réel contre 2 % autorisé). Pas de trace de morceau jeté (check_asset ne rapporte aucun îlot flottant) : variance normale de proportion du maillage Tripo brut sur l'axe de référence, pas un défaut du pipeline ai_restyle.py — un ajustement de tolérance (SCALE_TOLERANCE_RATIO, restyle_wave.py, hors périmètre de cette tâche) ou une régénération Tripo suffirait probablement."
+  },
+  "wl_tank_horizontal": {
+    "g2": "PENDING",
+    "note": "A3D-15 — NON corrigé, pré-existant : bbox = 3,206 m pour 3,500 m attendus ± 0,070 m (-8,4 %). Pas de trace de morceau jeté (check_asset ne rapporte aucun îlot flottant ni arête non-manifold) : variance de proportion du maillage Tripo brut sur l'axe de référence (échelle par axe 0,8–1,25, voir tools/ai3d/manifests/wave1.yaml notes), pas un défaut du pipeline ai_restyle.py."
+  }
+}

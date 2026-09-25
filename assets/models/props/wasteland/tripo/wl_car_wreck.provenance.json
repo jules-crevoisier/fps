@@ -1,0 +1,13 @@
+{
+  "tool": "Tripo Studio — Modèle HD H3.1 (texture 4K incluse)",
+  "concept_image_tool": "Nano Banana Pro (générateur d'images de Tripo Studio)",
+  "tripo_task_id": "9cbda1b3-58bc-47cb-ac44-de8be4d6586c",
+  "tripo_task_url": "https://studio.tripo3d.ai/fr/workspace/generate/9cbda1b3-58bc-47cb-ac44-de8be4d6586c",
+  "source_glb": "assets/incoming/tripo/studio/wl_car_wreck.glb",
+  "prompt": null,
+  "prompt_source": "non archivé",
+  "date": "2026-09-25",
+  "post_processing": "tools/blender/ai_import_painted.py (import « peinture conservée » : fusion des sommets quasi confondus, retrait des îlots < 1 % de la diagonale, décimation collapse jusqu'au budget de tris, échelle uniforme, pivot au sol centré, ALBÉDO TRIPO CONSERVÉ tel quel (jamais ai_restyle.py, qui le jette et remesh en voxel) ; manifeste tools/ai3d/manifests/painted_env.yaml)",
+  "licence": "Sorties Tripo Studio générées avec le compte de l'auteur ; usage soumis aux conditions Tripo AI du plan du compte (preuve hors dépôt).",
+  "notes": "Grappe de décor ART-89, remplace le « sedan_wreck » procédural jugé trop « jouet ». Sert aussi de source à skins/covers_charrette_w.glb (échelle 0,72 + planches/caisses procédurales ajoutées). Références : assets/incoming/tripo/studio/wave1_tasks.json (task id), docs/assets/CREDITS.md (coût/date), tools/ai3d/manifests/painted_env.yaml (hauteur/budget cible)."
+}

@@ -1,0 +1,17 @@
+{
+  "smooth_normal": true,
+  "ao": true,
+  "curvature": true,
+  "color_attributes": [
+    "AO",
+    "Curvature"
+  ],
+  "custom_attributes": [
+    "_smooth_normal"
+  ],
+  "file": "fence_wood.glb",
+  "objects": [
+    "fence_wood"
+  ],
+  "tris": 540
+}

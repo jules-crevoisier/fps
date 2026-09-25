@@ -1,0 +1,17 @@
+{
+  "smooth_normal": true,
+  "ao": false,
+  "curvature": false,
+  "masks": true,
+  "color_attributes": [
+    "masks"
+  ],
+  "custom_attributes": [
+    "_smooth_normal"
+  ],
+  "file": "gp_bomb.glb",
+  "objects": [
+    "gp_bomb"
+  ],
+  "tris": 3000
+}

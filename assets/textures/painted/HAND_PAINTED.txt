@@ -1,0 +1,27 @@
+# assets/textures/painted/HAND_PAINTED.txt
+#
+# ART-79B -- un chemin (relatif a la racine du depot) par ligne, un par
+# fichier que tools/textures/make_tileable.py a remplace par une texture
+# peinte a la main (planches Tripo Studio raccordees). Genere/mis a jour
+# par make_tileable.py -- ne pas editer a la main.
+#
+# tools/textures/gen_textures.py lit cette liste et ne (re)genere JAMAIS
+# un fichier qui y figure (incident 2026-09-24 : un rerun avait deja
+# efface des textures peintes a la main).
+assets/textures/painted/material_asphalt_albedo.png
+assets/textures/painted/material_container_paint_albedo.png
+assets/textures/painted/material_container_paint_grime.png
+assets/textures/painted/material_corrugated_metal_albedo.png
+assets/textures/painted/material_corrugated_metal_grime.png
+assets/textures/painted/material_cracked_concrete_albedo.png
+assets/textures/painted/material_cracked_concrete_grime.png
+assets/textures/painted/material_painted_metal_albedo.png
+assets/textures/painted/material_painted_metal_grime.png
+assets/textures/painted/material_rust_albedo.png
+assets/textures/painted/material_sand_dirt_albedo.png
+assets/textures/painted/material_wood_planks_albedo.png
+assets/textures/painted/material_wood_planks_grime.png
+assets/textures/painted/terrain_sable_albedo.png
+assets/textures/painted/terrain_terre_battue_albedo.png
+assets/textures/wasteland/wl_plaster_albedo.png
+assets/textures/wasteland/wl_rock_strata_albedo.png

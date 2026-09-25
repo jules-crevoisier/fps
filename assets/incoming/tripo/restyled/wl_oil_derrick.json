@@ -1,0 +1,17 @@
+{
+  "smooth_normal": true,
+  "ao": false,
+  "curvature": false,
+  "masks": true,
+  "color_attributes": [
+    "masks"
+  ],
+  "custom_attributes": [
+    "_smooth_normal"
+  ],
+  "file": "wl_oil_derrick.glb",
+  "objects": [
+    "wl_oil_derrick"
+  ],
+  "tris": 3825
+}

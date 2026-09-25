@@ -1,0 +1,92 @@
+{
+  "input": "C:\\Users\\srko\\Desktop\\fps\\assets\\incoming\\tripo\\restyled\\wl_crane_lattice.glb.prescaled.glb",
+  "output": "C:\\Users\\srko\\Desktop\\fps\\assets\\incoming\\tripo\\restyled\\wl_crane_lattice.glb",
+  "family": "props",
+  "budget_tris": 15000,
+  "final_tris": 13032,
+  "merged_vertices": 10381,
+  "nonmanifold_repair": {
+    "duplicate_faces": 0,
+    "sliver_faces": 128,
+    "remaining_nonmanifold_edges": 724
+  },
+  "removed_isolated_faces": 76,
+  "post_separation_dropped_faces": 0,
+  "post_bevel_dropped_faces": 0,
+  "post_bevel_nonmanifold_repair": {
+    "duplicate_faces": 209,
+    "sliver_faces": 0,
+    "remaining_nonmanifold_edges": 2046,
+    "skipped_max_edges": [
+      "wl_crane_lattice"
+    ]
+  },
+  "watertight_fix": {
+    "remeshed": false,
+    "remesh_failed": true,
+    "collapsed_to": null,
+    "dropped_kinds": [],
+    "dropped_disconnected_faces": 4545
+  },
+  "slots": [
+    {
+      "original_material": "tripo_mat_e5d2ca0b",
+      "assigned_kind": "container_paint",
+      "face_count": 3,
+      "avg_delta_e_sample_to_kind": 9.244
+    },
+    {
+      "original_material": "tripo_mat_e5d2ca0b",
+      "assigned_kind": "corrugated_metal",
+      "face_count": 96,
+      "avg_delta_e_sample_to_kind": 7.365
+    },
+    {
+      "original_material": "tripo_mat_e5d2ca0b",
+      "assigned_kind": "cracked_concrete",
+      "face_count": 1151,
+      "avg_delta_e_sample_to_kind": 6.209
+    },
+    {
+      "original_material": "tripo_mat_e5d2ca0b",
+      "assigned_kind": "painted_metal",
+      "face_count": 5,
+      "avg_delta_e_sample_to_kind": 13.653
+    },
+    {
+      "original_material": "tripo_mat_e5d2ca0b",
+      "assigned_kind": "rust",
+      "face_count": 5,
+      "avg_delta_e_sample_to_kind": 9.152
+    },
+    {
+      "original_material": "tripo_mat_e5d2ca0b",
+      "assigned_kind": "sand_dirt",
+      "face_count": 5512,
+      "avg_delta_e_sample_to_kind": 18.079
+    },
+    {
+      "original_material": "tripo_mat_e5d2ca0b",
+      "assigned_kind": "wood_planks",
+      "face_count": 1,
+      "avg_delta_e_sample_to_kind": 18.71
+    }
+  ],
+  "assigned_kinds": [
+    "container_paint",
+    "corrugated_metal",
+    "cracked_concrete",
+    "painted_metal",
+    "rust",
+    "sand_dirt",
+    "wood_planks"
+  ],
+  "delta_e_output_to_palette": 0.0,
+  "bevel_class": "landmark",
+  "nodes": [
+    "wl_crane_lattice"
+  ],
+  "parts": [],
+  "markers": [],
+  "turntable_contact_sheet": null
+}

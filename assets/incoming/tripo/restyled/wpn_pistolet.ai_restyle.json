@@ -1,0 +1,107 @@
+{
+  "input": "C:\\Users\\srko\\Desktop\\fps\\assets\\incoming\\tripo\\restyled\\wpn_pistolet.glb.prescaled.glb",
+  "output": "C:\\Users\\srko\\Desktop\\fps\\assets\\incoming\\tripo\\restyled\\wpn_pistolet.glb",
+  "family": "weapons",
+  "budget_tris": 8000,
+  "final_tris": 4118,
+  "merged_vertices": 2321,
+  "nonmanifold_repair": {
+    "duplicate_faces": 0,
+    "sliver_faces": 14,
+    "remaining_nonmanifold_edges": 34
+  },
+  "removed_isolated_faces": 0,
+  "post_separation_dropped_faces": 1254,
+  "post_bevel_dropped_faces": 245,
+  "post_bevel_nonmanifold_repair": {
+    "duplicate_faces": 0,
+    "sliver_faces": 6,
+    "remaining_nonmanifold_edges": 0,
+    "skipped_max_edges": []
+  },
+  "watertight_fix": {
+    "remeshed": false,
+    "remesh_failed": true,
+    "collapsed_to": null,
+    "dropped_kinds": [],
+    "dropped_disconnected_faces": 0
+  },
+  "slots": [
+    {
+      "original_material": "tripo_mat_24ce228f",
+      "assigned_kind": "asphalt",
+      "face_count": 37,
+      "avg_delta_e_sample_to_kind": 13.417
+    },
+    {
+      "original_material": "tripo_mat_24ce228f",
+      "assigned_kind": "container_paint",
+      "face_count": 745,
+      "avg_delta_e_sample_to_kind": 44.716
+    },
+    {
+      "original_material": "tripo_mat_24ce228f",
+      "assigned_kind": "corrugated_metal",
+      "face_count": 178,
+      "avg_delta_e_sample_to_kind": 5.829
+    },
+    {
+      "original_material": "tripo_mat_24ce228f",
+      "assigned_kind": "cracked_concrete",
+      "face_count": 1362,
+      "avg_delta_e_sample_to_kind": 24.722
+    },
+    {
+      "original_material": "tripo_mat_24ce228f",
+      "assigned_kind": "dirty_glass",
+      "face_count": 58,
+      "avg_delta_e_sample_to_kind": 31.272
+    },
+    {
+      "original_material": "tripo_mat_24ce228f",
+      "assigned_kind": "painted_metal",
+      "face_count": 251,
+      "avg_delta_e_sample_to_kind": 6.441
+    },
+    {
+      "original_material": "tripo_mat_24ce228f",
+      "assigned_kind": "sand_dirt",
+      "face_count": 6,
+      "avg_delta_e_sample_to_kind": 26.01
+    },
+    {
+      "original_material": "tripo_mat_24ce228f",
+      "assigned_kind": "ship_deck",
+      "face_count": 1287,
+      "avg_delta_e_sample_to_kind": 3.854
+    }
+  ],
+  "assigned_kinds": [
+    "asphalt",
+    "container_paint",
+    "corrugated_metal",
+    "cracked_concrete",
+    "dirty_glass",
+    "painted_metal",
+    "sand_dirt",
+    "ship_deck"
+  ],
+  "delta_e_output_to_palette": 0.0,
+  "bevel_class": "weapon_fp",
+  "nodes": [
+    "wpn_pistolet",
+    "chargeur",
+    "culasse",
+    "Muzzle",
+    "Foregrip"
+  ],
+  "parts": [
+    "chargeur",
+    "culasse"
+  ],
+  "markers": [
+    "Muzzle",
+    "Foregrip"
+  ],
+  "turntable_contact_sheet": null
+}

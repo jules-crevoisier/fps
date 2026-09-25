@@ -1,0 +1,17 @@
+{
+  "smooth_normal": true,
+  "ao": true,
+  "curvature": true,
+  "color_attributes": [
+    "AO",
+    "Curvature"
+  ],
+  "custom_attributes": [
+    "_smooth_normal"
+  ],
+  "file": "life_ring.glb",
+  "objects": [
+    "life_ring"
+  ],
+  "tris": 1264
+}

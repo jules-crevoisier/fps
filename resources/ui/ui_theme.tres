@@ -1,4 +1,4 @@
-[gd_resource type="Theme" load_steps=4 format=3]
+[gd_resource type="Theme" load_steps=27 format=3]
 
 [ext_resource type="FontFile" path="res://resources/fonts/BarlowSemiCondensed-Medium.ttf" id="f_body"]
 [ext_resource type="FontFile" path="res://resources/fonts/BarlowCondensed-SemiBold.ttf" id="f_label"]
@@ -187,6 +187,99 @@ corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
 anti_aliasing = true
 
+[sub_resource type="StyleBoxFlat" id="LineReadOnly"]
+content_margin_left = 14.0
+content_margin_top = 10.0
+content_margin_right = 14.0
+content_margin_bottom = 10.0
+bg_color = Color(0.101961, 0.105882, 0.117647, 0.6)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.180392, 0.188235, 0.203922, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+anti_aliasing = true
+
+[sub_resource type="StyleBoxFlat" id="ScrollTrack"]
+content_margin_left = 5.0
+content_margin_right = 5.0
+bg_color = Color(0.137255, 0.141176, 0.156863, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+anti_aliasing = true
+
+[sub_resource type="StyleBoxFlat" id="ScrollGrabber"]
+content_margin_left = 5.0
+content_margin_right = 5.0
+bg_color = Color(0.886275, 0.231373, 0.2, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+anti_aliasing = true
+
+[sub_resource type="StyleBoxFlat" id="ScrollGrabberHighlight"]
+content_margin_left = 5.0
+content_margin_right = 5.0
+bg_color = Color(0.92, 0.46, 0.44, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+anti_aliasing = true
+
+[sub_resource type="StyleBoxFlat" id="ScrollGrabberPressed"]
+content_margin_left = 5.0
+content_margin_right = 5.0
+bg_color = Color(0.784314, 0.141176, 0.172549, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+anti_aliasing = true
+
+[sub_resource type="Gradient" id="GrabberGradNormal"]
+offsets = PackedFloat32Array(0, 0.78, 0.86, 1)
+colors = PackedColorArray(0.886275, 0.231373, 0.2, 1, 0.886275, 0.231373, 0.2, 1, 0.886275, 0.231373, 0.2, 0, 0.886275, 0.231373, 0.2, 0)
+
+[sub_resource type="GradientTexture2D" id="GrabberIconNormal"]
+gradient = SubResource("GrabberGradNormal")
+width = 18
+height = 18
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="Gradient" id="GrabberGradHighlight"]
+offsets = PackedFloat32Array(0, 0.78, 0.86, 1)
+colors = PackedColorArray(0.92, 0.46, 0.44, 1, 0.92, 0.46, 0.44, 1, 0.92, 0.46, 0.44, 0, 0.92, 0.46, 0.44, 0)
+
+[sub_resource type="GradientTexture2D" id="GrabberIconHighlight"]
+gradient = SubResource("GrabberGradHighlight")
+width = 18
+height = 18
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="Gradient" id="GrabberGradDisabled"]
+offsets = PackedFloat32Array(0, 0.78, 0.86, 1)
+colors = PackedColorArray(0.431373, 0.423529, 0.407843, 1, 0.431373, 0.423529, 0.407843, 1, 0.431373, 0.423529, 0.407843, 0, 0.431373, 0.423529, 0.407843, 0)
+
+[sub_resource type="GradientTexture2D" id="GrabberIconDisabled"]
+gradient = SubResource("GrabberGradDisabled")
+width = 18
+height = 18
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
 [resource]
 default_font = ExtResource("f_body")
 default_font_size = 25
@@ -215,16 +308,54 @@ CheckBox/fonts/font = ExtResource("f_body")
 CheckBox/font_sizes/font_size = 25
 LineEdit/colors/font_color = Color(0.94902, 0.937255, 0.913725, 1)
 LineEdit/colors/font_placeholder_color = Color(0.662745, 0.65098, 0.627451, 1)
+LineEdit/colors/font_uneditable_color = Color(0.431373, 0.423529, 0.407843, 1)
 LineEdit/colors/caret_color = Color(0.886275, 0.231373, 0.2, 1)
+LineEdit/colors/clear_button_color = Color(0.662745, 0.65098, 0.627451, 1)
+LineEdit/colors/clear_button_color_pressed = Color(0.886275, 0.231373, 0.2, 1)
 LineEdit/fonts/font = ExtResource("f_body")
 LineEdit/font_sizes/font_size = 25
 LineEdit/styles/normal = SubResource("LineNormal")
 LineEdit/styles/focus = SubResource("LineFocus")
+LineEdit/styles/read_only = SubResource("LineReadOnly")
 Panel/styles/panel = SubResource("Panel")
 PanelContainer/styles/panel = SubResource("Panel")
 HSlider/styles/slider = SubResource("SliderTrack")
 HSlider/styles/grabber_area = SubResource("SliderFill")
 HSlider/styles/grabber_area_highlight = SubResource("SliderFill")
+HSlider/icons/grabber = SubResource("GrabberIconNormal")
+HSlider/icons/grabber_highlight = SubResource("GrabberIconHighlight")
+HSlider/icons/grabber_disabled = SubResource("GrabberIconDisabled")
+HSlider/constants/center_grabber = 1
+OptionButton/colors/font_color = Color(0.94902, 0.937255, 0.913725, 1)
+OptionButton/colors/font_hover_color = Color(0.94902, 0.937255, 0.913725, 1)
+OptionButton/colors/font_pressed_color = Color(0.94902, 0.937255, 0.913725, 1)
+OptionButton/colors/font_hover_pressed_color = Color(0.94902, 0.937255, 0.913725, 1)
+OptionButton/colors/font_disabled_color = Color(0.431373, 0.423529, 0.407843, 1)
+OptionButton/colors/font_focus_color = Color(1, 1, 1, 1)
+OptionButton/fonts/font = ExtResource("f_label")
+OptionButton/font_sizes/font_size = 22
+OptionButton/styles/normal = SubResource("BtnNormal")
+OptionButton/styles/hover = SubResource("BtnHover")
+OptionButton/styles/pressed = SubResource("BtnPressed")
+OptionButton/styles/disabled = SubResource("BtnDisabled")
+OptionButton/styles/focus = SubResource("BtnFocus")
+OptionButton/styles/normal_mirrored = SubResource("BtnNormal")
+OptionButton/styles/hover_mirrored = SubResource("BtnHover")
+OptionButton/styles/pressed_mirrored = SubResource("BtnPressed")
+OptionButton/styles/disabled_mirrored = SubResource("BtnDisabled")
+OptionButton/constants/h_separation = 12
+OptionButton/constants/arrow_margin = 12
+OptionButton/constants/modulate_arrow = 1
+VScrollBar/styles/scroll = SubResource("ScrollTrack")
+VScrollBar/styles/scroll_focus = SubResource("ScrollTrack")
+VScrollBar/styles/grabber = SubResource("ScrollGrabber")
+VScrollBar/styles/grabber_highlight = SubResource("ScrollGrabberHighlight")
+VScrollBar/styles/grabber_pressed = SubResource("ScrollGrabberPressed")
+HScrollBar/styles/scroll = SubResource("ScrollTrack")
+HScrollBar/styles/scroll_focus = SubResource("ScrollTrack")
+HScrollBar/styles/grabber = SubResource("ScrollGrabber")
+HScrollBar/styles/grabber_highlight = SubResource("ScrollGrabberHighlight")
+HScrollBar/styles/grabber_pressed = SubResource("ScrollGrabberPressed")
 Label/colors/font_color = Color(0.94902, 0.937255, 0.913725, 1)
 Label/fonts/font = ExtResource("f_body")
 Label/font_sizes/font_size = 25

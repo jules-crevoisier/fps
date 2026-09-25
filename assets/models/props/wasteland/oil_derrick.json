@@ -1,0 +1,17 @@
+{
+  "smooth_normal": true,
+  "ao": true,
+  "curvature": true,
+  "color_attributes": [
+    "AO",
+    "Curvature"
+  ],
+  "custom_attributes": [
+    "_smooth_normal"
+  ],
+  "file": "oil_derrick.glb",
+  "objects": [
+    "oil_derrick"
+  ],
+  "tris": 6588
+}

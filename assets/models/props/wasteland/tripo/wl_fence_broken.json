@@ -1,0 +1,22 @@
+{
+  "smooth_normal": true,
+  "ao": true,
+  "curvature": true,
+  "masks": false,
+  "color_attributes": [
+    "AO",
+    "Curvature"
+  ],
+  "custom_attributes": [
+    "_smooth_normal"
+  ],
+  "file": "wl_fence_broken.glb",
+  "objects": [
+    "wl_fence_broken"
+  ],
+  "tris": 4000,
+  "painted": true,
+  "source": "C:\\Users\\srko\\Desktop\\fps\\assets\\incoming\\tripo\\studio\\wl_fence_broken.glb",
+  "floating_islands": [],
+  "nonmanifold_edges_remaining": 0
+}

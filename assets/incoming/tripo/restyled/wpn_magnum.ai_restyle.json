@@ -1,0 +1,107 @@
+{
+  "input": "C:\\Users\\srko\\Desktop\\fps\\assets\\incoming\\tripo\\restyled\\wpn_magnum.glb.prescaled.glb",
+  "output": "C:\\Users\\srko\\Desktop\\fps\\assets\\incoming\\tripo\\restyled\\wpn_magnum.glb",
+  "family": "weapons",
+  "budget_tris": 9000,
+  "final_tris": 6062,
+  "merged_vertices": 3486,
+  "nonmanifold_repair": {
+    "duplicate_faces": 0,
+    "sliver_faces": 5,
+    "remaining_nonmanifold_edges": 129
+  },
+  "removed_isolated_faces": 0,
+  "post_separation_dropped_faces": 8,
+  "post_bevel_dropped_faces": 0,
+  "post_bevel_nonmanifold_repair": {
+    "duplicate_faces": 2,
+    "sliver_faces": 11,
+    "remaining_nonmanifold_edges": 0,
+    "skipped_max_edges": []
+  },
+  "watertight_fix": {
+    "remeshed": false,
+    "remesh_failed": true,
+    "collapsed_to": null,
+    "dropped_kinds": [],
+    "dropped_disconnected_faces": 75
+  },
+  "slots": [
+    {
+      "original_material": "tripo_mat_542ca9a0",
+      "assigned_kind": "container_paint",
+      "face_count": 443,
+      "avg_delta_e_sample_to_kind": 21.597
+    },
+    {
+      "original_material": "tripo_mat_542ca9a0",
+      "assigned_kind": "corrugated_metal",
+      "face_count": 188,
+      "avg_delta_e_sample_to_kind": 6.326
+    },
+    {
+      "original_material": "tripo_mat_542ca9a0",
+      "assigned_kind": "cracked_concrete",
+      "face_count": 10,
+      "avg_delta_e_sample_to_kind": 20.133
+    },
+    {
+      "original_material": "tripo_mat_542ca9a0",
+      "assigned_kind": "painted_metal",
+      "face_count": 132,
+      "avg_delta_e_sample_to_kind": 8.592
+    },
+    {
+      "original_material": "tripo_mat_542ca9a0",
+      "assigned_kind": "rust",
+      "face_count": 6,
+      "avg_delta_e_sample_to_kind": 12.785
+    },
+    {
+      "original_material": "tripo_mat_542ca9a0",
+      "assigned_kind": "sand_dirt",
+      "face_count": 1641,
+      "avg_delta_e_sample_to_kind": 23.418
+    },
+    {
+      "original_material": "tripo_mat_542ca9a0",
+      "assigned_kind": "ship_deck",
+      "face_count": 1519,
+      "avg_delta_e_sample_to_kind": 4.464
+    },
+    {
+      "original_material": "tripo_mat_542ca9a0",
+      "assigned_kind": "wood_planks",
+      "face_count": 690,
+      "avg_delta_e_sample_to_kind": 7.95
+    }
+  ],
+  "assigned_kinds": [
+    "container_paint",
+    "corrugated_metal",
+    "cracked_concrete",
+    "painted_metal",
+    "rust",
+    "sand_dirt",
+    "ship_deck",
+    "wood_planks"
+  ],
+  "delta_e_output_to_palette": 0.0,
+  "bevel_class": "weapon_fp",
+  "nodes": [
+    "wpn_magnum",
+    "barillet",
+    "chien",
+    "Muzzle",
+    "Foregrip"
+  ],
+  "parts": [
+    "barillet",
+    "chien"
+  ],
+  "markers": [
+    "Muzzle",
+    "Foregrip"
+  ],
+  "turntable_contact_sheet": null
+}

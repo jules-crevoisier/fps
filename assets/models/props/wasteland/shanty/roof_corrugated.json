@@ -1,0 +1,17 @@
+{
+  "smooth_normal": true,
+  "ao": false,
+  "curvature": false,
+  "masks": false,
+  "color_attributes": [
+    "PlankTint"
+  ],
+  "custom_attributes": [
+    "_smooth_normal"
+  ],
+  "file": "roof_corrugated.glb",
+  "objects": [
+    "roof_corrugated"
+  ],
+  "tris": 616
+}

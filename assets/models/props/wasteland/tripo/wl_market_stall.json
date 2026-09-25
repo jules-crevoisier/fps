@@ -1,0 +1,22 @@
+{
+  "smooth_normal": true,
+  "ao": true,
+  "curvature": true,
+  "masks": false,
+  "color_attributes": [
+    "AO",
+    "Curvature"
+  ],
+  "custom_attributes": [
+    "_smooth_normal"
+  ],
+  "file": "wl_market_stall.glb",
+  "objects": [
+    "wl_market_stall"
+  ],
+  "tris": 5996,
+  "painted": true,
+  "source": "C:\\Users\\srko\\Desktop\\fps\\assets\\incoming\\tripo\\studio\\wl_market_stall.glb",
+  "floating_islands": [],
+  "nonmanifold_edges_remaining": 0
+}

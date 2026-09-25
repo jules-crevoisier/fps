@@ -1,0 +1,96 @@
+{
+  "file": "C:\\Users\\srko\\Desktop\\fps\\assets\\incoming\\tripo\\restyled\\wpn_eclair.glb",
+  "object_count": 2,
+  "asset_class": null,
+  "class_budget": null,
+  "budget_tris": 10000,
+  "objects": [
+    {
+      "name": "chargeur_superieur",
+      "tris": 1164,
+      "loose_verts": 0,
+      "boundary_edges": 0,
+      "bad_nonmanifold_edges": 0,
+      "closed": true,
+      "flipped_normals_suspect": false,
+      "floating_pieces": [],
+      "allowed_rigid_islands": 0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "rotation_deg": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transforms_applied": true,
+      "origin_at_bottom_center": false,
+      "uv_present": false,
+      "vertex_color_attributes": [
+        "Color"
+      ],
+      "color0_present": true,
+      "color0_flat_suspect": false,
+      "material_names": [
+        "ship_deck",
+        "sand_dirt",
+        "cracked_concrete",
+        "painted_metal",
+        "asphalt"
+      ],
+      "unknown_material_names": []
+    },
+    {
+      "name": "wpn_eclair",
+      "tris": 1022,
+      "loose_verts": 0,
+      "boundary_edges": 32,
+      "bad_nonmanifold_edges": 0,
+      "closed": false,
+      "flipped_normals_suspect": false,
+      "floating_pieces": [],
+      "allowed_rigid_islands": 0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "rotation_deg": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transforms_applied": true,
+      "origin_at_bottom_center": true,
+      "uv_present": false,
+      "vertex_color_attributes": [
+        "Color"
+      ],
+      "color0_present": true,
+      "color0_flat_suspect": false,
+      "material_names": [
+        "ship_deck",
+        "sand_dirt",
+        "cracked_concrete",
+        "asphalt"
+      ],
+      "unknown_material_names": []
+    }
+  ],
+  "warnings": [
+    "chargeur_superieur: origine hors du centre-bas de la bbox (peut être volontaire — arme/gant)",
+    "chargeur_superieur: aucune UV map",
+    "wpn_eclair: 32 arête(s) de bord ouvert (normal si non-fermé)",
+    "wpn_eclair: aucune UV map"
+  ],
+  "failures": [],
+  "dims_m": {
+    "largeur_x": 0.3229,
+    "hauteur_z": 0.2226,
+    "profondeur_y": 0.5352
+  },
+  "tris": 2186,
+  "ok": true
+}

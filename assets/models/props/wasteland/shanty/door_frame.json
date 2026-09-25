@@ -1,0 +1,17 @@
+{
+  "smooth_normal": true,
+  "ao": false,
+  "curvature": false,
+  "masks": false,
+  "color_attributes": [
+    "PlankTint"
+  ],
+  "custom_attributes": [
+    "_smooth_normal"
+  ],
+  "file": "door_frame.glb",
+  "objects": [
+    "door_frame"
+  ],
+  "tris": 176
+}

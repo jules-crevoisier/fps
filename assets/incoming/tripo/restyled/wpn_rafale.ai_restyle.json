@@ -1,0 +1,91 @@
+{
+  "input": "C:\\Users\\srko\\Desktop\\fps\\assets\\incoming\\tripo\\restyled\\wpn_rafale.glb.prescaled.glb",
+  "output": "C:\\Users\\srko\\Desktop\\fps\\assets\\incoming\\tripo\\restyled\\wpn_rafale.glb",
+  "family": "weapons",
+  "budget_tris": 10000,
+  "final_tris": 9028,
+  "merged_vertices": 1163,
+  "nonmanifold_repair": {
+    "duplicate_faces": 0,
+    "sliver_faces": 0,
+    "remaining_nonmanifold_edges": 0
+  },
+  "removed_isolated_faces": 0,
+  "post_separation_dropped_faces": 236,
+  "post_bevel_dropped_faces": 0,
+  "post_bevel_nonmanifold_repair": {
+    "duplicate_faces": 0,
+    "sliver_faces": 0,
+    "remaining_nonmanifold_edges": 0,
+    "skipped_max_edges": []
+  },
+  "watertight_fix": {
+    "remeshed": false,
+    "remesh_failed": true,
+    "collapsed_to": null,
+    "dropped_kinds": [],
+    "dropped_disconnected_faces": 1274
+  },
+  "slots": [
+    {
+      "original_material": "tripo_mat_440d3f8c",
+      "assigned_kind": "asphalt",
+      "face_count": 305,
+      "avg_delta_e_sample_to_kind": 15.542
+    },
+    {
+      "original_material": "tripo_mat_440d3f8c",
+      "assigned_kind": "container_paint",
+      "face_count": 257,
+      "avg_delta_e_sample_to_kind": 39.488
+    },
+    {
+      "original_material": "tripo_mat_440d3f8c",
+      "assigned_kind": "rubber_tire",
+      "face_count": 94,
+      "avg_delta_e_sample_to_kind": 15.454
+    },
+    {
+      "original_material": "tripo_mat_440d3f8c",
+      "assigned_kind": "sand_dirt",
+      "face_count": 276,
+      "avg_delta_e_sample_to_kind": 27.638
+    },
+    {
+      "original_material": "tripo_mat_440d3f8c",
+      "assigned_kind": "ship_deck",
+      "face_count": 3836,
+      "avg_delta_e_sample_to_kind": 6.244
+    },
+    {
+      "original_material": "tripo_mat_440d3f8c",
+      "assigned_kind": "wood_planks",
+      "face_count": 12,
+      "avg_delta_e_sample_to_kind": 11.724
+    }
+  ],
+  "assigned_kinds": [
+    "asphalt",
+    "container_paint",
+    "rubber_tire",
+    "sand_dirt",
+    "ship_deck",
+    "wood_planks"
+  ],
+  "delta_e_output_to_palette": 0.0,
+  "bevel_class": "weapon_fp",
+  "nodes": [
+    "wpn_rafale",
+    "chargeur",
+    "Muzzle",
+    "Foregrip"
+  ],
+  "parts": [
+    "chargeur"
+  ],
+  "markers": [
+    "Muzzle",
+    "Foregrip"
+  ],
+  "turntable_contact_sheet": null
+}

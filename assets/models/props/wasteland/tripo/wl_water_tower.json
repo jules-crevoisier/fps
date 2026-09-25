@@ -1,0 +1,131 @@
+{
+  "smooth_normal": true,
+  "ao": true,
+  "curvature": true,
+  "masks": false,
+  "color_attributes": [
+    "AO",
+    "Curvature"
+  ],
+  "custom_attributes": [
+    "_smooth_normal"
+  ],
+  "file": "wl_water_tower.glb",
+  "objects": [
+    "wl_water_tower"
+  ],
+  "tris": 3564,
+  "painted": true,
+  "source": "C:\\Users\\srko\\Desktop\\fps\\assets\\incoming\\tripo\\studio\\wl_water_tower.glb",
+  "floating_islands": [
+    {
+      "n_faces": 44,
+      "gap_m": 3.6757
+    },
+    {
+      "n_faces": 44,
+      "gap_m": 2.9464
+    },
+    {
+      "n_faces": 8,
+      "gap_m": 2.8725
+    },
+    {
+      "n_faces": 8,
+      "gap_m": 2.8725
+    },
+    {
+      "n_faces": 8,
+      "gap_m": 2.8725
+    },
+    {
+      "n_faces": 8,
+      "gap_m": 2.8725
+    },
+    {
+      "n_faces": 44,
+      "gap_m": 2.2277
+    },
+    {
+      "n_faces": 44,
+      "gap_m": 1.5095
+    },
+    {
+      "n_faces": 44,
+      "gap_m": 0.8354
+    },
+    {
+      "n_faces": 10,
+      "gap_m": 0.7132
+    },
+    {
+      "n_faces": 10,
+      "gap_m": 0.7035
+    },
+    {
+      "n_faces": 10,
+      "gap_m": 0.6937
+    },
+    {
+      "n_faces": 10,
+      "gap_m": 0.6937
+    },
+    {
+      "n_faces": 10,
+      "gap_m": 0.6888
+    },
+    {
+      "n_faces": 10,
+      "gap_m": 0.6888
+    },
+    {
+      "n_faces": 10,
+      "gap_m": 0.6839
+    },
+    {
+      "n_faces": 10,
+      "gap_m": 0.6839
+    },
+    {
+      "n_faces": 8,
+      "gap_m": 0.3908
+    },
+    {
+      "n_faces": 8,
+      "gap_m": 0.3908
+    },
+    {
+      "n_faces": 8,
+      "gap_m": 0.3762
+    },
+    {
+      "n_faces": 8,
+      "gap_m": 0.3762
+    },
+    {
+      "n_faces": 30,
+      "gap_m": 0.3615
+    },
+    {
+      "n_faces": 30,
+      "gap_m": 0.3615
+    },
+    {
+      "n_faces": 30,
+      "gap_m": 0.3615
+    },
+    {
+      "n_faces": 30,
+      "gap_m": 0.3615
+    },
+    {
+      "n_faces": 44,
+      "gap_m": 0.2198
+    },
+    {
+      "n_faces": 44,
+      "gap_m": 0.2198
+    }
+  ],
+  "nonmanifold_edges_remaining": 0
+}

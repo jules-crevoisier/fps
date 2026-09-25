@@ -1,0 +1,13 @@
+{
+  "tool": "Tripo Studio — Smart Mesh (x4) + texture",
+  "concept_image_tool": "Nano Banana Pro (générateur d'images de Tripo Studio)",
+  "tripo_task_id": "7a9f028c-343a-497c-afe5-55c287b18af6",
+  "tripo_task_url": "https://studio.tripo3d.ai/fr/workspace/generate/7a9f028c-343a-497c-afe5-55c287b18af6",
+  "source_glb": "assets/incoming/tripo/studio/wl_garage.glb",
+  "prompt": null,
+  "prompt_source": "non archivé",
+  "date": "2026-09-25",
+  "post_processing": "tools/blender/ai_import_painted.py (import « peinture conservée » : fusion des sommets quasi confondus, retrait des îlots < 1 % de la diagonale, décimation collapse jusqu'au budget de tris, échelle uniforme, pivot au sol centré, ALBÉDO TRIPO CONSERVÉ tel quel (jamais ai_restyle.py, qui le jette et remesh en voxel) ; manifeste tools/ai3d/manifests/painted_env.yaml)",
+  "licence": "Sorties Tripo Studio générées avec le compte de l'auteur ; usage soumis aux conditions Tripo AI du plan du compte (preuve hors dépôt).",
+  "notes": "Bâtiment « coin beauté », ART-82/83. Hauteur cible 5,0 m (painted_env.yaml). Réutilisé aussi en LOD lointain (tripo_far/wl_garage_far_{a,b}.glb). Références : assets/incoming/tripo/studio/wave1_tasks.json (task id), docs/assets/CREDITS.md (coût/date), tools/ai3d/manifests/painted_env.yaml (hauteur/budget cible)."
+}

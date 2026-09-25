@@ -1,0 +1,53 @@
+{
+  "file": "C:\\Users\\srko\\Desktop\\fps\\assets\\incoming\\tripo\\restyled\\cs_ship_mast.glb",
+  "object_count": 1,
+  "asset_class": null,
+  "class_budget": null,
+  "budget_tris": 5000,
+  "objects": [
+    {
+      "name": "cs_ship_mast",
+      "tris": 869,
+      "loose_verts": 0,
+      "boundary_edges": 61,
+      "bad_nonmanifold_edges": 0,
+      "closed": false,
+      "flipped_normals_suspect": false,
+      "floating_pieces": [],
+      "allowed_rigid_islands": 0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "rotation_deg": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transforms_applied": true,
+      "origin_at_bottom_center": true,
+      "uv_present": true,
+      "vertex_color_attributes": [
+        "Color"
+      ],
+      "color0_present": true,
+      "color0_flat_suspect": false,
+      "material_names": [
+        "cracked_concrete"
+      ],
+      "unknown_material_names": []
+    }
+  ],
+  "warnings": [
+    "cs_ship_mast: 61 arête(s) de bord ouvert (normal si non-fermé)"
+  ],
+  "failures": [],
+  "dims_m": {
+    "largeur_x": 3.066,
+    "hauteur_z": 1.4597,
+    "profondeur_y": 1.0611
+  },
+  "tris": 869,
+  "ok": true
+}

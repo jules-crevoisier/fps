@@ -1,0 +1,143 @@
+{
+  "file": "C:\\Users\\srko\\Desktop\\fps\\assets\\incoming\\tripo\\restyled\\wpn_magnum.glb",
+  "object_count": 3,
+  "asset_class": null,
+  "class_budget": null,
+  "budget_tris": 9000,
+  "objects": [
+    {
+      "name": "barillet",
+      "tris": 2027,
+      "loose_verts": 0,
+      "boundary_edges": 79,
+      "bad_nonmanifold_edges": 0,
+      "closed": false,
+      "flipped_normals_suspect": false,
+      "floating_pieces": [],
+      "allowed_rigid_islands": 0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "rotation_deg": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transforms_applied": true,
+      "origin_at_bottom_center": false,
+      "uv_present": true,
+      "vertex_color_attributes": [
+        "Color"
+      ],
+      "color0_present": true,
+      "color0_flat_suspect": false,
+      "material_names": [
+        "wood_planks",
+        "container_paint",
+        "ship_deck",
+        "corrugated_metal",
+        "rust",
+        "painted_metal",
+        "sand_dirt",
+        "cracked_concrete"
+      ],
+      "unknown_material_names": []
+    },
+    {
+      "name": "chien",
+      "tris": 1160,
+      "loose_verts": 0,
+      "boundary_edges": 72,
+      "bad_nonmanifold_edges": 0,
+      "closed": false,
+      "flipped_normals_suspect": false,
+      "floating_pieces": [],
+      "allowed_rigid_islands": 0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "rotation_deg": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transforms_applied": true,
+      "origin_at_bottom_center": false,
+      "uv_present": true,
+      "vertex_color_attributes": [
+        "Color"
+      ],
+      "color0_present": true,
+      "color0_flat_suspect": false,
+      "material_names": [
+        "wood_planks",
+        "container_paint",
+        "ship_deck",
+        "corrugated_metal",
+        "rust",
+        "painted_metal",
+        "sand_dirt"
+      ],
+      "unknown_material_names": []
+    },
+    {
+      "name": "wpn_magnum",
+      "tris": 2875,
+      "loose_verts": 0,
+      "boundary_edges": 177,
+      "bad_nonmanifold_edges": 0,
+      "closed": false,
+      "flipped_normals_suspect": false,
+      "floating_pieces": [],
+      "allowed_rigid_islands": 0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "rotation_deg": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transforms_applied": true,
+      "origin_at_bottom_center": true,
+      "uv_present": true,
+      "vertex_color_attributes": [
+        "Color"
+      ],
+      "color0_present": true,
+      "color0_flat_suspect": false,
+      "material_names": [
+        "wood_planks",
+        "container_paint",
+        "ship_deck",
+        "corrugated_metal",
+        "rust",
+        "painted_metal",
+        "sand_dirt",
+        "cracked_concrete"
+      ],
+      "unknown_material_names": []
+    }
+  ],
+  "warnings": [
+    "barillet: 79 arête(s) de bord ouvert (normal si non-fermé)",
+    "barillet: origine hors du centre-bas de la bbox (peut être volontaire — arme/gant)",
+    "chien: 72 arête(s) de bord ouvert (normal si non-fermé)",
+    "chien: origine hors du centre-bas de la bbox (peut être volontaire — arme/gant)",
+    "wpn_magnum: 177 arête(s) de bord ouvert (normal si non-fermé)"
+  ],
+  "failures": [],
+  "dims_m": {
+    "largeur_x": 0.38,
+    "hauteur_z": 0.1951,
+    "profondeur_y": 0.0659
+  },
+  "tris": 6062,
+  "ok": true
+}

@@ -1,10 +1,22 @@
 // ink_sky.gdshader
-// Big blue sky (design.md v2 SS4 "Lighting script"): a zenith-to-horizon
-// gradient (per-map colours, set by LevelLook.gd from Cartoon.map_palette()),
-// a soft warm sun disc, and painted, FLAT-BOTTOMED cumulus clouds sitting
-// only 8-35 degrees above the horizon at 20-35% coverage -- below 8 degrees is
-// plain haze, so rooftop/building silhouettes stay readable against it. No
-// ink line on the clouds (v1's dark ring is gone: "Clouds: ... no ink").
+// Big blue sky (design.md v2 SS4 "Lighting script", retuned v3 per
+// STYLE_BIBLE.md SS7.6): a zenith-to-horizon gradient (per-map colours, set
+// by LevelLook.gd from Cartoon.map_palette()), a soft warm sun disc, and
+// painted, FLAT-BOTTOMED cumulus clouds sitting only 6-30 degrees above the
+// horizon at ~32% coverage (3 to 5 big, legible masses per half-sky instead
+// of v2's "30 crumbs") -- below 6 degrees is plain haze, so the coulisses
+// ring (scripts/levels/Backdrop.gd) and rooftop/building silhouettes stay
+// readable against it. No ink line on the clouds (v1's dark ring is gone:
+// "Clouds: ... no ink").
+//
+// ART-76 (docs/research/09_wasteland_vertical_slice.md SS d.6, CHK-13 "3 a
+// 5 masses nuageuses par demi-ciel, aucune sous 6 degres") re-verified this
+// exact cloud band/coverage/scale against that criterion: the values below
+// were already the ones calibrated for it (see the v3 note above and
+// cloud_coverage's own comment further down) and are RELOCKED by
+// tests/levels/test_backdrop.gd rather than re-tuned blind -- changing them
+// again needs a fresh render + tools/review/style_check.py pass, not a
+// guess from reading the noise math alone.
 shader_type sky;
 
 uniform vec4 sky_zenith_color : source_color = vec4(0.243, 0.525, 0.878, 1.0);   // #3E86E0
@@ -12,18 +24,29 @@ uniform vec4 sky_horizon_color : source_color = vec4(0.804, 0.910, 0.973, 1.0); 
 uniform float horizon_blur : hint_range(0.01, 0.4) = 0.12;
 uniform vec4 ground_color : source_color = vec4(0.45, 0.42, 0.37, 1.0);
 
+// v3 (STYLE_BIBLE.md SS7.6, tache ART-06) : disque plus large + halo plus
+// doux mais moins intense -- un soleil peint plus present sans laver le ciel.
 uniform vec4 sun_color : source_color = vec4(1.0, 0.941, 0.784, 1.0); // #FFF0C8
-uniform float sun_disc_radius : hint_range(0.005, 0.1) = 0.018;
-uniform float sun_glow_radius : hint_range(0.02, 0.4) = 0.12;
-uniform float sun_glow_strength : hint_range(0.0, 1.0) = 0.45;
+uniform float sun_disc_radius : hint_range(0.005, 0.1) = 0.025;
+uniform float sun_glow_radius : hint_range(0.02, 0.4) = 0.15;
+uniform float sun_glow_strength : hint_range(0.0, 1.0) = 0.35;
 
-// Cumulus band (design.md v2 SS4): flat-bottomed, 2-tone, no ink.
+// Cumulus band v3 (STYLE_BIBLE.md SS7.6) : 3 a 5 GROSSES masses lisibles par
+// demi-ciel (cloud_scale 5.0 -> 3.0, moins de cellules de bruit par demi-tour
+// de ciel) au lieu de "30 miettes" v2, bande plus basse/etroite (6-30 deg au
+// lieu de 8-35) et bord de seuil plus net (0.04 au lieu de 0.12 : 2 tons
+// francs, pas un dégradé mou) -- couverture 0.32 (un poil plus dense que
+// 0.28 pour rester a 3-5 masses malgre l'echelle reduite, cf CHK-13).
 uniform vec4 cloud_lit_color : source_color = vec4(1.0, 0.973, 0.925, 1.0);   // #FFF8EC
 uniform vec4 cloud_shade_color : source_color = vec4(0.655, 0.722, 0.878, 1.0); // #A7B8E0
-uniform float cloud_band_low_deg : hint_range(0.0, 30.0) = 8.0;
-uniform float cloud_band_high_deg : hint_range(10.0, 60.0) = 35.0;
-uniform float cloud_coverage : hint_range(0.0, 1.0) = 0.28;
-uniform float cloud_scale : hint_range(1.0, 20.0) = 5.0;
+uniform float cloud_band_low_deg : hint_range(0.0, 30.0) = 6.0;
+uniform float cloud_band_high_deg : hint_range(10.0, 60.0) = 30.0;
+uniform float cloud_coverage : hint_range(0.0, 1.0) = 0.32;
+uniform float cloud_scale : hint_range(1.0, 20.0) = 3.0;
+// Largeur du seuil de bord de nuage (STYLE_BIBLE.md SS7.6 "0,12 -> 0,04") :
+// bord net, deux tons francs plutot qu'un flou -- voir son usage plus bas
+// (`threshold + cloud_edge_width`).
+uniform float cloud_edge_width : hint_range(0.01, 0.2) = 0.04;
 
 // Cheap 3D value noise (seamless on a sky dome: it's a function of the
 // EYEDIR unit vector, not a wrapped 2D UV, so there is no seam to hide).
@@ -86,7 +109,7 @@ void sky() {
 	float top_fade = 1.0 - smoothstep(0.7, 1.0, band_t);
 	float density = cloud_fbm(EYEDIR * cloud_scale) * base_cut * top_fade;
 	float threshold = 1.0 - clamp(cloud_coverage, 0.0, 1.0);
-	float cloud_mask = smoothstep(threshold, threshold + 0.12, density);
+	float cloud_mask = smoothstep(threshold, threshold + cloud_edge_width, density);
 
 	// 2-tone shading: the flat underside is the cool shade tone, the puffy
 	// upper part is the warm lit tone -- a hard-ish step, not a gradient,

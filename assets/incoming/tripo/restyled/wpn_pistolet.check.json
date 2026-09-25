@@ -1,0 +1,138 @@
+{
+  "file": "C:\\Users\\srko\\Desktop\\fps\\assets\\incoming\\tripo\\restyled\\wpn_pistolet.glb",
+  "object_count": 3,
+  "asset_class": null,
+  "class_budget": null,
+  "budget_tris": 8000,
+  "objects": [
+    {
+      "name": "chargeur",
+      "tris": 753,
+      "loose_verts": 0,
+      "boundary_edges": 19,
+      "bad_nonmanifold_edges": 0,
+      "closed": false,
+      "flipped_normals_suspect": false,
+      "floating_pieces": [],
+      "allowed_rigid_islands": 0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "rotation_deg": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transforms_applied": true,
+      "origin_at_bottom_center": false,
+      "uv_present": true,
+      "vertex_color_attributes": [
+        "Color"
+      ],
+      "color0_present": true,
+      "color0_flat_suspect": false,
+      "material_names": [
+        "ship_deck",
+        "painted_metal",
+        "cracked_concrete",
+        "dirty_glass",
+        "corrugated_metal",
+        "asphalt"
+      ],
+      "unknown_material_names": []
+    },
+    {
+      "name": "culasse",
+      "tris": 1454,
+      "loose_verts": 0,
+      "boundary_edges": 31,
+      "bad_nonmanifold_edges": 0,
+      "closed": false,
+      "flipped_normals_suspect": false,
+      "floating_pieces": [],
+      "allowed_rigid_islands": 0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "rotation_deg": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transforms_applied": true,
+      "origin_at_bottom_center": false,
+      "uv_present": true,
+      "vertex_color_attributes": [
+        "Color"
+      ],
+      "color0_present": true,
+      "color0_flat_suspect": false,
+      "material_names": [
+        "ship_deck",
+        "painted_metal",
+        "cracked_concrete",
+        "dirty_glass",
+        "corrugated_metal",
+        "asphalt"
+      ],
+      "unknown_material_names": []
+    },
+    {
+      "name": "wpn_pistolet",
+      "tris": 1911,
+      "loose_verts": 0,
+      "boundary_edges": 5,
+      "bad_nonmanifold_edges": 0,
+      "closed": false,
+      "flipped_normals_suspect": false,
+      "floating_pieces": [],
+      "allowed_rigid_islands": 0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "rotation_deg": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transforms_applied": true,
+      "origin_at_bottom_center": true,
+      "uv_present": true,
+      "vertex_color_attributes": [
+        "Color"
+      ],
+      "color0_present": true,
+      "color0_flat_suspect": false,
+      "material_names": [
+        "ship_deck",
+        "painted_metal",
+        "cracked_concrete",
+        "asphalt",
+        "container_paint",
+        "sand_dirt"
+      ],
+      "unknown_material_names": []
+    }
+  ],
+  "warnings": [
+    "chargeur: 19 arête(s) de bord ouvert (normal si non-fermé)",
+    "chargeur: origine hors du centre-bas de la bbox (peut être volontaire — arme/gant)",
+    "culasse: 31 arête(s) de bord ouvert (normal si non-fermé)",
+    "culasse: origine hors du centre-bas de la bbox (peut être volontaire — arme/gant)",
+    "wpn_pistolet: 5 arête(s) de bord ouvert (normal si non-fermé)"
+  ],
+  "failures": [],
+  "dims_m": {
+    "largeur_x": 0.33,
+    "hauteur_z": 0.2539,
+    "profondeur_y": 0.0995
+  },
+  "tris": 4118,
+  "ok": true
+}

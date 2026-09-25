@@ -1,0 +1,14 @@
+{
+  "tool": "Tripo Studio (peau/composite découpée depuis la coque wl_diligence.glb, voir sa provenance pour le détail Smart Mesh/Modèle HD : Tripo Studio — Modèle HD H3.1 sans Ultra (2K))",
+  "concept_image_tool": "Nano Banana Pro (générateur d'images de Tripo Studio)",
+  "tripo_task_id": "e3e0eefc-7c80-48ad-849e-bbd4df0d8846",
+  "tripo_task_url": "https://studio.tripo3d.ai/fr/workspace/generate/e3e0eefc-7c80-48ad-849e-bbd4df0d8846",
+  "source_generation_date": "2026-09-25",
+  "source_shell_glb": "assets/models/props/wasteland/tripo/wl_diligence.glb",
+  "prompt": null,
+  "prompt_source": "non archivé (peau/composite découpé(e) depuis la coque déjà importée, aucune nouvelle génération Tripo pour ce fichier)",
+  "date": "2026-09-25",
+  "post_processing": "tools/blender/shell_to_skin.py (mode shell (coque de la diligence)) — voir docs/art/WASTELAND_V4_ART_PLAN.md §2 « Traitement par volume » et ArtCovers.gd::_skin_diligence, ART-92/96",
+  "licence": "Sorties Tripo Studio générées avec le compte de l'auteur ; usage soumis aux conditions Tripo AI du plan du compte (preuve hors dépôt).",
+  "notes": "Corps de la diligence (étirement 14,4 %/14,1 %/0 % en largeur/profondeur/hauteur, ≤ 15 % au contrat ART-92). Complétée par skins/diligence_crates.glb (même coque source) pour combler la profondeur de la boîte Diligence."
+}

@@ -1,0 +1,56 @@
+{
+  "file": "C:\\Users\\srko\\Desktop\\fps\\assets\\incoming\\tripo\\restyled\\gp_borne.glb",
+  "object_count": 1,
+  "asset_class": null,
+  "class_budget": null,
+  "budget_tris": 1200,
+  "objects": [
+    {
+      "name": "gp_borne",
+      "tris": 1200,
+      "loose_verts": 0,
+      "boundary_edges": 0,
+      "bad_nonmanifold_edges": 0,
+      "closed": true,
+      "flipped_normals_suspect": false,
+      "floating_pieces": [],
+      "allowed_rigid_islands": 0,
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "rotation_deg": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transforms_applied": true,
+      "origin_at_bottom_center": true,
+      "uv_present": false,
+      "vertex_color_attributes": [
+        "Color"
+      ],
+      "color0_present": true,
+      "color0_flat_suspect": false,
+      "material_names": [
+        "cracked_concrete",
+        "painted_metal",
+        "ship_deck",
+        "sand_dirt"
+      ],
+      "unknown_material_names": []
+    }
+  ],
+  "warnings": [
+    "gp_borne: aucune UV map"
+  ],
+  "failures": [],
+  "dims_m": {
+    "largeur_x": 0.6574,
+    "hauteur_z": 2.5426,
+    "profondeur_y": 0.5856
+  },
+  "tris": 1200,
+  "ok": true
+}

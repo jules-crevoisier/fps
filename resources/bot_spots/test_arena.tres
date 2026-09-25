@@ -1,0 +1,500 @@
+[gd_resource type="Resource" script_class="BotSpots" format=3]
+
+[ext_resource type="Script" path="res://scripts/ai/BotSpots.gd" id="1_fohkq"]
+
+[resource]
+script = ExtResource("1_fohkq")
+map_id = "test_arena"
+spots = Array[Dictionary]([{
+"approach_points": PackedVector3Array(-6.6000004, 0.4000001, -8.6, -4.6000004, 0.4000001, -8.6, -8.6, 0.4000001, -6.6000004, -6.6000004, 0.4000001, -6.6000004, -8.6, 0.4000001, -4.6000004),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, true, true]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, true, true]),
+"position": Vector3(-8.6, 0.4000001, -8.6),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-8.6, 0.4000001, -8.6, -4.6000004, 0.4000001, -8.6, -8.6, 0.4000001, -6.6000004, -6.6000004, 0.4000001, -6.6000004, -4.6000004, 0.4000001, -6.6000004, -6.6000004, 0.4000001, -4.6000004),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, true, true]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, true, true]),
+"position": Vector3(-6.6000004, 0.4000001, -8.6),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-8.6, 0.4000001, -8.6, -6.6000004, 0.4000001, -8.6, -2.6000004, 0.4000001, -8.6, -6.6000004, 0.4000001, -6.6000004, -4.6000004, 0.4000001, -6.6000004, -2.6000004, 0.4000001, -6.6000004, -4.6000004, 0.4000001, -4.6000004),
+"coverage_crouch": Array[bool]([false, true, true, true, true, true, true, false]),
+"coverage_stand": Array[bool]([false, true, true, true, true, true, true, false]),
+"position": Vector3(-4.6000004, 0.4000001, -8.6),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-4.6000004, 0.4000001, -8.6, -4.6000004, 0.4000001, -6.6000004, -2.6000004, 0.4000001, -6.6000004, -2.6000004, 0.4000001, -4.6000004),
+"coverage_crouch": Array[bool]([false, true, true, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, true, true, true, true, true, false, false]),
+"position": Vector3(-2.6000004, 0.4000001, -8.6),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(3.3999996, 0.4000001, -8.6, 5.3999996, 0.4000001, -8.6, 1.3999996, 0.4000001, -6.6000004, 3.3999996, 0.4000001, -6.6000004, 1.3999996, 0.4000001, -4.6000004),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, true, true]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, true, true]),
+"position": Vector3(1.3999996, 0.4000001, -8.6),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(1.3999996, 0.4000001, -8.6, 5.3999996, 0.4000001, -8.6, 7.3999996, 0.4000001, -8.6, 1.3999996, 0.4000001, -6.6000004, 3.3999996, 0.4000001, -6.6000004, 5.3999996, 0.4000001, -6.6000004),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, true, true]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, true, true]),
+"position": Vector3(3.3999996, 0.4000001, -8.6),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(1.3999996, 0.4000001, -8.6, 3.3999996, 0.4000001, -8.6, 7.3999996, 0.4000001, -8.6, 3.3999996, 0.4000001, -6.6000004, 5.3999996, 0.4000001, -6.6000004, 7.3999996, 0.4000001, -6.6000004, 5.3999996, 0.4000001, -4.6000004),
+"coverage_crouch": Array[bool]([false, false, true, true, true, true, true, false]),
+"coverage_stand": Array[bool]([false, false, true, true, true, true, true, false]),
+"position": Vector3(5.3999996, 0.4000001, -8.6),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(3.3999996, 0.4000001, -8.6, 5.3999996, 0.4000001, -8.6, 9.4, 0.4000001, -8.6, 5.3999996, 0.4000001, -6.6000004, 7.3999996, 0.4000001, -6.6000004, 9.4, 0.4000001, -6.6000004, 7.3999996, 0.4000001, -4.6000004),
+"coverage_crouch": Array[bool]([false, true, true, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, true, true, true, true, true, false, false]),
+"position": Vector3(7.3999996, 0.4000001, -8.6),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(7.3999996, 0.4000001, -8.6, 7.3999996, 0.4000001, -6.6000004, 9.4, 0.4000001, -6.6000004, 9.4, 0.4000001, -4.6000004),
+"coverage_crouch": Array[bool]([false, true, true, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, true, true, true, true, true, false, false]),
+"position": Vector3(9.4, 0.4000001, -8.6),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-8.6, 0.4000001, -8.6, -6.6000004, 0.4000001, -8.6, -6.6000004, 0.4000001, -6.6000004, -4.6000004, 0.4000001, -6.6000004, -8.6, 0.4000001, -4.6000004, -6.6000004, 0.4000001, -4.6000004, -8.6, 0.4000001, -2.6000004),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, true, true]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, true, true]),
+"position": Vector3(-8.6, 0.4000001, -6.6000004),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-8.6, 0.4000001, -8.6, -6.6000004, 0.4000001, -8.6, -4.6000004, 0.4000001, -8.6, -8.6, 0.4000001, -6.6000004, -4.6000004, 0.4000001, -6.6000004, -2.6000004, 0.4000001, -6.6000004, -8.6, 0.4000001, -4.6000004, -6.6000004, 0.4000001, -4.6000004, -4.6000004, 0.4000001, -4.6000004, -6.6000004, 0.4000001, -2.6000004),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, true, true]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, true, true]),
+"position": Vector3(-6.6000004, 0.4000001, -6.6000004),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-6.6000004, 0.4000001, -8.6, -4.6000004, 0.4000001, -8.6, -2.6000004, 0.4000001, -8.6, -8.6, 0.4000001, -6.6000004, -6.6000004, 0.4000001, -6.6000004, -2.6000004, 0.4000001, -6.6000004, -6.6000004, 0.4000001, -4.6000004, -4.6000004, 0.4000001, -4.6000004, -2.6000004, 0.4000001, -4.6000004, -4.6000004, 0.4000001, -2.6000004),
+"coverage_crouch": Array[bool]([false, true, true, true, true, true, true, false]),
+"coverage_stand": Array[bool]([false, true, true, true, true, true, true, false]),
+"position": Vector3(-4.6000004, 0.4000001, -6.6000004),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-4.6000004, 0.4000001, -8.6, -2.6000004, 0.4000001, -8.6, -6.6000004, 0.4000001, -6.6000004, -4.6000004, 0.4000001, -6.6000004, -4.6000004, 0.4000001, -4.6000004, -2.6000004, 0.4000001, -4.6000004, -2.6000004, 0.4000001, -2.6000004),
+"coverage_crouch": Array[bool]([false, true, true, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, true, true, true, true, true, false, false]),
+"position": Vector3(-2.6000004, 0.4000001, -6.6000004),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(1.3999996, 0.4000001, -8.6, 3.3999996, 0.4000001, -8.6, 3.3999996, 0.4000001, -6.6000004, 1.3999996, 0.4000001, -4.6000004, 3.3999996, 0.4000001, -4.6000004, 1.3999996, 0.4000001, -2.6000004),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, true, true]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, true, true]),
+"position": Vector3(1.3999996, 0.4000001, -6.6000004),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(1.3999996, 0.4000001, -8.6, 3.3999996, 0.4000001, -8.6, 5.3999996, 0.4000001, -8.6, 1.3999996, 0.4000001, -6.6000004, 5.3999996, 0.4000001, -6.6000004, 1.3999996, 0.4000001, -4.6000004, 3.3999996, 0.4000001, -4.6000004, 5.3999996, 0.4000001, -4.6000004, 3.3999996, 0.4000001, -2.6000004),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, true, true]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, true, true]),
+"position": Vector3(3.3999996, 0.4000001, -6.6000004),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(3.3999996, 0.4000001, -8.6, 5.3999996, 0.4000001, -8.6, 7.3999996, 0.4000001, -8.6, 3.3999996, 0.4000001, -6.6000004, 7.3999996, 0.4000001, -6.6000004, 9.4, 0.4000001, -6.6000004, 3.3999996, 0.4000001, -4.6000004, 5.3999996, 0.4000001, -4.6000004, 7.3999996, 0.4000001, -4.6000004, 5.3999996, 0.4000001, -2.6000004),
+"coverage_crouch": Array[bool]([false, false, true, true, true, true, true, false]),
+"coverage_stand": Array[bool]([false, false, true, true, true, true, true, false]),
+"position": Vector3(5.3999996, 0.4000001, -6.6000004),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(5.3999996, 0.4000001, -8.6, 7.3999996, 0.4000001, -8.6, 9.4, 0.4000001, -8.6, 5.3999996, 0.4000001, -6.6000004, 9.4, 0.4000001, -6.6000004, 5.3999996, 0.4000001, -4.6000004, 7.3999996, 0.4000001, -4.6000004, 9.4, 0.4000001, -4.6000004, 7.3999996, 0.4000001, -2.6000004),
+"coverage_crouch": Array[bool]([false, true, true, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, true, true, true, true, true, false, false]),
+"position": Vector3(7.3999996, 0.4000001, -6.6000004),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(7.3999996, 0.4000001, -8.6, 9.4, 0.4000001, -8.6, 5.3999996, 0.4000001, -6.6000004, 7.3999996, 0.4000001, -6.6000004, 7.3999996, 0.4000001, -4.6000004, 9.4, 0.4000001, -4.6000004, 9.4, 0.4000001, -2.6000004),
+"coverage_crouch": Array[bool]([false, true, true, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, true, true, true, true, true, false, false]),
+"position": Vector3(9.4, 0.4000001, -6.6000004),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-8.6, 0.4000001, -8.6, -8.6, 0.4000001, -6.6000004, -6.6000004, 0.4000001, -6.6000004, -6.6000004, 0.4000001, -4.6000004, -4.6000004, 0.4000001, -4.6000004, -8.6, 0.4000001, -2.6000004, -6.6000004, 0.4000001, -2.6000004),
+"coverage_crouch": Array[bool]([true, true, false, false, true, true, true, true]),
+"coverage_stand": Array[bool]([true, true, false, false, true, true, true, true]),
+"position": Vector3(-8.6, 0.4000001, -4.6000004),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-6.6000004, 0.4000001, -8.6, -8.6, 0.4000001, -6.6000004, -6.6000004, 0.4000001, -6.6000004, -4.6000004, 0.4000001, -6.6000004, -8.6, 0.4000001, -4.6000004, -4.6000004, 0.4000001, -4.6000004, -2.6000004, 0.4000001, -4.6000004, -8.6, 0.4000001, -2.6000004, -6.6000004, 0.4000001, -2.6000004, -4.6000004, 0.4000001, -2.6000004),
+"coverage_crouch": Array[bool]([true, true, false, false, true, true, true, true]),
+"coverage_stand": Array[bool]([true, true, false, false, true, true, true, true]),
+"position": Vector3(-6.6000004, 0.4000001, -4.6000004),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-4.6000004, 0.4000001, -8.6, -6.6000004, 0.4000001, -6.6000004, -4.6000004, 0.4000001, -6.6000004, -2.6000004, 0.4000001, -6.6000004, -8.6, 0.4000001, -4.6000004, -6.6000004, 0.4000001, -4.6000004, -2.6000004, 0.4000001, -4.6000004, -6.6000004, 0.4000001, -2.6000004, -4.6000004, 0.4000001, -2.6000004, -2.6000004, 0.4000001, -2.6000004),
+"coverage_crouch": Array[bool]([true, false, true, true, true, false, true, true]),
+"coverage_stand": Array[bool]([true, false, true, true, true, false, true, true]),
+"position": Vector3(-4.6000004, 0.4000001, -4.6000004),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-2.6000004, 0.4000001, -8.6, -4.6000004, 0.4000001, -6.6000004, -2.6000004, 0.4000001, -6.6000004, -6.6000004, 0.4000001, -4.6000004, -4.6000004, 0.4000001, -4.6000004, -4.6000004, 0.4000001, -2.6000004, -2.6000004, 0.4000001, -2.6000004),
+"coverage_crouch": Array[bool]([true, true, true, true, true, false, false, true]),
+"coverage_stand": Array[bool]([true, true, true, true, true, false, false, true]),
+"position": Vector3(-2.6000004, 0.4000001, -4.6000004),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(1.3999996, 0.4000001, -8.6, 1.3999996, 0.4000001, -6.6000004, 3.3999996, 0.4000001, -6.6000004, 3.3999996, 0.4000001, -4.6000004, 5.3999996, 0.4000001, -4.6000004, 1.3999996, 0.4000001, -2.6000004, 3.3999996, 0.4000001, -2.6000004),
+"coverage_crouch": Array[bool]([false, true, false, false, true, true, true, true]),
+"coverage_stand": Array[bool]([false, true, false, false, true, true, true, true]),
+"position": Vector3(1.3999996, 0.4000001, -4.6000004),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(1.3999996, 0.4000001, -6.6000004, 3.3999996, 0.4000001, -6.6000004, 5.3999996, 0.4000001, -6.6000004, 1.3999996, 0.4000001, -4.6000004, 5.3999996, 0.4000001, -4.6000004, 7.3999996, 0.4000001, -4.6000004, 1.3999996, 0.4000001, -2.6000004, 3.3999996, 0.4000001, -2.6000004, 5.3999996, 0.4000001, -2.6000004),
+"coverage_crouch": Array[bool]([true, true, false, false, true, true, true, true]),
+"coverage_stand": Array[bool]([true, true, false, false, true, true, true, true]),
+"position": Vector3(3.3999996, 0.4000001, -4.6000004),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(5.3999996, 0.4000001, -8.6, 3.3999996, 0.4000001, -6.6000004, 5.3999996, 0.4000001, -6.6000004, 7.3999996, 0.4000001, -6.6000004, 1.3999996, 0.4000001, -4.6000004, 3.3999996, 0.4000001, -4.6000004, 7.3999996, 0.4000001, -4.6000004, 3.3999996, 0.4000001, -2.6000004, 5.3999996, 0.4000001, -2.6000004, 7.3999996, 0.4000001, -2.6000004),
+"coverage_crouch": Array[bool]([true, true, true, false, true, false, true, false]),
+"coverage_stand": Array[bool]([true, true, true, false, true, false, true, false]),
+"position": Vector3(5.3999996, 0.4000001, -4.6000004),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(7.3999996, 0.4000001, -8.6, 5.3999996, 0.4000001, -6.6000004, 7.3999996, 0.4000001, -6.6000004, 9.4, 0.4000001, -6.6000004, 3.3999996, 0.4000001, -4.6000004, 5.3999996, 0.4000001, -4.6000004, 9.4, 0.4000001, -4.6000004, 5.3999996, 0.4000001, -2.6000004, 7.3999996, 0.4000001, -2.6000004, 9.4, 0.4000001, -2.6000004),
+"coverage_crouch": Array[bool]([true, true, true, true, true, false, false, true]),
+"coverage_stand": Array[bool]([true, true, true, true, true, false, false, true]),
+"position": Vector3(7.3999996, 0.4000001, -4.6000004),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(9.4, 0.4000001, -8.6, 7.3999996, 0.4000001, -6.6000004, 9.4, 0.4000001, -6.6000004, 7.3999996, 0.4000001, -4.6000004, 7.3999996, 0.4000001, -2.6000004, 9.4, 0.4000001, -2.6000004),
+"coverage_crouch": Array[bool]([true, true, true, true, true, false, false, true]),
+"coverage_stand": Array[bool]([true, true, true, true, true, false, false, true]),
+"position": Vector3(9.4, 0.4000001, -4.6000004),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-8.6, 0.4000001, -6.6000004, -8.6, 0.4000001, -4.6000004, -6.6000004, 0.4000001, -4.6000004, -6.6000004, 0.4000001, -2.6000004, -4.6000004, 0.4000001, -2.6000004),
+"coverage_crouch": Array[bool]([true, true, false, false, false, true, true, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, true, true, true]),
+"position": Vector3(-8.6, 0.4000001, -2.6000004),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-6.6000004, 0.4000001, -6.6000004, -8.6, 0.4000001, -4.6000004, -6.6000004, 0.4000001, -4.6000004, -4.6000004, 0.4000001, -4.6000004, -8.6, 0.4000001, -2.6000004, -4.6000004, 0.4000001, -2.6000004, -2.6000004, 0.4000001, -2.6000004),
+"coverage_crouch": Array[bool]([true, true, false, false, false, true, true, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, true, true, true]),
+"position": Vector3(-6.6000004, 0.4000001, -2.6000004),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-4.6000004, 0.4000001, -6.6000004, -6.6000004, 0.4000001, -4.6000004, -4.6000004, 0.4000001, -4.6000004, -2.6000004, 0.4000001, -4.6000004, -8.6, 0.4000001, -2.6000004, -6.6000004, 0.4000001, -2.6000004, -2.6000004, 0.4000001, -2.6000004),
+"coverage_crouch": Array[bool]([true, true, true, true, false, false, true, true]),
+"coverage_stand": Array[bool]([true, true, true, true, false, false, true, true]),
+"position": Vector3(-4.6000004, 0.4000001, -2.6000004),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-2.6000004, 0.4000001, -6.6000004, -4.6000004, 0.4000001, -4.6000004, -2.6000004, 0.4000001, -4.6000004, -6.6000004, 0.4000001, -2.6000004, -4.6000004, 0.4000001, -2.6000004, -0.6000004, 0.4000001, -0.6000004),
+"coverage_crouch": Array[bool]([true, false, true, true, false, false, false, true]),
+"coverage_stand": Array[bool]([true, false, true, true, false, false, false, true]),
+"position": Vector3(-2.6000004, 0.4000001, -2.6000004),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(1.3999996, 0.4000001, -6.6000004, 1.3999996, 0.4000001, -4.6000004, 3.3999996, 0.4000001, -4.6000004, 3.3999996, 0.4000001, -2.6000004, 5.3999996, 0.4000001, -2.6000004, -0.6000004, 0.4000001, -0.6000004),
+"coverage_crouch": Array[bool]([false, true, false, false, false, true, true, true]),
+"coverage_stand": Array[bool]([false, true, false, false, false, true, true, true]),
+"position": Vector3(1.3999996, 0.4000001, -2.6000004),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(3.3999996, 0.4000001, -6.6000004, 1.3999996, 0.4000001, -4.6000004, 3.3999996, 0.4000001, -4.6000004, 5.3999996, 0.4000001, -4.6000004, 1.3999996, 0.4000001, -2.6000004, 5.3999996, 0.4000001, -2.6000004),
+"coverage_crouch": Array[bool]([true, true, false, false, false, true, true, false]),
+"coverage_stand": Array[bool]([true, true, false, false, false, true, true, false]),
+"position": Vector3(3.3999996, 0.4000001, -2.6000004),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(5.3999996, 0.4000001, -6.6000004, 3.3999996, 0.4000001, -4.6000004, 5.3999996, 0.4000001, -4.6000004, 7.3999996, 0.4000001, -4.6000004, 1.3999996, 0.4000001, -2.6000004, 3.3999996, 0.4000001, -2.6000004, 7.3999996, 0.4000001, -2.6000004, 9.4, 0.4000001, -2.6000004),
+"coverage_crouch": Array[bool]([true, true, true, false, false, false, true, true]),
+"coverage_stand": Array[bool]([true, true, true, false, false, false, true, true]),
+"position": Vector3(5.3999996, 0.4000001, -2.6000004),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(7.3999996, 0.4000001, -6.6000004, 5.3999996, 0.4000001, -4.6000004, 7.3999996, 0.4000001, -4.6000004, 9.4, 0.4000001, -4.6000004, 5.3999996, 0.4000001, -2.6000004, 9.4, 0.4000001, -2.6000004),
+"coverage_crouch": Array[bool]([true, true, true, true, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, true, true, false, false, false, true]),
+"position": Vector3(7.3999996, 0.4000001, -2.6000004),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(9.4, 0.4000001, -6.6000004, 7.3999996, 0.4000001, -4.6000004, 9.4, 0.4000001, -4.6000004, 5.3999996, 0.4000001, -2.6000004, 7.3999996, 0.4000001, -2.6000004),
+"coverage_crouch": Array[bool]([true, true, true, true, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, true, true, false, false, false, true]),
+"position": Vector3(9.4, 0.4000001, -2.6000004),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-2.6000004, 0.4000001, -2.6000004, 1.3999996, 0.4000001, -2.6000004, -2.6000004, 0.4000001, 1.3999996, 1.3999996, 0.4000001, 1.3999996),
+"coverage_crouch": Array[bool]([false, false, false, true, false, false, false, true]),
+"coverage_stand": Array[bool]([false, false, false, true, false, false, false, true]),
+"position": Vector3(-0.6000004, 0.4000001, -0.6000004),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-6.6000004, 0.4000001, 1.3999996, -4.6000004, 0.4000001, 1.3999996, -8.6, 0.4000001, 3.3999996, -6.6000004, 0.4000001, 3.3999996, -8.6, 0.4000001, 5.3999996),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, true, true]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, true, true]),
+"position": Vector3(-8.6, 0.4000001, 1.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-8.6, 0.4000001, 1.3999996, -4.6000004, 0.4000001, 1.3999996, -2.6000004, 0.4000001, 1.3999996, -8.6, 0.4000001, 3.3999996, -6.6000004, 0.4000001, 3.3999996, -4.6000004, 0.4000001, 3.3999996, -6.6000004, 0.4000001, 5.3999996),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, true, true]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, true, true]),
+"position": Vector3(-6.6000004, 0.4000001, 1.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-8.6, 0.4000001, 1.3999996, -6.6000004, 0.4000001, 1.3999996, -2.6000004, 0.4000001, 1.3999996, -6.6000004, 0.4000001, 3.3999996, -4.6000004, 0.4000001, 3.3999996, -2.6000004, 0.4000001, 3.3999996, -4.6000004, 0.4000001, 5.3999996),
+"coverage_crouch": Array[bool]([false, true, false, true, true, true, true, false]),
+"coverage_stand": Array[bool]([false, true, false, true, true, true, true, false]),
+"position": Vector3(-4.6000004, 0.4000001, 1.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-0.6000004, 0.4000001, -0.6000004, -6.6000004, 0.4000001, 1.3999996, -4.6000004, 0.4000001, 1.3999996, -4.6000004, 0.4000001, 3.3999996, -2.6000004, 0.4000001, 3.3999996, -2.6000004, 0.4000001, 5.3999996),
+"coverage_crouch": Array[bool]([false, true, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, true, false, true, true, true, false, false]),
+"position": Vector3(-2.6000004, 0.4000001, 1.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-0.6000004, 0.4000001, -0.6000004, 3.3999996, 0.4000001, 1.3999996, 5.3999996, 0.4000001, 1.3999996, 1.3999996, 0.4000001, 3.3999996, 3.3999996, 0.4000001, 3.3999996, 1.3999996, 0.4000001, 5.3999996),
+"coverage_crouch": Array[bool]([false, false, false, true, false, false, false, true]),
+"coverage_stand": Array[bool]([false, false, false, true, false, false, false, true]),
+"position": Vector3(1.3999996, 0.4000001, 1.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(1.3999996, 0.4000001, 1.3999996, 5.3999996, 0.4000001, 1.3999996, 7.3999996, 0.4000001, 1.3999996, 1.3999996, 0.4000001, 3.3999996, 3.3999996, 0.4000001, 3.3999996, 5.3999996, 0.4000001, 3.3999996, 3.3999996, 0.4000001, 5.3999996),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, false, true]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, false, true]),
+"position": Vector3(3.3999996, 0.4000001, 1.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(1.3999996, 0.4000001, 1.3999996, 3.3999996, 0.4000001, 1.3999996, 7.3999996, 0.4000001, 1.3999996, 9.4, 0.4000001, 1.3999996, 3.3999996, 0.4000001, 3.3999996, 5.3999996, 0.4000001, 3.3999996, 7.3999996, 0.4000001, 3.3999996),
+"coverage_crouch": Array[bool]([false, false, true, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, true, true, true, true, false, false]),
+"position": Vector3(5.3999996, 0.4000001, 1.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(3.3999996, 0.4000001, 1.3999996, 5.3999996, 0.4000001, 1.3999996, 9.4, 0.4000001, 1.3999996, 5.3999996, 0.4000001, 3.3999996, 7.3999996, 0.4000001, 3.3999996, 9.4, 0.4000001, 3.3999996),
+"coverage_crouch": Array[bool]([false, true, true, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, true, true, true, true, true, false, false]),
+"position": Vector3(7.3999996, 0.4000001, 1.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(5.3999996, 0.4000001, 1.3999996, 7.3999996, 0.4000001, 1.3999996, 7.3999996, 0.4000001, 3.3999996, 9.4, 0.4000001, 3.3999996),
+"coverage_crouch": Array[bool]([false, true, true, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, true, true, true, true, true, false, false]),
+"position": Vector3(9.4, 0.4000001, 1.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-8.6, 0.4000001, 1.3999996, -6.6000004, 0.4000001, 1.3999996, -6.6000004, 0.4000001, 3.3999996, -8.6, 0.4000001, 5.3999996, -6.6000004, 0.4000001, 5.3999996, -8.6, 0.4000001, 7.3999996),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, true, true]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, true, true]),
+"position": Vector3(-8.6, 0.4000001, 3.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-8.6, 0.4000001, 1.3999996, -6.6000004, 0.4000001, 1.3999996, -4.6000004, 0.4000001, 1.3999996, -8.6, 0.4000001, 3.3999996, -4.6000004, 0.4000001, 3.3999996, -2.6000004, 0.4000001, 3.3999996, -8.6, 0.4000001, 5.3999996, -6.6000004, 0.4000001, 5.3999996, -4.6000004, 0.4000001, 5.3999996, -6.6000004, 0.4000001, 7.3999996),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, true, true]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, true, true]),
+"position": Vector3(-6.6000004, 0.4000001, 3.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-6.6000004, 0.4000001, 1.3999996, -4.6000004, 0.4000001, 1.3999996, -2.6000004, 0.4000001, 1.3999996, -6.6000004, 0.4000001, 3.3999996, -2.6000004, 0.4000001, 3.3999996, -6.6000004, 0.4000001, 5.3999996, -4.6000004, 0.4000001, 5.3999996, -2.6000004, 0.4000001, 5.3999996, -4.6000004, 0.4000001, 7.3999996),
+"coverage_crouch": Array[bool]([false, true, true, true, true, true, true, false]),
+"coverage_stand": Array[bool]([false, true, true, true, true, true, true, false]),
+"position": Vector3(-4.6000004, 0.4000001, 3.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-4.6000004, 0.4000001, 1.3999996, -2.6000004, 0.4000001, 1.3999996, -6.6000004, 0.4000001, 3.3999996, -4.6000004, 0.4000001, 3.3999996, -4.6000004, 0.4000001, 5.3999996, -2.6000004, 0.4000001, 5.3999996, -2.6000004, 0.4000001, 7.3999996),
+"coverage_crouch": Array[bool]([false, true, true, false, true, true, false, false]),
+"coverage_stand": Array[bool]([false, true, true, false, true, true, false, false]),
+"position": Vector3(-2.6000004, 0.4000001, 3.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(1.3999996, 0.4000001, 1.3999996, 3.3999996, 0.4000001, 1.3999996, 3.3999996, 0.4000001, 3.3999996, 5.3999996, 0.4000001, 3.3999996, 1.3999996, 0.4000001, 5.3999996, 3.3999996, 0.4000001, 5.3999996, 1.3999996, 0.4000001, 7.3999996),
+"coverage_crouch": Array[bool]([false, false, false, true, false, true, true, true]),
+"coverage_stand": Array[bool]([false, false, false, true, false, true, true, true]),
+"position": Vector3(1.3999996, 0.4000001, 3.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(1.3999996, 0.4000001, 1.3999996, 3.3999996, 0.4000001, 1.3999996, 5.3999996, 0.4000001, 1.3999996, 1.3999996, 0.4000001, 3.3999996, 5.3999996, 0.4000001, 3.3999996, 1.3999996, 0.4000001, 5.3999996, 3.3999996, 0.4000001, 5.3999996, 5.3999996, 0.4000001, 5.3999996),
+"coverage_crouch": Array[bool]([false, false, false, true, true, false, true, true]),
+"coverage_stand": Array[bool]([false, false, false, true, true, false, true, true]),
+"position": Vector3(3.3999996, 0.4000001, 3.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(3.3999996, 0.4000001, 1.3999996, 5.3999996, 0.4000001, 1.3999996, 7.3999996, 0.4000001, 1.3999996, 1.3999996, 0.4000001, 3.3999996, 3.3999996, 0.4000001, 3.3999996, 7.3999996, 0.4000001, 3.3999996, 9.4, 0.4000001, 3.3999996, 3.3999996, 0.4000001, 5.3999996, 5.3999996, 0.4000001, 5.3999996, 7.3999996, 0.4000001, 5.3999996),
+"coverage_crouch": Array[bool]([false, false, true, true, true, true, true, false]),
+"coverage_stand": Array[bool]([false, false, true, true, true, true, true, false]),
+"position": Vector3(5.3999996, 0.4000001, 3.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(5.3999996, 0.4000001, 1.3999996, 7.3999996, 0.4000001, 1.3999996, 9.4, 0.4000001, 1.3999996, 5.3999996, 0.4000001, 3.3999996, 9.4, 0.4000001, 3.3999996, 5.3999996, 0.4000001, 5.3999996, 7.3999996, 0.4000001, 5.3999996, 9.4, 0.4000001, 5.3999996),
+"coverage_crouch": Array[bool]([false, true, true, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, true, true, true, true, true, false, false]),
+"position": Vector3(7.3999996, 0.4000001, 3.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(7.3999996, 0.4000001, 1.3999996, 9.4, 0.4000001, 1.3999996, 5.3999996, 0.4000001, 3.3999996, 7.3999996, 0.4000001, 3.3999996, 7.3999996, 0.4000001, 5.3999996, 9.4, 0.4000001, 5.3999996),
+"coverage_crouch": Array[bool]([false, true, true, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, true, true, true, true, true, false, false]),
+"position": Vector3(9.4, 0.4000001, 3.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-8.6, 0.4000001, 1.3999996, -8.6, 0.4000001, 3.3999996, -6.6000004, 0.4000001, 3.3999996, -6.6000004, 0.4000001, 5.3999996, -4.6000004, 0.4000001, 5.3999996, -8.6, 0.4000001, 7.3999996, -6.6000004, 0.4000001, 7.3999996, -8.6, 0.4000001, 9.4),
+"coverage_crouch": Array[bool]([true, false, false, false, true, true, true, true]),
+"coverage_stand": Array[bool]([true, false, false, false, true, true, true, true]),
+"position": Vector3(-8.6, 0.4000001, 5.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-6.6000004, 0.4000001, 1.3999996, -8.6, 0.4000001, 3.3999996, -6.6000004, 0.4000001, 3.3999996, -4.6000004, 0.4000001, 3.3999996, -8.6, 0.4000001, 5.3999996, -4.6000004, 0.4000001, 5.3999996, -2.6000004, 0.4000001, 5.3999996, -8.6, 0.4000001, 7.3999996, -6.6000004, 0.4000001, 7.3999996, -4.6000004, 0.4000001, 7.3999996),
+"coverage_crouch": Array[bool]([true, false, false, false, true, true, true, true]),
+"coverage_stand": Array[bool]([true, false, false, false, true, true, true, true]),
+"position": Vector3(-6.6000004, 0.4000001, 5.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-4.6000004, 0.4000001, 1.3999996, -6.6000004, 0.4000001, 3.3999996, -4.6000004, 0.4000001, 3.3999996, -2.6000004, 0.4000001, 3.3999996, -8.6, 0.4000001, 5.3999996, -6.6000004, 0.4000001, 5.3999996, -2.6000004, 0.4000001, 5.3999996, -6.6000004, 0.4000001, 7.3999996, -4.6000004, 0.4000001, 7.3999996, -2.6000004, 0.4000001, 7.3999996, -4.6000004, 0.4000001, 9.4),
+"coverage_crouch": Array[bool]([true, true, true, false, true, false, true, false]),
+"coverage_stand": Array[bool]([true, true, true, false, true, false, true, false]),
+"position": Vector3(-4.6000004, 0.4000001, 5.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-2.6000004, 0.4000001, 1.3999996, -4.6000004, 0.4000001, 3.3999996, -2.6000004, 0.4000001, 3.3999996, -6.6000004, 0.4000001, 5.3999996, -4.6000004, 0.4000001, 5.3999996, -4.6000004, 0.4000001, 7.3999996, -2.6000004, 0.4000001, 7.3999996),
+"coverage_crouch": Array[bool]([true, true, true, true, true, false, false, false]),
+"coverage_stand": Array[bool]([true, true, true, true, true, false, false, false]),
+"position": Vector3(-2.6000004, 0.4000001, 5.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(1.3999996, 0.4000001, 1.3999996, 1.3999996, 0.4000001, 3.3999996, 3.3999996, 0.4000001, 3.3999996, 3.3999996, 0.4000001, 5.3999996, 5.3999996, 0.4000001, 5.3999996, 1.3999996, 0.4000001, 7.3999996, 3.3999996, 0.4000001, 7.3999996, 1.3999996, 0.4000001, 9.4),
+"coverage_crouch": Array[bool]([true, false, false, false, false, true, true, true]),
+"coverage_stand": Array[bool]([true, false, false, false, false, true, true, true]),
+"position": Vector3(1.3999996, 0.4000001, 5.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(3.3999996, 0.4000001, 1.3999996, 1.3999996, 0.4000001, 3.3999996, 3.3999996, 0.4000001, 3.3999996, 5.3999996, 0.4000001, 3.3999996, 1.3999996, 0.4000001, 5.3999996, 5.3999996, 0.4000001, 5.3999996, 7.3999996, 0.4000001, 5.3999996, 1.3999996, 0.4000001, 7.3999996, 3.3999996, 0.4000001, 7.3999996, 5.3999996, 0.4000001, 7.3999996, 3.3999996, 0.4000001, 9.4),
+"coverage_crouch": Array[bool]([true, false, false, false, true, true, true, true]),
+"coverage_stand": Array[bool]([true, false, false, false, true, true, true, true]),
+"position": Vector3(3.3999996, 0.4000001, 5.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(3.3999996, 0.4000001, 3.3999996, 5.3999996, 0.4000001, 3.3999996, 7.3999996, 0.4000001, 3.3999996, 1.3999996, 0.4000001, 5.3999996, 3.3999996, 0.4000001, 5.3999996, 7.3999996, 0.4000001, 5.3999996, 9.4, 0.4000001, 5.3999996, 3.3999996, 0.4000001, 7.3999996, 5.3999996, 0.4000001, 7.3999996, 7.3999996, 0.4000001, 7.3999996, 5.3999996, 0.4000001, 9.4),
+"coverage_crouch": Array[bool]([true, false, true, false, true, false, true, false]),
+"coverage_stand": Array[bool]([true, false, true, false, true, false, true, false]),
+"position": Vector3(5.3999996, 0.4000001, 5.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(5.3999996, 0.4000001, 3.3999996, 7.3999996, 0.4000001, 3.3999996, 9.4, 0.4000001, 3.3999996, 3.3999996, 0.4000001, 5.3999996, 5.3999996, 0.4000001, 5.3999996, 9.4, 0.4000001, 5.3999996, 5.3999996, 0.4000001, 7.3999996, 7.3999996, 0.4000001, 7.3999996, 9.4, 0.4000001, 7.3999996, 7.3999996, 0.4000001, 9.4),
+"coverage_crouch": Array[bool]([true, true, true, true, true, false, false, false]),
+"coverage_stand": Array[bool]([true, true, true, true, true, false, false, false]),
+"position": Vector3(7.3999996, 0.4000001, 5.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(7.3999996, 0.4000001, 3.3999996, 9.4, 0.4000001, 3.3999996, 5.3999996, 0.4000001, 5.3999996, 7.3999996, 0.4000001, 5.3999996, 7.3999996, 0.4000001, 7.3999996, 9.4, 0.4000001, 7.3999996, 9.4, 0.4000001, 9.4),
+"coverage_crouch": Array[bool]([true, true, true, true, true, false, false, false]),
+"coverage_stand": Array[bool]([true, true, true, true, true, false, false, false]),
+"position": Vector3(9.4, 0.4000001, 5.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-8.6, 0.4000001, 3.3999996, -8.6, 0.4000001, 5.3999996, -6.6000004, 0.4000001, 5.3999996, -6.6000004, 0.4000001, 7.3999996, -8.6, 0.4000001, 9.4, -6.6000004, 0.4000001, 9.4),
+"coverage_crouch": Array[bool]([true, true, false, false, false, true, true, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, true, true, true]),
+"position": Vector3(-8.6, 0.4000001, 7.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-6.6000004, 0.4000001, 3.3999996, -8.6, 0.4000001, 5.3999996, -6.6000004, 0.4000001, 5.3999996, -4.6000004, 0.4000001, 5.3999996, -8.6, 0.4000001, 7.3999996, -4.6000004, 0.4000001, 7.3999996, -2.6000004, 0.4000001, 7.3999996, -8.6, 0.4000001, 9.4, -6.6000004, 0.4000001, 9.4, -4.6000004, 0.4000001, 9.4),
+"coverage_crouch": Array[bool]([true, true, false, false, false, true, true, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, true, true, true]),
+"position": Vector3(-6.6000004, 0.4000001, 7.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-4.6000004, 0.4000001, 3.3999996, -6.6000004, 0.4000001, 5.3999996, -4.6000004, 0.4000001, 5.3999996, -2.6000004, 0.4000001, 5.3999996, -6.6000004, 0.4000001, 7.3999996, -2.6000004, 0.4000001, 7.3999996, -6.6000004, 0.4000001, 9.4, -4.6000004, 0.4000001, 9.4, -2.6000004, 0.4000001, 9.4),
+"coverage_crouch": Array[bool]([true, true, true, true, false, false, true, true]),
+"coverage_stand": Array[bool]([true, true, true, true, false, false, true, true]),
+"position": Vector3(-4.6000004, 0.4000001, 7.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-2.6000004, 0.4000001, 3.3999996, -4.6000004, 0.4000001, 5.3999996, -2.6000004, 0.4000001, 5.3999996, -6.6000004, 0.4000001, 7.3999996, -4.6000004, 0.4000001, 7.3999996, -4.6000004, 0.4000001, 9.4, -2.6000004, 0.4000001, 9.4),
+"coverage_crouch": Array[bool]([true, true, true, true, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, true, true, false, false, false, true]),
+"position": Vector3(-2.6000004, 0.4000001, 7.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(1.3999996, 0.4000001, 3.3999996, 1.3999996, 0.4000001, 5.3999996, 3.3999996, 0.4000001, 5.3999996, 3.3999996, 0.4000001, 7.3999996, 1.3999996, 0.4000001, 9.4, 3.3999996, 0.4000001, 9.4),
+"coverage_crouch": Array[bool]([true, true, false, false, false, true, true, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, true, true, true]),
+"position": Vector3(1.3999996, 0.4000001, 7.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(1.3999996, 0.4000001, 5.3999996, 3.3999996, 0.4000001, 5.3999996, 5.3999996, 0.4000001, 5.3999996, 1.3999996, 0.4000001, 7.3999996, 5.3999996, 0.4000001, 7.3999996, 7.3999996, 0.4000001, 7.3999996, 1.3999996, 0.4000001, 9.4, 3.3999996, 0.4000001, 9.4, 5.3999996, 0.4000001, 9.4),
+"coverage_crouch": Array[bool]([true, true, false, false, false, true, true, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, true, true, true]),
+"position": Vector3(3.3999996, 0.4000001, 7.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(3.3999996, 0.4000001, 5.3999996, 5.3999996, 0.4000001, 5.3999996, 7.3999996, 0.4000001, 5.3999996, 3.3999996, 0.4000001, 7.3999996, 7.3999996, 0.4000001, 7.3999996, 9.4, 0.4000001, 7.3999996, 3.3999996, 0.4000001, 9.4, 5.3999996, 0.4000001, 9.4, 7.3999996, 0.4000001, 9.4),
+"coverage_crouch": Array[bool]([true, true, true, false, false, false, true, true]),
+"coverage_stand": Array[bool]([true, true, true, false, false, false, true, true]),
+"position": Vector3(5.3999996, 0.4000001, 7.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(5.3999996, 0.4000001, 5.3999996, 7.3999996, 0.4000001, 5.3999996, 9.4, 0.4000001, 5.3999996, 3.3999996, 0.4000001, 7.3999996, 5.3999996, 0.4000001, 7.3999996, 9.4, 0.4000001, 7.3999996, 5.3999996, 0.4000001, 9.4, 7.3999996, 0.4000001, 9.4, 9.4, 0.4000001, 9.4),
+"coverage_crouch": Array[bool]([true, true, true, true, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, true, true, false, false, false, true]),
+"position": Vector3(7.3999996, 0.4000001, 7.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(7.3999996, 0.4000001, 5.3999996, 9.4, 0.4000001, 5.3999996, 5.3999996, 0.4000001, 7.3999996, 7.3999996, 0.4000001, 7.3999996, 7.3999996, 0.4000001, 9.4, 9.4, 0.4000001, 9.4),
+"coverage_crouch": Array[bool]([true, true, true, true, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, true, true, false, false, false, true]),
+"position": Vector3(9.4, 0.4000001, 7.3999996),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-8.6, 0.4000001, 5.3999996, -8.6, 0.4000001, 7.3999996, -6.6000004, 0.4000001, 7.3999996, -6.6000004, 0.4000001, 9.4),
+"coverage_crouch": Array[bool]([true, true, false, false, false, true, true, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, true, true, true]),
+"position": Vector3(-8.6, 0.4000001, 9.4),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-8.6, 0.4000001, 7.3999996, -6.6000004, 0.4000001, 7.3999996, -4.6000004, 0.4000001, 7.3999996, -8.6, 0.4000001, 9.4, -4.6000004, 0.4000001, 9.4),
+"coverage_crouch": Array[bool]([true, true, false, false, false, true, true, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, true, true, true]),
+"position": Vector3(-6.6000004, 0.4000001, 9.4),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-4.6000004, 0.4000001, 5.3999996, -6.6000004, 0.4000001, 7.3999996, -4.6000004, 0.4000001, 7.3999996, -2.6000004, 0.4000001, 7.3999996, -6.6000004, 0.4000001, 9.4, -2.6000004, 0.4000001, 9.4),
+"coverage_crouch": Array[bool]([true, true, true, true, false, false, true, true]),
+"coverage_stand": Array[bool]([true, true, true, true, false, false, true, true]),
+"position": Vector3(-4.6000004, 0.4000001, 9.4),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-4.6000004, 0.4000001, 7.3999996, -2.6000004, 0.4000001, 7.3999996, -4.6000004, 0.4000001, 9.4),
+"coverage_crouch": Array[bool]([true, true, true, true, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, true, true, false, false, false, true]),
+"position": Vector3(-2.6000004, 0.4000001, 9.4),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(1.3999996, 0.4000001, 5.3999996, 1.3999996, 0.4000001, 7.3999996, 3.3999996, 0.4000001, 7.3999996, 3.3999996, 0.4000001, 9.4),
+"coverage_crouch": Array[bool]([true, true, false, false, false, true, true, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, true, true, true]),
+"position": Vector3(1.3999996, 0.4000001, 9.4),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(3.3999996, 0.4000001, 5.3999996, 1.3999996, 0.4000001, 7.3999996, 3.3999996, 0.4000001, 7.3999996, 5.3999996, 0.4000001, 7.3999996, 1.3999996, 0.4000001, 9.4, 5.3999996, 0.4000001, 9.4),
+"coverage_crouch": Array[bool]([true, true, false, false, false, true, true, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, true, true, true]),
+"position": Vector3(3.3999996, 0.4000001, 9.4),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(5.3999996, 0.4000001, 5.3999996, 3.3999996, 0.4000001, 7.3999996, 5.3999996, 0.4000001, 7.3999996, 7.3999996, 0.4000001, 7.3999996, 3.3999996, 0.4000001, 9.4, 7.3999996, 0.4000001, 9.4, 9.4, 0.4000001, 9.4),
+"coverage_crouch": Array[bool]([true, true, true, false, false, false, true, true]),
+"coverage_stand": Array[bool]([true, true, true, false, false, false, true, true]),
+"position": Vector3(5.3999996, 0.4000001, 9.4),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(7.3999996, 0.4000001, 5.3999996, 5.3999996, 0.4000001, 7.3999996, 7.3999996, 0.4000001, 7.3999996, 9.4, 0.4000001, 7.3999996, 5.3999996, 0.4000001, 9.4, 9.4, 0.4000001, 9.4),
+"coverage_crouch": Array[bool]([true, true, true, true, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, true, true, false, false, false, true]),
+"position": Vector3(7.3999996, 0.4000001, 9.4),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(9.4, 0.4000001, 5.3999996, 7.3999996, 0.4000001, 7.3999996, 9.4, 0.4000001, 7.3999996, 5.3999996, 0.4000001, 9.4, 7.3999996, 0.4000001, 9.4),
+"coverage_crouch": Array[bool]([true, true, true, true, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, true, true, false, false, false, true]),
+"position": Vector3(9.4, 0.4000001, 9.4),
+"sniping": false
+}])

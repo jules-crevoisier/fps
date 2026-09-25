@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="AgentAnimProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/agents/anim/AgentAnimProfile.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+agent_name = "Roseau"
+cadence_scale = 0.95
+torso_tilt_deg = 0.0
+lateral_sway_deg = 0.0
+bounce_amplitude_m = 0.012
+idle_style = "affût du héron : genou haut, pied posé lentement"

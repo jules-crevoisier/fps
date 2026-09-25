@@ -1,0 +1,206 @@
+{
+  "smooth_normal": true,
+  "ao": true,
+  "curvature": true,
+  "masks": false,
+  "color_attributes": [
+    "AO",
+    "Color",
+    "Color.001",
+    "Curvature"
+  ],
+  "custom_attributes": [
+    "_SMOOTH_NORMAL",
+    "_smooth_normal"
+  ],
+  "file": "wl_shack_far_b.glb",
+  "objects": [
+    "wl_shack"
+  ],
+  "tris": 1459,
+  "painted": true,
+  "source": "C:\\Users\\srko\\Desktop\\fps\\assets\\models\\props\\wasteland\\tripo\\wl_shack.glb",
+  "floating_islands": [
+    {
+      "n_faces": 4,
+      "gap_m": 0.9292
+    },
+    {
+      "n_faces": 4,
+      "gap_m": 0.8752
+    },
+    {
+      "n_faces": 1,
+      "gap_m": 0.8176
+    },
+    {
+      "n_faces": 8,
+      "gap_m": 0.6539
+    },
+    {
+      "n_faces": 18,
+      "gap_m": 0.6492
+    },
+    {
+      "n_faces": 4,
+      "gap_m": 0.3914
+    },
+    {
+      "n_faces": 1,
+      "gap_m": 0.3288
+    },
+    {
+      "n_faces": 1,
+      "gap_m": 0.3192
+    },
+    {
+      "n_faces": 1,
+      "gap_m": 0.2855
+    },
+    {
+      "n_faces": 1,
+      "gap_m": 0.2665
+    },
+    {
+      "n_faces": 1,
+      "gap_m": 0.2444
+    },
+    {
+      "n_faces": 1,
+      "gap_m": 0.2152
+    },
+    {
+      "n_faces": 1,
+      "gap_m": 0.2117
+    },
+    {
+      "n_faces": 1,
+      "gap_m": 0.2094
+    },
+    {
+      "n_faces": 1,
+      "gap_m": 0.1704
+    },
+    {
+      "n_faces": 1,
+      "gap_m": 0.1634
+    },
+    {
+      "n_faces": 6,
+      "gap_m": 0.1427
+    },
+    {
+      "n_faces": 4,
+      "gap_m": 0.1315
+    },
+    {
+      "n_faces": 42,
+      "gap_m": 0.124
+    },
+    {
+      "n_faces": 1,
+      "gap_m": 0.086
+    },
+    {
+      "n_faces": 1,
+      "gap_m": 0.0851
+    },
+    {
+      "n_faces": 1,
+      "gap_m": 0.0798
+    },
+    {
+      "n_faces": 1,
+      "gap_m": 0.0718
+    },
+    {
+      "n_faces": 18,
+      "gap_m": 0.0684
+    },
+    {
+      "n_faces": 1,
+      "gap_m": 0.0659
+    },
+    {
+      "n_faces": 1,
+      "gap_m": 0.0634
+    },
+    {
+      "n_faces": 6,
+      "gap_m": 0.0507
+    },
+    {
+      "n_faces": 1,
+      "gap_m": 0.0494
+    },
+    {
+      "n_faces": 1,
+      "gap_m": 0.0477
+    },
+    {
+      "n_faces": 1,
+      "gap_m": 0.0475
+    },
+    {
+      "n_faces": 1,
+      "gap_m": 0.0464
+    },
+    {
+      "n_faces": 5,
+      "gap_m": 0.0463
+    },
+    {
+      "n_faces": 1,
+      "gap_m": 0.0463
+    },
+    {
+      "n_faces": 1,
+      "gap_m": 0.0449
+    },
+    {
+      "n_faces": 8,
+      "gap_m": 0.0324
+    },
+    {
+      "n_faces": 1,
+      "gap_m": 0.0306
+    },
+    {
+      "n_faces": 46,
+      "gap_m": 0.028
+    },
+    {
+      "n_faces": 22,
+      "gap_m": 0.0252
+    },
+    {
+      "n_faces": 4,
+      "gap_m": 0.0223
+    },
+    {
+      "n_faces": 1,
+      "gap_m": 0.0176
+    },
+    {
+      "n_faces": 1,
+      "gap_m": 0.0132
+    },
+    {
+      "n_faces": 25,
+      "gap_m": 0.0121
+    },
+    {
+      "n_faces": 1,
+      "gap_m": 0.0118
+    },
+    {
+      "n_faces": 32,
+      "gap_m": 0.011
+    },
+    {
+      "n_faces": 8,
+      "gap_m": 0.0107
+    }
+  ],
+  "nonmanifold_edges_remaining": 73
+}

@@ -1,0 +1,107 @@
+{
+  "input": "C:\\Users\\srko\\Desktop\\fps\\assets\\incoming\\tripo\\restyled\\wpn_faucheur.glb.prescaled.glb",
+  "output": "C:\\Users\\srko\\Desktop\\fps\\assets\\incoming\\tripo\\restyled\\wpn_faucheur.glb",
+  "family": "weapons",
+  "budget_tris": 12000,
+  "final_tris": 7785,
+  "merged_vertices": 4679,
+  "nonmanifold_repair": {
+    "duplicate_faces": 0,
+    "sliver_faces": 0,
+    "remaining_nonmanifold_edges": 6
+  },
+  "removed_isolated_faces": 0,
+  "post_separation_dropped_faces": 274,
+  "post_bevel_dropped_faces": 0,
+  "post_bevel_nonmanifold_repair": {
+    "duplicate_faces": 2,
+    "sliver_faces": 19,
+    "remaining_nonmanifold_edges": 0,
+    "skipped_max_edges": []
+  },
+  "watertight_fix": {
+    "remeshed": false,
+    "remesh_failed": true,
+    "collapsed_to": null,
+    "dropped_kinds": [],
+    "dropped_disconnected_faces": 2238
+  },
+  "slots": [
+    {
+      "original_material": "tripo_mat_1157f5be",
+      "assigned_kind": "asphalt",
+      "face_count": 3,
+      "avg_delta_e_sample_to_kind": 12.589
+    },
+    {
+      "original_material": "tripo_mat_1157f5be",
+      "assigned_kind": "corrugated_metal",
+      "face_count": 63,
+      "avg_delta_e_sample_to_kind": 7.321
+    },
+    {
+      "original_material": "tripo_mat_1157f5be",
+      "assigned_kind": "cracked_concrete",
+      "face_count": 500,
+      "avg_delta_e_sample_to_kind": 23.896
+    },
+    {
+      "original_material": "tripo_mat_1157f5be",
+      "assigned_kind": "dirty_glass",
+      "face_count": 23,
+      "avg_delta_e_sample_to_kind": 21.82
+    },
+    {
+      "original_material": "tripo_mat_1157f5be",
+      "assigned_kind": "painted_metal",
+      "face_count": 1203,
+      "avg_delta_e_sample_to_kind": 4.804
+    },
+    {
+      "original_material": "tripo_mat_1157f5be",
+      "assigned_kind": "sand_dirt",
+      "face_count": 1705,
+      "avg_delta_e_sample_to_kind": 14.602
+    },
+    {
+      "original_material": "tripo_mat_1157f5be",
+      "assigned_kind": "ship_deck",
+      "face_count": 1566,
+      "avg_delta_e_sample_to_kind": 5.452
+    },
+    {
+      "original_material": "tripo_mat_1157f5be",
+      "assigned_kind": "wood_planks",
+      "face_count": 57,
+      "avg_delta_e_sample_to_kind": 15.992
+    }
+  ],
+  "assigned_kinds": [
+    "asphalt",
+    "corrugated_metal",
+    "cracked_concrete",
+    "dirty_glass",
+    "painted_metal",
+    "sand_dirt",
+    "ship_deck",
+    "wood_planks"
+  ],
+  "delta_e_output_to_palette": 0.0,
+  "bevel_class": "weapon_fp",
+  "nodes": [
+    "wpn_faucheur",
+    "culasse",
+    "bipied",
+    "Muzzle",
+    "Foregrip"
+  ],
+  "parts": [
+    "culasse",
+    "bipied"
+  ],
+  "markers": [
+    "Muzzle",
+    "Foregrip"
+  ],
+  "turntable_contact_sheet": null
+}

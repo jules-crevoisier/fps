@@ -1,0 +1,17 @@
+{
+  "smooth_normal": true,
+  "ao": false,
+  "curvature": false,
+  "masks": false,
+  "color_attributes": [
+    "PlankTint"
+  ],
+  "custom_attributes": [
+    "_smooth_normal"
+  ],
+  "file": "wall_2_level.glb",
+  "objects": [
+    "wall_2_level"
+  ],
+  "tris": 1100
+}

@@ -1,0 +1,76 @@
+{
+  "input": "C:\\Users\\srko\\Desktop\\fps\\assets\\incoming\\tripo\\restyled\\gp_borne.glb.prescaled.glb",
+  "output": "C:\\Users\\srko\\Desktop\\fps\\assets\\incoming\\tripo\\restyled\\gp_borne.glb",
+  "family": "props",
+  "budget_tris": 1200,
+  "final_tris": 1200,
+  "merged_vertices": 449,
+  "nonmanifold_repair": {
+    "duplicate_faces": 0,
+    "sliver_faces": 0,
+    "remaining_nonmanifold_edges": 0
+  },
+  "removed_isolated_faces": 0,
+  "post_separation_dropped_faces": 0,
+  "post_bevel_dropped_faces": 0,
+  "post_bevel_nonmanifold_repair": {
+    "duplicate_faces": 0,
+    "sliver_faces": 0,
+    "remaining_nonmanifold_edges": 0,
+    "skipped_max_edges": []
+  },
+  "watertight_fix": {
+    "remeshed": true,
+    "remesh_failed": false,
+    "collapsed_to": null,
+    "dropped_kinds": [],
+    "dropped_disconnected_faces": 0
+  },
+  "slots": [
+    {
+      "original_material": "tripo_mat_b514b6bb",
+      "assigned_kind": "corrugated_metal",
+      "face_count": 4,
+      "avg_delta_e_sample_to_kind": 5.58
+    },
+    {
+      "original_material": "tripo_mat_b514b6bb",
+      "assigned_kind": "cracked_concrete",
+      "face_count": 411,
+      "avg_delta_e_sample_to_kind": 25.589
+    },
+    {
+      "original_material": "tripo_mat_b514b6bb",
+      "assigned_kind": "painted_metal",
+      "face_count": 2,
+      "avg_delta_e_sample_to_kind": 7.633
+    },
+    {
+      "original_material": "tripo_mat_b514b6bb",
+      "assigned_kind": "sand_dirt",
+      "face_count": 199,
+      "avg_delta_e_sample_to_kind": 42.213
+    },
+    {
+      "original_material": "tripo_mat_b514b6bb",
+      "assigned_kind": "ship_deck",
+      "face_count": 24,
+      "avg_delta_e_sample_to_kind": 3.822
+    }
+  ],
+  "assigned_kinds": [
+    "corrugated_metal",
+    "cracked_concrete",
+    "painted_metal",
+    "sand_dirt",
+    "ship_deck"
+  ],
+  "delta_e_output_to_palette": 0.0,
+  "bevel_class": "weapon_fp",
+  "nodes": [
+    "gp_borne"
+  ],
+  "parts": [],
+  "markers": [],
+  "turntable_contact_sheet": null
+}

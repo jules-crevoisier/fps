@@ -1,0 +1,216 @@
+{
+  "panel_w": 512,
+  "panel_h": 256,
+  "cols": 4,
+  "rows": 4,
+  "panels": {
+    "forge": {
+      "text": "FORGE",
+      "team": "west",
+      "rect_px": [
+        0,
+        0,
+        512,
+        256
+      ],
+      "uv_rect": [
+        0.0,
+        0.0,
+        0.25,
+        0.25
+      ]
+    },
+    "marechal": {
+      "text": "MARÉCHAL",
+      "team": "east",
+      "rect_px": [
+        512,
+        0,
+        512,
+        256
+      ],
+      "uv_rect": [
+        0.25,
+        0.0,
+        0.25,
+        0.25
+      ]
+    },
+    "hotel": {
+      "text": "HÔTEL",
+      "team": "west",
+      "rect_px": [
+        1024,
+        0,
+        512,
+        256
+      ],
+      "uv_rect": [
+        0.5,
+        0.0,
+        0.25,
+        0.25
+      ]
+    },
+    "banque": {
+      "text": "BANQUE",
+      "team": "east",
+      "rect_px": [
+        1536,
+        0,
+        512,
+        256
+      ],
+      "uv_rect": [
+        0.75,
+        0.0,
+        0.25,
+        0.25
+      ]
+    },
+    "magasin": {
+      "text": "MAGASIN",
+      "team": "west",
+      "rect_px": [
+        0,
+        256,
+        512,
+        256
+      ],
+      "uv_rect": [
+        0.0,
+        0.25,
+        0.25,
+        0.25
+      ]
+    },
+    "epicerie": {
+      "text": "ÉPICERIE",
+      "team": "east",
+      "rect_px": [
+        512,
+        256,
+        512,
+        256
+      ],
+      "uv_rect": [
+        0.25,
+        0.25,
+        0.25,
+        0.25
+      ]
+    },
+    "echoppes": {
+      "text": "ÉCHOPPES",
+      "team": "west",
+      "rect_px": [
+        1024,
+        256,
+        512,
+        256
+      ],
+      "uv_rect": [
+        0.5,
+        0.25,
+        0.25,
+        0.25
+      ]
+    },
+    "bazar": {
+      "text": "BAZAR",
+      "team": "east",
+      "rect_px": [
+        1536,
+        256,
+        512,
+        256
+      ],
+      "uv_rect": [
+        0.75,
+        0.25,
+        0.25,
+        0.25
+      ]
+    },
+    "saloon_bleu": {
+      "text": "SALOON",
+      "team": "west",
+      "rect_px": [
+        0,
+        512,
+        512,
+        256
+      ],
+      "uv_rect": [
+        0.0,
+        0.5,
+        0.25,
+        0.25
+      ]
+    },
+    "saloon_rouge": {
+      "text": "SALOON",
+      "team": "east",
+      "rect_px": [
+        512,
+        512,
+        512,
+        256
+      ],
+      "uv_rect": [
+        0.25,
+        0.5,
+        0.25,
+        0.25
+      ]
+    },
+    "poste": {
+      "text": "POSTE",
+      "team": "neutral",
+      "rect_px": [
+        1024,
+        512,
+        512,
+        256
+      ],
+      "uv_rect": [
+        0.5,
+        0.5,
+        0.25,
+        0.25
+      ]
+    },
+    "fuel": {
+      "text": "FUEL",
+      "team": "west",
+      "rect_px": [
+        1536,
+        512,
+        512,
+        256
+      ],
+      "uv_rect": [
+        0.75,
+        0.5,
+        0.25,
+        0.25
+      ]
+    },
+    "gas": {
+      "text": "GAS",
+      "team": "east",
+      "rect_px": [
+        0,
+        768,
+        512,
+        256
+      ],
+      "uv_rect": [
+        0.0,
+        0.75,
+        0.25,
+        0.25
+      ]
+    }
+  }
+}

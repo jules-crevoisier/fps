@@ -1,0 +1,62 @@
+{
+  "input": "C:\\Users\\srko\\Desktop\\fps\\assets\\incoming\\tripo\\restyled\\cs_lifeboat_davits.glb.prescaled.glb",
+  "output": "C:\\Users\\srko\\Desktop\\fps\\assets\\incoming\\tripo\\restyled\\cs_lifeboat_davits.glb",
+  "family": "props",
+  "budget_tris": 4000,
+  "final_tris": 3998,
+  "merged_vertices": 772,
+  "nonmanifold_repair": {
+    "duplicate_faces": 0,
+    "sliver_faces": 0,
+    "remaining_nonmanifold_edges": 0
+  },
+  "removed_isolated_faces": 0,
+  "post_separation_dropped_faces": 0,
+  "post_bevel_dropped_faces": 0,
+  "post_bevel_nonmanifold_repair": {
+    "duplicate_faces": 0,
+    "sliver_faces": 0,
+    "remaining_nonmanifold_edges": 0,
+    "skipped_max_edges": []
+  },
+  "watertight_fix": {
+    "remeshed": true,
+    "remesh_failed": false,
+    "collapsed_to": null,
+    "dropped_kinds": [],
+    "dropped_disconnected_faces": 0
+  },
+  "slots": [
+    {
+      "original_material": "tripo_mat_bf4cd718",
+      "assigned_kind": "cracked_concrete",
+      "face_count": 1272,
+      "avg_delta_e_sample_to_kind": 23.317
+    },
+    {
+      "original_material": "tripo_mat_bf4cd718",
+      "assigned_kind": "dirty_glass",
+      "face_count": 238,
+      "avg_delta_e_sample_to_kind": 31.201
+    },
+    {
+      "original_material": "tripo_mat_bf4cd718",
+      "assigned_kind": "sand_dirt",
+      "face_count": 652,
+      "avg_delta_e_sample_to_kind": 37.324
+    }
+  ],
+  "assigned_kinds": [
+    "cracked_concrete",
+    "dirty_glass",
+    "sand_dirt"
+  ],
+  "delta_e_output_to_palette": 0.0,
+  "bevel_class": "prop_crate",
+  "nodes": [
+    "cs_lifeboat_davits"
+  ],
+  "parts": [],
+  "markers": [],
+  "turntable_contact_sheet": null
+}

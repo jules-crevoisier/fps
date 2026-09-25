@@ -1,0 +1,19 @@
+{
+  "smooth_normal": true,
+  "ao": false,
+  "curvature": false,
+  "masks": false,
+  "color_attributes": [
+    "Color",
+    "Color.001"
+  ],
+  "custom_attributes": [
+    "_SMOOTH_NORMAL",
+    "_smooth_normal"
+  ],
+  "file": "diligence_shell.glb",
+  "objects": [
+    "wl_diligence"
+  ],
+  "tris": 5990
+}

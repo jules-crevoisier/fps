@@ -1,0 +1,19 @@
+{
+  "smooth_normal": true,
+  "ao": false,
+  "curvature": false,
+  "masks": false,
+  "color_attributes": [
+    "Color",
+    "Color.001"
+  ],
+  "custom_attributes": [
+    "_SMOOTH_NORMAL",
+    "_smooth_normal"
+  ],
+  "file": "covers_charrette_w.glb",
+  "objects": [
+    "wl_car_wreck"
+  ],
+  "tris": 4748
+}

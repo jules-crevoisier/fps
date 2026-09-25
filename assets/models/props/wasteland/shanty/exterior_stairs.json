@@ -1,0 +1,17 @@
+{
+  "smooth_normal": true,
+  "ao": false,
+  "curvature": false,
+  "masks": false,
+  "color_attributes": [
+    "PlankTint"
+  ],
+  "custom_attributes": [
+    "_smooth_normal"
+  ],
+  "file": "exterior_stairs.glb",
+  "objects": [
+    "exterior_stairs"
+  ],
+  "tris": 836
+}

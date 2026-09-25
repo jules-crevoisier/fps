@@ -1,0 +1,17 @@
+{
+  "smooth_normal": true,
+  "ao": false,
+  "curvature": false,
+  "masks": true,
+  "color_attributes": [
+    "masks"
+  ],
+  "custom_attributes": [
+    "_smooth_normal"
+  ],
+  "file": "gp_borne.glb",
+  "objects": [
+    "gp_borne"
+  ],
+  "tris": 1200
+}

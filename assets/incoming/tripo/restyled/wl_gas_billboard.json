@@ -1,0 +1,17 @@
+{
+  "smooth_normal": true,
+  "ao": false,
+  "curvature": false,
+  "masks": true,
+  "color_attributes": [
+    "masks"
+  ],
+  "custom_attributes": [
+    "_smooth_normal"
+  ],
+  "file": "wl_gas_billboard.glb",
+  "objects": [
+    "wl_gas_billboard"
+  ],
+  "tris": 2593
+}

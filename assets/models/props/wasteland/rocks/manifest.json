@@ -1,0 +1,936 @@
+{
+  "pieces": [
+    {
+      "name": "rock_01",
+      "category": "rock",
+      "path": "C:\\Users\\srko\\Desktop\\fps\\assets\\models\\props\\wasteland\\rocks\\rock_01.glb",
+      "tris": 304,
+      "dims_m": [
+        0.3591,
+        0.2696,
+        0.22
+      ],
+      "budget_tris": 800,
+      "materials": [
+        "rock_01_painted"
+      ],
+      "uv_present": true,
+      "closed": true,
+      "smooth_normal": true,
+      "res": 1024,
+      "painter": "PAINT_BAKE_OK rock_01.glb objets=1 res=1024 luminance=ok",
+      "painter_slots": [
+        {
+          "original_material": "wl_rock_strata",
+          "kind": "wl_rock_strata",
+          "base_mode": "texture",
+          "base_texture": "assets/textures/wasteland/wl_rock_strata_albedo.png",
+          "target_luma": 0.4055,
+          "baked_luma": 0.4102,
+          "luma_ok": true
+        },
+        {
+          "original_material": "sand_top",
+          "kind": "sand_top",
+          "base_mode": "existing",
+          "base_texture": "terrain_sable_albedo",
+          "target_luma": 0.6401,
+          "baked_luma": 0.6421,
+          "luma_ok": true
+        }
+      ],
+      "check_asset_ok": true,
+      "check_asset_failures": [],
+      "icosphere_subdivisions": 2,
+      "main_plane_cuts": 8,
+      "detail_plane_cuts": 3,
+      "large_facet_area_ratio": 0.6545,
+      "footprint_aspect": 1.3575,
+      "bevel_width_m": 0.02,
+      "flipped_diagonals": 0,
+      "micro_folds": 0,
+      "strata_side_projected_ratio": 1.0,
+      "sand_top_area_m2": 0.0377,
+      "underside_area_m2": 0.0759,
+      "albedo_coverage": 0.6385,
+      "albedo_mean_luma": 0.4533,
+      "albedo_luma_std": 0.1388,
+      "albedo_median_hue_deg": 25.63,
+      "albedo_reserved_hue_fraction": 0.0,
+      "strata_source_mean_luma": 0.4055,
+      "flat_top_area_m2": 0
+    },
+    {
+      "name": "rock_02",
+      "category": "rock",
+      "path": "C:\\Users\\srko\\Desktop\\fps\\assets\\models\\props\\wasteland\\rocks\\rock_02.glb",
+      "tris": 364,
+      "dims_m": [
+        0.6394,
+        0.4395,
+        0.28
+      ],
+      "budget_tris": 800,
+      "materials": [
+        "rock_02_painted"
+      ],
+      "uv_present": true,
+      "closed": true,
+      "smooth_normal": true,
+      "res": 1024,
+      "painter": "PAINT_BAKE_OK rock_02.glb objets=1 res=1024 luminance=ok",
+      "painter_slots": [
+        {
+          "original_material": "wl_rock_strata",
+          "kind": "wl_rock_strata",
+          "base_mode": "texture",
+          "base_texture": "assets/textures/wasteland/wl_rock_strata_albedo.png",
+          "target_luma": 0.4055,
+          "baked_luma": 0.4063,
+          "luma_ok": true
+        },
+        {
+          "original_material": "sand_top",
+          "kind": "sand_top",
+          "base_mode": "existing",
+          "base_texture": "terrain_sable_albedo",
+          "target_luma": 0.6401,
+          "baked_luma": 0.6407,
+          "luma_ok": true
+        }
+      ],
+      "check_asset_ok": true,
+      "check_asset_failures": [],
+      "icosphere_subdivisions": 2,
+      "main_plane_cuts": 8,
+      "detail_plane_cuts": 4,
+      "large_facet_area_ratio": 0.8088,
+      "footprint_aspect": 1.4677,
+      "bevel_width_m": 0.024,
+      "flipped_diagonals": 0,
+      "micro_folds": 0,
+      "strata_side_projected_ratio": 1.0,
+      "sand_top_area_m2": 0.1893,
+      "underside_area_m2": 0.1847,
+      "albedo_coverage": 0.5907,
+      "albedo_mean_luma": 0.4774,
+      "albedo_luma_std": 0.1514,
+      "albedo_median_hue_deg": 32.57,
+      "albedo_reserved_hue_fraction": 0.0,
+      "strata_source_mean_luma": 0.4055,
+      "flat_top_area_m2": 0
+    },
+    {
+      "name": "rock_03",
+      "category": "rock",
+      "path": "C:\\Users\\srko\\Desktop\\fps\\assets\\models\\props\\wasteland\\rocks\\rock_03.glb",
+      "tris": 286,
+      "dims_m": [
+        0.9186,
+        0.6594,
+        0.6
+      ],
+      "budget_tris": 800,
+      "materials": [
+        "rock_03_painted"
+      ],
+      "uv_present": true,
+      "closed": true,
+      "smooth_normal": true,
+      "res": 1024,
+      "painter": "PAINT_BAKE_OK rock_03.glb objets=1 res=1024 luminance=ok",
+      "painter_slots": [
+        {
+          "original_material": "wl_rock_strata",
+          "kind": "wl_rock_strata",
+          "base_mode": "texture",
+          "base_texture": "assets/textures/wasteland/wl_rock_strata_albedo.png",
+          "target_luma": 0.4055,
+          "baked_luma": 0.4034,
+          "luma_ok": true
+        },
+        {
+          "original_material": "sand_top",
+          "kind": "sand_top",
+          "base_mode": "existing",
+          "base_texture": "terrain_sable_albedo",
+          "target_luma": 0.6401,
+          "baked_luma": 0.6382,
+          "luma_ok": true
+        }
+      ],
+      "check_asset_ok": true,
+      "check_asset_failures": [],
+      "icosphere_subdivisions": 2,
+      "main_plane_cuts": 8,
+      "detail_plane_cuts": 5,
+      "large_facet_area_ratio": 0.7811,
+      "footprint_aspect": 1.464,
+      "bevel_width_m": 0.028,
+      "flipped_diagonals": 0,
+      "micro_folds": 0,
+      "strata_side_projected_ratio": 1.0,
+      "sand_top_area_m2": 0.2467,
+      "underside_area_m2": 0.3658,
+      "albedo_coverage": 0.5676,
+      "albedo_mean_luma": 0.4468,
+      "albedo_luma_std": 0.1559,
+      "albedo_median_hue_deg": 23.65,
+      "albedo_reserved_hue_fraction": 5.4e-05,
+      "strata_source_mean_luma": 0.4055,
+      "flat_top_area_m2": 0
+    },
+    {
+      "name": "rock_04",
+      "category": "rock",
+      "path": "C:\\Users\\srko\\Desktop\\fps\\assets\\models\\props\\wasteland\\rocks\\rock_04.glb",
+      "tris": 384,
+      "dims_m": [
+        1.2586,
+        0.7995,
+        0.8199
+      ],
+      "budget_tris": 800,
+      "materials": [
+        "rock_04_painted"
+      ],
+      "uv_present": true,
+      "closed": true,
+      "smooth_normal": true,
+      "res": 1024,
+      "painter": "PAINT_BAKE_OK rock_04.glb objets=1 res=1024 luminance=ok",
+      "painter_slots": [
+        {
+          "original_material": "wl_rock_strata",
+          "kind": "wl_rock_strata",
+          "base_mode": "texture",
+          "base_texture": "assets/textures/wasteland/wl_rock_strata_albedo.png",
+          "target_luma": 0.4055,
+          "baked_luma": 0.4016,
+          "luma_ok": true
+        },
+        {
+          "original_material": "sand_top",
+          "kind": "sand_top",
+          "base_mode": "existing",
+          "base_texture": "terrain_sable_albedo",
+          "target_luma": 0.6401,
+          "baked_luma": 0.6394,
+          "luma_ok": true
+        }
+      ],
+      "check_asset_ok": true,
+      "check_asset_failures": [],
+      "icosphere_subdivisions": 2,
+      "main_plane_cuts": 8,
+      "detail_plane_cuts": 5,
+      "large_facet_area_ratio": 0.6685,
+      "footprint_aspect": 1.6163,
+      "bevel_width_m": 0.032,
+      "flipped_diagonals": 0,
+      "micro_folds": 2,
+      "strata_side_projected_ratio": 1.0,
+      "sand_top_area_m2": 0.5735,
+      "underside_area_m2": 0.5354,
+      "albedo_coverage": 0.6465,
+      "albedo_mean_luma": 0.462,
+      "albedo_luma_std": 0.1798,
+      "albedo_median_hue_deg": 23.9,
+      "albedo_reserved_hue_fraction": 0.000106,
+      "strata_source_mean_luma": 0.4055,
+      "flat_top_area_m2": 0
+    },
+    {
+      "name": "rock_05",
+      "category": "rock",
+      "path": "C:\\Users\\srko\\Desktop\\fps\\assets\\models\\props\\wasteland\\rocks\\rock_05.glb",
+      "tris": 350,
+      "dims_m": [
+        1.5957,
+        1.1192,
+        0.9998
+      ],
+      "budget_tris": 800,
+      "materials": [
+        "rock_05_painted"
+      ],
+      "uv_present": true,
+      "closed": true,
+      "smooth_normal": true,
+      "res": 1024,
+      "painter": "PAINT_BAKE_OK rock_05.glb objets=1 res=1024 luminance=ok",
+      "painter_slots": [
+        {
+          "original_material": "wl_rock_strata",
+          "kind": "wl_rock_strata",
+          "base_mode": "texture",
+          "base_texture": "assets/textures/wasteland/wl_rock_strata_albedo.png",
+          "target_luma": 0.4055,
+          "baked_luma": 0.3997,
+          "luma_ok": true
+        },
+        {
+          "original_material": "sand_top",
+          "kind": "sand_top",
+          "base_mode": "existing",
+          "base_texture": "terrain_sable_albedo",
+          "target_luma": 0.6401,
+          "baked_luma": 0.6396,
+          "luma_ok": true
+        }
+      ],
+      "check_asset_ok": true,
+      "check_asset_failures": [],
+      "icosphere_subdivisions": 2,
+      "main_plane_cuts": 10,
+      "detail_plane_cuts": 5,
+      "large_facet_area_ratio": 0.7719,
+      "footprint_aspect": 1.4153,
+      "bevel_width_m": 0.036,
+      "flipped_diagonals": 0,
+      "micro_folds": 0,
+      "strata_side_projected_ratio": 1.0,
+      "sand_top_area_m2": 0.9163,
+      "underside_area_m2": 0.9666,
+      "albedo_coverage": 0.6034,
+      "albedo_mean_luma": 0.4605,
+      "albedo_luma_std": 0.1721,
+      "albedo_median_hue_deg": 30.84,
+      "albedo_reserved_hue_fraction": 2e-06,
+      "strata_source_mean_luma": 0.4055,
+      "flat_top_area_m2": 0
+    },
+    {
+      "name": "rock_06",
+      "category": "rock",
+      "path": "C:\\Users\\srko\\Desktop\\fps\\assets\\models\\props\\wasteland\\rocks\\rock_06.glb",
+      "tris": 322,
+      "dims_m": [
+        1.973,
+        1.3525,
+        1.2597
+      ],
+      "budget_tris": 800,
+      "materials": [
+        "rock_06_painted"
+      ],
+      "uv_present": true,
+      "closed": true,
+      "smooth_normal": true,
+      "res": 1024,
+      "painter": "PAINT_BAKE_OK rock_06.glb objets=1 res=1024 luminance=ok",
+      "painter_slots": [
+        {
+          "original_material": "wl_rock_strata",
+          "kind": "wl_rock_strata",
+          "base_mode": "texture",
+          "base_texture": "assets/textures/wasteland/wl_rock_strata_albedo.png",
+          "target_luma": 0.4055,
+          "baked_luma": 0.3982,
+          "luma_ok": true
+        },
+        {
+          "original_material": "sand_top",
+          "kind": "sand_top",
+          "base_mode": "existing",
+          "base_texture": "terrain_sable_albedo",
+          "target_luma": 0.6401,
+          "baked_luma": 0.6376,
+          "luma_ok": true
+        }
+      ],
+      "check_asset_ok": true,
+      "check_asset_failures": [],
+      "icosphere_subdivisions": 2,
+      "main_plane_cuts": 10,
+      "detail_plane_cuts": 6,
+      "large_facet_area_ratio": 0.796,
+      "footprint_aspect": 1.4781,
+      "bevel_width_m": 0.04,
+      "flipped_diagonals": 0,
+      "micro_folds": 2,
+      "strata_side_projected_ratio": 1.0,
+      "sand_top_area_m2": 1.287,
+      "underside_area_m2": 1.7565,
+      "albedo_coverage": 0.6147,
+      "albedo_mean_luma": 0.4522,
+      "albedo_luma_std": 0.1922,
+      "albedo_median_hue_deg": 19.83,
+      "albedo_reserved_hue_fraction": 0.000194,
+      "strata_source_mean_luma": 0.4055,
+      "flat_top_area_m2": 0
+    },
+    {
+      "name": "cliff_block_01",
+      "category": "cliff",
+      "path": "C:\\Users\\srko\\Desktop\\fps\\assets\\models\\props\\wasteland\\rocks\\cliff_block_01.glb",
+      "tris": 1638,
+      "dims_m": [
+        6.1483,
+        3.3774,
+        4.2
+      ],
+      "budget_tris": 3000,
+      "materials": [
+        "cliff_block_01_painted"
+      ],
+      "uv_present": true,
+      "closed": true,
+      "smooth_normal": true,
+      "res": 2048,
+      "painter": "PAINT_BAKE_OK cliff_block_01.glb objets=1 res=2048 luminance=ok",
+      "painter_slots": [
+        {
+          "original_material": "wl_rock_strata",
+          "kind": "wl_rock_strata",
+          "base_mode": "texture",
+          "base_texture": "assets/textures/wasteland/wl_rock_strata_albedo.png",
+          "target_luma": 0.4055,
+          "baked_luma": 0.406,
+          "luma_ok": true
+        },
+        {
+          "original_material": "sand_top",
+          "kind": "sand_top",
+          "base_mode": "existing",
+          "base_texture": "terrain_sable_albedo",
+          "target_luma": 0.6401,
+          "baked_luma": 0.6401,
+          "luma_ok": true
+        }
+      ],
+      "check_asset_ok": true,
+      "check_asset_failures": [],
+      "terrace_count": 3,
+      "outline_vertex_counts": [
+        14,
+        14,
+        13,
+        13
+      ],
+      "outline_aspect": 2.3059,
+      "terrace_offsets_m": [
+        -0.0892,
+        0.0581,
+        -0.0954
+      ],
+      "tier_plane_cuts": 6,
+      "fracture_plane_cuts": 2,
+      "groove_count": 3,
+      "fallen_block_count": 4,
+      "top_lip_overhang_m": 0.0954,
+      "flipped_diagonals": 0,
+      "micro_folds": 0,
+      "strata_side_projected_ratio": 1.0,
+      "sand_top_area_m2": 9.5903,
+      "underside_area_m2": 16.1586,
+      "albedo_coverage": 0.6514,
+      "albedo_mean_luma": 0.4482,
+      "albedo_luma_std": 0.1877,
+      "albedo_median_hue_deg": 22.43,
+      "albedo_reserved_hue_fraction": 1.1e-05,
+      "strata_source_mean_luma": 0.4055,
+      "flat_top_area_m2": 8.3547
+    },
+    {
+      "name": "cliff_block_02",
+      "category": "cliff",
+      "path": "C:\\Users\\srko\\Desktop\\fps\\assets\\models\\props\\wasteland\\rocks\\cliff_block_02.glb",
+      "tris": 1776,
+      "dims_m": [
+        6.815,
+        4.7345,
+        5.8001
+      ],
+      "budget_tris": 3000,
+      "materials": [
+        "cliff_block_02_painted"
+      ],
+      "uv_present": true,
+      "closed": true,
+      "smooth_normal": true,
+      "res": 2048,
+      "painter": "PAINT_BAKE_OK cliff_block_02.glb objets=1 res=2048 luminance=ok",
+      "painter_slots": [
+        {
+          "original_material": "wl_rock_strata",
+          "kind": "wl_rock_strata",
+          "base_mode": "texture",
+          "base_texture": "assets/textures/wasteland/wl_rock_strata_albedo.png",
+          "target_luma": 0.4055,
+          "baked_luma": 0.406,
+          "luma_ok": true
+        },
+        {
+          "original_material": "sand_top",
+          "kind": "sand_top",
+          "base_mode": "existing",
+          "base_texture": "terrain_sable_albedo",
+          "target_luma": 0.6401,
+          "baked_luma": 0.6402,
+          "luma_ok": true
+        }
+      ],
+      "check_asset_ok": true,
+      "check_asset_failures": [],
+      "terrace_count": 3,
+      "outline_vertex_counts": [
+        15,
+        13,
+        13,
+        14
+      ],
+      "outline_aspect": 1.589,
+      "terrace_offsets_m": [
+        -0.3466,
+        0.09,
+        -0.2215
+      ],
+      "tier_plane_cuts": 6,
+      "fracture_plane_cuts": 3,
+      "groove_count": 4,
+      "fallen_block_count": 5,
+      "top_lip_overhang_m": 0.2215,
+      "flipped_diagonals": 0,
+      "micro_folds": 0,
+      "strata_side_projected_ratio": 1.0,
+      "sand_top_area_m2": 13.2057,
+      "underside_area_m2": 22.3162,
+      "albedo_coverage": 0.6981,
+      "albedo_mean_luma": 0.4436,
+      "albedo_luma_std": 0.1886,
+      "albedo_median_hue_deg": 21.65,
+      "albedo_reserved_hue_fraction": 1.5e-05,
+      "strata_source_mean_luma": 0.4055,
+      "flat_top_area_m2": 11.0155
+    },
+    {
+      "name": "cliff_block_03",
+      "category": "cliff",
+      "path": "C:\\Users\\srko\\Desktop\\fps\\assets\\models\\props\\wasteland\\rocks\\cliff_block_03.glb",
+      "tris": 2174,
+      "dims_m": [
+        8.2133,
+        6.0137,
+        7.6
+      ],
+      "budget_tris": 3000,
+      "materials": [
+        "cliff_block_03_painted"
+      ],
+      "uv_present": true,
+      "closed": true,
+      "smooth_normal": true,
+      "res": 2048,
+      "painter": "PAINT_BAKE_OK cliff_block_03.glb objets=1 res=2048 luminance=ok",
+      "painter_slots": [
+        {
+          "original_material": "wl_rock_strata",
+          "kind": "wl_rock_strata",
+          "base_mode": "texture",
+          "base_texture": "assets/textures/wasteland/wl_rock_strata_albedo.png",
+          "target_luma": 0.4055,
+          "baked_luma": 0.4061,
+          "luma_ok": true
+        },
+        {
+          "original_material": "sand_top",
+          "kind": "sand_top",
+          "base_mode": "existing",
+          "base_texture": "terrain_sable_albedo",
+          "target_luma": 0.6401,
+          "baked_luma": 0.6401,
+          "luma_ok": true
+        }
+      ],
+      "check_asset_ok": true,
+      "check_asset_failures": [],
+      "terrace_count": 4,
+      "outline_vertex_counts": [
+        15,
+        15,
+        16,
+        16,
+        16
+      ],
+      "outline_aspect": 1.425,
+      "terrace_offsets_m": [
+        -0.3389,
+        0.1993,
+        -0.0928,
+        -0.2236
+      ],
+      "tier_plane_cuts": 8,
+      "fracture_plane_cuts": 3,
+      "groove_count": 5,
+      "fallen_block_count": 5,
+      "top_lip_overhang_m": 0.2236,
+      "flipped_diagonals": 0,
+      "micro_folds": 0,
+      "strata_side_projected_ratio": 1.0,
+      "sand_top_area_m2": 21.6444,
+      "underside_area_m2": 32.9674,
+      "albedo_coverage": 0.6588,
+      "albedo_mean_luma": 0.4488,
+      "albedo_luma_std": 0.176,
+      "albedo_median_hue_deg": 27.02,
+      "albedo_reserved_hue_fraction": 0.0,
+      "strata_source_mean_luma": 0.4055,
+      "flat_top_area_m2": 17.1609
+    },
+    {
+      "name": "mesa_01",
+      "category": "mesa",
+      "path": "C:\\Users\\srko\\Desktop\\fps\\assets\\models\\props\\wasteland\\rocks\\mesa_01.glb",
+      "tris": 814,
+      "dims_m": [
+        33.0549,
+        22.3047,
+        16.0
+      ],
+      "budget_tris": 2000,
+      "materials": [
+        "mesa_01_painted"
+      ],
+      "uv_present": true,
+      "closed": true,
+      "smooth_normal": true,
+      "res": 2048,
+      "painter": "PAINT_BAKE_OK mesa_01.glb objets=1 res=2048 luminance=ok",
+      "painter_slots": [
+        {
+          "original_material": "wl_rock_strata",
+          "kind": "wl_rock_strata",
+          "base_mode": "texture",
+          "base_texture": "assets/textures/wasteland/wl_rock_strata_albedo.png",
+          "target_luma": 0.4055,
+          "baked_luma": 0.4063,
+          "luma_ok": true
+        },
+        {
+          "original_material": "sand_top",
+          "kind": "sand_top",
+          "base_mode": "existing",
+          "base_texture": "terrain_sable_albedo",
+          "target_luma": 0.6401,
+          "baked_luma": 0.6401,
+          "luma_ok": true
+        }
+      ],
+      "check_asset_ok": true,
+      "check_asset_failures": [],
+      "terrace_count": 3,
+      "outline_vertex_counts": [
+        17,
+        21,
+        20,
+        18
+      ],
+      "outline_aspect": 1.4093,
+      "terrace_offsets_m": [
+        -0.44,
+        0.793,
+        -0.6824
+      ],
+      "tier_plane_cuts": 6,
+      "fracture_plane_cuts": 2,
+      "groove_count": 5,
+      "fallen_block_count": 5,
+      "top_lip_overhang_m": 0.6824,
+      "flipped_diagonals": 0,
+      "micro_folds": 0,
+      "strata_side_projected_ratio": 1.0,
+      "sand_top_area_m2": 378.1027,
+      "underside_area_m2": 523.0104,
+      "albedo_coverage": 0.6783,
+      "albedo_mean_luma": 0.4563,
+      "albedo_luma_std": 0.1593,
+      "albedo_median_hue_deg": 30.0,
+      "albedo_reserved_hue_fraction": 0.0,
+      "strata_source_mean_luma": 0.4055,
+      "flat_top_area_m2": 271.9394
+    },
+    {
+      "name": "mesa_02",
+      "category": "mesa",
+      "path": "C:\\Users\\srko\\Desktop\\fps\\assets\\models\\props\\wasteland\\rocks\\mesa_02.glb",
+      "tris": 1054,
+      "dims_m": [
+        39.9024,
+        33.9548,
+        21.0
+      ],
+      "budget_tris": 2000,
+      "materials": [
+        "mesa_02_painted"
+      ],
+      "uv_present": true,
+      "closed": true,
+      "smooth_normal": true,
+      "res": 2048,
+      "painter": "PAINT_BAKE_OK mesa_02.glb objets=1 res=2048 luminance=ok",
+      "painter_slots": [
+        {
+          "original_material": "wl_rock_strata",
+          "kind": "wl_rock_strata",
+          "base_mode": "texture",
+          "base_texture": "assets/textures/wasteland/wl_rock_strata_albedo.png",
+          "target_luma": 0.4055,
+          "baked_luma": 0.4064,
+          "luma_ok": true
+        },
+        {
+          "original_material": "sand_top",
+          "kind": "sand_top",
+          "base_mode": "existing",
+          "base_texture": "terrain_sable_albedo",
+          "target_luma": 0.6401,
+          "baked_luma": 0.6401,
+          "luma_ok": true
+        }
+      ],
+      "check_asset_ok": true,
+      "check_asset_failures": [],
+      "terrace_count": 4,
+      "outline_vertex_counts": [
+        23,
+        23,
+        22,
+        19,
+        24
+      ],
+      "outline_aspect": 1.4547,
+      "terrace_offsets_m": [
+        0.1882,
+        0.9412,
+        0.7699,
+        -1.015
+      ],
+      "tier_plane_cuts": 8,
+      "fracture_plane_cuts": 3,
+      "groove_count": 6,
+      "fallen_block_count": 6,
+      "top_lip_overhang_m": 1.015,
+      "flipped_diagonals": 0,
+      "micro_folds": 0,
+      "strata_side_projected_ratio": 1.0,
+      "sand_top_area_m2": 791.1769,
+      "underside_area_m2": 1041.3583,
+      "albedo_coverage": 0.6474,
+      "albedo_mean_luma": 0.4563,
+      "albedo_luma_std": 0.1621,
+      "albedo_median_hue_deg": 23.01,
+      "albedo_reserved_hue_fraction": 0.0,
+      "strata_source_mean_luma": 0.4055,
+      "flat_top_area_m2": 523.1692
+    },
+    {
+      "name": "canyon_edge_01",
+      "category": "canyon_edge",
+      "path": "C:\\Users\\srko\\Desktop\\fps\\assets\\models\\props\\wasteland\\rocks\\canyon_edge_01.glb",
+      "tris": 746,
+      "dims_m": [
+        16.0,
+        8.2941,
+        12.0
+      ],
+      "budget_tris": 3000,
+      "materials": [
+        "canyon_edge_01_painted"
+      ],
+      "uv_present": true,
+      "closed": true,
+      "smooth_normal": true,
+      "res": 2048,
+      "painter": "PAINT_BAKE_OK canyon_edge_01.glb objets=1 res=2048 luminance=ok",
+      "painter_slots": [
+        {
+          "original_material": "wl_rock_strata",
+          "kind": "wl_rock_strata",
+          "base_mode": "texture",
+          "base_texture": "assets/textures/wasteland/wl_rock_strata_albedo.png",
+          "target_luma": 0.4055,
+          "baked_luma": 0.4063,
+          "luma_ok": true
+        },
+        {
+          "original_material": "sand_top",
+          "kind": "sand_top",
+          "base_mode": "existing",
+          "base_texture": "terrain_sable_albedo",
+          "target_luma": 0.6401,
+          "baked_luma": 0.6401,
+          "luma_ok": true
+        }
+      ],
+      "check_asset_ok": true,
+      "check_asset_failures": [],
+      "length_m": 16.0,
+      "terrace_count": 3,
+      "face_plane_cuts": 29,
+      "buttress_count": 3,
+      "buttress_volume_count": 5,
+      "buttress_sections": [
+        {
+          "buttress": 0,
+          "volume": 0,
+          "z": 1.651,
+          "facets": 5,
+          "sharp_turn_share": 1.0,
+          "front_largest_face_share": 0.5231
+        },
+        {
+          "buttress": 0,
+          "volume": 0,
+          "z": 3.026,
+          "facets": 5,
+          "sharp_turn_share": 1.0,
+          "front_largest_face_share": 0.5069
+        },
+        {
+          "buttress": 0,
+          "volume": 0,
+          "z": 4.402,
+          "facets": 5,
+          "sharp_turn_share": 1.0,
+          "front_largest_face_share": 0.3094
+        },
+        {
+          "buttress": 0,
+          "volume": 1,
+          "z": 6.616,
+          "facets": 5,
+          "sharp_turn_share": 1.0,
+          "front_largest_face_share": 0.2649
+        },
+        {
+          "buttress": 0,
+          "volume": 1,
+          "z": 7.753,
+          "facets": 5,
+          "sharp_turn_share": 1.0,
+          "front_largest_face_share": 0.2592
+        },
+        {
+          "buttress": 0,
+          "volume": 1,
+          "z": 8.89,
+          "facets": 5,
+          "sharp_turn_share": 1.0,
+          "front_largest_face_share": 0.3796
+        },
+        {
+          "buttress": 1,
+          "volume": 0,
+          "z": 5.178,
+          "facets": 5,
+          "sharp_turn_share": 1.0,
+          "front_largest_face_share": 0.5128
+        },
+        {
+          "buttress": 1,
+          "volume": 0,
+          "z": 6.244,
+          "facets": 5,
+          "sharp_turn_share": 1.0,
+          "front_largest_face_share": 0.5128
+        },
+        {
+          "buttress": 1,
+          "volume": 0,
+          "z": 7.309,
+          "facets": 5,
+          "sharp_turn_share": 1.0,
+          "front_largest_face_share": 0.5128
+        },
+        {
+          "buttress": 1,
+          "volume": 1,
+          "z": 9.018,
+          "facets": 5,
+          "sharp_turn_share": 1.0,
+          "front_largest_face_share": 0.4111
+        },
+        {
+          "buttress": 1,
+          "volume": 1,
+          "z": 9.94,
+          "facets": 5,
+          "sharp_turn_share": 1.0,
+          "front_largest_face_share": 0.3982
+        },
+        {
+          "buttress": 1,
+          "volume": 1,
+          "z": 10.862,
+          "facets": 5,
+          "sharp_turn_share": 1.0,
+          "front_largest_face_share": 0.3481
+        },
+        {
+          "buttress": 2,
+          "volume": 0,
+          "z": 1.74,
+          "facets": 5,
+          "sharp_turn_share": 1.0,
+          "front_largest_face_share": 0.4307
+        },
+        {
+          "buttress": 2,
+          "volume": 0,
+          "z": 3.19,
+          "facets": 5,
+          "sharp_turn_share": 1.0,
+          "front_largest_face_share": 0.4086
+        },
+        {
+          "buttress": 2,
+          "volume": 0,
+          "z": 4.64,
+          "facets": 5,
+          "sharp_turn_share": 1.0,
+          "front_largest_face_share": 0.3172
+        }
+      ],
+      "fallen_block_count": 4,
+      "flipped_diagonals": 0,
+      "micro_folds": 0,
+      "strata_side_projected_ratio": 1.0,
+      "sand_top_area_m2": 109.4319,
+      "underside_area_m2": 124.5895,
+      "albedo_coverage": 0.8304,
+      "albedo_mean_luma": 0.445,
+      "albedo_luma_std": 0.1802,
+      "albedo_median_hue_deg": 22.15,
+      "albedo_reserved_hue_fraction": 1e-06,
+      "strata_source_mean_luma": 0.4055,
+      "seam_max_delta_m": 0.0,
+      "flat_top_area_m2": 67.712
+    }
+  ],
+  "piece_count": 12,
+  "ok": true,
+  "failures": [],
+  "budgets_tris": {
+    "rock": 800,
+    "cliff": 3000,
+    "mesa": 2000,
+    "canyon_edge": 3000
+  },
+  "strata_texture": "assets/textures/wasteland/wl_rock_strata_albedo.png",
+  "strata_tile_m": 2.0,
+  "painter_world_uv_scale": 0.5,
+  "strata_slot": "wl_rock_strata",
+  "sand_slot": "sand_top",
+  "sand_texture": "assets/textures/painted/terrain_sable_albedo.png",
+  "rock_bevel_range_m": [
+    0.02,
+    0.04
+  ],
+  "category_counts": {
+    "rock": 6,
+    "cliff": 3,
+    "mesa": 2,
+    "canyon_edge": 1
+  }
+}
