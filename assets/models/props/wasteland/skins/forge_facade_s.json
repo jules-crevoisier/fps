@@ -1,0 +1,19 @@
+{
+  "smooth_normal": true,
+  "ao": false,
+  "curvature": false,
+  "masks": false,
+  "color_attributes": [
+    "Color",
+    "Color.001"
+  ],
+  "custom_attributes": [
+    "_SMOOTH_NORMAL",
+    "_smooth_normal"
+  ],
+  "file": "forge_facade_s.glb",
+  "objects": [
+    "wl_garage"
+  ],
+  "tris": 5188
+}

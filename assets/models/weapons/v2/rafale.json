@@ -1,0 +1,64 @@
+{
+  "id": "rafale",
+  "output": "assets/models/weapons/v2/rafale.glb",
+  "backup": "assets/models/weapons/_painted_v1/rafale.glb",
+  "backed_up_this_run": false,
+  "albedo": "assets/textures/weapons/rafale_albedo.png",
+  "scale_factor": 0.92,
+  "grip_length_cm": 11.5,
+  "final_tris": 5066,
+  "iou_profile": 0.9997206443802961,
+  "pieces": [
+    "Mag"
+  ],
+  "anchors_blender_cm": {
+    "Grip": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "Foregrip": [
+      -1.224,
+      22.356,
+      0.975
+    ],
+    "Muzzle": [
+      -1.208,
+      38.272,
+      7.419
+    ],
+    "Sight": [
+      -1.224,
+      -0.092,
+      14.168
+    ],
+    "MagWell": [
+      0.662,
+      14.444,
+      -2.576
+    ],
+    "Eject": [
+      0.672,
+      13.892,
+      8.096
+    ]
+  },
+  "trigger_guard_cm": {
+    "top": 1.25,
+    "bottom": -2.0,
+    "back": 3.5,
+    "front": 9.25
+  },
+  "checks": {
+    "grip_inside": true,
+    "grip_in_profile": true,
+    "grip_surface_dist_cm": 0.594,
+    "foregrip_surface_dist_cm": 0.001,
+    "sight_surface_dist_cm": 0.083,
+    "magwell_surface_dist_cm": 0.272,
+    "eject_surface_dist_cm": 0.004,
+    "muzzle_bore_depth_cm": 6.644,
+    "sight_elevation_cm": 6.749,
+    "sight_muzzle_lateral_deg": 0.0232
+  }
+}

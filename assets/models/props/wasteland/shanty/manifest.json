@@ -1304,7 +1304,7 @@
   "ok": true,
   "failures": [],
   "chk16_exception": {
-    "approved_by_lead": true,
+    "approved_by_lead": false,
     "reason": "check_asset.py CHK-16 compare chaque piece a la seule plus grosse composante (jamais de chainage proche-en-proche) : un mur de planches VOLONTAIREMENT jointees (joints 1-2 cm, critere d'acceptation) y echoue structurellement des la premiere planche voisine. Pre-existant : 5 props wasteland deja livres (fence_wood, pallet, exterior_stairs, corrugated_shed, balcony_railing) echouent au meme CHK-16 aujourd'hui. check_asset.py est hors de la liste de fichiers de ce contrat (ART-73) -- ne peut pas etre corrige ici.",
     "affected_modules": [
       "wall_1_level",
@@ -1325,7 +1325,11 @@
       "tower_leg"
     ],
     "affected_module_count": 16,
-    "lead_decision": "2026-09-25 : exception CHK-16 APPROUVÉE pour les modules multi-pièces à joints réels (planches jointées 1-2 cm, voulu par le critère) ; ce ne sont pas des pièces flottantes. Correctif de fond suivi dans TOOL-03 (chaînage proche-en-proche dans check_asset.py) — l'exception sera retirée quand TOOL-03 passe."
+    "decision_needed": [
+      "approuver l'exception CHK-16 pour les assets multi-pieces a joints reels",
+      "corriger check_asset.py (chainage proche-en-proche)",
+      "remodeler sans ecart reel > 1 cm (perd le critere joints 1-2 cm)"
+    ]
   },
   "chamfer_m": 0.015,
   "chamfer_within_contract": true,

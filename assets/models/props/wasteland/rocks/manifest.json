@@ -26,7 +26,7 @@
           "base_mode": "texture",
           "base_texture": "assets/textures/wasteland/wl_rock_strata_albedo.png",
           "target_luma": 0.4055,
-          "baked_luma": 0.4102,
+          "baked_luma": 0.412,
           "luma_ok": true
         },
         {
@@ -35,7 +35,7 @@
           "base_mode": "existing",
           "base_texture": "terrain_sable_albedo",
           "target_luma": 0.6401,
-          "baked_luma": 0.6421,
+          "baked_luma": 0.6431,
           "luma_ok": true
         }
       ],
@@ -52,10 +52,10 @@
       "strata_side_projected_ratio": 1.0,
       "sand_top_area_m2": 0.0377,
       "underside_area_m2": 0.0759,
-      "albedo_coverage": 0.6385,
-      "albedo_mean_luma": 0.4533,
-      "albedo_luma_std": 0.1388,
-      "albedo_median_hue_deg": 25.63,
+      "albedo_coverage": 0.6391,
+      "albedo_mean_luma": 0.4507,
+      "albedo_luma_std": 0.1371,
+      "albedo_median_hue_deg": 25.71,
       "albedo_reserved_hue_fraction": 0.0,
       "strata_source_mean_luma": 0.4055,
       "flat_top_area_m2": 0
@@ -86,7 +86,7 @@
           "base_mode": "texture",
           "base_texture": "assets/textures/wasteland/wl_rock_strata_albedo.png",
           "target_luma": 0.4055,
-          "baked_luma": 0.4063,
+          "baked_luma": 0.4075,
           "luma_ok": true
         },
         {
@@ -95,7 +95,7 @@
           "base_mode": "existing",
           "base_texture": "terrain_sable_albedo",
           "target_luma": 0.6401,
-          "baked_luma": 0.6407,
+          "baked_luma": 0.6408,
           "luma_ok": true
         }
       ],
@@ -112,9 +112,9 @@
       "strata_side_projected_ratio": 1.0,
       "sand_top_area_m2": 0.1893,
       "underside_area_m2": 0.1847,
-      "albedo_coverage": 0.5907,
-      "albedo_mean_luma": 0.4774,
-      "albedo_luma_std": 0.1514,
+      "albedo_coverage": 0.5912,
+      "albedo_mean_luma": 0.475,
+      "albedo_luma_std": 0.1493,
       "albedo_median_hue_deg": 32.57,
       "albedo_reserved_hue_fraction": 0.0,
       "strata_source_mean_luma": 0.4055,
@@ -146,7 +146,7 @@
           "base_mode": "texture",
           "base_texture": "assets/textures/wasteland/wl_rock_strata_albedo.png",
           "target_luma": 0.4055,
-          "baked_luma": 0.4034,
+          "baked_luma": 0.4038,
           "luma_ok": true
         },
         {
@@ -155,7 +155,7 @@
           "base_mode": "existing",
           "base_texture": "terrain_sable_albedo",
           "target_luma": 0.6401,
-          "baked_luma": 0.6382,
+          "baked_luma": 0.6386,
           "luma_ok": true
         }
       ],
@@ -172,10 +172,10 @@
       "strata_side_projected_ratio": 1.0,
       "sand_top_area_m2": 0.2467,
       "underside_area_m2": 0.3658,
-      "albedo_coverage": 0.5676,
-      "albedo_mean_luma": 0.4468,
-      "albedo_luma_std": 0.1559,
-      "albedo_median_hue_deg": 23.65,
+      "albedo_coverage": 0.5679,
+      "albedo_mean_luma": 0.4405,
+      "albedo_luma_std": 0.1521,
+      "albedo_median_hue_deg": 23.71,
       "albedo_reserved_hue_fraction": 5.4e-05,
       "strata_source_mean_luma": 0.4055,
       "flat_top_area_m2": 0
@@ -206,7 +206,7 @@
           "base_mode": "texture",
           "base_texture": "assets/textures/wasteland/wl_rock_strata_albedo.png",
           "target_luma": 0.4055,
-          "baked_luma": 0.4016,
+          "baked_luma": 0.4019,
           "luma_ok": true
         },
         {
@@ -215,7 +215,7 @@
           "base_mode": "existing",
           "base_texture": "terrain_sable_albedo",
           "target_luma": 0.6401,
-          "baked_luma": 0.6394,
+          "baked_luma": 0.6393,
           "luma_ok": true
         }
       ],
@@ -232,11 +232,11 @@
       "strata_side_projected_ratio": 1.0,
       "sand_top_area_m2": 0.5735,
       "underside_area_m2": 0.5354,
-      "albedo_coverage": 0.6465,
-      "albedo_mean_luma": 0.462,
-      "albedo_luma_std": 0.1798,
-      "albedo_median_hue_deg": 23.9,
-      "albedo_reserved_hue_fraction": 0.000106,
+      "albedo_coverage": 0.6468,
+      "albedo_mean_luma": 0.4586,
+      "albedo_luma_std": 0.1764,
+      "albedo_median_hue_deg": 23.91,
+      "albedo_reserved_hue_fraction": 0.000128,
       "strata_source_mean_luma": 0.4055,
       "flat_top_area_m2": 0
     },
@@ -266,7 +266,7 @@
           "base_mode": "texture",
           "base_texture": "assets/textures/wasteland/wl_rock_strata_albedo.png",
           "target_luma": 0.4055,
-          "baked_luma": 0.3997,
+          "baked_luma": 0.4005,
           "luma_ok": true
         },
         {
@@ -275,7 +275,7 @@
           "base_mode": "existing",
           "base_texture": "terrain_sable_albedo",
           "target_luma": 0.6401,
-          "baked_luma": 0.6396,
+          "baked_luma": 0.64,
           "luma_ok": true
         }
       ],
@@ -292,11 +292,11 @@
       "strata_side_projected_ratio": 1.0,
       "sand_top_area_m2": 0.9163,
       "underside_area_m2": 0.9666,
-      "albedo_coverage": 0.6034,
-      "albedo_mean_luma": 0.4605,
-      "albedo_luma_std": 0.1721,
-      "albedo_median_hue_deg": 30.84,
-      "albedo_reserved_hue_fraction": 2e-06,
+      "albedo_coverage": 0.6037,
+      "albedo_mean_luma": 0.4616,
+      "albedo_luma_std": 0.1706,
+      "albedo_median_hue_deg": 30.97,
+      "albedo_reserved_hue_fraction": 0.0,
       "strata_source_mean_luma": 0.4055,
       "flat_top_area_m2": 0
     },
@@ -335,7 +335,7 @@
           "base_mode": "existing",
           "base_texture": "terrain_sable_albedo",
           "target_luma": 0.6401,
-          "baked_luma": 0.6376,
+          "baked_luma": 0.6377,
           "luma_ok": true
         }
       ],
@@ -352,11 +352,11 @@
       "strata_side_projected_ratio": 1.0,
       "sand_top_area_m2": 1.287,
       "underside_area_m2": 1.7565,
-      "albedo_coverage": 0.6147,
-      "albedo_mean_luma": 0.4522,
-      "albedo_luma_std": 0.1922,
-      "albedo_median_hue_deg": 19.83,
-      "albedo_reserved_hue_fraction": 0.000194,
+      "albedo_coverage": 0.6148,
+      "albedo_mean_luma": 0.4543,
+      "albedo_luma_std": 0.1905,
+      "albedo_median_hue_deg": 20.0,
+      "albedo_reserved_hue_fraction": 0.000143,
       "strata_source_mean_luma": 0.4055,
       "flat_top_area_m2": 0
     },
@@ -424,10 +424,10 @@
       "strata_side_projected_ratio": 1.0,
       "sand_top_area_m2": 9.5903,
       "underside_area_m2": 16.1586,
-      "albedo_coverage": 0.6514,
-      "albedo_mean_luma": 0.4482,
-      "albedo_luma_std": 0.1877,
-      "albedo_median_hue_deg": 22.43,
+      "albedo_coverage": 0.6515,
+      "albedo_mean_luma": 0.4445,
+      "albedo_luma_std": 0.1863,
+      "albedo_median_hue_deg": 22.39,
       "albedo_reserved_hue_fraction": 1.1e-05,
       "strata_source_mean_luma": 0.4055,
       "flat_top_area_m2": 8.3547
@@ -496,10 +496,10 @@
       "strata_side_projected_ratio": 1.0,
       "sand_top_area_m2": 13.2057,
       "underside_area_m2": 22.3162,
-      "albedo_coverage": 0.6981,
-      "albedo_mean_luma": 0.4436,
-      "albedo_luma_std": 0.1886,
-      "albedo_median_hue_deg": 21.65,
+      "albedo_coverage": 0.6982,
+      "albedo_mean_luma": 0.4409,
+      "albedo_luma_std": 0.1874,
+      "albedo_median_hue_deg": 21.62,
       "albedo_reserved_hue_fraction": 1.5e-05,
       "strata_source_mean_luma": 0.4055,
       "flat_top_area_m2": 11.0155
@@ -571,9 +571,9 @@
       "sand_top_area_m2": 21.6444,
       "underside_area_m2": 32.9674,
       "albedo_coverage": 0.6588,
-      "albedo_mean_luma": 0.4488,
-      "albedo_luma_std": 0.176,
-      "albedo_median_hue_deg": 27.02,
+      "albedo_mean_luma": 0.4455,
+      "albedo_luma_std": 0.1745,
+      "albedo_median_hue_deg": 27.0,
       "albedo_reserved_hue_fraction": 0.0,
       "strata_source_mean_luma": 0.4055,
       "flat_top_area_m2": 17.1609
@@ -643,7 +643,7 @@
       "sand_top_area_m2": 378.1027,
       "underside_area_m2": 523.0104,
       "albedo_coverage": 0.6783,
-      "albedo_mean_luma": 0.4563,
+      "albedo_mean_luma": 0.4558,
       "albedo_luma_std": 0.1593,
       "albedo_median_hue_deg": 30.0,
       "albedo_reserved_hue_fraction": 0.0,
@@ -717,8 +717,8 @@
       "sand_top_area_m2": 791.1769,
       "underside_area_m2": 1041.3583,
       "albedo_coverage": 0.6474,
-      "albedo_mean_luma": 0.4563,
-      "albedo_luma_std": 0.1621,
+      "albedo_mean_luma": 0.4559,
+      "albedo_luma_std": 0.1617,
       "albedo_median_hue_deg": 23.01,
       "albedo_reserved_hue_fraction": 0.0,
       "strata_source_mean_luma": 0.4055,
@@ -899,9 +899,9 @@
       "sand_top_area_m2": 109.4319,
       "underside_area_m2": 124.5895,
       "albedo_coverage": 0.8304,
-      "albedo_mean_luma": 0.445,
+      "albedo_mean_luma": 0.4444,
       "albedo_luma_std": 0.1802,
-      "albedo_median_hue_deg": 22.15,
+      "albedo_median_hue_deg": 22.13,
       "albedo_reserved_hue_fraction": 1e-06,
       "strata_source_mean_luma": 0.4055,
       "seam_max_delta_m": 0.0,

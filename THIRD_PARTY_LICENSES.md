@@ -11,6 +11,7 @@ licence. Un asset sans ligne dans ce fichier ne doit pas entrer dans le jeu.
 | Police Barlow Semi Condensed (Medium) | `resources/fonts/BarlowSemiCondensed-Medium.ttf` | Jeremy Tribby — https://github.com/jpt/barlow | SIL Open Font License 1.1 | [`resources/fonts/OFL-Barlow.txt`](resources/fonts/OFL-Barlow.txt) |
 | Police Bangers (Regular) — onomatopée de kill UNIQUEMENT (`Comic.font_onomatopoeia()`, STYLE_BIBLE v3 §8.2, ART-30) | `resources/fonts/Bangers-Regular.ttf` | Vernon Adams — https://github.com/googlefonts/bangers (récupérée sur https://github.com/google/fonts/tree/main/ofl/bangers) | SIL Open Font License 1.1 | [`resources/fonts/OFL-Bangers.txt`](resources/fonts/OFL-Bangers.txt) |
 | Moteur Godot 4.7 | (runtime) | https://godotengine.org | MIT | https://godotengine.org/license |
+| Bras FP (avant-bras + mains à doigts articulés, modes avant-bras et mains flottantes) dérivés du mannequin Universal Animation Library, générés par `tools/blender/fp_rig.py` (FP-10) | `assets/models/fp/fp_arms*.glb` | Quaternius — https://quaternius.com (source : `assets/incoming/quaternius/ual.glb`) | CC0 1.0 | https://creativecommons.org/publicdomain/zero/1.0/ |
 | Maillage + squelette + animations des 6 agents et des avant-bras FP (kitbash gear par-dessus le mannequin "Universal Animation Library" Standard) | `assets/models/characters/*.glb` | Quaternius — https://quaternius.com | CC0 1.0 | https://creativecommons.org/publicdomain/zero/1.0/ |
 
 ## Outils de développement (non livrés dans les builds joueurs)

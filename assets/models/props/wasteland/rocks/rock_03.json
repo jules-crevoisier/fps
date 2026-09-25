@@ -29,7 +29,7 @@
         "bevel_faces": 181,
         "calibration_passes": 2,
         "full_res_passes": 1,
-        "reserved_hue_guarded": 590,
+        "reserved_hue_guarded": 566,
         "slots": [
           {
             "original_material": "wl_rock_strata",
@@ -38,9 +38,9 @@
             "base_mode": "texture",
             "base_texture": "assets/textures/wasteland/wl_rock_strata_albedo.png",
             "target_luma": 0.4055,
-            "gain_linear": 0.8096,
-            "baked_luma": 0.4034,
-            "luma_ratio": 0.9949,
+            "gain_linear": 0.8002,
+            "baked_luma": 0.4038,
+            "luma_ratio": 0.9957,
             "luma_ok": true
           },
           {
@@ -50,9 +50,9 @@
             "base_mode": "existing",
             "base_texture": "terrain_sable_albedo",
             "target_luma": 0.6401,
-            "gain_linear": 0.9726,
-            "baked_luma": 0.6382,
-            "luma_ratio": 0.997,
+            "gain_linear": 0.975,
+            "baked_luma": 0.6386,
+            "luma_ratio": 0.9977,
             "luma_ok": true
           }
         ],
@@ -64,7 +64,7 @@
     "tris": 286,
     "painted": true,
     "paint_bake_version": 2,
-    "source": "C:\\Users\\srko\\AppData\\Local\\Temp\\stylized_rocks_work_94omuphh\\rock_03_raw.glb",
+    "source": "C:\\Users\\srko\\AppData\\Local\\Temp\\stylized_rocks_work_8f1avjfk\\rock_03_raw.glb",
     "res": 1024,
     "palette": null,
     "seed": 0,
@@ -94,10 +94,10 @@
     "strata_side_projected_ratio": 1.0,
     "sand_top_area_m2": 0.2467,
     "underside_area_m2": 0.3658,
-    "albedo_coverage": 0.5676,
-    "albedo_mean_luma": 0.4468,
-    "albedo_luma_std": 0.1559,
-    "albedo_median_hue_deg": 23.65,
+    "albedo_coverage": 0.5679,
+    "albedo_mean_luma": 0.4405,
+    "albedo_luma_std": 0.1521,
+    "albedo_median_hue_deg": 23.71,
     "albedo_reserved_hue_fraction": 5.4e-05,
     "strata_source_mean_luma": 0.4055,
     "flat_top_area_m2": 0

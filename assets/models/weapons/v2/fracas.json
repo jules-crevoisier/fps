@@ -1,0 +1,64 @@
+{
+  "id": "fracas",
+  "output": "assets/models/weapons/v2/fracas.glb",
+  "backup": "assets/models/weapons/_painted_v1/fracas.glb",
+  "backed_up_this_run": false,
+  "albedo": "assets/textures/weapons/fracas_albedo.png",
+  "scale_factor": 1.0550458715596331,
+  "grip_length_cm": 11.5,
+  "final_tris": 5258,
+  "iou_profile": 0.9999202456434183,
+  "pieces": [
+    "Pump"
+  ],
+  "anchors_blender_cm": {
+    "Grip": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "Foregrip": [
+      -1.678,
+      51.17,
+      0.433
+    ],
+    "Muzzle": [
+      -1.683,
+      75.436,
+      10.245
+    ],
+    "Sight": [
+      -1.678,
+      17.408,
+      13.357
+    ],
+    "MagWell": [
+      -1.678,
+      23.739,
+      1.889
+    ],
+    "Eject": [
+      2.015,
+      22.683,
+      9.179
+    ]
+  },
+  "trigger_guard_cm": {
+    "top": 1.0,
+    "bottom": -2.0,
+    "back": 11.25,
+    "front": 12.75
+  },
+  "checks": {
+    "grip_inside": true,
+    "grip_in_profile": true,
+    "grip_surface_dist_cm": 0.74,
+    "foregrip_surface_dist_cm": 0.005,
+    "sight_surface_dist_cm": 0.002,
+    "magwell_surface_dist_cm": 0.001,
+    "eject_surface_dist_cm": 0.002,
+    "muzzle_bore_depth_cm": 3.281,
+    "sight_elevation_cm": 3.112,
+    "sight_muzzle_lateral_deg": 0.0056
+  }
+}

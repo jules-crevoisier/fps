@@ -1,0 +1,64 @@
+{
+  "id": "marqueur",
+  "output": "assets/models/weapons/v2/marqueur.glb",
+  "backup": "assets/models/weapons/_painted_v1/marqueur.glb",
+  "backed_up_this_run": false,
+  "albedo": "assets/textures/weapons/marqueur_albedo.png",
+  "scale_factor": 0.8846153846153846,
+  "grip_length_cm": 11.5,
+  "final_tris": 4402,
+  "iou_profile": 1.0,
+  "pieces": [
+    "Mag"
+  ],
+  "anchors_blender_cm": {
+    "Grip": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "Foregrip": [
+      -2.539,
+      35.827,
+      1.522
+    ],
+    "Muzzle": [
+      -2.537,
+      69.442,
+      9.102
+    ],
+    "Sight": [
+      -2.539,
+      4.317,
+      17.869
+    ],
+    "MagWell": [
+      -0.646,
+      22.027,
+      0.885
+    ],
+    "Eject": [
+      0.416,
+      16.365,
+      9.377
+    ]
+  },
+  "trigger_guard_cm": {
+    "top": 1.25,
+    "bottom": -1.75,
+    "back": 8.25,
+    "front": 10.5
+  },
+  "checks": {
+    "grip_inside": true,
+    "grip_in_profile": true,
+    "grip_surface_dist_cm": 0.616,
+    "foregrip_surface_dist_cm": 0.001,
+    "sight_surface_dist_cm": 0.001,
+    "magwell_surface_dist_cm": 0.065,
+    "eject_surface_dist_cm": 0.003,
+    "muzzle_bore_depth_cm": 0.0,
+    "sight_elevation_cm": 8.767,
+    "sight_muzzle_lateral_deg": 0.0016
+  }
+}

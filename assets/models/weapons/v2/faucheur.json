@@ -1,0 +1,65 @@
+{
+  "id": "faucheur",
+  "output": "assets/models/weapons/v2/faucheur.glb",
+  "backup": "assets/models/weapons/_painted_v1/faucheur.glb",
+  "backed_up_this_run": false,
+  "albedo": "assets/textures/weapons/faucheur_albedo.png",
+  "scale_factor": 1.0454545454545454,
+  "grip_length_cm": 11.5,
+  "final_tris": 5657,
+  "iou_profile": 0.9996421222152635,
+  "pieces": [
+    "Bolt",
+    "Mag"
+  ],
+  "anchors_blender_cm": {
+    "Grip": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "Foregrip": [
+      -2.708,
+      37.95,
+      3.398
+    ],
+    "Muzzle": [
+      -2.71,
+      106.95,
+      10.718
+    ],
+    "Sight": [
+      -2.708,
+      3.471,
+      18.505
+    ],
+    "MagWell": [
+      -0.857,
+      20.386,
+      1.464
+    ],
+    "Eject": [
+      -0.68,
+      21.223,
+      10.141
+    ]
+  },
+  "trigger_guard_cm": {
+    "top": 1.5,
+    "bottom": -2.25,
+    "back": 8.0,
+    "front": 13.0
+  },
+  "checks": {
+    "grip_inside": true,
+    "grip_in_profile": true,
+    "grip_surface_dist_cm": 0.737,
+    "foregrip_surface_dist_cm": 0.005,
+    "sight_surface_dist_cm": 0.001,
+    "magwell_surface_dist_cm": 0.317,
+    "eject_surface_dist_cm": 0.004,
+    "muzzle_bore_depth_cm": 0.029,
+    "sight_elevation_cm": 7.786,
+    "sight_muzzle_lateral_deg": 0.0015
+  }
+}

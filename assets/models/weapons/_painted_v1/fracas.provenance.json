@@ -1,0 +1,14 @@
+{
+  "tool": "Tripo Studio — Smart Mesh P2.0 (x4) + texture",
+  "concept_image_tool": "Nano Banana Pro (générateur d'images de Tripo Studio)",
+  "tripo_task_id": "ea62a30a-d995-4a04-8952-63e8ab8e3727",
+  "tripo_task_url": "https://studio.tripo3d.ai/fr/workspace/generate/ea62a30a-d995-4a04-8952-63e8ab8e3727",
+  "source_glb": "assets/incoming/tripo/studio/wpn_fracas.glb",
+  "bpy_reference_backup": "assets/models/weapons/_bpy/fracas.glb",
+  "prompt": null,
+  "prompt_source": "non archivé",
+  "date": "2026-09-24",
+  "post_processing": "tools/blender/fit_weapon_painted.py (source Tripo alignée sur la géométrie bpy de référence — axe du canon, longueur, pivot poignée — sauvegardée AVANT écrasement sous assets/models/weapons/_bpy/<id>.glb ; empties Muzzle/Foregrip copiés tels quels depuis cette référence bpy, jamais recalculés ; albédo Tripo conservé, jamais ai_restyle.py) ; manifeste tools/ai3d/manifests/painted_weapons.yaml, A3D-20",
+  "licence": "Sorties Tripo Studio générées avec le compte de l'auteur ; usage soumis aux conditions Tripo AI du plan du compte (preuve hors dépôt).",
+  "notes": "Remplace le corps bpy en blocs de tools/blender/make_weapons.py (A3D-20). Confirmé par le sidecar déjà écrit assets/models/weapons/fracas.json (« painted»: true, «source»/«fitted_to»). Task id : assets/incoming/tripo/studio/wave1_tasks.json."
+}

@@ -38,7 +38,7 @@
             "base_mode": "texture",
             "base_texture": "assets/textures/wasteland/wl_rock_strata_albedo.png",
             "target_luma": 0.4055,
-            "gain_linear": 0.8884,
+            "gain_linear": 0.8877,
             "baked_luma": 0.4061,
             "luma_ratio": 1.0015,
             "luma_ok": true
@@ -50,9 +50,9 @@
             "base_mode": "existing",
             "base_texture": "terrain_sable_albedo",
             "target_luma": 0.6401,
-            "gain_linear": 0.8592,
+            "gain_linear": 0.8631,
             "baked_luma": 0.6401,
-            "luma_ratio": 1.0,
+            "luma_ratio": 0.9999,
             "luma_ok": true
           }
         ],
@@ -64,7 +64,7 @@
     "tris": 2174,
     "painted": true,
     "paint_bake_version": 2,
-    "source": "C:\\Users\\srko\\AppData\\Local\\Temp\\stylized_rocks_work_94omuphh\\cliff_block_03_raw.glb",
+    "source": "C:\\Users\\srko\\AppData\\Local\\Temp\\stylized_rocks_work_8f1avjfk\\cliff_block_03_raw.glb",
     "res": 2048,
     "palette": null,
     "seed": 0,
@@ -109,9 +109,9 @@
     "sand_top_area_m2": 21.6444,
     "underside_area_m2": 32.9674,
     "albedo_coverage": 0.6588,
-    "albedo_mean_luma": 0.4488,
-    "albedo_luma_std": 0.176,
-    "albedo_median_hue_deg": 27.02,
+    "albedo_mean_luma": 0.4455,
+    "albedo_luma_std": 0.1745,
+    "albedo_median_hue_deg": 27.0,
     "albedo_reserved_hue_fraction": 0.0,
     "strata_source_mean_luma": 0.4055,
     "flat_top_area_m2": 17.1609
