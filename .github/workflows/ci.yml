@@ -31,6 +31,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7.0.1
 
+      - name: Installer Python 3
+        # L'image barichello/godot-ci n'embarque pas Python : sans lui, le
+        # garde-fou de licence de tools/test.sh échoue et coupe toute la suite.
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq --no-install-recommends python3 python3-yaml
+          python3 --version
+
       - name: Importer le projet
         run: godot --headless --path . --import
 
@@ -70,6 +78,8 @@ jobs:
 
       - name: Sonde de gameplay (gameplay_probe, headless)
         if: always()
+        # bash obligatoire : la redirection `> >(tee ...)` n'existe pas en sh.
+        shell: bash
         env:
           GODOT_BIN: godot
         run: |
@@ -203,6 +213,14 @@ jobs:
           mkdir -p "$HOME/.local/share/godot/export_templates/"
           mv "/root/.local/share/godot/export_templates/${GODOT_VERSION}.stable" \
              "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
+
+      - name: Installer Python 3
+        # L'image barichello/godot-ci n'embarque pas Python : sans lui, le
+        # garde-fou de licence de tools/test.sh échoue et coupe toute la suite.
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq --no-install-recommends python3 python3-yaml
+          python3 --version
 
       - name: Importer le projet
         run: godot --headless --path . --import
