@@ -351,6 +351,147 @@ if bpy is not None:
 		print(f"FP_CAMERA_CLOSEUP_OK {out_png}")
 		return out_png
 
+	def _apply_first_image_texture_preview(obj) -> None:
+		"""Variante de `_apply_real_texture_preview` pour des materiaux
+		EXTERNES dont la Base Color n'est pas un lien DIRECT (armes v2,
+		`ravage_painted` -- sonde reelle, voir rapport de tache : Base Color
+		vient d'un noeud Mix [texture x attribut de couleur de sommet], jamais
+		une image branchee directement -- `_find_base_color_input` ne la
+		trouve donc pas) : cherche la PREMIERE image `ShaderNodeTexImage` du
+		graphe de noeuds, ou qu'elle soit branchee."""
+		for i, mat in enumerate(list(obj.data.materials)):
+			if mat is None or not mat.use_nodes or mat.node_tree is None:
+				continue
+			image = next((n.image for n in mat.node_tree.nodes if n.type == 'TEX_IMAGE' and n.image is not None), None)
+			if image is None:
+				continue
+			prev = bpy.data.materials.new(f"{mat.name}_preview")
+			prev.use_nodes = True
+			nt = prev.node_tree
+			for n in list(nt.nodes):
+				nt.nodes.remove(n)
+			out = nt.nodes.new("ShaderNodeOutputMaterial")
+			emission = nt.nodes.new("ShaderNodeEmission")
+			tex = nt.nodes.new("ShaderNodeTexImage")
+			tex.image = image
+			nt.links.new(tex.outputs["Color"], emission.inputs["Color"])
+			nt.links.new(emission.outputs["Emission"], out.inputs["Surface"])
+			obj.data.materials[i] = prev
+
+	def render_weapon_hold_checkpoint(glb_path: str, weapon_glb_path: str, out_png: str, size: int = 640,
+			cylinder_radius: float = 0.018) -> str:
+		"""FP-10B (critere d'acceptation : "vue FP tenant le Ravage v2 ... pour
+		revue utilisateur") -- pose les bras (memes solveurs que le contrat
+		pytest, `pose_hold_cylinder`) puis importe `weapon_glb_path` (contrat
+		"arme v2", doc 12 §3.3 -- FP-11, DEJA livre : origine = repere `Grip`,
+		a l'origine locale de l'arme) et le TRANSLATE (aucune rotation : le
+		contrat v2 aligne deja l'axe Sight->Muzzle sur la camera FP, mesure
+		`sight_muzzle_lateral_deg` ~0 dans le rapport FP-11) pour que son
+		`Grip` coincide avec la cible de prise du contrat FP-10
+		(`fp_rig.GRIP_TARGET_CAM`).
+
+		LIMITE ASSUMEE (hors perimetre FP-10B, voir le rendu de tache) : les
+		doigts restent poses sur le CYLINDRE DE REFERENCE analytique du
+		contrat pytest, pas sur la surface reelle de l'arme -- l'auto-prise
+		contre un maillage d'arme reel (BVH) est explicitement FP-13+
+		(`make_fp_viewmodel.py`, doc 12 §3.1 : "la chorégraphie du Ravage",
+		vague B, menee par le lead en parallele de cette tache). Ce rendu
+		verifie donc l'ECHELLE/LA POSITION de l'arme contre la main, pas la
+		prise exacte doigt par doigt."""
+		rig, arms_obj, scene = _prep_hold_scene(glb_path, cylinder_radius)
+		# Le cylindre de reference n'a de sens que pour poser les doigts (deja
+		# fait par `_prep_hold_scene`) -- jamais visible ici, l'ARME reelle le
+		# remplace a l'ecran.
+		ref_cyl = bpy.data.objects.get("GripCylinder")
+		if ref_cyl is not None:
+			bpy.data.objects.remove(ref_cyl, do_unlink=True)
+
+		before = set(bpy.data.objects.keys())
+		bpy.ops.import_scene.gltf(filepath=weapon_glb_path)
+		imported = [o for o in bpy.data.objects if o.name not in before]
+		grip_empty = next((o for o in imported if o.name == "Grip"), None)
+		if grip_empty is None:
+			raise RuntimeError(f"fp_camera: aucun repere 'Grip' dans {weapon_glb_path} (contrat arme v2, doc 12 §3.3)")
+		weapon_parts = [o for o in imported if o.type == 'MESH']
+		if not weapon_parts:
+			raise RuntimeError(f"fp_camera: aucune piece MESH dans {weapon_glb_path}")
+		grip_target_b = Vector(godot_to_blender(fp_rig.GRIP_TARGET_CAM))
+		offset = grip_target_b - grip_empty.matrix_world.translation
+		for o in weapon_parts:
+			o.location += offset
+			_apply_first_image_texture_preview(o)
+		stray = [o for o in imported if o not in weapon_parts]
+		for o in stray:
+			bpy.data.objects.remove(o, do_unlink=True)
+
+		setup_camera(scene, render_w=size * 2)
+		os.makedirs(os.path.dirname(os.path.abspath(out_png)), exist_ok=True)
+		scene.render.filepath = out_png
+		scene.render.image_settings.file_format = 'PNG'
+		bpy.ops.render.render(write_still=True)
+		print(f"FP_CAMERA_WEAPON_HOLD_OK {out_png}")
+		return out_png
+
+	def render_glove_comparison(fp_glb_path: str, tripo_glb_path: str, out_png: str, size: int = 640) -> str:
+		"""FP-10B (critere d'acceptation : "comparaison avec les gants Tripo") --
+		gros plan cote a cote : a gauche la main FP (`fp_glb_path`, ce fichier),
+		a droite les gants Tripo peints existants (`tripo_glb_path`,
+		`assets/models/characters/fp_gloves.glb` -- porte les DEUX gants,
+		"fp_glove_grip"/"fp_glove_support", lecture seule, jamais modifie)."""
+		left_png = os.path.splitext(out_png)[0] + "._fp.png"
+		render_grip_closeup(fp_glb_path, left_png, size=size)
+
+		fp_rig.reset_scene()
+		bpy.ops.import_scene.gltf(filepath=tripo_glb_path)
+		mesh_objs = [o for o in bpy.context.scene.objects if o.type == 'MESH']
+		if not mesh_objs:
+			raise RuntimeError(f"fp_camera: aucune piece MESH dans {tripo_glb_path}")
+		for o in mesh_objs:
+			_apply_first_image_texture_preview(o)
+		center = sum((o.matrix_world.translation for o in mesh_objs), Vector()) / len(mesh_objs)
+		radius = max((o.matrix_world.translation - center).length + max(o.dimensions) for o in mesh_objs)
+
+		scene = bpy.context.scene
+		scene.render.engine = 'BLENDER_EEVEE_NEXT' if 'BLENDER_EEVEE_NEXT' in (
+			e.identifier for e in bpy.types.RenderSettings.bl_rna.properties['engine'].enum_items) else 'BLENDER_EEVEE'
+		scene.render.film_transparent = True
+		world = bpy.data.worlds.new("FPCheckWorld")
+		world.use_nodes = True
+		bg = world.node_tree.nodes.get("Background")
+		if bg:
+			bg.inputs[0].default_value = (0.10, 0.10, 0.11, 1.0)
+		scene.world = world
+		_apply_wysiwyg_view_transform(scene)
+
+		cam_data = bpy.data.cameras.new("TripoCompareCam")
+		cam_data.lens_unit = 'FOV'
+		cam_data.angle = math.radians(38.0)
+		cam_data.clip_start = 0.01
+		cam_data.clip_end = 100.0
+		cam = bpy.data.objects.new("TripoCompareCam", cam_data)
+		cam.location = center + Vector((radius * 0.9, -radius * 1.6, radius * 0.6))
+		scene.collection.objects.link(cam)
+		scene.camera = cam
+		_look_at(cam, center)
+		edge = int(round((size * 2) / ASPECT / 2.0)) * 2
+		scene.render.resolution_x = edge
+		scene.render.resolution_y = edge
+		scene.render.pixel_aspect_x = 1.0
+		scene.render.pixel_aspect_y = 1.0
+
+		right_png = os.path.splitext(out_png)[0] + "._tripo.png"
+		os.makedirs(os.path.dirname(os.path.abspath(right_png)), exist_ok=True)
+		scene.render.filepath = right_png
+		scene.render.image_settings.file_format = 'PNG'
+		bpy.ops.render.render(write_still=True)
+
+		_composite_side_by_side([left_png, right_png], out_png)
+		for tmp in (left_png, right_png):
+			if os.path.isfile(tmp):
+				os.remove(tmp)
+		print(f"FP_CAMERA_GLOVE_COMPARISON_OK {out_png}")
+		return out_png
+
 	def _composite_side_by_side(paths, out_path: str) -> str:
 		"""Planche unique (doc 12 -- "colonnes cote a cote sur une seule
 		image PNG") : concatene horizontalement les rendus de `paths` (meme
@@ -385,6 +526,10 @@ if bpy is not None:
 		p.add_argument("--in-b", dest="in_path_b", default=None, help="second fp_arms*.glb (mode 2, ex. floating)")
 		p.add_argument("--out", dest="out_dir", default=None, help="dossier de sortie (defaut : a cote de --in)")
 		p.add_argument("--size", type=int, default=640)
+		p.add_argument("--weapon", dest="weapon_glb", default=None,
+			help="FP-10B : arme v2 (ex. assets/models/weapons/v2/ravage.glb) -- rendu 'tenue' supplementaire")
+		p.add_argument("--tripo-gloves", dest="tripo_gloves_glb", default=None,
+			help="FP-10B : gants Tripo peints existants a comparer (ex. assets/models/characters/fp_gloves.glb)")
 		return p.parse_args(argv)
 
 	def main(argv=None) -> None:
@@ -413,6 +558,18 @@ if bpy is not None:
 		out_closeup = os.path.join(out_dir, f"{stem}_closeup.png")
 		render_grip_closeup(in_path, out_closeup, size=args.size)
 		paths.append(out_closeup)
+
+		if args.weapon_glb:
+			weapon_glb = os.path.abspath(args.weapon_glb)
+			weapon_stem = os.path.splitext(os.path.basename(weapon_glb))[0]
+			out_weapon = os.path.join(out_dir, f"{stem}_hold_{weapon_stem}.png")
+			render_weapon_hold_checkpoint(in_path, weapon_glb, out_weapon, size=args.size)
+			paths.append(out_weapon)
+
+		if args.tripo_gloves_glb:
+			out_compare = os.path.join(out_dir, f"{stem}_vs_tripo_gloves.png")
+			render_glove_comparison(in_path, os.path.abspath(args.tripo_gloves_glb), out_compare, size=args.size)
+			paths.append(out_compare)
 
 		if len(paths) > 1:
 			sheet_path = os.path.join(out_dir, "fp_hold_sheet.png")

@@ -201,12 +201,104 @@ class TestGuardBlueSaturation(unittest.TestCase):
 
 	def test_default_trigger_is_below_native_steel_saturation(self):
 		# Propriete cle du choix de seuil (voir la constante
-		# BLUE_GUARD_SATURATION_TRIGGER) : l'acier emaille #4A505C lui-meme
-		# (S=0,1957) doit declencher le garde par defaut, pour absorber la
-		# derive de quantification PNG 8 bits mesuree sur les vraies armes.
+		# BLUE_GUARD_SATURATION_TRIGGER) : l'ancien acier emaille #4A505C
+		# (teinte historique de `enamel_steel` -- plus utilisee pour peindre
+		# depuis FP-12B, cf. WEAPON_METAL_WARM_HEX, mais gardee ici comme
+		# exemple numerique de "bleu residuel plausible") a lui-meme
+		# S=0,1957 : doit toujours declencher le garde par defaut, tres au
+		# dessus du declencheur FP-12B (0,02).
 		steel_hue, steel_sat = rw.rgb_to_hue_sat(np.array(rw.hex_to_rgb01("#4A505C")))
-		self.assertTrue(bool(rw.hue_in_band(steel_hue, rw.BLUE_HUE_RANGE_DEG)))
+		self.assertTrue(bool(rw.hue_in_band(steel_hue, rw.BLUE_GUARD_HUE_RANGE_DEG)))
 		self.assertGreater(float(steel_sat), rw.BLUE_GUARD_SATURATION_TRIGGER)
+
+
+class TestFP12BWarmMetal(unittest.TestCase):
+	"""FP-12B (revue du lead 2026-09-25, APRES FP-12) : le metal doit devenir
+	un gris-brun chaud (teinte 20-45 deg, saturation 0,06-0,18), applique en
+	LOCAL par ce script (`apply_paint_overrides`) sans toucher tokens.json --
+	hors perimetre de cette tache, voir le commentaire de
+	`WEAPON_METAL_WARM_HEX`."""
+
+	def test_warm_metal_hex_is_within_the_lead_s_target_range(self):
+		hue, sat = rw.rgb_to_hue_sat(np.array(rw.hex_to_rgb01(rw.WEAPON_METAL_WARM_HEX)))
+		self.assertGreaterEqual(float(hue), 20.0)
+		self.assertLessEqual(float(hue), 45.0)
+		self.assertGreaterEqual(float(sat), 0.06)
+		self.assertLessEqual(float(sat), 0.18)
+
+	def test_warm_metal_hex_is_outside_the_forbidden_metal_band(self):
+		# Le point cle de la correction : la nouvelle teinte metal ne doit
+		# JAMAIS tomber dans la bande mesuree par l'acceptance FP-12B
+		# (teinte [180,260]), quelle que soit sa saturation.
+		hue, _ = rw.rgb_to_hue_sat(np.array(rw.hex_to_rgb01(rw.WEAPON_METAL_WARM_HEX)))
+		self.assertFalse(bool(rw.hue_in_band(hue, rw.BLUE_GUARD_HUE_RANGE_DEG)))
+
+	def test_apply_paint_overrides_replaces_only_the_named_material(self):
+		palette = rw.load_palette()
+		overridden = rw.apply_paint_overrides(palette)
+		self.assertEqual(overridden["materials"]["enamel_steel"], rw.WEAPON_METAL_WARM_HEX)
+		for key in ("wood", "brass", "enamel_cream"):
+			self.assertEqual(overridden["materials"][key], palette["materials"][key])
+		self.assertEqual(overridden["accents"], palette["accents"])
+		# tokens.json (charge dans `palette` par `load_palette`) n'est jamais
+		# mute par l'appel -- hors perimetre FP-12B, cf. STYLE_BIBLE.md §5.1.
+		self.assertEqual(palette["materials"]["enamel_steel"], "#4A505C")
+
+	def test_apply_paint_overrides_does_not_mutate_its_input(self):
+		palette = rw.load_palette()
+		before_materials = dict(palette["materials"])
+		rw.apply_paint_overrides(palette)
+		self.assertEqual(palette["materials"], before_materials)
+
+	def test_saturated_blue_remaps_to_warm_metal_not_teal(self):
+		# Regression FP-12B (voir le commentaire de BLUE_REMAP_CANDIDATES) :
+		# avec la palette REELLEMENT peinte (enamel_steel chaud), un bleu tres
+		# sature (comme le defaut mesure sur rafale.glb, jusqu'a S=0,8) doit
+		# rejoindre le metal chaud, PAS le sarcelle -- {enamel_steel,
+		# enamel_steel_shadow, teal, teal_shadow} (doc 12 d'origine) aurait
+		# choisi le sarcelle ici (bien plus proche en OKLab d'un bleu sature
+		# que le metal chaud, oppose sur le cercle chromatique).
+		palette_o = rw.apply_paint_overrides(rw.load_palette())
+		img = np.tile(np.array([0.10, 0.20, 0.65]), (8, 8, 1))  # bleu tres sature, hue~225, S~0.85
+		out, report = rw.apply_global_pull(img, palette_o)
+		self.assertGreater(report["blue_remapped_texels"], 0)
+		hue, sat = rw.rgb_to_hue_sat(out.reshape(-1, 3))
+		warm_hue, _ = rw.rgb_to_hue_sat(np.array(rw.hex_to_rgb01(rw.WEAPON_METAL_WARM_HEX)))
+		# La teinte du resultat doit se lire pres du metal chaud (~34 deg),
+		# jamais pres du sarcelle (176 deg).
+		for h in hue:
+			self.assertLess(abs(float(h) - float(warm_hue)), 15.0,
+				f"hue {float(h):.1f} loin du metal chaud ({float(warm_hue):.1f}) -- possible regression sarcelle")
+
+
+class TestLightenTowardWhiteCap(unittest.TestCase):
+	"""FP-12B : "les panneaux clairs du Pistolet ne doivent pas virer au
+	blanc pur" -- le liisere d'eclat (`lighten_toward_white`, force par
+	defaut 0,85) ne doit jamais faire atteindre le blanc pur a un panneau
+	deja proche du blanc (creme `#E6E1D6`, carcasse du Pistolet)."""
+
+	def test_near_white_input_never_reaches_pure_white(self):
+		cream = np.array(rw.hex_to_rgb01("#E6E1D6"))
+		img = np.tile(cream, (2, 2, 1))
+		mask = np.ones((2, 2), dtype=bool)
+		out = rw.lighten_toward_white(img, mask, amount=0.85)
+		lab = rw.srgb_to_oklab(out.reshape(-1, 3))
+		self.assertTrue(np.all(lab[:, 0] <= rw.LISERE_MAX_OKLAB_L + 1e-9))
+		self.assertTrue(np.all(out < 0.99))
+		self.assertTrue(np.all(out > cream))  # toujours plus clair que la base
+
+	def test_still_lightens_darker_colours_normally(self):
+		# Le plafond ne doit jamais brider une couleur qui en est loin.
+		img = np.tile(np.array([0.2, 0.3, 0.4]), (2, 2, 1))
+		mask = np.ones((2, 2), dtype=bool)
+		out = rw.lighten_toward_white(img, mask, amount=0.9)
+		self.assertTrue(np.all(out > img))
+
+	def test_unmasked_pixels_untouched(self):
+		img = np.tile(np.array(rw.hex_to_rgb01("#E6E1D6")), (2, 2, 1))
+		mask = np.zeros((2, 2), dtype=bool)
+		out = rw.lighten_toward_white(img, mask, amount=0.85)
+		np.testing.assert_allclose(out, img)
 
 
 class TestApplyBrushNoise(unittest.TestCase):
@@ -439,12 +531,57 @@ class TestRepaintRealWeapons(unittest.TestCase):
 				self.assertEqual(result["uv0_hash"], rw.uv0_hash(mesh["uv"]))
 
 	def test_blue_fraction_at_most_two_percent(self):
+		# Critere FP-12 d'origine (2026-09-25 20:57) : [190,250] deg, S>0,20.
+		# Conserve pour la regression -- automatiquement couvert par le
+		# critere FP-12B ci-dessous (bande plus large, seuil plus bas), qui le
+		# remplace comme acceptance mesuree de cette tache.
 		for wid, result in self.results.items():
 			with self.subTest(weapon=wid):
 				rgb01 = np.asarray(result["image"], dtype=np.float64) / 255.0
 				hue, sat = rw.rgb_to_hue_sat(rgb01.reshape(-1, 3))
 				blue = rw.hue_in_band(hue, rw.BLUE_HUE_RANGE_DEG) & (sat > rw.BLUE_SATURATION_MIN)
 				self.assertLessEqual(float(blue.mean()), 0.02, f"{wid}: {blue.mean()*100:.2f}% bleu")
+
+	def test_warm_metal_fraction_at_most_two_percent_fp12b(self):
+		# Critere d'acceptance FP-12B (revue du lead 2026-09-25, APRES FP-12,
+		# mesure sur l'albedo FINAL) : "pixels metal de teinte 180-260 deg ET
+		# saturation > 0,06 <= 2%" -- le metal repeint par FP-12 (gris ardoise
+		# bleute) violait ce critere bien au-dela de 2% ; le metal chaud
+		# gris-brun de FP-12B (WEAPON_METAL_WARM_HEX, teinte ~34 deg) en est
+		# loin, donc quasiment aucun texel ne devrait plus tomber dans cette
+		# bande sur aucune des 7 armes.
+		for wid, result in self.results.items():
+			with self.subTest(weapon=wid):
+				rgb01 = np.asarray(result["image"], dtype=np.float64) / 255.0
+				hue, sat = rw.rgb_to_hue_sat(rgb01.reshape(-1, 3))
+				violating = rw.hue_in_band(hue, rw.BLUE_GUARD_HUE_RANGE_DEG) & (sat > rw.FP12B_METAL_SATURATION_MIN)
+				self.assertLessEqual(float(violating.mean()), 0.02,
+					f"{wid}: {violating.mean()*100:.2f}% metal bleute (critere FP-12B)")
+
+	def test_no_teal_flood_from_blue_remap_fp12b(self):
+		# Regression FP-12B : `apply_global_pull` remappait les texels bleu
+		# SATURE vers le plus proche de {acier, acier ombre, sarcelle, sarcelle
+		# ombre} (doc 12). Une fois l'acier repeint chaud (teinte ~34 deg,
+		# oppose du bleu), le sarcelle (176 deg, reste proche du bleu) devenait
+		# MECANIQUEMENT le plus proche voisin de la quasi-totalite des texels
+		# bleu satures -- mesure : jusqu'a ~85% du corps de rafale.glb (90% de
+		# texels source a teinte bleue) virait au sarcelle au lieu du metal
+		# chaud attendu, un rendu 3D (pas visible sur les seules metriques de
+		# teinte/saturation globales) l'a revele. `BLUE_REMAP_CANDIDATES` ne
+		# contient plus que l'acier (voir son commentaire) -- verifie ici que
+		# plus aucune arme ne vire au sarcelle en masse : aucune des 7 n'a de
+		# boite `accent:teal` dans le manifeste (reserve a la Semeuse par
+		# STYLE_BIBLE.md §5.2, absente de ce manifeste), donc le sarcelle ne
+		# devrait plus jamais dominer un albedo produit par ce script.
+		TEAL_HUE_RANGE_DEG = (160.0, 195.0)
+		TEAL_SATURATION_MIN = 0.15
+		for wid, result in self.results.items():
+			with self.subTest(weapon=wid):
+				rgb01 = np.asarray(result["image"], dtype=np.float64) / 255.0
+				hue, sat = rw.rgb_to_hue_sat(rgb01.reshape(-1, 3))
+				teal = rw.hue_in_band(hue, TEAL_HUE_RANGE_DEG) & (sat > TEAL_SATURATION_MIN)
+				self.assertLessEqual(float(teal.mean()), 0.02,
+					f"{wid}: {teal.mean()*100:.2f}% sarcelle -- regression du remap bleu FP-12B")
 
 	def test_reserved_hue_fraction_at_most_one_percent(self):
 		for wid, result in self.results.items():
@@ -466,7 +603,12 @@ class TestRepaintRealWeapons(unittest.TestCase):
 
 	@unittest.skipUnless(HAVE_SCIPY_KMEANS, "scipy.cluster.vq indisponible")
 	def test_six_kmeans_clusters_near_palette_or_shadow(self):
-		labels, cand_lab = rw.palette_candidates_lab(self.palette)
+		# FP-12B : la reference doit etre la palette REELLEMENT peinte
+		# (`apply_paint_overrides`, `enamel_steel` -> WEAPON_METAL_WARM_HEX),
+		# pas la palette brute de tokens.json -- `repaint_weapon` applique cet
+		# override en interne, donc les clusters de l'image produite se
+		# regroupent autour du metal CHAUD, plus autour du gris ardoise brut.
+		labels, cand_lab = rw.palette_candidates_lab(rw.apply_paint_overrides(self.palette))
 		for wid, result in self.results.items():
 			with self.subTest(weapon=wid):
 				rgb01 = np.asarray(result["image"], dtype=np.float64) / 255.0
@@ -516,6 +658,63 @@ class TestAcceptanceAccentsPresent(unittest.TestCase):
 				mean_lab = rw.srgb_to_oklab(mean_rgb)
 				target_lab = rw.srgb_to_oklab(np.array(rw.hex_to_rgb01(target_hex)))
 				self.assertLessEqual(rw.delta_e_ok(mean_lab, target_lab), 0.10)
+
+
+@unittest.skipUnless("pistolet" in WEAPONS_PRESENT, "pistolet.glb absent de ce checkout")
+class TestPistolCarcassNotPureWhiteFP12B(unittest.TestCase):
+	"""Critere d'acceptance FP-12B explicite : "les panneaux clairs du
+	Pistolet ne doivent pas virer au blanc pur" -- verifie DIRECTEMENT, sur la
+	texture PRODUITE, que le liisere d'eclat (le mecanisme VISE par le
+	critere -- repaint_textures_avant_apres.jpg montrait la carcasse blanchir
+	precisement sur ses aretes) qui tombe dans la boite carcasse (creme, deja
+	proche du blanc) n'atteint jamais la luminance OKLab plafond
+	(`LISERE_MAX_OKLAB_L`)."""
+
+	def test_carcass_box_never_reaches_pure_white(self):
+		palette = rw.load_palette()
+		manifest = rw.load_manifest()
+		entry = next(e for e in manifest["weapons"] if e["id"] == "pistolet")
+		box = next(b for b in entry["boxes"] if b["part"] == "carcasse")
+		glb_path = os.path.join(WEAPONS_DIR, "pistolet.glb")
+		mesh = rw.load_weapon_mesh(glb_path)
+		result = rw.repaint_weapon("pistolet", glb_path, entry["boxes"], palette)
+		rgb01 = np.asarray(result["image"], dtype=np.float64) / 255.0
+		width, height = result["image"].size
+		face_id_buffer = rw.build_face_id_buffer(mesh["uv"], mesh["faces"], width, height)
+		fmask = rw.faces_in_box(mesh["vertices"], mesh["faces"], box["box_min"], box["box_max"])
+		valid = face_id_buffer > 0
+		face_idx = np.where(valid, face_id_buffer - 1, 0)
+		texel_mask = valid & fmask[face_idx]
+		self.assertGreater(int(texel_mask.sum()), 0, "carcasse: boite vide sur ce maillage")
+
+		# Le liisere (bande convexe eclaircie) est le mecanisme cible par le
+		# critere -- la variance NORMALE du pinceau (`apply_brush_noise`,
+		# +-3,5%) sur le reste de la carcasse, deja claire, n'en fait pas
+		# partie et reste loin du blanc pur sans avoir besoin du meme plafond
+		# (voir le commentaire de LISERE_MAX_OKLAB_L) : ce test isole donc le
+		# sous-ensemble liisere de la boite, plutot que toute la boite.
+		convex_segs, _ = rw.find_edge_segments(mesh["vertices"], mesh["faces"], mesh["uv"])
+		lisere_mask = rw.rasterize_segments(convex_segs, width, height, rw.LISERE_WIDTH_PX)
+		ink_mask = rw.rasterize_segments(convex_segs, width, height, rw.INK_WIDTH_PX)
+		box_lisere_mask = texel_mask & lisere_mask & ~ink_mask
+		self.assertGreater(int(box_lisere_mask.sum()), 0,
+			"carcasse: aucun texel de liisere sur ce maillage -- test non probant")
+
+		lisere_lab = rw.srgb_to_oklab(rgb01[box_lisere_mask])
+		max_lisere_l = float(lisere_lab[:, 0].max())
+		# Tolerance explicite (pas 1e-6) : `rgb01` vient d'un PNG 8 bits deja
+		# quantifie (arrondi independant par canal) puis relu -- un texel
+		# plafonne PILE a LISERE_MAX_OKLAB_L peut deriver de quelques
+		# millièmes une fois quantifie/relu (mesure jusqu'a +0,0018 en
+		# tunant ce plafond), meme mecanisme que BLUE_GUARD_SATURATION_
+		# TRIGGER/BLUE_GUARD_TARGET_SATURATION plus haut dans le module.
+		self.assertLessEqual(max_lisere_l, rw.LISERE_MAX_OKLAB_L + 0.005,
+			f"carcasse: liisere a luminance max {max_lisere_l:.4f} au-dessus du plafond (blanc pur)")
+
+		# Sanity large sur TOUTE la boite (variance de pinceau incluse) :
+		# jamais litteralement blanc pur non plus, meme hors liisere.
+		self.assertLess(float(rgb01[texel_mask].max()), 0.99,
+			"carcasse: un texel atteint quasiment (255,255,255)")
 
 
 if __name__ == "__main__":

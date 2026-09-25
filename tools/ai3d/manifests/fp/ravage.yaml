@@ -1,0 +1,85 @@
+# tools/ai3d/manifests/fp/ravage.yaml -- FP-13 (docs/research/12_viewmodel_v2.md §3.5–3.7)
+# Viewmodel FP du Ravage, lu par tools/blender/make_fp_viewmodel.py (--id ravage).
+# Toutes les positions « arme » sont en espace arme Godot (origine = Grip, x droite,
+# y haut, z arrière, -z = canon) ; les positions « caméra » en espace caméra Godot.
+# reload_time n'est JAMAIS recopié ici : il est lu dans `tres`.
+id: ravage
+family: rifle              # tools/blender/fp_choreo/rifle.py
+category: rifle            # couverture à la hanche 13–21 % (§3.7)
+weapon_glb: assets/models/weapons/v2/ravage.glb
+weapon_provenance: assets/models/weapons/v2/ravage.provenance.json
+albedo: assets/textures/weapons/ravage_albedo.png     # FP-12/FP-12B : remplace la Base Color si présent
+tres: resources/weapons/ravage.tres
+arms:
+  forearm: assets/models/fp/fp_arms.glb
+  floating: assets/models/fp/fp_arms_floating.glb
+  # Épaules (caméra, avant fp_rig.shoulder_solve pour la prise de hanche) et pôles des
+  # coudes (décalage depuis l'épaule, valeurs de fp_rig.py, FP-10).
+  shoulder:
+    hand.R: [0.32, -0.40, 0.10]      # en arrière, à droite et sous la poignée : l'avant-bras passe sous la crosse
+    hand.L: [-0.16, -0.34, -0.06]
+  pole_offset:
+    hand.R: [0.35, -0.45, -0.10]
+    hand.L: [-0.35, -0.45, -0.10]
+  shoulder_follow:                   # part du déplacement du poignet que l'épaule accompagne
+    hand.R: 0.8
+    hand.L: 0.2
+pieces:
+  mag: Mag                 # pièce DSL -> nœud du GLB v2 (os fp_mag)
+hip:
+  muzzle_screen: [0.618, 0.608]      # cible (image, y vers le bas) ; contrat x 0,58–0,64 / y 0,56–0,64
+  convergence_m: 3.0                 # le canon vise l'axe de visée à 3 m (arrière de l'arme plus bas)
+  cant_deg: -2.0                     # léger roulis, dessus vers la droite
+  muzzle_depth: [0.60, 1.10, 0.025]  # recherche : min, max, pas (m)
+  coverage_target: 0.17
+ads_depth: 0.28
+# Repères de prise (espace arme). `from` : repère du GLB v2 (Grip, Foregrip, MagWell,
+# Eject...) ou `Mag` (origine de la pièce) ; `offset` : point de départ INTÉRIEUR ;
+# `cast` : maillage visé par un rayon lancé depuis ce point dans le sens -palm (la paume
+# se pose sur la surface touchée) ; `palm` : normale de paume vers l'objet ; `knuckles` :
+# ligne des jointures, index -> auriculaire.
+sockets:
+  Grip:
+    hand: R
+    from: Grip
+    offset: [0.0, -0.008, 0.002]
+    cast: body
+    palm: [-1.0, 0.0, 0.0]
+    knuckles: [0.0, -0.978, 0.208]
+  Foregrip:
+    hand: L
+    from: Foregrip
+    offset: [0.0, 0.012, 0.0]
+    cast: body
+    palm: [0.35, 0.94, 0.0]
+    knuckles: [0.0, 0.0, 1.0]
+  MagGrab:
+    hand: L
+    from: Mag
+    offset: [0.0, -0.10, -0.03]
+    cast: mag
+    palm: [1.0, 0.0, 0.0]
+    knuckles: [0.0, -0.79, -0.61]
+  MagTap:
+    hand: L
+    from: Mag
+    offset: [0.0, -0.205, -0.062]
+    cast: mag
+    palm: [0.0, 0.8, 0.6]
+    knuckles: [0.0, -0.6, 0.8]
+  MagTouch:
+    hand: L
+    from: Mag
+    offset: [0.0, -0.125, -0.048]
+    cast: mag
+    palm: [1.0, 0.0, 0.0]
+    knuckles: [0.0, -0.79, -0.61]
+  Charge:
+    hand: L
+    from: Grip
+    offset: [-0.01, 0.06, -0.19]
+    cast: body
+    palm: [1.0, 0.0, 0.0]
+    knuckles: [0.0, -1.0, 0.0]
+# Surcharges de fp_choreo.rifle.RifleParams (vide = temps forts du §3.5).
+choreo: {}

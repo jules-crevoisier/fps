@@ -1408,16 +1408,20 @@
       "done_at": "2026-09-25T19:38:06"
     },
     "ART-50": {
-      "status": "todo",
+      "status": "blocked",
       "notes": [
         "2026-09-25T18:55:01 Proto : ne revoir que Wasteland, Vif/Verrou, HUD (Cargo Ship hors proto)."
-      ]
+      ],
+      "blocked_at": "2026-09-25T22:56:20",
+      "reason": "Décision utilisateur 2026-09-25 : carte en greybox uniquement, l'habillage sera repris plus tard par l'utilisateur"
     },
     "LD-04B": {
-      "status": "todo",
+      "status": "blocked",
       "notes": [
         "2026-09-25T18:55:03 Proto : callouts de Wasteland v4 seulement (Cargo Ship hors proto)."
-      ]
+      ],
+      "blocked_at": "2026-09-25T22:56:21",
+      "reason": "Décision utilisateur 2026-09-25 : carte en greybox uniquement, l'habillage sera repris plus tard par l'utilisateur"
     },
     "TECH-09": {
       "status": "blocked",
@@ -1510,10 +1514,12 @@
       "done_at": "2026-09-25T20:37:00"
     },
     "ART-100": {
-      "status": "todo",
+      "status": "blocked",
       "notes": [
         "2026-09-25T20:27:07 Lead : inclure la correction de la vue V5 (capture vide : caméra dans un volume) et vérifier grue/derrick/château d'eau sur l'ensemble des vues V1-V12 (au moins une vue chacun)."
-      ]
+      ],
+      "blocked_at": "2026-09-25T22:56:17",
+      "reason": "Décision utilisateur 2026-09-25 : carte en greybox uniquement, l'habillage sera repris plus tard par l'utilisateur"
     },
     "ART-94": {
       "status": "done",
@@ -1578,26 +1584,49 @@
     },
     "FP-10B": {
       "status": "doing",
-      "doing_at": "2026-09-25T22:05:14"
+      "doing_at": "2026-09-25T22:05:14",
+      "notes": [
+        "2026-09-25T23:19:18 Retour QA (2026-09-25, passe de correction interrompue par la limite de dépense) : le poing reste FACETTÉ/cristallin (arêtes vives lumière/ombre sur les phalanges), TROU visible dans le maillage du gant entre un doigt replié et la masse des jointures (fp_arms_closeup.jpg, zone ~350,20-560,180), et la comparaison avec les gants Tripo montre la main FP plus rugueuse que la référence. Causes pistes : tools/blender/fp_rig.py GLOVE_SUBDIV_CUTS=1 (l.420) / _refine_shell : subdivision réelle (Catmull-Clark niveau 2) + normales lissées (auto-smooth off, shade smooth) + fermeture des trous (recalcul/soudure des bords libres) ; vérifier en rendu gros plan qu'aucun trou ni facette ne subsiste."
+      ]
     },
     "FP-12B": {
       "status": "doing",
       "doing_at": "2026-09-25T22:05:14"
     },
     "LD-45": {
-      "status": "doing",
+      "status": "todo",
       "notes": [
         "2026-09-25T22:07:51 Lead : tests/maps/test_wasteland_markers.gd a 3 échecs (temps de chemin navmesh) apparus avec la vague toits bas/habillage : les diagnostiquer ; corriger la géométrie dans wasteland.gd si un passage a été bouché/allongé, sinon (changement voulu) justifier et ajuster le seuil en le documentant. Ne toucher à aucun visual:false posé par ART-96."
       ],
-      "doing_at": "2026-09-25T22:07:53"
+      "doing_at": "2026-09-25T22:07:53",
+      "todo_at": "2026-09-25T22:56:21"
     },
     "ART-101": {
-      "status": "doing",
-      "doing_at": "2026-09-25T22:07:53"
+      "status": "blocked",
+      "doing_at": "2026-09-25T22:07:53",
+      "blocked_at": "2026-09-25T22:56:15",
+      "reason": "Décision utilisateur 2026-09-25 : carte en greybox uniquement, l'habillage sera repris plus tard par l'utilisateur"
     },
     "ART-103": {
-      "status": "doing",
-      "doing_at": "2026-09-25T22:07:53"
+      "status": "blocked",
+      "doing_at": "2026-09-25T22:07:53",
+      "blocked_at": "2026-09-25T22:56:16",
+      "reason": "Décision utilisateur 2026-09-25 : carte en greybox uniquement, l'habillage sera repris plus tard par l'utilisateur"
+    },
+    "ART-75": {
+      "status": "blocked",
+      "blocked_at": "2026-09-25T22:56:18",
+      "reason": "Décision utilisateur 2026-09-25 : carte en greybox uniquement, l'habillage sera repris plus tard par l'utilisateur"
+    },
+    "ART-77": {
+      "status": "blocked",
+      "blocked_at": "2026-09-25T22:56:19",
+      "reason": "Décision utilisateur 2026-09-25 : carte en greybox uniquement, l'habillage sera repris plus tard par l'utilisateur"
+    },
+    "ART-78": {
+      "status": "blocked",
+      "blocked_at": "2026-09-25T22:56:19",
+      "reason": "Décision utilisateur 2026-09-25 : carte en greybox uniquement, l'habillage sera repris plus tard par l'utilisateur"
     }
   }
 }

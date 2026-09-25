@@ -270,6 +270,95 @@ class TestHandScale(unittest.TestCase):
 		self.assertAlmostEqual(fp_rig.HAND_SCALE_TOLERANCE, 0.02)
 
 
+class TestLaplacianRelaxPositions(unittest.TestCase):
+	"""fp_rig.laplacian_relax_positions (section 5b, FP-10B) -- coeur de
+	`_refine_shell` : relaxation de Laplace pure, sans bpy."""
+
+	def test_isolated_vertex_never_moves(self):
+		points = {0: (1.0, 2.0, 3.0)}
+		out = fp_rig.laplacian_relax_positions(points, {0: set()}, factor=0.5, iterations=3)
+		self.assertEqual(out[0], (1.0, 2.0, 3.0))
+
+	def test_factor_zero_is_identity(self):
+		points = {0: (0.0, 0.0, 0.0), 1: (1.0, 0.0, 0.0)}
+		adjacency = {0: {1}, 1: {0}}
+		out = fp_rig.laplacian_relax_positions(points, adjacency, factor=0.0, iterations=5)
+		self.assertEqual(out, points)
+
+	def test_single_iteration_exact_average_at_factor_one(self):
+		# factor=1.0 : un sommet SANS voisin repli sur `pts[idx]` (voir docstring) ;
+		# un sommet AVEC voisins saute DIRECTEMENT (une iteration) a leur moyenne exacte.
+		points = {0: (10.0, 0.0, 0.0), 1: (0.0, 0.0, 0.0), 2: (2.0, 0.0, 0.0), 3: (0.0, 2.0, 0.0), 4: (0.0, -2.0, 0.0)}
+		adjacency = {0: {1, 2, 3, 4}, 1: set(), 2: set(), 3: set(), 4: set()}
+		out = fp_rig.laplacian_relax_positions(points, adjacency, factor=1.0, iterations=1)
+		self.assertEqual(out[0], (0.5, 0.0, 0.0))  # moyenne exacte de (0,0,0),(2,0,0),(0,2,0),(0,-2,0).
+		self.assertEqual(out[1], (0.0, 0.0, 0.0))  # sans voisin : immobile.
+
+	def test_one_iteration_matches_manual_weighted_average(self):
+		# Mise a jour SIMULTANEE (Jacobi, jamais Gauss-Seidel) : les DEUX sommets
+		# lisent la position D'ORIGINE de l'autre, meme iteration (voir docstring).
+		points = {0: (10.0, 0.0, 0.0), 1: (0.0, 0.0, 0.0)}
+		adjacency = {0: {1}, 1: {0}}
+		out = fp_rig.laplacian_relax_positions(points, adjacency, factor=0.5, iterations=1)
+		self.assertEqual(out[0], (5.0, 0.0, 0.0))
+		self.assertEqual(out[1], (5.0, 0.0, 0.0))
+
+	def test_deterministic(self):
+		points = {0: (0.0, 5.0, 0.0), 1: (0.0, 0.0, 0.0), 2: (2.0, 0.0, 0.0)}
+		adjacency = {0: {1, 2}, 1: {0}, 2: {0}}
+		out1 = fp_rig.laplacian_relax_positions(points, adjacency, factor=0.5, iterations=4)
+		out2 = fp_rig.laplacian_relax_positions(points, adjacency, factor=0.5, iterations=4)
+		self.assertEqual(out1, out2)
+
+	def test_zero_iterations_is_identity(self):
+		points = {0: (1.0, 2.0, 3.0), 1: (4.0, 5.0, 6.0)}
+		adjacency = {0: {1}, 1: {0}}
+		out = fp_rig.laplacian_relax_positions(points, adjacency, factor=0.9, iterations=0)
+		self.assertEqual(out, points)
+
+
+class TestVertexSpikeDistances(unittest.TestCase):
+	"""fp_rig.vertex_spike_distances / spike_vertex_indices (section 5b,
+	FP-10B) -- critere d'acceptation "aucun sommet de manchette a plus de
+	3 mm hors de l'enveloppe du gant", verifie ici sur des points synthetiques."""
+
+	def test_vertex_on_flat_patch_has_zero_spike_distance(self):
+		# Croix plate dans le plan Z=0, centre a l'origine : sa moyenne de voisins EST l'origine.
+		points = {0: (0.0, 0.0, 0.0), 1: (1.0, 0.0, 0.0), 2: (-1.0, 0.0, 0.0),
+			3: (0.0, 1.0, 0.0), 4: (0.0, -1.0, 0.0)}
+		adjacency = {0: {1, 2, 3, 4}, 1: {0}, 2: {0}, 3: {0}, 4: {0}}
+		dists = fp_rig.vertex_spike_distances(points, adjacency)
+		self.assertAlmostEqual(dists[0], 0.0, places=9)
+
+	def test_isolated_vertex_has_zero_spike_distance(self):
+		dists = fp_rig.vertex_spike_distances({0: (9.0, 9.0, 9.0)}, {0: set()})
+		self.assertEqual(dists[0], 0.0)
+
+	def test_pushed_out_vertex_is_flagged_as_spike(self):
+		# Sommet pousse a 5 mm de la moyenne de ses 2 voisins (> tolerance 3 mm, FP-10B).
+		points = {0: (0.0, 0.005, 0.0), 1: (-0.01, 0.0, 0.0), 2: (0.01, 0.0, 0.0)}
+		adjacency = {0: {1, 2}, 1: {0}, 2: {0}}
+		bad = fp_rig.spike_vertex_indices(points, adjacency, tolerance_m=fp_rig.CUFF_ENVELOPE_TOLERANCE_M)
+		self.assertIn(0, bad)
+
+	def test_vertex_within_tolerance_is_not_flagged(self):
+		# Sommet a 2 mm de la moyenne de ses voisins (< tolerance 3 mm) : jamais une pointe.
+		points = {0: (0.0, 0.001, 0.0), 1: (-0.01, -0.001, 0.0), 2: (0.01, -0.001, 0.0)}
+		adjacency = {0: {1, 2}, 1: {0}, 2: {0}}
+		bad = fp_rig.spike_vertex_indices(points, adjacency, tolerance_m=fp_rig.CUFF_ENVELOPE_TOLERANCE_M)
+		self.assertNotIn(0, bad)
+
+	def test_default_tolerance_matches_fp_10b_acceptance(self):
+		# Critere d'acceptation FP-10B : 3 mm.
+		self.assertAlmostEqual(fp_rig.CUFF_ENVELOPE_TOLERANCE_M, 0.003)
+
+	def test_indices_are_sorted(self):
+		points = {5: (0.0, 1.0, 0.0), 2: (0.0, -1.0, 0.0), 9: (0.0, 0.0, 0.0)}
+		adjacency = {5: {9}, 2: {9}, 9: {5, 2}}
+		bad = fp_rig.spike_vertex_indices(points, adjacency, tolerance_m=0.0)
+		self.assertEqual(bad, sorted(bad))
+
+
 class TestArmMeasurements(unittest.TestCase):
 	"""Constantes mesurees sur ual.glb (voir en-tete de fp_rig.py / rapport
 	de tache) -- verrouille contre une regression silencieuse des chiffres
@@ -350,6 +439,23 @@ class TestBlenderPipelineDeterminism(unittest.TestCase):
 				break
 		self.assertIsNotNone(tris, proc.stdout)
 		self.assertLessEqual(tris, fp_rig.TRI_BUDGET_ARMS)
+
+	def test_no_glove_cuff_vertex_pierces_the_envelope(self):
+		"""Critere d'acceptation FP-10B : "aucune pointe (test : aucun sommet
+		de manchette a plus de 3 mm hors de l'enveloppe du gant)" -- le
+		pipeline reel (`_verify_no_glove_spikes`, section 9) leve une
+		RuntimeError et fait echouer le build si ce n'est pas le cas (les deux
+		executions ont deja reussi, `setUpClass` : `returncode == 0` verifie
+		par `_bones_and_verts`) ; on verifie ici, en plus, que le marqueur
+		attendu est bien present et sous la tolerance annoncee."""
+		proc = self.runs[0]
+		worst_mm = None
+		for line in proc.stdout.splitlines():
+			if line.startswith("FP_RIG_CUFF_CHECK_OK "):
+				worst_mm = float(line.split("pire ecart ")[1].split(" mm")[0])
+				break
+		self.assertIsNotNone(worst_mm, proc.stdout)
+		self.assertLessEqual(worst_mm, fp_rig.CUFF_ENVELOPE_TOLERANCE_M * 1000.0)
 
 
 @unittest.skipUnless(BLENDER_AVAILABLE, f"Blender introuvable ({BLENDER_BIN}) -- voir BLENDER_BIN")

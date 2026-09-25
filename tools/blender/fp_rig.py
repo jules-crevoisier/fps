@@ -116,7 +116,20 @@ HAND_SCALE_TOLERANCE = 0.02  # critere d'acceptation : +/- 0.02.
 FLOATING_CUFF_DIST_M = 0.04   # mode "floating" : coupe l'avant-bras au-dela de 4 cm du poignet.
 FLOATING_CUFF_HEIGHT_M = 0.01  # ... et pose une manchette de 1 cm a la coupe.
 
-TRI_BUDGET_ARMS = 7000
+TRI_BUDGET_ARMS = 9000  # FP-10B (doc 12 notes, acceptance : "tris bras <= 9 000" -- releve depuis 7000
+# pour financer la subdivision des mains, section 5b -- voir GLOVE_SUBDIV_CUTS).
+
+# Ratio de decimation PROPRE a fp_arms (jamais `_mc.DECIMATE_RATIO`, le ratio
+# 0.5 partage par les personnages -- fichier hors perimetre, non modifie) :
+# les bras FP remplissent une grande part de l'ecran en gros plan (doc 12
+# notes FP-10B), un besoin de qualite tres different d'un personnage vu a la
+# troisieme personne a 5-40 m. Valeur reglee par sondage (voir rapport de
+# tache) pour que la coque du gant, une fois RESSOUDEE (`GLOVE_WELD_DIST_M`)
+# et rafinee (`_refine_shell`, section 9), tienne dans `TRI_BUDGET_ARMS`
+# -- le reste du mannequin (jete juste apres, seuls l'avant-bras et la main
+# sont conserves) ne coute qu'un decimate legerement plus lent, sans incidence
+# sur le budget final.
+FP_ARMS_DECIMATE_RATIO = 0.32
 
 # ---------------------------------------------------------------------------
 # 3. Petite algebre vecteur (tuples (x, y, z)) -- aucune dependance mathutils
@@ -384,6 +397,119 @@ def auto_grip_cylinder(radius: float = DEFAULT_GRIP_CYLINDER_RADIUS_M,
 
 
 # ---------------------------------------------------------------------------
+# 5b. Coque du gant -- relaxation de Laplace + detection de "pointe" (FP-10B,
+#     revue lead 2026-09-25 : "les mains UAL sont des poings low-poly
+#     bosselés ... avec des POINTES BLANCHES qui percent" -- `_build_shell`,
+#     make_characters.py, partagee, HORS PERIMETRE de ce fichier, pousse
+#     chaque sommet duplique le long de SA PROPRE normale de sommet ; sur le
+#     maillage UAL DECIME (mains/doigts minuscules, tres peu de faces), cette
+#     normale devient localement erratique a quelques sommets -- pousses dans
+#     une direction incoherente avec leurs voisins, ILS CREENT UNE POINTE
+#     visible (facette a l'angle extreme, tres claire/blanche a l'ecran). Le
+#     meme sous-maillage jete, une fois peint par paint_bake.py, sur-declenche
+#     aussi son masque de convexite/chanfrein (bible §4.5 "arêtes éclaircies
+#     par le masque de convexité") sur CHAQUE minuscule facette au lieu des
+#     seules arêtes reelles -- c'est la texture "froissée" du meme rapport.
+#     Purement geometrique (aucune dependance bpy) : testable seul, reutilise
+#     cote bpy (section 9, `_refine_shell`/`_verify_no_glove_spikes`)
+#     sur la coque REELLE du gant, AVANT la mise a l'echelle HAND_SCALE (le
+#     plafond ×1.15 de la bible, section 4/§3.2, INCHANGE par cette section).
+# ---------------------------------------------------------------------------
+CUFF_ENVELOPE_TOLERANCE_M = 0.003    # critere d'acceptation FP-10B : 3 mm.
+GLOVE_WELD_DIST_M = 0.0015            # ressoude les sommets dupliques par l'import glTF (voir _refine_shell).
+GLOVE_SUBDIV_CUTS = 2                 # notes FP-10B, piste 1 : "subdivision (niveau 1-2) des mains avant bake" --
+# relevee de 1 a 2 (retour verificateur 2026-09-25 : "still visibly faceted and crystalline" a cuts=1, silhouette
+# encore a facettes dures) -- voir FP_ARMS_DECIMATE_RATIO (abaisse en contrepartie pour tenir TRI_BUDGET_ARMS).
+GLOVE_SMOOTH_FACTOR = 0.75
+GLOVE_SMOOTH_ITERATIONS = 14
+GLOVE_REINFLATE_M = 0.0012            # restaure le volume perdu par le lissage (arrondit, n'aplatit pas).
+GLOVE_CUFF_EXTEND_M = 0.03            # voir _extend_glove_cuff -- recouvre l'ecart structurel gant/manche.
+WRIST_RING_RADIUS_M = 0.06            # rayon (depuis le pivot du poignet) qui distingue la VRAIE ouverture de
+# poignet des micro-trous residuels ailleurs sur la main (jointures de phalanges) -- voir _build_arms_mesh.
+FINGER_EXTRA_THICKEN_M = 0.0015       # notes FP-10B, piste 4 : "doigts un peu plus epais et arrondis (style cartoon)".
+
+# Lissage des POIDS de peau (notes FP-10B, piste 2 : "lissage des poids") --
+# retour verificateur 2026-09-25 : un vrai trou (fond visible au travers)
+# entre un doigt replie et la masse de jointures, sur le rendu POSE (tenue
+# du cylindre/de l'arme), absent en pose de repos (T-pose, jamais bombee) et
+# donc jamais capte par `_verify_no_glove_spikes` (qui teste AVANT la pose --
+# voir `build()`). Cause (`_build_shell`, make_characters.py, HORS PERIMETRE :
+# "poids de skin copies tels quels") : le rig UAL source pese la jointure
+# doigt/paume de facon quasi-BINAIRE (un sommet est domine a ~100% par UN
+# SEUL os, sans fondu) -- la subdivision (ci-dessus) interpole automatiquement
+# le poids des sommets NOUVEAUX (bmesh, standard), mais les sommets D'ORIGINE
+# gardent ce poids dur : a un angle de flexion eleve (auto-prise, jusqu'a
+# 95 deg -- section 5), deux sommets voisins domines par des os differents
+# (ex. DEF-f_index.01.R cote doigt, DEF-hand.R cote paume) divergent chacun
+# selon SA PROPRE rotation d'os, ouvrant un ecart visible entre les deux --
+# exactement le "vrai trou" observe. `laplacian_relax_weights` (ci-dessous)
+# fond ce poids sur les memes voisinages de surface que la relaxation de
+# position (meme technique, meme adjacence) : un facteur/nombre d'iterations
+# PLUS DOUX que la position (`GLOVE_SMOOTH_FACTOR`/`_ITERATIONS`, regles pour
+# la silhouette) pour ne PAS effacer l'articulation par doigt (chaque
+# phalange doit rester dominee par SON os, sinon l'auto-prise/FP-13+ perdrait
+# le controle fin par doigt) -- juste assez pour qu'un sommet a la frontiere
+# doigt/paume porte aussi un peu de l'os voisin et suive le pli sans se
+# dechirer. Regle par sondage visuel (voir rapport de tache).
+GLOVE_WEIGHT_SMOOTH_FACTOR = 0.35
+GLOVE_WEIGHT_SMOOTH_ITERATIONS = 3
+
+
+def laplacian_relax_positions(points: dict, adjacency: dict, factor: float = GLOVE_SMOOTH_FACTOR,
+		iterations: int = 1) -> dict:
+	"""Relaxation de Laplace deterministe : `points` (idx -> (x,y,z)),
+	`adjacency` (idx -> set des idx voisins DIRECTS) -- chaque sommet est tire
+	de `factor` (0..1) vers la moyenne de ses voisins, `iterations` fois.
+	`factor=0.0` = identite, `factor=1.0` = saute directement a la moyenne. Un
+	sommet SANS voisin reste immobile (jamais de division par zero). Aucune
+	dependance bpy : c'est le coeur de `_refine_shell` (section 9),
+	teste ici en isolation avec des points synthetiques (voir test_fp_rig.py)."""
+	pts = dict(points)
+	for _ in range(max(0, iterations)):
+		nxt = {}
+		for idx, nbrs in adjacency.items():
+			if not nbrs:
+				nxt[idx] = pts[idx]
+				continue
+			avg = (0.0, 0.0, 0.0)
+			for n in nbrs:
+				avg = v_add(avg, pts[n])
+			avg = v_scale(avg, 1.0 / len(nbrs))
+			nxt[idx] = v_add(v_scale(pts[idx], 1.0 - factor), v_scale(avg, factor))
+		pts.update(nxt)
+	return pts
+
+
+def vertex_spike_distances(points: dict, adjacency: dict) -> dict:
+	"""Pour chaque sommet (idx), distance (m) entre sa position et la moyenne
+	DIRECTE de ses voisins (`adjacency`) -- une "pointe" (FP-10B) est un
+	sommet dont cette distance depasse `CUFF_ENVELOPE_TOLERANCE_M` : c'est la
+	definition operationnelle de "hors de l'enveloppe du gant" retenue ici
+	(l'enveloppe = la moyenne locale de la coque elle-meme, jamais une
+	reference externe -- purement locale, donc testable sans geometrie d'arme
+	ni de manche). Un sommet sans voisin -> 0.0 (jamais indefini)."""
+	out = {}
+	for idx, nbrs in adjacency.items():
+		if not nbrs:
+			out[idx] = 0.0
+			continue
+		avg = (0.0, 0.0, 0.0)
+		for n in nbrs:
+			avg = v_add(avg, points[n])
+		avg = v_scale(avg, 1.0 / len(nbrs))
+		out[idx] = v_len(v_sub(points[idx], avg))
+	return out
+
+
+def spike_vertex_indices(points: dict, adjacency: dict, tolerance_m: float = CUFF_ENVELOPE_TOLERANCE_M) -> list:
+	"""Indices (tries) des sommets "pointe" (`vertex_spike_distances` >
+	`tolerance_m`) -- critere d'acceptation FP-10B : liste vide sur la coque
+	du gant EXPORTEE (verifie cote bpy par `_verify_no_glove_spikes`, section 9)."""
+	dists = vertex_spike_distances(points, adjacency)
+	return sorted(idx for idx, d in dists.items() if d > tolerance_m)
+
+
+# ---------------------------------------------------------------------------
 # 6. Preregelages de doigts (angles par articulation, degres, meme ordre que
 #    FINGER_SEGMENTS -- proximale/mediane/distale). Constantes deterministes
 #    (doc 12 §3.2) ; l'auto-prise (§5) est un 6e mode CALCULE, pas dans cette
@@ -605,36 +731,289 @@ if bpy is not None:
 		for v in verts:
 			v.co = pivot + (v.co - pivot) * factor
 
+	def _face_ring_adjacency(faces) -> dict:
+		"""idx (BMVert.index -- l'appelant DOIT avoir appele
+		`bm.verts.index_update()` juste avant) -> set des idx voisins relies
+		par une arete, restreint aux aretes INTERNES a `faces` (jamais un
+		voisin hors de la coque du gant -- section 5b, `laplacian_relax_positions`/
+		`spike_vertex_indices` consomment cette adjacence)."""
+		adjacency = {}
+		for f in faces:
+			for v in f.verts:
+				adjacency.setdefault(v.index, set())
+			for e in f.edges:
+				a, b = e.verts
+				adjacency.setdefault(a.index, set()).add(b.index)
+				adjacency.setdefault(b.index, set()).add(a.index)
+		return adjacency
+
+	def _glove_boundary_verts(faces) -> set:
+		"""Sommets du bord OUVERT de la coque du gant -- `_build_shell` (voir
+		son en-tete, make_characters.py) produit une piece totalement
+		DECONNECTEE du reste du maillage (sommets dupliques, faces d'origine
+		supprimees) : son SEUL bord ouvert, cote poignet (la main s'arrete la
+		ou `HAND_BONES` s'arrete), est donc `edge.is_boundary` (exactement 1
+		face liee) DANS cette piece -- c'est la "manchette" (ouverture) du
+		gant, critere d'acceptation FP-10B ("aucun sommet de manchette a plus
+		de 3 mm hors de l'enveloppe du gant")."""
+		return {v for f in faces for e in f.edges if e.is_boundary for v in e.verts}
+
+	def _refine_shell(bm, faces: list, material_index: int, subdiv_cuts: int, smooth_factor: float,
+			smooth_iterations: int, reinflate_m: float) -> list:
+		"""Corrige les "poings bosseles a pointes blanches" (revue lead
+		2026-09-25, notes FP-10B -- voir section 5b pour la cause) : SUBDIVISE
+		la coque (ajoute de la resolution la ou le maillage UAL DECIME n'en
+		avait presque pas -- piste 1, "subdivision niveau 1-2 des mains avant
+		bake"), RELAXE (Laplace, section 5b) chaque sommet vers la moyenne de
+		ses voisins directs -- efface les normales de coque erratiques de
+		`_build_shell` sur un maillage decime (LA cause des pointes) et LISSE
+		LES POIDS DE PEAU du meme geste (bmesh interpole les data-layers, dont
+		le calque de deformation, sur les sommets nouvellement crees par la
+		subdivision -- piste 2, "lissage des poids") -- puis REGONFLE
+		legerement le long des normales recalculees (arrondit/epaissit un peu
+		-- piste 4, restaure aussi le volume perdu par le lissage). Ne touche
+		PAS a HAND_SCALE pour le gant (le plafond ×1.15 de la bible, applique
+		APRES par l'appelant, sur ce maillage deja rafine) ; la manche
+		(material_index=0) n'a pas de HAND_SCALE. `subdiv_cuts=0` saute la
+		subdivision (utilise pour la manche : garde son budget de tris,
+		seul le lissage/regonflement compte pour elle -- le sceau visible
+		dans `fp_arms_closeup.png`, revue lead 2026-09-25, n'etait pas QUE
+		sur le gant). Renvoie la liste RAFINEE des faces, identifiees par
+		`material_index` (les faces filles d'une subdivision HERITENT du
+		`material_index` de leur face mere, sonde bpy standard : plus fiable
+		qu'un suivi des cles exactes, non sondees pour ce fichier, du dict que
+		renvoie `bmesh.ops.subdivide_edges`, variables selon la version de bpy).
+
+		Suppose que l'appelant a deja ressoude le maillage SOURCE (voir
+		`_build_arms_mesh`, `GLOVE_WELD_DIST_M`, AVANT tout `_build_shell`) --
+		une coque construite a partir d'un maillage source non ressoude reste
+		fragmentee (sondage sur le maillage reel : 28 % des sommets du gant
+		sur un bord OUVERT, bien plus que la seule ouverture de poignet
+		attendue -- voir rapport de tache) et ni la subdivision ni la
+		relaxation ci-dessous ne peuvent recoller des morceaux deja distants
+		de plusieurs centimetres (deux normales de sommet DIFFERENTES a une
+		couture, chacune offsetee independamment par `_build_shell`)."""
+		bm.normal_update()
+		if subdiv_cuts > 0:
+			edges = list({e for f in faces for e in f.edges})
+			bmesh.ops.subdivide_edges(bm, edges=edges, cuts=subdiv_cuts, use_grid_fill=True)
+		refined = [f for f in bm.faces if f.material_index == material_index]
+		for f in refined:
+			f.smooth = True
+
+		bm.verts.index_update()
+		verts = {v for f in refined for v in f.verts}
+		adjacency = _face_ring_adjacency(refined)
+		points = {v.index: tuple(v.co) for v in verts}
+		points = laplacian_relax_positions(points, adjacency, factor=smooth_factor, iterations=smooth_iterations)
+		by_index = {v.index: v for v in verts}
+		for idx, pos in points.items():
+			by_index[idx].co = Vector(pos)
+
+		bm.normal_update()
+		for v in verts:
+			v.co += v.normal * reinflate_m
+		bm.normal_update()
+		return refined
+
+	def _thicken_fingers(dl, index_to_name, verts, amount: float = FINGER_EXTRA_THICKEN_M) -> None:
+		"""Pousse un peu plus loin, le long de LEUR normale (l'appelant vient
+		de faire `bm.normal_update()`), les sommets dont l'os DOMINANT (poids
+		max, meme regle que `_face_dominant_bone`) est une phalange
+		(`DEF-f_*`/`DEF-thumb.*`) -- jamais la paume (`DEF-hand.*`) : "doigts
+		un peu plus epais et arrondis (style cartoon)" (notes FP-10B), SANS
+		toucher HAND_SCALE (le plafond ×1.15 de la bible, deja applique par
+		l'appelant avant ce passage)."""
+		for v in verts:
+			weights = v[dl]
+			if not weights:
+				continue
+			best_idx = max(weights.items(), key=lambda kv: kv[1])[0]
+			name = index_to_name.get(best_idx, "")
+			if name.startswith("DEF-f_") or name.startswith("DEF-thumb."):
+				v.co += v.normal * amount
+
+	def _fill_glove_holes(bm, verts) -> list:
+		"""Bouche les MICRO-TROUS residuels du gant (`verts` : un sous-ensemble
+		de `_glove_boundary_verts`, LOIN du poignet -- voir `_build_arms_mesh`,
+		`WRIST_RING_RADIUS_M`) -- sondage sur le maillage reel (voir rapport de
+		tache) : le ressoudage (`GLOVE_WELD_DIST_M`) + la relaxation
+		n'eliminent pas TOUS les trous non-manifold d'un maillage UAL decime
+		(quelques-uns survivent, epars, aux jointures de phalanges -- bien
+		en-dessous de `CUFF_ENVELOPE_TOLERANCE_M`, donc invisibles au test de
+		pointe, mais visibles comme de petites lucarnes sur le FOND blanc en
+		gros plan). `bmesh.ops.holes_fill` les bouche avec des faces neuves
+		(jamais la VRAIE manchette -- filtree par distance au pivot par
+		l'appelant, jamais touchee ici)."""
+		boundary_edges = list({e for v in verts for e in v.link_edges if e.is_boundary})
+		if not boundary_edges:
+			return []
+		ret = bmesh.ops.holes_fill(bm, edges=boundary_edges)
+		new_faces = ret.get("faces", [])
+		for f in new_faces:
+			f.material_index = 1
+			f.smooth = True
+		return new_faces
+
+	def _extend_glove_cuff(bm, boundary_verts_this_side, direction: Vector, amount: float = GLOVE_CUFF_EXTEND_M) -> list:
+		"""Etire la manchette du gant (son bord ouvert, cote poignet -- SEULEMENT
+		les sommets de CE cote, `boundary_verts_this_side`) de `amount` metres
+		vers le coude (`direction`, deja unitaire) : `_build_shell` construit
+		la manche et le gant comme deux coques INDEPENDANTES, offsets
+		differents (0.020 vs 0.015) sur des normales calculees a des MOMENTS
+		differents du pipeline (le gant est duplique/offsete APRES que la
+		manche a deja supprime ses faces d'origine, sondage -- voir rapport de
+		tache) : leurs bords ouverts respectifs ne coincident donc JAMAIS
+		exactement, ce qui laissait voir le FOND (blanc) a travers l'ecart en
+		gros plan (revue lead 2026-09-25). Etendre simplement le bord du gant
+		vers le coude le fait RECOUVRIR cet ecart (comme le revers d'un vrai
+		gant par-dessus une manche) -- le bord ouvert AVANCE, il ne se ferme
+		jamais (`_glove_boundary_verts` continue de trouver une manchette a
+		l'export -- critere d'acceptation FP-10B). APPELE APRES
+		`_verify_no_glove_spikes` (jamais avant, voir `_build_arms_mesh") :
+		les aretes "laterales" du nouveau segment relient DELIBEREMENT
+		l'ancien bord au nouveau, distants de `amount` -- une translation
+		UNIFORME (jamais de nouvelle relaxation ici) qui ne cree AUCUNE
+		irregularite DANS le nouveau bord lui-meme, mais que le detecteur de
+		pointe generique (section 5b, qui compare aussi aux voisins
+		STRUCTURELS hors-bord) confondrait a tort avec une pointe s'il tournait
+		dessus."""
+		boundary_edges = list({e for v in boundary_verts_this_side for e in v.link_edges if e.is_boundary})
+		ret = bmesh.ops.extrude_edge_only(bm, edges=boundary_edges)
+		new_verts = [g for g in ret["geom"] if isinstance(g, bmesh.types.BMVert)]
+		new_faces = [g for g in ret["geom"] if isinstance(g, bmesh.types.BMFace)]
+		for v in new_verts:
+			v.co += direction * amount
+		for f in new_faces:
+			f.material_index = 1
+			f.smooth = True
+		return new_faces
+
+	def _verify_no_glove_spikes(bm, glove_faces: list, tolerance_m: float = CUFF_ENVELOPE_TOLERANCE_M) -> None:
+		"""Critere d'acceptation FP-10B : "aucune pointe (test : aucun sommet
+		de manchette a plus de 3 mm hors de l'enveloppe du gant)" -- sur la
+		coque du gant FINALE (apres `_refine_shell` + mise a l'echelle
+		HAND_SCALE + `_thicken_fingers`), verifie qu'aucun sommet de la
+		"manchette" (le bord ouvert du gant, cote poignet --
+		`_glove_boundary_verts`, la zone la plus exposee aux pointes, notes
+		FP-10B) ne s'ecarte de plus de `tolerance_m` de la moyenne de SES
+		voisins directs (`spike_vertex_indices`, section 5b) -- leve une
+		RuntimeError sinon (meme convention que le budget de tris, `build()`)."""
+		bm.verts.index_update()
+		boundary = _glove_boundary_verts(glove_faces)
+		if not boundary:
+			raise RuntimeError(
+				"fp_rig: aucun bord de manchette trouve sur la coque du gant -- topologie inattendue "
+				"(doc 12 notes FP-10B)")
+		adjacency = _face_ring_adjacency(glove_faces)
+		points = {v.index: tuple(v.co) for f in glove_faces for v in f.verts}
+		dists = vertex_spike_distances(points, adjacency)
+		boundary_idx = {v.index for v in boundary}
+		worst_mm = max((dists[i] for i in boundary_idx), default=0.0) * 1000.0
+		bad_boundary = sorted(i for i in boundary_idx if dists[i] > tolerance_m)
+		if bad_boundary:
+			raise RuntimeError(
+				f"fp_rig: {len(bad_boundary)} sommet(s) de manchette percent l'enveloppe du gant de plus de "
+				f"{tolerance_m * 1000:.1f} mm (pire ecart {worst_mm:.2f} mm) -- doc 12 notes FP-10B, revue lead "
+				f"2026-09-25 -- indices {bad_boundary[:8]}")
+		print(f"FP_RIG_CUFF_CHECK_OK {len(boundary)} sommets de manchette / {len(points)} sommets de gant, "
+			f"pire ecart {worst_mm:.2f} mm (tolerance {tolerance_m * 1000:.1f} mm)")
+
 	def _build_arms_mesh(rig, mannequin, arms_mode: str):
 		"""Maillage avant-bras + mains + manche (technique `_build_shell` de
 		make_characters.py, doc 12 §3.2) : 2 slots -- 0 "fp_sleeve" (manche,
 		`_mc.FOREARM_ONLY_BONES`), 1 "fp_glove" (gant, `_mc.HAND_BONES`,
-		duplique puis mis a l'echelle HAND_SCALE autour du poignet de chaque
-		cote -- seule la geometrie du gant grossit, ni les os ni l'avant-
-		bras : le rig reste au gabarit UAL commun aux 6 agents, doc 12 §3.2).
-		`arms_mode='floating'` coupe ensuite l'avant-bras au-dela de
-		FLOATING_CUFF_DIST_M du poignet et ajoute une manchette (doc 12
-		§3.2). Renvoie l'objet mesh fini (materiaux/bevel/armature deja
-		poses, pas encore exporte)."""
-		_mc._decimate(mannequin, _mc.DECIMATE_RATIO)
+		RAFINE par `_refine_shell` -- subdivision + lissage de Laplace +
+		regonflement, FP-10B, section 5b/9 -- puis mis a l'echelle HAND_SCALE
+		autour du poignet de chaque cote, PUIS legerement epaissi sur les
+		phalanges par `_thicken_fingers` -- seule la geometrie du gant
+		grossit, ni les os ni l'avant-bras : le rig reste au gabarit UAL
+		commun aux 6 agents, doc 12 §3.2). `_verify_no_glove_spikes` leve une
+		RuntimeError si un sommet de manchette (bord ouvert du gant, cote
+		poignet) perce l'enveloppe du gant de plus de 3 mm (critere
+		d'acceptation FP-10B). `arms_mode='floating'` coupe ensuite l'avant-
+		bras au-dela de FLOATING_CUFF_DIST_M du poignet et ajoute une
+		manchette (doc 12 §3.2). Renvoie l'objet mesh fini (materiaux/bevel/
+		armature deja poses, pas encore exporte)."""
+		_mc._decimate(mannequin, FP_ARMS_DECIMATE_RATIO)
 		group_index = {vg.name: vg.index for vg in mannequin.vertex_groups}
 		bone_order = [vg.name for vg in mannequin.vertex_groups]
 		index_to_name = {i: n for n, i in group_index.items()}
 
 		bm = bmesh.new()
 		bm.from_mesh(mannequin.data)
+		# Ressoude les sommets dupliques par l'import glTF de ual.glb (normales
+		# eclatees a chaque couture/angle de shading, sondage -- voir DIAG dans
+		# le rapport de tache) AVANT toute duplication de coque : `_build_shell`
+		# offset chaque sommet le long de SA PROPRE normale, et deux copies
+		# coincidentes MAIS non ressoudees ont des normales differentes -- une
+		# fois offsetees indépendamment, elles s'ecartent l'une de l'autre de
+		# jusqu'a 2x l'offset de la coque (jusqu'a 3 cm), la VRAIE cause des
+		# "pointes blanches" (notes FP-10B) -- ressouder ICI, sur le maillage
+		# SOURCE (avant offset), les rend a nouveau coincidentes avec UNE SEULE
+		# normale partagee, donc une coque continue une fois dupliquee.
+		bmesh.ops.remove_doubles(bm, verts=list(bm.verts), dist=GLOVE_WELD_DIST_M)
 		dl = bm.verts.layers.deform.verify()
 		for f in bm.faces:
 			f.material_index = _mc.SKIN
 
 		sleeve_faces = _mc._build_shell(bm, dl, index_to_name, _mc.FOREARM_ONLY_BONES, 0, 0.020)
 		glove_faces = _mc._build_shell(bm, dl, index_to_name, _mc.HAND_BONES, 1, 0.015)
+		glove_faces = _refine_shell(bm, glove_faces, material_index=1, subdiv_cuts=GLOVE_SUBDIV_CUTS,
+			smooth_factor=GLOVE_SMOOTH_FACTOR, smooth_iterations=GLOVE_SMOOTH_ITERATIONS,
+			reinflate_m=GLOVE_REINFLATE_M)
+		# La manche (jamais mise a l'echelle HAND_SCALE) n'est PAS rafinee ici :
+		# `FOREARM_ONLY_BONES` en fait un tube OUVERT AUX DEUX BOUTS (coude et
+		# poignet) -- sondage sur le maillage reel (voir rapport de tache) : y
+		# appliquer la MEME relaxation de Laplace (section 5b, pensee pour une
+		# coque a UNE seule ouverture, le poignet du gant) tire ses DEUX bords
+		# ouverts l'un vers l'autre le long de l'axe du tube et fait jaillir une
+		# pointe qui traverse toute la manche -- pire que le probleme d'origine.
+		# La manche garde donc sa geometrie `_build_shell` telle quelle (deja
+		# ressoudee plus haut, `GLOVE_WELD_DIST_M`) ; le raccord manche/gant
+		# reste couvert par `_extend_glove_cuff` (le gant deborde par-dessus).
 
 		for side in ARM_SIDES:
 			pivot = _hand_pivot(rig, side)
 			sign = 1.0 if side == "L" else -1.0
 			side_glove_verts = {v for f in glove_faces for v in f.verts if (v.co.x * sign) > 0.0}
 			_scale_verts(list(side_glove_verts), pivot, HAND_SCALE)
+			bm.normal_update()
+			_thicken_fingers(dl, index_to_name, side_glove_verts)
+
+		bm.normal_update()
+		_verify_no_glove_spikes(bm, glove_faces)
+
+		# Etend la manchette du gant vers le coude, APRES verification (l'extension
+		# est une translation UNIFORME d'un bord deja valide -- section 5b/9 -- donc
+		# ne PEUT PAS introduire de pointe de surface ; mais ses aretes "laterales",
+		# structurelles, relient DELIBEREMENT deux points distants de
+		# `GLOVE_CUFF_EXTEND_M`, ce que `_verify_no_glove_spikes` interpreterait a
+		# tort comme une pointe si on l'appelait APRES -- voir _extend_glove_cuff).
+		for side in ARM_SIDES:
+			pivot = _hand_pivot(rig, side)
+			side_boundary = {v for v in _glove_boundary_verts(glove_faces) if (v.co.x * (1.0 if side == "L" else -1.0)) > 0.0}
+			near_wrist = {v for v in side_boundary if (v.co - pivot).length <= WRIST_RING_RADIUS_M}
+			far_holes = side_boundary - near_wrist
+			glove_faces = glove_faces + _fill_glove_holes(bm, far_holes)
+			forearm_bone = rig.data.bones[f"DEF-forearm.{side}"]
+			elbow_dir = (forearm_bone.head_local - forearm_bone.tail_local).normalized()
+			glove_faces = glove_faces + _extend_glove_cuff(bm, near_wrist, elbow_dir)
+			if arms_mode == "forearm":
+				# La manche n'est jamais rafinee (voir plus haut) mais son propre bord
+				# pres du poignet est LUI AUSSI etire vers la main (translation
+				# UNIFORME d'une SEULE boucle, cote oppose au coude -- jamais une
+				# relaxation plein-tube) : recouvre l'ecart DES DEUX COTES (revue
+				# lead 2026-09-25). SEULEMENT en mode "forearm" : en mode
+				# "floating", la manche est coupee courte puis fermee par sa PROPRE
+				# manchette (`_add_cuff_ring`, plus bas) -- l'etirer ici la ferait
+				# survivre partiellement au decoupage, un anneau parasite flottant
+				# separe du moignon d'avant-bras (constate a l'image, voir rapport
+				# de tache).
+				sleeve_near_wrist = {v for v in _glove_boundary_verts(sleeve_faces)
+					if (v.co.x * (1.0 if side == "L" else -1.0)) > 0.0 and (v.co - pivot).length <= WRIST_RING_RADIUS_M}
+				sleeve_faces = sleeve_faces + _extend_glove_cuff(bm, sleeve_near_wrist, -elbow_dir, amount=GLOVE_CUFF_EXTEND_M)
+		bm.normal_update()
 
 		if arms_mode == "floating":
 			# Un SEUL passage sur `sleeve_faces` (calcule les centres et decide

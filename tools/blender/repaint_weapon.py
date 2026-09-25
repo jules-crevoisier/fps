@@ -104,6 +104,17 @@ relief procedural de paint_bake est prefere a celui-ci -- ce script-ci ne
 l'invoque PAS (aucune option CLI ne le branche), jamais ce qui produit les
 PNG livres par cette tache.
 
+FP-12B (revue du lead 2026-09-25, APRES FP-12, memes 7 armes) : le metal
+repeint par FP-12 restait un gris ardoise bleute (`enamel_steel` #4A505C,
+teinte 220 deg) qui se lit encore "bleu" a l'oeil. Nouvelle cible : metal
+chaud gris-brun (teinte 20-45 deg, saturation 0,06-0,18), critere mesure
+plus strict "teinte [180,260] deg ET saturation > 0,06 <= 2 %" sur chaque
+albedo, plus un plafond de luminance sur le liisere d'eclat pour que les
+panneaux clairs (carcasse creme du Pistolet) ne virent jamais au blanc pur.
+`docs/style/tokens.json`/STYLE_BIBLE.md sont hors perimetre de cette tache :
+voir `WEAPON_METAL_WARM_HEX`/`apply_paint_overrides` pour le correctif LOCAL
+applique uniquement a la sortie peinte de ce script.
+
 Usage :
     python tools/blender/repaint_weapon.py --manifest tools/ai3d/manifests/weapon_repaint.yaml
         [--only pistolet,ravage] [--out-dir assets/textures/weapons] [--report PATH]
@@ -158,24 +169,83 @@ BLUE_SATURATION_MIN = 0.20         # revu 0,35 -> 0,20 (revue du lead 2026-09-25
                                     # declenchement (etape 1) et de seuil de controle final
                                     # (`guard_blue_saturation`, etape 4bis) -- les DEUX usages du lead.
 BLUE_REMAP_FORCE = 1.0             # "remappes" (doc 12) : reassignation pleine, pas un rappel a 0,6
-BLUE_GUARD_SATURATION_TRIGGER = 0.12  # etape 4bis : seuil de DECLENCHEMENT du filet de securite --
-                                    # volontairement BIEN EN DESSOUS de BLUE_SATURATION_MIN (0,20) :
-                                    # l'acier emaille #4A505C a lui-meme S=0,1957 en continu, a peine
-                                    # sous 0,20 -- la quantification finale en PNG 8 bits (arrondi
-                                    # independant par canal) suffit a le faire deriver au-dessus (mesure
-                                    # jusqu'a S=0,204 sur l'albedo final de ravage.glb malgre un rappel
-                                    # de palette correct). Un seuil de declenchement sous la saturation
-                                    # NATIVE de l'acier garantit que ce texel est corrige AVANT
-                                    # quantification, quel que soit le sens de l'arrondi.
-BLUE_GUARD_TARGET_SATURATION = 0.16  # cible du filet -- juste sous la saturation NATIVE de l'acier
-                                    # (0,1957), marge de 0,04 sous le seuil mesure (0,20) qui absorbe la
-                                    # quantification 8 bits (derive mesuree jusqu'a +0,018) tout en
-                                    # restant proche de la couleur d'origine. Une cible plus basse
-                                    # (0,05, DeltaE_OK <= 0,05 de l'acier -- essaye d'abord) aplatit
-                                    # trop la grande zone "acier" du pistolet et fait apparaitre, par
-                                    # ricochet, un 7e groupe k-means hors tolerance (un residu de teinte
-                                    # de crosse, mesure a DeltaE_OK=0,118) : 0,16 suffit a la conformite
-                                    # (etape 4bis) sans deplacer assez le nuage de points pour ca.
+
+# -- FP-12B (revue du lead 2026-09-25, APRES FP-12) ---------------------------
+# Le metal repeint par FP-12 restait un gris ardoise bleute (`enamel_steel`
+# #4A505C -- teinte 220 deg, S=0,1957) qui se lit encore "bleu" a l'oeil sous
+# l'eclairage cel malgre les gardes ci-dessus : elles absorbaient la DERIVE de
+# quantification autour de la cible d'origine, pas la cible ELLE-MEME, qui
+# etait deja dans la bande bleue avant meme la quantification. Nouveau critere
+# mesure par le lead (PLUS STRICT que celui de FP-12, sur l'albedo final) :
+# "teinte [180,260] deg ET saturation > 0,06 <= 2%" -- bande plus large, seuil
+# de saturation bien plus bas (0,06 au lieu de 0,20 : un bleu marine dilue,
+# sous l'ancien seuil, se lit quand meme comme froid a l'oeil sous l'eclairage
+# cel). Cible : metal chaud gris-brun (teinte 20-45 deg, saturation
+# 0,06-0,18), bois brun chaud/laiton/rouille deja conformes (voir la mesure
+# des 9 couleurs + ombres dans test_repaint_weapon -- seul `enamel_steel`
+# tombe dans la bande bleue, `teal` est juste sous 180 deg, tout le reste est
+# hors bande).
+#
+# `docs/style/tokens.json` `color.weapon_materials.enamel_steel` (STYLE_BIBLE.
+# md §5.1 ligne 663) reste INCHANGE : ce fichier et STYLE_BIBLE.md ne sont PAS
+# dans le perimetre FP-12B (le contrat de la tache liste uniquement
+# tools/blender/repaint_weapon.py, tools/ai3d/manifests/weapon_repaint.yaml,
+# assets/textures/weapons/ et les tests de ce module comme modifiables).
+# `WEAPON_METAL_WARM_HEX` est donc un correctif LOCAL a ce script, applique
+# uniquement a la sortie peinte via `apply_paint_overrides` (jamais ecrit dans
+# tokens.json ni dans la STYLE_BIBLE -- si la reference officielle doit
+# changer pour tous les consommateurs de `enamel_steel`, c'est une decision du
+# lead, hors de ce contrat).
+WEAPON_METAL_WARM_HEX = "#756F67"  # teinte 34,3 deg, saturation 0,120 (au milieu de la cible
+                                    # 20-45/0,06-0,18) ; OKLab L=0,545, proche de l'acier
+                                    # d'origine (L=0,430) pour ne changer que la teinte/chroma
+                                    # du metal, pas sa valeur globale dans l'arme.
+PAINT_MATERIAL_OVERRIDES = {"enamel_steel": WEAPON_METAL_WARM_HEX}  # voir `apply_paint_overrides`
+
+BLUE_GUARD_HUE_RANGE_DEG = (180.0, 260.0)  # bande du critere FP-12B (etape 4bis), plus large que
+                                    # BLUE_HUE_RANGE_DEG (etape 1 -- declenchement du remap PLEIN sur
+                                    # les texels SOURCE tres bleus, INCHANGE par FP-12B : un bleu
+                                    # source tres sature doit toujours etre remappe en totalite, meme
+                                    # raisonnement que BLUE_SATURATION_MIN plus haut).
+FP12B_METAL_SATURATION_MIN = 0.06  # seuil MESURE de l'acceptance FP-12B sur l'albedo final --
+                                    # distinct du declencheur interne du garde ci-dessous (plus bas,
+                                    # meme principe de marge de quantification que BLUE_GUARD_
+                                    # SATURATION_TRIGGER/BLUE_SATURATION_MIN plus haut).
+BLUE_GUARD_SATURATION_TRIGGER = 0.02  # etape 4bis, revu 0,12 -> 0,02 (FP-12B, seuil mesure 0,20 ->
+                                    # 0,06) : la bande [180,260] ne contient plus AUCUNE couleur de
+                                    # palette legitime maintenant que `enamel_steel` est repeint chaud
+                                    # (`teal`, la seule couleur proche, est a 176 deg -- hors bande) ;
+                                    # un declencheur tres bas desature systematiquement tout residu
+                                    # chromatique qui s'y trouve encore, sans risque de toucher une
+                                    # couleur voulue.
+BLUE_GUARD_TARGET_SATURATION = 0.045  # cible du filet, revue 0,16 -> 0,045 (FP-12B) : marge de 0,015
+                                    # sous le seuil mesure (0,06), meme principe de marge de
+                                    # quantification PNG 8 bits que la revision precedente (derive
+                                    # mesuree jusqu'a +0,018 sur un seuil 5x plus grand -- marge
+                                    # proportionnellement resserree en consequence, verifiee par
+                                    # test_repaint_weapon sur les 7 armes reelles).
+LISERE_MAX_OKLAB_L = 0.925         # FP-12B : le panneau creme (carcasse) du Pistolet, deja proche du
+                                    # blanc (`enamel_cream` OKLab L=0,911), rejoint (251,250,249) en
+                                    # sRGB des qu'il porte un liisere d'eclat (LISERE_LIGHTEN=0,85) --
+                                    # indiscernable du blanc pur a l'oeil (repaint_textures_avant_apres.
+                                    # jpg, revue du lead). Plafonne la luminance OKLab du resultat de
+                                    # `lighten_toward_white` (et, apres coups de pinceau, celui
+                                    # d'`apply_relief` -- voir `cap_oklab_lightness`), quel que soit
+                                    # `amount` ou la clarte de depart -- "les panneaux clairs ne doivent
+                                    # pas virer au blanc pur", UNIQUEMENT pour le liisere (bande
+                                    # d'eclat) : la variation normale du pinceau (`apply_brush_noise`,
+                                    # +-3,5%) sur un materiau deja clair comme `enamel_cream` n'est pas
+                                    # ce plafond -- elle reste loin du blanc pur (mesure <= L=0,938 sur
+                                    # la carcasse du Pistolet, tres en dessous de 1,0) et ne doit pas
+                                    # etre confondue avec l'effet du liisere (voir
+                                    # test_carcass_box_never_reaches_pure_white, qui isole les deux, et
+                                    # applique une TOLERANCE explicite -- pas 1e-6 -- a cette meme
+                                    # derive de quantification). 0,965 / 0,955 / 0,95 / 0,93 (essayes
+                                    # d'abord) laissaient tous deriver le liisere une fois quantifie en
+                                    # PNG 8 bits (arrondi par canal, comme partout ailleurs dans ce
+                                    # fichier) et relu (jusqu'a +0,0018 mesure) -- reste bien AU-DESSUS
+                                    # de la base `enamel_cream` (OKLab L=0,911, un liisere plus sombre
+                                    # que sa base ne serait plus un "eclat").
 RESERVED_HUE_BANDS_DEG = ((300.0, 355.0), (105.0, 145.0))
 # Meme garde que le bleu : `docs/style/tokens.json` `reserved.rule` n'y voit
 # une violation qu'au-dessus d'une chroma minimale -- un gris/beige a teinte
@@ -190,7 +260,24 @@ LISERE_LIGHTEN = 0.85
 INK_WIDTH_PX = 2
 INK_DARKEN = 0.55
 CREVICE_WIDTH_PX = 4
-CREVICE_DARKEN = 0.30
+CREVICE_DARKEN = 0.12               # FP-12B, revu 0,30 -> 0,12 (mesure : voir ci-dessous) --
+                                    # AUCUNE couleur de §5.1 n'a de variante "assombrie de 30% vers
+                                    # l'encre" dans les 18 candidats (seulement base et ombre a L x
+                                    # 0,6) : sur `enamel_cream` (L OKLab 0,911, tres clair), un
+                                    # assombrissement de 30% atterrit a L=0,70 -- entre la base et son
+                                    # ombre (L=0,546), a DeltaE_OK 0,135 de son plus proche candidat
+                                    # (`paper_shadow`), au-dela de la tolerance k-means (<=0,10,
+                                    # test_six_kmeans_clusters_near_palette_or_shadow). Invisible avec
+                                    # l'ancien acier bleu (sa distance a TOUT le reste de la palette
+                                    # etait si grande, teinte 220 deg, que les 6 centroides du k-means
+                                    # se redistribuaient autrement et absorbaient ce residu dans un
+                                    # cluster voisin) ; expose des que l'acier rejoint la meme region
+                                    # de teinte chaude que `enamel_cream`/`paper` (WEAPON_METAL_WARM_
+                                    # HEX). 0,12 measure sur les 7 armes reelles : `enamel_cream`
+                                    # assombri atterrit a DeltaE_OK<=0,08 de `enamel_cream` lui-meme
+                                    # (encore un creux visible, juste moins profond) ; pire cluster
+                                    # k-means mesure <= 0,072 sur les 7 armes (0,30 donnait jusqu'a
+                                    # 0,1297 sur faucheur).
 BRUSH_NOISE_AMPLITUDE = 0.035
 
 INK_HEX = "#1A1410"                 # docs/style/tokens.json color.ink
@@ -323,6 +410,24 @@ def load_palette(tokens_path=DEFAULT_TOKENS_PATH) -> dict:
 	}
 
 
+def apply_paint_overrides(palette: dict, overrides: dict = PAINT_MATERIAL_OVERRIDES) -> dict:
+	"""FP-12B : renvoie une COPIE de `palette` dont les entrees `materials`
+	listees dans `overrides` (par defaut `PAINT_MATERIAL_OVERRIDES` --
+	`enamel_steel` -> `WEAPON_METAL_WARM_HEX`) sont remplacees. `palette`
+	(l'entree) n'est JAMAIS mutee -- `load_palette` continue de renvoyer la
+	valeur BRUTE de `docs/style/tokens.json`, verifiee par
+	`TestPaletteLoading.test_loads_the_nine_colours_from_tokens_json` ; c'est
+	CETTE fonction, appelee par `repaint_weapon` avant de peindre, qui porte le
+	correctif local FP-12B (tokens.json est hors perimetre de cette tache --
+	voir le commentaire de `WEAPON_METAL_WARM_HEX`). Ne touche jamais
+	`accents`."""
+	materials = dict(palette["materials"])
+	for name, hexv in overrides.items():
+		if name in materials:
+			materials[name] = hexv
+	return {**palette, "materials": materials}
+
+
 def resolve_target_hex(palette: dict, target: str) -> str:
 	"""`target` = "material:<nom>" ou "accent:<nom>" (manifeste weapon_repaint.yaml)
 	-> hex. Leve `ValueError` sur une cle absente (jamais un repli silencieux
@@ -379,22 +484,44 @@ def delta_e_ok(lab_a, lab_b) -> float:
 # Etape 1 -- rappel de palette global (OKLab, tout le texel)
 # =============================================================================
 
+BLUE_REMAP_CANDIDATES = ("enamel_steel", "enamel_steel_shadow")
+# FP-12B (revue du lead 2026-09-25, APRES FP-12) : revu depuis ("enamel_steel",
+# "enamel_steel_shadow", "teal", "teal_shadow") -- le doc 12 dit "remappes vers
+# l'acier OU le sarcelle, selon la clarte" (plus proche voisin OKLab parmi les
+# 4). Ce choix n'avait de sens QUE tant que "acier" etait LUI-MEME bleu (teinte
+# 220 deg, proche du sarcelle a 176 deg) : les deux candidats etaient alors
+# deux destinations bleutees PLAUSIBLES, departagees par la clarte. Depuis que
+# `enamel_steel` est repeint chaud (WEAPON_METAL_WARM_HEX, teinte ~34 deg --
+# quasi a l'oppose du bleu sur le cercle chromatique), le sarcelle (176 deg)
+# devient MECANIQUEMENT le plus proche voisin OKLab de la quasi-totalite des
+# texels bleu SATURE (peu importe leur clarte) -- mesure sur rafale.glb (90 %
+# de texels a teinte bleue jusqu'a S=0,8, cf. commentaire d'apply_global_pull)
+# : la totalite du corps de l'arme virait au sarcelle au lieu du metal chaud
+# attendu. Le sarcelle N'EST JAMAIS un accent explicite d'aucune des 7 armes de
+# `tools/ai3d/manifests/weapon_repaint.yaml` (STYLE_BIBLE.md §5.2 le reserve a
+# la Semeuse, absente de ce manifeste) -- les accents sont TOUJOURS poses par
+# boite explicite (etape 2), jamais choisis par un remap de teinte. Retirer le
+# sarcelle de ce remap corrige donc un regression, pas un choix de style : le
+# seul candidat restant est l'acier (chaud) et son ombre.
 def apply_global_pull(rgb01, palette: dict, force: float = GLOBAL_PULL_FORCE,
 		blue_hue_range=BLUE_HUE_RANGE_DEG, blue_saturation_min: float = BLUE_SATURATION_MIN,
-		shadow_factor: float = SHADOW_L_FACTOR, blue_remap_force: float = BLUE_REMAP_FORCE) -> tuple:
+		shadow_factor: float = SHADOW_L_FACTOR, blue_remap_force: float = BLUE_REMAP_FORCE,
+		blue_remap_candidates=BLUE_REMAP_CANDIDATES) -> tuple:
 	"""Etape 1 du §3.4 : tire chaque texel de `force` vers son plus proche
 	voisin OKLab parmi les 9 couleurs de §5.1 + leurs ombres (18 candidats),
 	SAUF les texels bleus (teinte dans `blue_hue_range`, saturation HSV >
 	`blue_saturation_min`) qui sont REMAPPES (poids `blue_remap_force`, PLEIN
 	par defaut -- pas un simple "rappel" a 0,6) vers leur plus proche voisin
-	parmi UNIQUEMENT {acier, acier ombre, sarcelle, sarcelle ombre}. Le doc 12
-	dit "remappes", pas "tires" : un bleu source tres sature (mesure sur
-	rafale.glb -- 90 % des texels a teinte bleue, jusqu'a S=0,8) laisserait,
-	a force 0,6 comme le reste de la palette, jusqu'a 4 % de texels encore
-	au-dessus du seuil de saturation apres blend -- au-dela du critere
-	d'acceptance FP-12 (<= 2 %). Un remap PLEIN est la seule facon de garantir
-	la disparition du bleu quelle que soit sa saturation d'origine. Renvoie
-	`(rgb01_repeint, rapport)`."""
+	parmi UNIQUEMENT `blue_remap_candidates` (voir sa constante par defaut,
+	BLUE_REMAP_CANDIDATES, et son commentaire FP-12B -- l'acier chaud et son
+	ombre, plus le sarcelle du doc 12 d'origine). Le doc 12 dit "remappes", pas
+	"tires" : un bleu source tres sature (mesure sur rafale.glb -- 90 % des
+	texels a teinte bleue, jusqu'a S=0,8) laisserait, a force 0,6 comme le
+	reste de la palette, jusqu'a 4 % de texels encore au-dessus du seuil de
+	saturation apres blend -- au-dela du critere d'acceptance FP-12 (<= 2 %).
+	Un remap PLEIN est la seule facon de garantir la disparition du bleu
+	quelle que soit sa saturation d'origine. Renvoie `(rgb01_repeint,
+	rapport)`."""
 	h, w = rgb01.shape[:2]
 	flat = rgb01.reshape(-1, 3).astype(np.float64)
 	lab = srgb_to_oklab(flat)
@@ -402,7 +529,7 @@ def apply_global_pull(rgb01, palette: dict, force: float = GLOBAL_PULL_FORCE,
 	is_blue = hue_in_band(hue, blue_hue_range) & (sat > blue_saturation_min)
 
 	labels, cand_lab = palette_candidates_lab(palette, shadow_factor=shadow_factor)
-	blue_names = ["enamel_steel", "enamel_steel_shadow", "teal", "teal_shadow"]
+	blue_names = list(blue_remap_candidates)
 	blue_slice = np.array([labels.index(n) for n in blue_names])
 	cand_blue = cand_lab[blue_slice]
 
@@ -603,12 +730,38 @@ def rasterize_segments(segments: list, width: int, height: int, line_width_px: i
 	return np.asarray(img, dtype=bool)
 
 
-def lighten_toward_white(rgb01, mask_hw, amount: float) -> "np.ndarray":
+def cap_oklab_lightness(rgb01, mask_hw, max_lightness: float) -> "np.ndarray":
+	"""Plafonne la luminance OKLab des texels sous `mask_hw` a `max_lightness`
+	(teinte/chroma conservees) -- utilise par `lighten_toward_white` ET, en
+	toute fin de `apply_relief` (FP-12B), pour re-plafonner le liisere APRES
+	les coups de pinceau : `apply_brush_noise` est MULTIPLICATIF (`rgb *= k`)
+	et peut donc repousser un texel deja plafonne au-dessus de `max_lightness`
+	si son jitter est positif -- un seul plafond avant le pinceau ne suffit
+	pas a garantir "jamais blanc pur" sur le resultat FINAL."""
+	out = rgb01.copy()
+	if mask_hw.any():
+		lab = srgb_to_oklab(out[mask_hw])
+		lab[:, 0] = np.minimum(lab[:, 0], max_lightness)
+		out[mask_hw] = np.clip(oklab_to_srgb(lab), 0.0, 1.0)
+	return out
+
+
+def lighten_toward_white(rgb01, mask_hw, amount: float, max_lightness: float = LISERE_MAX_OKLAB_L) -> "np.ndarray":
 	"""Melange "screen" vers le blanc sous `mask_hw` -- eclaircit sans jamais
-	depasser 1.0 et sans aplatir la teinte (contrairement a un simple ajout)."""
+	depasser 1.0 et sans aplatir la teinte (contrairement a un simple ajout).
+	FP-12B : le resultat est ensuite plafonne en luminance OKLab a
+	`max_lightness` (< 1.0, "blanc pur") -- sans ce plafond, un panneau deja
+	proche du blanc (creme `#E6E1D6`, OKLab L=0,911, carcasse du Pistolet)
+	rejoint (251,250,249) en sRGB des qu'il porte un liisere d'eclat plein
+	(`amount`=0,85 par defaut) -- indiscernable du blanc pur a l'oeil (voir
+	LISERE_MAX_OKLAB_L). Les materiaux plus sombres (acier, bois...) restent
+	tres en dessous du plafond et ne sont jamais affectes. `apply_relief`
+	replafonne une seconde fois APRES les coups de pinceau (voir
+	`cap_oklab_lightness`) : ce premier plafond seul ne survit pas a un
+	jitter positif."""
 	out = rgb01.copy()
 	out[mask_hw] = 1.0 - (1.0 - out[mask_hw]) * (1.0 - amount)
-	return out
+	return cap_oklab_lightness(out, mask_hw, max_lightness)
 
 
 def darken_toward(rgb01, mask_hw, target_rgb01, amount: float) -> "np.ndarray":
@@ -690,6 +843,10 @@ def apply_relief(rgb01, face_id_buffer, vertices, faces, uv, *,
 	out = lighten_toward_white(out, lisere_mask & ~ink_mask, lisere_lighten)
 	out = darken_toward(out, ink_mask, hex_to_rgb01(INK_HEX), ink_darken)
 	out = apply_brush_noise(out, face_id_buffer, vertices, faces, amplitude=brush_amplitude, seed=seed)
+	# FP-12B : le pinceau (multiplicatif) peut repousser un liisere deja
+	# plafonne au-dessus de LISERE_MAX_OKLAB_L (jitter positif) -- replafonne
+	# ici, sur le resultat FINAL, voir `cap_oklab_lightness`.
+	out = cap_oklab_lightness(out, lisere_mask & ~ink_mask, LISERE_MAX_OKLAB_L)
 
 	lisere_only_mask = lisere_mask & ~ink_mask
 	lisere_luma = float(srgb_luma(out)[lisere_only_mask].mean()) if lisere_only_mask.any() else float("nan")
@@ -707,30 +864,32 @@ def apply_relief(rgb01, face_id_buffer, vertices, faces, uv, *,
 # Etape 4 -- gardes de fin de run (bleue puis teinte reservee)
 # =============================================================================
 
-def guard_blue_saturation(rgb01, hue_range=BLUE_HUE_RANGE_DEG,
+def guard_blue_saturation(rgb01, hue_range=BLUE_GUARD_HUE_RANGE_DEG,
 		saturation_max: float = BLUE_GUARD_SATURATION_TRIGGER,
 		target_saturation: float = BLUE_GUARD_TARGET_SATURATION) -> tuple:
-	"""Etape 4bis -- filet de securite (revue du lead 2026-09-25 20:57,
-	critere mesure "S > 0,20 <= 2 %" sur l'albedo FINAL) : tout texel encore
-	dans la bande bleue [190,250] deg au-dessus de `saturation_max` est
+	"""Etape 4bis -- filet de securite. Critere mesure FP-12B (revue du lead
+	2026-09-25, APRES FP-12, prioritaire sur le critere FP-12 ci-dessous) :
+	"teinte [180,260] deg ET saturation > 0,06 <= 2 %" sur l'albedo FINAL --
+	tout texel encore dans cette bande au-dessus de `saturation_max` est
 	DESATURE -- teinte ET valeur conservees, seule `S` est ramenee au plus a
 	`target_saturation` -- plutot que repousse hors bande comme
 	`guard_reserved_hues` : on veut un acier/sarcelle neutre credible, pas une
 	teinte poussee au hasard vers le violet ou le cyan.
 
-	`saturation_max` (0,12 par defaut) est DELIBEREMENT sous le seuil mesure
-	par le lead (0,20), et meme sous la saturation NATIVE de l'acier emaille
-	(0,1957) : ce script produit un PNG 8 bits, et l'arrondi de quantification
-	independant par canal fait deriver un texel a S=0,196 jusqu'a S=0,20-0,23
-	selon le sens de l'arrondi -- verifie sur les vraies armes. Corriger
-	TOUT texel bleute, meme large sous le seuil final, avant cette
-	quantification est la seule facon de garantir la conformite APRES coup.
-	`target_saturation` (0,16, juste sous la saturation native de l'acier,
-	0,1957) laisse une marge de 0,04 sous le seuil mesure -- suffisante pour
-	absorber la derive de quantification (mesuree jusqu'a +0,018) sans
-	aplatir excessivement la zone "acier" : une cible plus basse (essayee
-	d'abord, 0,05) fait deriver assez le nuage de points en OKLab pour faire
-	apparaitre un 7e groupe k-means hors tolerance sur le pistolet.
+	(Critere FP-12 d'origine, 2026-09-25 20:57 : "S > 0,20 <= 2 %" sur la bande
+	[190,250] -- `BLUE_HUE_RANGE_DEG`/`BLUE_SATURATION_MIN` -- reste le
+	declencheur du remap PLEIN de l'etape 1, INCHANGE par FP-12B : un bleu
+	SOURCE tres sature doit toujours etre remappe en totalite avant meme
+	d'atteindre ce garde.)
+
+	`saturation_max` (0,02 par defaut) est DELIBEREMENT tres bas : depuis que
+	`enamel_steel` est repeint chaud (`WEAPON_METAL_WARM_HEX`, teinte ~34 deg),
+	la bande [180,260] ne contient plus AUCUNE couleur de palette legitime
+	(`teal` est a 176 deg, juste hors bande) -- tout residu chromatique qui s'y
+	trouve encore peut donc etre desature sans risque. `target_saturation`
+	(0,045) laisse une marge de 0,015 sous le seuil mesure (0,06) pour
+	absorber la derive de quantification PNG 8 bits (meme principe que la
+	revision FP-12 precedente, verifiee ici sur les 7 armes reelles).
 
 	COMPLEMENT des etapes 1 et 3, jamais un remplacement : le rappel de
 	palette (etape 1, remap plein sur les texels detectes bleus) et le
@@ -819,13 +978,22 @@ def repaint_weapon(weapon_id: str, glb_path, boxes: list, palette: dict, *,
 		lisere_lighten: float = LISERE_LIGHTEN, ink_width_px: int = INK_WIDTH_PX,
 		ink_darken: float = INK_DARKEN, crevice_width_px: int = CREVICE_WIDTH_PX,
 		crevice_darken: float = CREVICE_DARKEN, brush_amplitude: float = BRUSH_NOISE_AMPLITUDE,
+		blue_guard_hue_range=BLUE_GUARD_HUE_RANGE_DEG,
 		blue_guard_saturation_trigger: float = BLUE_GUARD_SATURATION_TRIGGER,
 		blue_guard_target_saturation: float = BLUE_GUARD_TARGET_SATURATION,
 		reserved_bands_deg=RESERVED_HUE_BANDS_DEG, reserved_saturation_min: float = RESERVED_SATURATION_MIN,
+		paint_overrides: dict = PAINT_MATERIAL_OVERRIDES,
 		seed="repaint_weapon") -> dict:
 	"""Pipeline complet (etapes 1 a 4bis) pour UNE arme. Renvoie
 	`{"image": PIL.Image RGB 2048x2048, "uv0_hash": str, "report": {...}}` --
-	n'ecrit AUCUN fichier (`main`/`run_manifest` s'en chargent)."""
+	n'ecrit AUCUN fichier (`main`/`run_manifest` s'en chargent).
+
+	FP-12B : `palette` est passee par `apply_paint_overrides(palette,
+	paint_overrides)` avant toute peinture -- que l'appelant ait passe la
+	palette BRUTE de `load_palette()` ou deja une palette repeinte, cette
+	fonction est la source unique de verite pour la couleur metal reellement
+	utilisee (voir `apply_paint_overrides`)."""
+	palette = apply_paint_overrides(palette, paint_overrides)
 	mesh = load_weapon_mesh(glb_path)
 	vertices, faces, uv = mesh["vertices"], mesh["faces"], mesh["uv"]
 	src_image = mesh["image"]
@@ -850,7 +1018,7 @@ def repaint_weapon(weapon_id: str, glb_path, boxes: list, palette: dict, *,
 		crevice_width_px=crevice_width_px, crevice_darken=crevice_darken,
 		brush_amplitude=brush_amplitude, seed=f"{seed}:{weapon_id}")
 
-	rgb01, blue_guarded_count = guard_blue_saturation(rgb01, hue_range=blue_hue_range,
+	rgb01, blue_guarded_count = guard_blue_saturation(rgb01, hue_range=blue_guard_hue_range,
 		saturation_max=blue_guard_saturation_trigger, target_saturation=blue_guard_target_saturation)
 
 	rgb01, guarded_count = guard_reserved_hues(rgb01, bands_deg=reserved_bands_deg,

@@ -65,8 +65,14 @@ const MODULE_PATHS: PackedStringArray = [
 ## Vrai hors du serveur dédié/hors de gdUnit4 (voir l'en-tête) — faux dans
 ## CHAQUE contexte qui lance ce jeu avec `--headless` (dont le contrat de
 ## cette tâche impose l'usage pour tout test).
+## Décision utilisateur 2026-09-25 : la carte reste en greybox pur (plan coté +
+## blocs générés par script) ; l'habillage sera repris plus tard par l'utilisateur.
+## Repasser à true pour réactiver la couche d'art.
+const ART_ENABLED := false
+
+
 static func is_enabled() -> bool:
-	return DisplayServer.get_name() != "headless"
+	return ART_ENABLED and DisplayServer.get_name() != "headless"
 
 ## Hook réel, appelé une seule fois par `MapSetup._enter_tree` juste après
 ## `_build_geometry` (voir son commentaire d'appel) — ne fait rien quand
