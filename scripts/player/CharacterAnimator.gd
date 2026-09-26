@@ -242,6 +242,86 @@ const _FINGER_CHAINS := ["f_index", "f_middle", "f_pinky", "f_ring", "thumb"]
 ## "Skeleton3D", vérifié par sondage direct des pistes d'un clip importé).
 const _SKELETON_TRACK_PREFIX := "Rig/Skeleton3D:"
 
+## -- Profil de rig par PERSONNAGE (Frog Cowboy natif vs legacy DEF-*, tâche
+## "native anim frog cowboy" 2026-09-26) -------------------------------------
+## Frog Cowboy (squelette Mixamo -> noms de profil humanoïde, voir
+## scripts/import/FrogCowboyPostImport.gd/HumanoidBoneMap.gd) n'utilise PAS le
+## rig legacy "DEF-*" partagé par Verrou/les 5 autres agents Tripo : os de
+## tête/recul/haut-du-corps ET préfixe de piste différents. `rig_profile_for`
+## résout ces valeurs par NOM DE MODÈLE RÉSOLU (CharacterBody.get_model_name(),
+## déjà après CharacterBody.MODEL_OVERRIDE -- "Verrou" -> "frog_cowboy") plutôt
+## que par nom d'agent : fonction PURE, testée directement.
+const _FROG_UPPER_BODY_CORE := [
+	"Chest", "UpperChest", "Neck", "Head",
+	"LeftShoulder", "LeftUpperArm", "LeftLowerArm", "LeftHand",
+	"RightShoulder", "RightUpperArm", "RightLowerArm", "RightHand",
+]
+const _FROG_HEAD_BONE := "Head"
+const _FROG_FLINCH_BONE := "UpperChest"
+const _FROG_TRACK_PREFIX := "Armature/Skeleton3D:"
+const _FROG_MODEL_NAME := "frog_cowboy"
+
+## Doigts humanoïdes (SkeletonProfileHumanoid) des DEUX mains, générés à
+## l'appel (pas un const : GDScript n'autorise pas d'appel de fonction dans une
+## expression const) — mêmes segments que HumanoidBoneMap.MIXAMO_TO_HUMANOID
+## (Thumb : Metacarpal/Proximal/Distal ; les 4 autres doigts :
+## Proximal/Intermediate/Distal).
+static func _humanoid_finger_bones() -> Array:
+	var segments_by_chain := {
+		"Thumb": ["Metacarpal", "Proximal", "Distal"],
+		"Index": ["Proximal", "Intermediate", "Distal"],
+		"Middle": ["Proximal", "Intermediate", "Distal"],
+		"Ring": ["Proximal", "Intermediate", "Distal"],
+		"Little": ["Proximal", "Intermediate", "Distal"],
+	}
+	var out: Array = []
+	for side in ["Left", "Right"]:
+		for chain in segments_by_chain.keys():
+			for seg in segments_by_chain[chain]:
+				out.append("%s%s%s" % [side, chain, seg])
+	return out
+
+## Doigts du rig legacy "DEF-*" (même génération que l'ancien `_filter_paths`,
+## factorisée ici pour être partagée avec `rig_profile_for`).
+static func _legacy_finger_bones() -> Array:
+	var out: Array = []
+	for side in ["L", "R"]:
+		for chain in _FINGER_CHAINS:
+			for seg in [1, 2, 3]:
+				out.append("DEF-%s.0%d.%s" % [chain, seg, side])
+	return out
+
+## Résout le profil de rig (os tête/recul, liste de filtre haut-du-corps,
+## préfixe de piste) pour `model_name` (CharacterBody.get_model_name(), déjà
+## résolu via CharacterBody.MODEL_OVERRIDE) : Frog Cowboy reçoit les noms de
+## profil humanoïde + l'os `WeaponGrip` (contrat GLB livré par le lead, cible
+## de la couche haut-du-corps comme le reste du bras droit) ; tout autre nom
+## (Verrou/legacy, ou un nom encore inconnu) reçoit le rig "DEF-*" partagé,
+## comportement INCHANGÉ depuis avant cette tâche.
+static func rig_profile_for(model_name: String) -> Dictionary:
+	if model_name == _FROG_MODEL_NAME:
+		return {
+			"head_bone": _FROG_HEAD_BONE,
+			"flinch_bone": _FROG_FLINCH_BONE,
+			"track_prefix": _FROG_TRACK_PREFIX,
+			"upper_body_bones": _FROG_UPPER_BODY_CORE + _humanoid_finger_bones() + ["WeaponGrip"],
+		}
+	return {
+		"head_bone": _HEAD_BONE,
+		"flinch_bone": _FLINCH_BONE,
+		"track_prefix": _SKELETON_TRACK_PREFIX,
+		"upper_body_bones": _UPPER_BODY_BONES + _legacy_finger_bones(),
+	}
+
+## Préfixe de clip haut-du-corps (visée/idle/tir/rechargement) selon la classe
+## d'arme RÉELLEMENT disponible sur l'AnimationPlayer courant (contrat : "use
+## Rifle_* when the character has them for the current weapon category, fall
+## back to Pistol_* otherwise") — fonction PURE, le sondage `has_animation`
+## reste au niveau de l'appelant (`_build_tree`), qui a déjà l'AnimationPlayer
+## sous la main.
+static func upper_body_clip_prefix(has_rifle_clips: bool) -> String:
+	return "Rifle_" if has_rifle_clips else "Pistol_"
+
 # ------------------------------------------------------------------
 #  API PURE — testée directement (tests/player/test_character_animator.gd),
 #  sans AnimationTree ni arbre de scène.
@@ -371,6 +451,13 @@ static func upper_body_blend_amount(locomotion: int) -> float:
 		return UPPER_BODY_BLEND_JOG
 	return 1.0
 
+## Arme tenue à deux mains (clips `Rifle_*`) : les deux mains restent sur l'arme en
+## Jog/Sprint — le balancier des bras du clip de course décollerait la main gauche du
+## garde-main. Les autres cas suivent `upper_body_blend_amount`.
+static func upper_body_blend_for(locomotion: int, two_handed: bool) -> float:
+	var amount := upper_body_blend_amount(locomotion)
+	return 1.0 if two_handed and amount > 0.0 else amount
+
 ## Facteur d'échelle temporelle (`parameters/ReloadSpeed/scale`, voir
 ## `_build_tree`) pour que le clip `Pistol_Reload` (durée native
 ## `RELOAD_CLIP_BASE_DURATION_S`) dure EXACTEMENT `reload_time` secondes —
@@ -378,10 +465,10 @@ static func upper_body_blend_amount(locomotion: int) -> float:
 ## avant la fin du VRAI rechargement sur les armes lentes, ex. Semeuse 4,2 s,
 ## ou finissait après sur les armes rapides). Repli défensif à 1,0 (vitesse
 ## native) si `reload_time` est invalide (≤ 0).
-static func reload_clip_speed(reload_time: float) -> float:
-	if reload_time <= 0.0:
+static func reload_clip_speed(reload_time: float, clip_length: float = RELOAD_CLIP_BASE_DURATION_S) -> float:
+	if reload_time <= 0.0 or clip_length <= 0.0:
 		return 1.0
-	return RELOAD_CLIP_BASE_DURATION_S / reload_time
+	return clip_length / reload_time
 
 ## Position (-1..1) dans le blend de visée Pistol_Aim_Down/Neutral/Up — pitch
 ## en radians, positif = regarde vers le haut (convention
@@ -501,6 +588,9 @@ var _current_locomotion: int = -1
 var _was_reloading: bool = false
 var _lean: float = 0.0   ## Inclinaison procédurale (slide/dive OU profil), lissée.
 var _profile: AgentAnimProfile   ## Personnalité d'animation de l'agent (§4.6, ART-15).
+var _two_handed := false  ## Clips `Rifle_*` choisis dans `_build_tree` (arme à deux mains).
+var _reload_clip_len := RELOAD_CLIP_BASE_DURATION_S  ## Durée réelle du clip de rechargement du personnage.
+var _rig: Dictionary = {}   ## Profil de rig résolu (voir `rig_profile_for`) — os tête/recul, filtre haut-du-corps, préfixe de piste.
 var _personality_time: float = 0.0   ## Horloge du rebond/balancement, mise à l'échelle par la cadence.
 var _body_squash_elapsed: float = -1.0   ## < 0 : pas de squash en cours (voir `_drive_body_squash`).
 var _flinch_elapsed: float = -1.0   ## < 0 : pas de recul en cours (voir `_drive_flinch`, GF-10).
@@ -550,7 +640,14 @@ func _ready() -> void:
 		_health.died.connect(_on_died)
 
 func _on_model_ready() -> void:
-	if _built or _character_body.get_anim_player() == null:
+	if _built:
+		return
+	_rig = rig_profile_for(_character_body.get_model_name())
+	if _character_body.get_anim_player() == null:
+		# Contrat "native anim frog cowboy" (2026-09-26) : le glb livré n'a pas
+		# encore ses clips embarqués -- T-pose tolérée, jamais de plantage
+		# (voir aussi les gardes défensives `has_animation` de `_apply_forced_loop`).
+		push_warning("CharacterAnimator : pas d'AnimationPlayer pour ce modèle (T-pose tolérée en attendant les clips).")
 		return
 	_profile = _resolve_profile()
 	_build_tree()
@@ -605,9 +702,9 @@ func _drive_locomotion(locomotion: int) -> void:
 ## toujours, `reload_clip_speed` a un repli défensif si jamais aucun signal
 ## `current_id_changed` n'est encore arrivé).
 func _drive_upper_body(locomotion: int, pitch: float, reloading: bool) -> void:
-	set("parameters/UpperBody/blend_amount", upper_body_blend_amount(locomotion))
+	set("parameters/UpperBody/blend_amount", upper_body_blend_for(locomotion, _two_handed))
 	set("parameters/AimPose/blend_position", aim_blend_t(pitch))
-	set("parameters/ReloadSpeed/scale", reload_clip_speed(_reload_time))
+	set("parameters/ReloadSpeed/scale", reload_clip_speed(_reload_time, _reload_clip_len))
 	if reloading and not _was_reloading:
 		set("parameters/ReloadShot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_FIRE)
 	_was_reloading = reloading
@@ -720,7 +817,7 @@ func _apply_body_squash(scale_y: float) -> void:
 	var skeleton := _character_body.get_skeleton()
 	if skeleton == null:
 		return
-	var idx := skeleton.find_bone(_HEAD_BONE)
+	var idx := skeleton.find_bone(_rig.get("head_bone", _HEAD_BONE))
 	if idx == -1:
 		return
 	var inverse_y := 1.0 / scale_y if not is_zero_approx(scale_y) else 1.0
@@ -753,7 +850,7 @@ func _apply_flinch(angle_rad: float) -> void:
 	var skeleton := _character_body.get_skeleton()
 	if skeleton == null:
 		return
-	var idx := skeleton.find_bone(_FLINCH_BONE)
+	var idx := skeleton.find_bone(_rig.get("flinch_bone", _FLINCH_BONE))
 	if idx == -1:
 		return
 	var base := skeleton.get_bone_pose_rotation(idx)
@@ -766,7 +863,17 @@ func _apply_flinch(angle_rad: float) -> void:
 # ------------------------------------------------------------------
 
 func _build_tree() -> void:
-	anim_player = get_path_to(_character_body.get_anim_player())
+	var ap := _character_body.get_anim_player()
+	anim_player = get_path_to(ap)
+	# Contrat "native anim frog cowboy" (2026-09-26) : bascule Rifle_*/Pistol_*
+	# selon ce que CE personnage expose réellement (frog livré avec des clips
+	# Rifle_*, les 5 autres agents Tripo n'ont que l'ancienne bibliothèque
+	# Pistol_* rebaked) -- jamais les deux mélangés pour un même personnage.
+	var _clip_prefix := upper_body_clip_prefix(ap.has_animation("Rifle_Idle"))
+	_two_handed = _clip_prefix == "Rifle_"
+	var reload_anim := "%sReload" % _clip_prefix
+	if ap.has_animation(reload_anim):
+		_reload_clip_len = ap.get_animation(reload_anim).length
 
 	var bt := AnimationNodeBlendTree.new()
 
@@ -798,11 +905,11 @@ func _build_tree() -> void:
 	# -- Couche "haut du corps" (visée continue + respiration + one-shots) --
 	var aim_pose := AnimationNodeBlendSpace1D.new()
 	var aim_down := AnimationNodeAnimation.new()
-	aim_down.animation = "Pistol_Aim_Down"
+	aim_down.animation = "%sAim_Down" % _clip_prefix
 	var aim_neutral := AnimationNodeAnimation.new()
-	aim_neutral.animation = "Pistol_Aim_Neutral"
+	aim_neutral.animation = "%sAim_Neutral" % _clip_prefix
 	var aim_up := AnimationNodeAnimation.new()
-	aim_up.animation = "Pistol_Aim_Up"
+	aim_up.animation = "%sAim_Up" % _clip_prefix
 	aim_pose.add_blend_point(aim_down, -1.0, -1, &"down")
 	aim_pose.add_blend_point(aim_neutral, 0.0, -1, &"neutral")
 	aim_pose.add_blend_point(aim_up, 1.0, -1, &"up")
@@ -813,7 +920,7 @@ func _build_tree() -> void:
 	# continue reste pleinement lisible (positions Down/Neutral/Up conservées),
 	# mais la pose n'est plus totalement statique à l'arrêt/en marche.
 	var idle_breath := AnimationNodeAnimation.new()
-	idle_breath.animation = "Pistol_Idle"
+	idle_breath.animation = "%sIdle" % _clip_prefix
 	bt.add_node("IdleBreath", idle_breath)
 	var breathing := AnimationNodeAdd2.new()
 	bt.add_node("Breathing", breathing)
@@ -826,7 +933,7 @@ func _build_tree() -> void:
 	bt.add_node("ShootShot", shoot_shot)
 	bt.connect_node("ShootShot", 0, "Breathing")
 	var shoot_clip := AnimationNodeAnimation.new()
-	shoot_clip.animation = "Pistol_Shoot"
+	shoot_clip.animation = "%sShoot" % _clip_prefix
 	bt.add_node("ShootClip", shoot_clip)
 	bt.connect_node("ShootShot", 1, "ShootClip")
 
@@ -840,7 +947,7 @@ func _build_tree() -> void:
 	bt.add_node("ReloadShot", reload_shot)
 	bt.connect_node("ReloadShot", 0, "ShootShot")
 	var reload_clip := AnimationNodeAnimation.new()
-	reload_clip.animation = "Pistol_Reload"
+	reload_clip.animation = "%sReload" % _clip_prefix
 	bt.add_node("ReloadClip", reload_clip)
 	var reload_speed := AnimationNodeTimeScale.new()
 	bt.add_node("ReloadSpeed", reload_speed)
@@ -870,7 +977,7 @@ func _build_tree() -> void:
 	active = true
 	set("parameters/Cadence/scale", effective_cadence_scale(_profile.cadence_scale if _profile else 1.0))
 	set("parameters/Breathing/add_amount", UPPER_BODY_BREATH_ADD_AMOUNT)
-	set("parameters/ReloadSpeed/scale", reload_clip_speed(_reload_time))
+	set("parameters/ReloadSpeed/scale", reload_clip_speed(_reload_time, _reload_clip_len))
 
 ## Force le clip d'origine de `locomotion` à boucler (contrat GF-27, voir
 ## `forced_loop_mode`) même si son `Animation.loop_mode` importé ne boucle pas
@@ -891,14 +998,14 @@ func _apply_forced_loop(bt: AnimationNodeBlendTree, locomotion: int) -> void:
 	leaf.loop_mode = forced_loop_mode(locomotion)
 
 ## Chemins de piste (relatifs à `AnimationPlayer.root_node`) pour la couche
-## "haut du corps" : colonne + les deux bras, doigts inclus.
+## "haut du corps" : colonne + les deux bras, doigts inclus — résolus depuis
+## `_rig` (voir `rig_profile_for`), jamais le rig "DEF-*" codé en dur (Frog
+## Cowboy expose des noms de profil humanoïde + `WeaponGrip`, pas les mêmes
+## noms d'os).
 func _filter_paths() -> Array:
-	var names: Array = _UPPER_BODY_BONES.duplicate()
-	for side in ["L", "R"]:
-		for chain in _FINGER_CHAINS:
-			for seg in [1, 2, 3]:
-				names.append("DEF-%s.0%d.%s" % [chain, seg, side])
+	var prefix: String = _rig.get("track_prefix", _SKELETON_TRACK_PREFIX)
+	var names: Array = _rig.get("upper_body_bones", _UPPER_BODY_BONES)
 	var paths: Array = []
 	for n in names:
-		paths.append(NodePath(_SKELETON_TRACK_PREFIX + n))
+		paths.append(NodePath(prefix + n))
 	return paths

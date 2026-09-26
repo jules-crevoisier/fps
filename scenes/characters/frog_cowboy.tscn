@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://assets/models/characters/frog_cowboy.glb" id="1_glb"]
+
+[node name="frog_cowboy" instance=ExtResource("1_glb")]
+
+[node name="BoneAttachment3D" type="BoneAttachment3D" parent="Armature/Skeleton3D"]
+bone_name = "WeaponGrip"
+bone_idx = -1
+
+[node name="WeaponSocket" type="Node3D" parent="Armature/Skeleton3D/BoneAttachment3D"]

@@ -134,34 +134,35 @@ func test_every_weapon_model_has_a_foregrip_anchor_distinct_from_muzzle_and_orig
 		inst.free()
 
 
-func test_muzzle_and_foregrip_anchors_match_the_backed_up_bpy_reference() -> void:
-	# "reprendre ses ancres Grip/Foregrip/Muzzle" (contrat A3D-20) : les
-	# positions locales doivent être EXACTEMENT celles de l'arme bpy d'origine
-	# (assets/models/weapons/_bpy/<id>.glb, jamais recalculées), pas seulement
-	# "présentes quelque part" — voir fit_weapon_painted.py::add_anchor_empty.
+func test_muzzle_and_foregrip_anchors_sit_on_the_painted_mesh() -> void:
+	# Contrat 2026-09-26 (le modèle peint fait foi, l'ancienne référence bpy est abandonnée :
+	# ses ancres étaient ~19 cm sous le canon) : Muzzle au bout avant du maillage, Foregrip
+	# sous le garde-main, tous deux dans la hauteur de l'arme. Canon vers -Z (glTF).
 	for id in WEAPON_IDS:
-		var stem: String = _STEMS_BY_ID[id]
-		var backup_path := "res://assets/models/weapons/_bpy/%s.glb" % stem
-		assert_bool(ResourceLoader.exists(backup_path)).append_failure_message(
-			"%s : sauvegarde bpy introuvable (%s) — impossible de vérifier les ancres" %
-			[_weapon_label(id), backup_path]).is_true()
-		var backup_scene: PackedScene = load(backup_path)
-		var backup_inst := backup_scene.instantiate() as Node3D
-
 		var inst := _load_model(id)
+		var mesh := _first_mesh(inst)
+		var aabb: AABB = mesh.transform * mesh.get_aabb()
 		var muzzle := inst.find_child("Muzzle", true, false) as Node3D
 		var foregrip := inst.find_child("Foregrip", true, false) as Node3D
-		var backup_muzzle := backup_inst.find_child("Muzzle", true, false) as Node3D
-		var backup_foregrip := backup_inst.find_child("Foregrip", true, false) as Node3D
-
-		assert_float(muzzle.position.distance_to(backup_muzzle.position)).append_failure_message(
-			"%s : Muzzle peint %s != Muzzle bpy %s" %
-			[_weapon_label(id), muzzle.position, backup_muzzle.position]).is_less(0.001)
-		assert_float(foregrip.position.distance_to(backup_foregrip.position)).append_failure_message(
-			"%s : Foregrip peint %s != Foregrip bpy %s" %
-			[_weapon_label(id), foregrip.position, backup_foregrip.position]).is_less(0.001)
+		var front_z := aabb.position.z
+		assert_float(absf(muzzle.position.z - front_z)).append_failure_message(
+			"%s : Muzzle %s loin du bout du canon (z=%.3f)" % [_weapon_label(id), muzzle.position, front_z]).is_less(0.03)
+		for anchor in [muzzle, foregrip]:
+			assert_bool(anchor.position.y >= aabb.position.y and anchor.position.y <= aabb.end.y).append_failure_message(
+				"%s : %s hors de la hauteur de l'arme %s" % [_weapon_label(id), anchor.name, aabb]).is_true()
+		assert_bool(foregrip.position.z > front_z and foregrip.position.z < 0.0).append_failure_message(
+			"%s : Foregrip %s pas entre la poignée et le canon" % [_weapon_label(id), foregrip.position]).is_true()
 		inst.free()
-		backup_inst.free()
+
+
+func _first_mesh(n: Node) -> MeshInstance3D:
+	if n is MeshInstance3D:
+		return n
+	for c in n.get_children():
+		var m := _first_mesh(c)
+		if m:
+			return m
+	return null
 
 
 # ======================================================================

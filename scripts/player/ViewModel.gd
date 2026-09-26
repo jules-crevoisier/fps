@@ -334,6 +334,16 @@ const SPRINT_POS_OFFSET := Vector3(-0.02, -0.10, -0.16)
 ## rien d'autre que l'arme+gants n'existe (§5.3, masque CHK-28/29/30).
 const _MASK_RENDER_LAYER := 20
 
+## Bras premières-personne de Verrou (tâche "frog fp arms", 2026-09-26) --
+## remplace les gants flottants (`_glove_r`/`_glove_l` ci-dessous) QUAND
+## `assets/models/characters/frog_cowboy_fp.glb` charge avec succès
+## (`_using_arms`, décidé une seule fois dans `_ready()`, voir `FPArmsRig.gd`
+## pour le rig lui-même et `FPArmsMath.gd` pour les maths d'alignement/anim).
+## Repli sur le chemin gants HISTORIQUE (inchangé) si ce glb est absent/
+## invalide -- voir `_ready()`.
+var _arms: FPArmsRig
+var _using_arms: bool = false
+
 var player: PlayerController
 var weapon: Weapon
 var _anim := AnimState.new()
@@ -373,8 +383,31 @@ func _ready() -> void:
 		weapon.reload_started.connect(_on_reload_started)
 		weapon.weapon_changed.connect(_on_weapon_changed)
 	position = REST_POS
-	_load_gloves()
+	# Bras FP grenouille EN PRIORITÉ (tâche "frog fp arms") -- `add_child` AVANT
+	# `load()` : FPArmsRig a besoin d'être dans l'arbre de scène pour que
+	# `get_path_to` (câblage AnimationTree -> AnimationPlayer, voir
+	# FPArmsRig._build_tree) calcule un chemin valide. Repli sur les gants
+	# flottants historiques (`_load_gloves`, INCHANGÉ) si le glb est absent/
+	# invalide -- jamais les deux à la fois (requirement 6 du contrat).
+	_arms = FPArmsRig.new()
+	add_child(_arms)
+	_using_arms = _arms.load()
+	if not _using_arms:
+		_arms.queue_free()
+		_arms = null
+		_load_gloves()
 	_refresh_model()
+	# Contour post-traitement BD (2026-09-26, ToonStyle.gd) : posé UNE FOIS sur la
+	# Camera3D locale -- structurel (`get_parent()` EST la Camera3D, voir la
+	# docstring de ce fichier "enfant de Head/Camera3D"), donc valide dès ce
+	# `_ready()` sans dépendre de l'ordre d'exécution d'un autre script (contrairement
+	# à `player.camera`, peuplé par PlayerCamera.gd). DIFFÉRÉ (`call_deferred`) :
+	# ce `_ready()` tourne PENDANT que GameWorld._spawn_player ajoute encore ses
+	# propres enfants (même piège documenté par MapSetup.gd _enter_tree -- "Parent
+	# node is busy setting up children") -- un add_child() immédiat sur la Camera3D
+	# échoue silencieusement (erreur moteur, pas une exception) tant que l'arbre du
+	# joueur n'a pas fini de se construire.
+	call_deferred("_wire_outline_pass")
 
 ## Charge fp_gloves.glb UNE FOIS (les gants eux-mêmes ne changent jamais,
 ## contrairement à l'arme) : extrait "GloveR"/"GloveL" de la scène importée et
@@ -382,6 +415,11 @@ func _ready() -> void:
 ## qui ne sert qu'à donner à l'export un unique nœud racine). Les deux gants
 ## restent SANS PARENT jusqu'à la première `_attach_gloves` (appelée par
 ## `_refresh_model` juste après).
+## Voir _ready() : add_outline_pass fait un add_child() sur la Camera3D, qui
+## échoue si l'arbre du joueur est encore en train de se construire.
+func _wire_outline_pass() -> void:
+	ToonStyle.add_outline_pass(get_parent() as Camera3D)
+
 func _load_gloves() -> void:
 	if not ResourceLoader.exists(GLOVES_PATH):
 		push_warning("ViewModel : fp_gloves introuvable (%s)" % GLOVES_PATH)
@@ -484,8 +522,11 @@ func _apply_glove_materials(glove: Node3D) -> void:
 			var mat: Material = mesh.mesh.surface_get_material(i)
 			var mat_name: String = mat.resource_name if mat else ""
 			if mat_name.contains(_PAINTED_MATERIAL_MARKER):
+				# Gants viewmodel (2026-09-26, style BD, ToonStyle.gd) : plus de
+				# next_pass ici -- le contour est désormais le pass plein écran
+				# (ToonStyle.add_outline_pass, posé une fois dans _ready()).
 				var tex := Cartoon.texture_from_imported_material(mat)
-				mesh.set_surface_override_material(i, Cartoon.painted_texture_prop(tex))
+				mesh.set_surface_override_material(i, ToonStyle.toon_material(tex))
 				continue
 			if mat_name.ends_with("_cuff"):
 				mesh.set_surface_override_material(i, Cartoon.character_surface("cloth", Cartoon.ally_color()))
@@ -523,11 +564,7 @@ func _process(delta: float) -> void:
 	var bob := _anim.tick_bob(player.horizontal_speed(), 9.0, delta)
 	var reload_off := _anim.tick_reload(delta)
 	var equip_off := _anim.tick_equip(delta)
-
-	var base := REST_POS.lerp(ADS_POS, 1.0 - _ads_t)
-	var proc := Vector3(_anim.sway_offset.x, _anim.sway_offset.y, 0.0) * _ads_t \
-		+ bob * _ads_t + Vector3(0, _anim.recoil_offset.y * 0.02, _anim.recoil_offset.y * 0.03) \
-		+ reload_off + equip_off + SPRINT_POS_OFFSET * _sprint_t
+	var reloading := _anim.reload_t >= 0.0
 	# Compensation de FOV (§5.3, voir la doc de TARGET_FOV_DEG) : en
 	# projection perspective, une coordonnée écran vaut (décalage / -
 	# profondeur) / tan(fov/2) — à décalage et profondeur FIXES (ceux réglés
@@ -537,6 +574,29 @@ func _process(delta: float) -> void:
 	# la profondeur réglée à l'œil (voir `_fov_scale`, même facteur appliqué
 	# à `scale` : la taille du maillage doit suivre le même calcul).
 	var fov_scale := _fov_scale()
+
+	if _using_arms:
+		_process_arms(aiming, reloading, bob, fov_scale)
+	else:
+		_process_gloves(delta, bob, reload_off, equip_off, fov_scale)
+
+	if _muzzle_mesh:
+		_muzzle_mesh.visible = _anim.is_muzzle_visible()
+		if not _anim.tick_muzzle(delta):
+			_muzzle_mesh.visible = false
+
+## Chemin HISTORIQUE (gants flottants, voir la docstring de classe) : position/
+## rotation/scale de CE nœud (racine arme+gants) pilotées directement, base
+## REST_POS<->ADS_POS + tout le "feel" procédural (sway/bob/recul/dip de
+## rechargement/montée d'équipement/pose sprint/tilt de slide) -- comportement
+## STRICTEMENT INCHANGÉ par la tâche "frog fp arms" (voir `_process_arms` pour
+## le chemin bras, qui NE partage PAS cette base REST_POS/ADS_POS -- requirement
+## 2 du contrat : « disable the old ADS positional offset for the frog arms »).
+func _process_gloves(delta: float, bob: Vector3, reload_off: Vector3, equip_off: Vector3, fov_scale: float) -> void:
+	var base := REST_POS.lerp(ADS_POS, 1.0 - _ads_t)
+	var proc := Vector3(_anim.sway_offset.x, _anim.sway_offset.y, 0.0) * _ads_t \
+		+ bob * _ads_t + Vector3(0, _anim.recoil_offset.y * 0.02, _anim.recoil_offset.y * 0.03) \
+		+ reload_off + equip_off + SPRINT_POS_OFFSET * _sprint_t
 	var target := Vector3((base.x + proc.x) * fov_scale, (base.y + proc.y) * fov_scale, base.z + proc.z)
 	position = position.lerp(target, clampf(18.0 * delta, 0.0, 1.0))
 	scale = Vector3(fov_scale, fov_scale, 1.0)
@@ -544,15 +604,40 @@ func _process(delta: float) -> void:
 	rotation.x = _anim.recoil_offset.y * 0.35
 
 	# Geste de rechargement dédié au gant gauche seul (voir doc de classe) :
-	# doit être lu APRÈS `tick_reload` ci-dessus, qui avance le minuteur
-	# partagé `reload_t`/`reload_dur`.
+	# doit être lu APRÈS `tick_reload`, qui avance le minuteur partagé
+	# `reload_t`/`reload_dur`.
 	if _glove_l:
 		_glove_l.position = _glove_l_rest + _anim.reload_glove_offset()
 
-	if _muzzle_mesh:
-		_muzzle_mesh.visible = _anim.is_muzzle_visible()
-		if not _anim.tick_muzzle(delta):
-			_muzzle_mesh.visible = false
+## Chemin bras FP grenouille (tâche "frog fp arms") : PAS de REST_POS/ADS_POS
+## (requirement 2, « disable the old ADS positional offset for the frog arms
+## so it isn't applied twice » -- FP_ADS porte déjà la pose de visée) ni de
+## dip de rechargement/montée d'équipement/pose-sprint-par-décalage/tilt de
+## slide (les clips FP_Reload/FP_Draw/FP_Sprint les portent désormais, voir
+## FPArmsRig._build_tree) -- seul le "feel" procédural que le contrat demande
+## de garder (requirement 1 : « sway, walk bob, recoil kick, FOV compensation »)
+## est composé ici, comme une PETITE transform LOCALE À LA CAMÉRA (`proc`) --
+## FPArmsRig.align_to_camera la multiplie à `camera.global_transform` avant de
+## résoudre l'alignement (voir sa docstring), donc ce décalage se lit
+## exactement comme avant à l'écran (+X caméra = droite écran, etc.), sans
+## jamais bouger un os individuellement.
+func _process_arms(aiming: bool, reloading: bool, bob: Vector3, fov_scale: float) -> void:
+	_arms.set_ads_amount(FPArmsMath.ads_blend_amount(_ads_t))
+	# Pas de pose « sprint » (arme baissée) : dans ce jeu, avancer = état Sprint par défaut ;
+	# l'arme doit rester prête (et la visée ne doit jamais être écrasée en mouvement).
+	_arms.set_sprint_amount(0.0)
+
+	var proc_pos := Vector3(_anim.sway_offset.x, _anim.sway_offset.y, 0.0) * _ads_t \
+		+ bob * _ads_t + Vector3(0, _anim.recoil_offset.y * 0.02, _anim.recoil_offset.y * 0.03)
+	var proc_rot := Basis.from_euler(Vector3(_anim.recoil_offset.y * 0.35, 0.0, -_anim.sway_offset.x * 1.5))
+	_arms.align_to_camera(player.camera, Transform3D(proc_rot, proc_pos), fov_scale)
+
+	var firing := player.input.fire_held if player.input else false
+	var block_inspect := FPArmsMath.should_cancel_inspect(firing, aiming, reloading)
+	if block_inspect:
+		_arms.cancel_inspect()
+	elif player.input and player.input.inspect_pressed:
+		_arms.trigger_inspect()
 
 ## Facteur qui neutralise le FOV RÉEL de la caméra (`player.camera.fov`,
 ## Camera3D porté par PlayerCamera.gd — voir sa doc) pour TARGET_FOV_DEG (voir
@@ -568,14 +653,29 @@ func _on_fired(cfg: WeaponConfig) -> void:
 		return
 	_anim.kick_recoil(Vector3(0, deg_to_rad(cfg.recoil_vertical) * 6.0, 0))
 	_anim.trigger_muzzle_flash()
+	if _using_arms:
+		# Pas de clip FP_Fire : il remplaçait la pose (visée comprise) par un tir « à la hanche »
+		# et faisait sauter l'arme. Le recul procédural (`kick_recoil`, via `align_to_camera`)
+		# s'ajoute à la pose courante, en visée comme à la hanche.
+		_arms.cancel_inspect()
 
 func _on_reload_started(cfg: WeaponConfig) -> void:
 	if cfg:
 		_anim.start_reload(cfg.reload_time)
+		if _using_arms:
+			_arms.trigger_reload(cfg.reload_time)
+			_arms.cancel_inspect()
 
 func _on_weapon_changed(_cfg: WeaponConfig) -> void:
+	# `weapon_changed` est aussi émis à CHAQUE tir (Weapon._emit_local, avec ammo_changed) :
+	# sortie d'arme seulement si l'arme change vraiment, sinon elle replongeait à chaque balle.
+	var id := WeaponDatabase.id_of(weapon.cfg()) if weapon else Inventory.EMPTY
+	if id == _current_id and _model:
+		return
 	_anim.start_equip()
 	_refresh_model()
+	if _using_arms:
+		_arms.trigger_draw()
 
 ## (Re)charge le modèle 3D correspondant à l'arme courante, la place pour le
 ## cadrage FPS classique (`_place_weapon`), y rattache les deux gants
@@ -598,9 +698,19 @@ func _refresh_model() -> void:
 	if scene == null:
 		return
 	_model = scene.instantiate() as Node3D
-	add_child(_model)
-	_place_weapon(id)
-	_attach_gloves()
+	if _using_arms:
+		# Bras FP : l'arme s'attache directement sous la BoneAttachment3D
+		# "WeaponGrip" du rig (transform identité + contre-échelle, voir
+		# FPArmsRig.attach_weapon) -- PAS enfant de CE nœud, contrairement au
+		# chemin gants ci-dessous : aucun `add_child(_model)` ici, aucun lacet/
+		# échelle/décalage PAR ARME (`_place_weapon`, `_attach_gloves`), ces
+		# hacks n'existant que pour compenser l'ancien système de gants
+		# flottants sans vraie main.
+		_arms.attach_weapon(_model)
+	else:
+		add_child(_model)
+		_place_weapon(id)
+		_attach_gloves()
 	_apply_cartoon_materials(_model)
 	_muzzle = _model.find_child("Muzzle", true, false) as Node3D
 	_spawn_muzzle_flash()
@@ -893,8 +1003,10 @@ func _apply_cartoon_materials(model: Node3D) -> void:
 			var mat: Material = mesh.mesh.surface_get_material(i)
 			var name: String = mat.resource_name if mat else ""
 			if name.contains(_PAINTED_MATERIAL_MARKER):
+				# Arme viewmodel (Ravage, seule arme de WeaponDatabase.PATHS -- style BD
+				# 2026-09-26, ToonStyle.gd) : plus de next_pass ici, voir _apply_glove_materials.
 				var tex := Cartoon.texture_from_imported_material(mat)
-				mesh.set_surface_override_material(i, Cartoon.painted_texture_prop(tex))
+				mesh.set_surface_override_material(i, ToonStyle.toon_material(tex))
 				continue
 			for slot in palette.keys():
 				if name.ends_with("_%s" % slot):

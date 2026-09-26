@@ -119,3 +119,64 @@ func test_on_hit_reaction_without_a_resolved_mesh_does_not_crash() -> void:
 	var look: PlayerLook = auto_free(PlayerLook.new())
 	look._on_hit_reaction(false)
 	assert_float(look._flash_time_left).is_equal(0.0)
+
+
+# ============================================================================
+#  Style BD (2026-09-26) : SEUL "verrou_tex" (l'agent Verrou -- voir
+#  ToonStyle.gd "Portée") route vers ToonStyle.toon_material ; tout autre nom
+#  `*_tex` (les 5 autres agents Tripo, ex. "vif_tex") garde l'ancien repli
+#  ink_toon -- ce test garde cette bascule scopée, pas étendue par erreur.
+# ============================================================================
+
+func _tex_material(color: Color, texture: Texture2D = null) -> StandardMaterial3D:
+	var std := StandardMaterial3D.new()
+	std.albedo_color = color
+	std.albedo_texture = texture
+	return std
+
+
+func test_verrou_tex_routes_to_toon_style() -> void:
+	var look: PlayerLook = auto_free(PlayerLook.new())
+	var img := Image.create(2, 2, false, Image.FORMAT_RGBA8)
+	img.fill(Color.WHITE)
+	var tex := ImageTexture.create_from_image(img)
+	var src := _tex_material(Color("9c6a42"), tex)
+	var m := look._textured_character_material(src, "verrou_tex")
+	assert_that(m.shader).is_equal(preload("res://assets/shaders/toon_bd.gdshader"))
+	assert_that(m.get_shader_parameter("albedo_texture")).is_equal(tex)
+	assert_that(m.get_shader_parameter("albedo_color")).is_equal(Color("9c6a42"))
+
+
+## Frog Cowboy (2026-09-26, requirement 3 : "uses the existing toon style path
+## ... currently used for Verrou") : son matériau est renommé "frog_cowboy_tex"
+## à l'import (scripts/import/FrogCowboyPostImport.gd, le nom Tripo brut
+## "tripo_mat_<uuid>" étant instable d'un export à l'autre) -- même bascule
+## que "verrou_tex", même garantie (texture peinte + teinte conservées).
+func test_frog_cowboy_tex_routes_to_toon_style() -> void:
+	var look: PlayerLook = auto_free(PlayerLook.new())
+	var img := Image.create(2, 2, false, Image.FORMAT_RGBA8)
+	img.fill(Color.WHITE)
+	var tex := ImageTexture.create_from_image(img)
+	var src := _tex_material(Color("9c6a42"), tex)
+	var m := look._textured_character_material(src, "frog_cowboy_tex")
+	assert_that(m.shader).is_equal(preload("res://assets/shaders/toon_bd.gdshader"))
+	assert_that(m.get_shader_parameter("albedo_texture")).is_equal(tex)
+	assert_that(m.get_shader_parameter("albedo_color")).is_equal(Color("9c6a42"))
+
+
+## Régression : un autre agent Tripo texturé (ex. "vif_tex") ne doit PAS
+## basculer sur ToonStyle -- cette tranche ne touche que Verrou.
+func test_other_agent_tex_keeps_the_ink_toon_fallback() -> void:
+	var look: PlayerLook = auto_free(PlayerLook.new())
+	var src := _tex_material(Color("ee6a24"))
+	var m := look._textured_character_material(src, "vif_tex")
+	assert_that(m.shader).is_equal(preload("res://assets/shaders/ink_toon.gdshader"))
+
+
+## Repli défensif (nom vide/inconnu, jamais produit en production) : reste sur
+## ink_toon, comme avant cette tranche.
+func test_unnamed_material_keeps_the_ink_toon_fallback() -> void:
+	var look: PlayerLook = auto_free(PlayerLook.new())
+	var src := _tex_material(Color.WHITE)
+	var m := look._textured_character_material(src, "")
+	assert_that(m.shader).is_equal(preload("res://assets/shaders/ink_toon.gdshader"))

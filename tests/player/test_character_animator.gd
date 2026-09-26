@@ -433,3 +433,83 @@ func test_reload_clip_speed_is_defensive_for_zero_or_negative_reload_time() -> v
 # `PlayerController.is_really_interacting` (pose INTERACT planter/désamorcer,
 # SnD uniquement) a été supprimée avec le reste des modes à manches lors du
 # nettoyage du prototype 2026-09-26 — tests retirés avec elle.
+
+
+# ============================================================================
+# Contrat "native anim frog cowboy" (2026-09-26) : profil de rig PAR
+# PERSONNAGE (résolu par nom de modèle, jamais un rig "DEF-*" codé en dur pour
+# tout le monde) + bascule Rifle_*/Pistol_* du haut du corps. Fonctions PURES.
+# ============================================================================
+
+# ---------------------------------------------------------------- rig_profile_for
+func test_rig_profile_for_frog_cowboy_uses_humanoid_bone_names() -> void:
+	var rig := CharacterAnimator.rig_profile_for("frog_cowboy")
+	assert_str(rig["head_bone"]).is_equal("Head")
+	assert_str(rig["flinch_bone"]).is_equal("UpperChest")
+	assert_str(rig["track_prefix"]).is_equal("Armature/Skeleton3D:")
+
+
+func test_rig_profile_for_frog_cowboy_upper_body_covers_arms_and_weapon_grip() -> void:
+	var rig := CharacterAnimator.rig_profile_for("frog_cowboy")
+	var bones: Array = rig["upper_body_bones"]
+	for expected in ["Chest", "UpperChest", "Neck", "Head",
+			"LeftShoulder", "LeftUpperArm", "LeftLowerArm", "LeftHand",
+			"RightShoulder", "RightUpperArm", "RightLowerArm", "RightHand",
+			"LeftThumbMetacarpal", "RightIndexProximal", "LeftLittleDistal",
+			"WeaponGrip"]:
+		assert_array(bones).append_failure_message(
+			"os \"%s\" attendu dans le filtre haut-du-corps de Frog Cowboy" % expected
+		).contains([expected])
+	# Jamais les jambes : le filtre reste "spine/bras" (design existant).
+	assert_bool(bones.has("LeftUpperLeg")).is_false()
+	assert_bool(bones.has("Hips")).is_false()
+
+
+func test_rig_profile_for_frog_cowboy_upper_body_has_no_duplicate_bone() -> void:
+	var bones: Array = CharacterAnimator.rig_profile_for("frog_cowboy")["upper_body_bones"]
+	var seen: Dictionary = {}
+	for b in bones:
+		assert_bool(seen.has(b)).append_failure_message("os \"%s\" dupliqué dans le filtre" % b).is_false()
+		seen[b] = true
+
+
+## Tout personnage qui n'est pas Frog Cowboy (Verrou/legacy, ou un nom encore
+## inconnu) garde EXACTEMENT le rig "DEF-*" partagé — comportement inchangé
+## depuis avant cette tâche.
+func test_rig_profile_for_legacy_characters_keeps_the_def_rig() -> void:
+	for model_name in ["choc", "vif", "verrou", "unknown_model"]:
+		var rig := CharacterAnimator.rig_profile_for(model_name)
+		assert_str(rig["head_bone"]).append_failure_message(model_name).is_equal("DEF-head")
+		assert_str(rig["flinch_bone"]).append_failure_message(model_name).is_equal("DEF-spine.003")
+		assert_str(rig["track_prefix"]).append_failure_message(model_name).is_equal("Rig/Skeleton3D:")
+		var bones: Array = rig["upper_body_bones"]
+		assert_array(bones).contains(["DEF-spine.001", "DEF-hand.L", "DEF-hand.R"])
+		assert_array(bones).contains(["DEF-thumb.01.L", "DEF-f_index.02.R"])
+
+
+# ---------------------------------------------------------------- upper_body_clip_prefix
+func test_upper_body_clip_prefix_uses_rifle_when_available() -> void:
+	assert_str(CharacterAnimator.upper_body_clip_prefix(true)).is_equal("Rifle_")
+
+
+func test_upper_body_clip_prefix_falls_back_to_pistol() -> void:
+	assert_str(CharacterAnimator.upper_body_clip_prefix(false)).is_equal("Pistol_")
+
+
+func test_two_handed_weapon_keeps_full_upper_body_while_running() -> void:
+	assert_float(CharacterAnimator.upper_body_blend_for(CharacterAnimator.Locomotion.SPRINT, true)).is_equal(1.0)
+	assert_float(CharacterAnimator.upper_body_blend_for(CharacterAnimator.Locomotion.JOG, true)).is_equal(1.0)
+
+
+func test_one_handed_weapon_keeps_reduced_upper_body_while_running() -> void:
+	assert_float(CharacterAnimator.upper_body_blend_for(CharacterAnimator.Locomotion.SPRINT, false)).is_equal(CharacterAnimator.UPPER_BODY_BLEND_SPRINT)
+
+
+func test_two_handed_weapon_does_not_force_upper_body_when_dead() -> void:
+	assert_float(CharacterAnimator.upper_body_blend_for(CharacterAnimator.Locomotion.DEAD, true)).is_equal(0.0)
+
+
+func test_reload_clip_speed_uses_the_real_clip_length() -> void:
+	# Clip Rifle_Reload de 2,5 s sur une arme à 2,5 s : vitesse 1 ; arme à 1,25 s : x2.
+	assert_float(CharacterAnimator.reload_clip_speed(2.5, 2.5)).is_equal_approx(1.0, 0.0001)
+	assert_float(CharacterAnimator.reload_clip_speed(1.25, 2.5)).is_equal_approx(2.0, 0.0001)

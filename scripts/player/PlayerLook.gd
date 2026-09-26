@@ -201,7 +201,7 @@ func _apply_character_materials(mesh: MeshInstance3D, ally: bool) -> void:
 		var mat: Material = mesh.mesh.surface_get_material(i)
 		var name: String = mat.resource_name if mat else ""
 		if name.ends_with("_tex"):
-			mesh.set_surface_override_material(i, _textured_character_material(mat))
+			mesh.set_surface_override_material(i, _textured_character_material(mat, name))
 			continue
 		for slot in _SLOTS:
 			if name.ends_with("_%s" % slot):
@@ -214,7 +214,11 @@ func _apply_character_materials(mesh: MeshInstance3D, ally: bool) -> void:
 				mesh.set_surface_override_material(i, Cartoon.character_surface(slot, color))
 				break
 	var is_enemy := not ally
-	Cartoon.apply_team_outline(mesh, is_enemy)
+	# Style BD (toon_bd) : le contour vient du post-traitement plein écran. La coque
+	# d'équipe (next_pass) traverse les vêtements fins (poncho) en grosses taches
+	# magenta : on ne la pose que sur l'ancien pipeline.
+	if not _uses_bd_style(mesh):
+		Cartoon.apply_team_outline(mesh, is_enemy)
 	# design.md §5 "Enemies" : coque de surbrillance + "a matching fresnel rim
 	# at 0.6" — Cartoon.apply_team_outline pose la coque, le rim reste à la
 	# charge de l'appelant (voir sa docstring). Inchangé par ART-14.
@@ -230,7 +234,9 @@ func _apply_character_materials(mesh: MeshInstance3D, ally: bool) -> void:
 ## de hit (`_restore_rest_rim`).
 func _apply_rest_rim(mesh: MeshInstance3D, is_enemy: bool) -> void:
 	if is_enemy:
-		Cartoon.set_rim(mesh, Cartoon.enemy_color(), 0.6)
+		# Pas de liseré fresnel au repos : sur les grandes faces vues de biais (poncho) il
+		# noyait le personnage en magenta ; le contour d'équipe (coque) signale déjà l'ennemi.
+		Cartoon.set_rim(mesh, Cartoon.enemy_color(), 0.0)
 	else:
 		Cartoon.set_rim(mesh, sky_rim_color(), _RIM_STRENGTH_SKY)
 
@@ -242,10 +248,34 @@ func _apply_rest_rim(mesh: MeshInstance3D, is_enemy: bool) -> void:
 ## `Cartoon.character_surface` simulerait un détail que Tripo a déjà peint
 ## dans la texture 2K). Le contour d'équipe est appliqué normalement par
 ## l'appelant (`apply_team_outline`), inchangé.
-func _textured_character_material(src_mat: Material) -> ShaderMaterial:
+## "verrou_tex"/"frog_cowboy_tex" (2026-09-26, style BD ; 2026-09-26 Frog
+## Cowboy) : les matériaux peints d'agents renderés via CharacterBody.MODEL_OVERRIDE
+## (voir ToonStyle.gd "Portée") passent par ToonStyle.toon_material au lieu du
+## shader ink_toon -- texture peinte et teinte conservées EXACTEMENT comme le
+## repli ci-dessous (même lecture BaseMaterial3D), seul le matériau final change.
+## "frog_cowboy_tex" est posé à l'import par scripts/import/FrogCowboyPostImport.gd
+## (le matériau Tripo brut s'appelle "tripo_mat_<uuid>", instable d'un export à
+## l'autre). Les 4 autres agents Tripo texturés restants (choc/guet/roseau/vanne,
+## même convention "*_tex") gardent le repli ink_toon ci-dessous tant qu'aucune
+## tâche ne leur applique le style BD à leur tour.
+const _BD_AGENT_MATERIAL_NAMES := ["verrou_tex", "frog_cowboy_tex"]
+
+## Vrai si une surface du mesh utilise un matériau du style BD (contour en post-traitement).
+func _uses_bd_style(mesh: MeshInstance3D) -> bool:
+	for i in mesh.mesh.get_surface_count():
+		var mat: Material = mesh.mesh.surface_get_material(i)
+		if mat and _BD_AGENT_MATERIAL_NAMES.has(mat.resource_name):
+			return true
+	return false
+
+func _textured_character_material(src_mat: Material, material_name: String = "") -> ShaderMaterial:
+	var src := src_mat as BaseMaterial3D
+	var tex: Texture2D = src.albedo_texture if src else null
+	var tint: Color = src.albedo_color if src else Color.WHITE
+	if _BD_AGENT_MATERIAL_NAMES.has(material_name):
+		return ToonStyle.toon_material(tex, tint)
 	var m := Cartoon.character_surface(&"outfit", Color.WHITE)
 	m.set_shader_parameter("paint_grain_strength", 0.0)
-	var src := src_mat as BaseMaterial3D
 	if src:
 		m.set_shader_parameter("albedo_color", src.albedo_color)
 		if src.albedo_texture != null:

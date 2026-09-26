@@ -161,6 +161,14 @@ static func _sun_direction(elevation_deg: float, azimuth_deg: float = _SUN_AZIMU
 
 func _apply_key_light(light: DirectionalLight3D) -> void:
 	var map_id := MatchConfig.map_id
+	# Shipment (2026-09-26, style BD) : `_style` ci-dessous a DEJA configure ce
+	# soleil via ToonStyle.setup_environment (meme WorldEnvironment.node_added,
+	# meme frame -- voir sa doc) des que son WorldEnvironment frere est entre dans
+	# l'arbre. Ne pas l'ecraser ici avec la config Cartoon/ink_toon de l'ancien
+	# pipeline (toon_style.json est une source de verite separee de
+	# docs/style/tokens.json, voir ToonStyle.gd "Portee").
+	if map_id == "shipment":
+		return
 	var palette := Cartoon.map_palette(map_id)
 	light.shadow_enabled = true
 	light.light_color = palette["sun_color"]
@@ -183,6 +191,23 @@ func _apply_key_light(light: DirectionalLight3D) -> void:
 	light.look_at_from_position(Vector3.ZERO, _sun_direction(elevation_deg, _sun_azimuth_deg(map_id)), Vector3.UP)
 
 func _style(we: WorldEnvironment) -> void:
+	# Shipment (2026-09-26, style BD "il faut tirer vraiment sur Borderlands") :
+	# environnement/soleil entierement pilotes par ToonStyle.gd depuis
+	# art/style/toon_style.json, jamais par Cartoon.map_palette/build_environment
+	# ci-dessous (contrat de tache : "Shipment... set its DirectionalLight/
+	# WorldEnvironment from the JSON"). Les AUTRES cartes (aucune aujourd'hui,
+	# Wasteland ayant ete retiree -- voir MapSetup.gd) garderaient l'ancien
+	# pipeline ci-dessous si elles revenaient.
+	if MatchConfig.map_id == "shipment":
+		var sun: DirectionalLight3D = null
+		var parent := we.get_parent()
+		if parent:
+			for sibling in parent.get_children():
+				if sibling is DirectionalLight3D:
+					sun = sibling
+					break
+		ToonStyle.setup_environment(we, sun)
+		return
 	we.environment = build_environment(MatchConfig.map_id)
 	var parent := we.get_parent()
 	if parent == null:

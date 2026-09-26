@@ -42,6 +42,11 @@ var fire_pressed: bool = false
 var fire_held: bool = false
 var aim_held: bool = false
 var reload_pressed: bool = false
+## Front montant de l'action "inspect" (tâche "frog fp arms", touche E --
+## voir project.godot : F était déjà pris par "pickup", cf. WorldWeapon.gd)
+## -- déclenche FP_Inspect côté ViewModel.gd, annulé par tir/visée/rechargement
+## (voir FPArmsMath.should_cancel_inspect).
+var inspect_pressed: bool = false
 var pickup_pressed: bool = false
 var pickup_held: bool = false
 var drop_pressed: bool = false
@@ -104,6 +109,7 @@ func clear() -> void:
 	fire_held = false
 	aim_held = false
 	reload_pressed = false
+	inspect_pressed = false
 	pickup_pressed = false
 	pickup_held = false
 	drop_pressed = false
@@ -142,6 +148,7 @@ func gather_from_devices() -> void:
 		aim_pressed, Input.is_action_pressed("aim"), Settings.hold_to_aim, _aim_toggle_active)
 	aim_held = _aim_toggle_active
 	reload_pressed = Input.is_action_just_pressed("reload")
+	inspect_pressed = Input.is_action_just_pressed("inspect")
 	pickup_pressed = Input.is_action_just_pressed("pickup")
 	pickup_held = Input.is_action_pressed("pickup")
 	drop_pressed = Input.is_action_just_pressed("drop")

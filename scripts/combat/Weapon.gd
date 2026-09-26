@@ -1038,7 +1038,11 @@ func _spawn_tracer(from: Vector3, to: Vector3) -> void:
 	im.surface_add_vertex(from)
 	im.surface_add_vertex(to)
 	im.surface_end()
-	player.get_tree().current_scene.add_child(mesh)
+	# `current_scene` est nul quand le jeu tourne depuis un script SceneTree (outils de capture).
+	var holder: Node = player.get_tree().current_scene
+	if holder == null:
+		holder = player.get_tree().root  # jamais le dossier des joueurs (BotBrain y lit `team`)
+	holder.add_child(mesh)
 	var t := mesh.create_tween()
 	t.tween_property(mat, "albedo_color:a", 0.0, 0.08)
 	t.tween_callback(mesh.queue_free)

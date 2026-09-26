@@ -30,11 +30,19 @@ const _GRIP_OFFSETS := {
 }
 const _DEFAULT_GRIP := {"pos": Vector3(0.0, -0.04, 0.0), "rot_deg": Vector3(0, 90, 0)}
 const _HAND_BONE := "DEF-hand.R"
+## Nom du nœud que scenes/characters/<agent>.tscn peut exposer (BoneAttachment3D
+## sur "RightHand" -> Node3D "WeaponSocket", ex. frog_cowboy.tscn) : le point
+## d'attache vient alors du PERSONNAGE (transform de ce nœud, réglable par
+## l'utilisateur dans l'éditeur), plus jamais d'un nom d'os codé en dur ici --
+## repli sur `_HAND_BONE`/`_GRIP_OFFSETS` (BoneAttachment3D créé en code, comme
+## avant) pour tout agent qui n'a pas encore ce nœud (les 5 autres glb Tripo).
+const _WEAPON_SOCKET_NAME := "WeaponSocket"
 
 var player: PlayerController
 var weapon: Weapon
 var _character_body: CharacterBody
 var _bone_attach: BoneAttachment3D
+var _weapon_socket: Node3D
 var _model: Node3D
 var _muzzle: Node3D
 var _muzzle_mesh: MeshInstance3D
@@ -66,16 +74,22 @@ func _ready() -> void:
 		weapon.remote_fired.connect(_on_remote_fired)
 		_on_current_id_changed(WeaponDatabase.id_of(weapon.cfg()))
 
-## Crée le BoneAttachment3D (main droite) une fois le squelette du corps
-## chargé — si l'arme était déjà instanciée (résolue avant le corps), on la
-## rattache immédiatement au lieu d'attendre le prochain changement d'arme.
+## Résout le point d'attache une fois le squelette du corps chargé — si
+## l'arme était déjà instanciée (résolue avant le corps), on la rattache
+## immédiatement au lieu d'attendre le prochain changement d'arme.
+## Priorité au nœud "WeaponSocket" du personnage (scenes/characters/<agent>.tscn,
+## ex. frog_cowboy.tscn — déjà un BoneAttachment3D sur la main droite retargetée,
+## voir sa doc de classe) ; repli sur l'ancien BoneAttachment3D codé en dur
+## (`_HAND_BONE`) pour un agent qui n'a pas encore ce nœud.
 func _on_body_ready() -> void:
-	var skeleton := _character_body.get_skeleton()
-	if skeleton == null:
-		return
-	_bone_attach = BoneAttachment3D.new()
-	_bone_attach.bone_name = _HAND_BONE
-	skeleton.add_child(_bone_attach)
+	_weapon_socket = _character_body.find_child(_WEAPON_SOCKET_NAME, true, false) as Node3D
+	if _weapon_socket == null:
+		var skeleton := _character_body.get_skeleton()
+		if skeleton == null:
+			return
+		_bone_attach = BoneAttachment3D.new()
+		_bone_attach.bone_name = _HAND_BONE
+		skeleton.add_child(_bone_attach)
 	if _model:
 		_reparent_model_to_hand()
 
@@ -103,7 +117,7 @@ func _on_current_id_changed(id: int) -> void:
 	if scene == null:
 		return
 	_model = scene.instantiate() as Node3D
-	if _bone_attach:
+	if _weapon_socket or _bone_attach:
 		_reparent_model_to_hand(weapon_id)
 	else:
 		# Squelette pas encore prêt (course de chargement) : on affiche l'arme
@@ -122,12 +136,49 @@ func _on_current_id_changed(id: int) -> void:
 func _reparent_model_to_hand(weapon_id: int = -1) -> void:
 	if _model.get_parent():
 		_model.get_parent().remove_child(_model)
+	if _weapon_socket:
+		# Point d'attache venant du PERSONNAGE (scenes/characters/<agent>.tscn,
+		# transform de "WeaponSocket" réglable par l'utilisateur dans l'éditeur --
+		# requirement "the attach point coming from the character, not hard-coded") :
+		# identité locale, aucun décalage par catégorie d'arme ici, contrairement au
+		# repli _bone_attach ci-dessous.
+		_weapon_socket.add_child(_model)
+		_model.transform = Transform3D.IDENTITY
+		_apply_scale_correction(_model)
+		return
 	_bone_attach.add_child(_model)
 	var cfg: WeaponConfig = WeaponDatabase.get_by_id(weapon_id) if weapon_id >= 0 else (weapon.cfg() if weapon else null)
 	var grip: Dictionary = _GRIP_OFFSETS.get(cfg.category, _DEFAULT_GRIP) if cfg else _DEFAULT_GRIP
 	var pos: Vector3 = grip["pos"]
 	var rot_deg: Vector3 = grip["rot_deg"]
 	_model.transform = Transform3D(Basis.from_euler(Vector3(deg_to_rad(rot_deg.x), deg_to_rad(rot_deg.y), deg_to_rad(rot_deg.z))), pos)
+	_apply_scale_correction(_model)
+
+## Contrepoids de l'échelle du CORPS (CharacterBody._scale_to_target_height,
+## TARGET_HEIGHT / hauteur du maillage -- souvent != 1, ex. Frog Cowboy ≈1.8)
+## sur l'arme rattachée sous WeaponSocket/BoneAttachment3D : les DEUX
+## descendent du modèle 3D du corps, déjà mis à l'échelle, alors que l'arme est
+## modélisée à sa taille RÉELLE (Blender) -- sans ce contrepoids elle
+## grossit/rétrécit AVEC le personnage (constaté : crosse géante ≈x1.8 sur
+## Frog Cowboy, voir capture). Neutralise l'échelle GLOBALE du parent direct
+## pour ramener celle de l'arme à ~1, quel que soit `TARGET_HEIGHT` (fonction
+## pure `counter_scale_for`, testée directement).
+func _apply_scale_correction(model: Node3D) -> void:
+	var parent := model.get_parent() as Node3D
+	if parent == null:
+		return
+	model.scale = counter_scale_for(parent.global_transform.basis.get_scale())
+
+## Échelle LOCALE à appliquer pour qu'un enfant direct d'un nœud à l'échelle
+## GLOBALE `parent_global_scale` se retrouve avec une échelle globale de 1,
+## composante par composante -- repli défensif à 1.0 sur une composante quasi
+## nulle (jamais de division par zéro/valeur infinie).
+static func counter_scale_for(parent_global_scale: Vector3) -> Vector3:
+	return Vector3(
+		1.0 / parent_global_scale.x if not is_zero_approx(parent_global_scale.x) else 1.0,
+		1.0 / parent_global_scale.y if not is_zero_approx(parent_global_scale.y) else 1.0,
+		1.0 / parent_global_scale.z if not is_zero_approx(parent_global_scale.z) else 1.0,
+	)
 
 ## Position MONDE du canon (empty "Muzzle" du modèle 3D courant, voir
 ## `_on_current_id_changed`) — utilisée par Weapon.gd (GF-06) pour dessiner

@@ -4,8 +4,12 @@
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="2_packedscene"]
 [ext_resource type="Script" path="res://scripts/levels/maps/MapSetup.gd" id="3_script"]
 [ext_resource type="Script" path="res://scripts/ui/GameHUD.gd" id="4_script"]
-[ext_resource type="Shader" path="res://assets/shaders/dev_grid.gdshader" id="5_shader"]
+[ext_resource type="Shader" path="res://assets/shaders/toon_bd.gdshader" id="5_shader"]
 
+; Blocs/sol/murs -- style BD (2026-09-26, art/style/toon_style.json v2) : meme
+; shader toon_bd.gdshader que Verrou/Ravage, memes couleurs de bloc qu'avant
+; (dev_grid.gdshader retire de CETTE scene -- le fichier shader reste sur disque,
+; encore reference par Cartoon.gd::dev_grid(), voir art/style/README.md "Portee").
 [sub_resource type="ShaderMaterial" id="mat_rust"]
 shader = ExtResource("5_shader")
 shader_parameter/albedo_color = Color(0.55, 0.25, 0.18, 1)

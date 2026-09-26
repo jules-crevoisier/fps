@@ -1,0 +1,102 @@
+{
+  "version": 2,
+  "name": "BD façon Borderlands — textures encrées, contour fin en post-traitement, ombres affûtées",
+  "notes": "SOURCE UNIQUE du rendu, lue par le shader Godot et par le générateur Blender. v2 après recherche (2026-09-26) : Borderlands n'est PAS un cel-shading à bandes plates. Le look = (1) textures peintes avec l'encre DEDANS (traits, hachures dans les creux), (2) contour noir FIN en post-traitement (Sobel profondeur + normales) qui s'estompe au loin, (3) éclairage réel avec ombres affûtées (rampe resserrée, pas de bandes), (4) couleurs très saturées + étalonnage.",
+  "shading": {
+    "model": "sharpened_lambert",
+    "wrap": 0.1,
+    "terminator": 0.45,
+    "sharpness": 0.12,
+    "shadow_value": 0.42,
+    "note": "Diffus = smoothstep(terminator - sharpness/2, terminator + sharpness/2, N·L × ombre portée). sharpness 0.12 = transition courte mais pas un créneau ; shadow_value = luminosité de la zone d'ombre avant teinte."
+  },
+  "shadow_tint": {
+    "hue_shift_deg": -8.0,
+    "saturation_mult": 1.25,
+    "note": "Ombres colorées (albédo décalé vers le bleu-violet, plus saturé), jamais grises."
+  },
+  "rim": {
+    "enabled": true,
+    "power": 4.0,
+    "threshold": 0.55,
+    "softness": 0.08,
+    "intensity": 0.25,
+    "color": "#FFE9B8",
+    "lit_side_only": true
+  },
+  "specular": {
+    "enabled": true,
+    "size": 0.18,
+    "softness": 0.12,
+    "intensity": 0.25,
+    "color": "#FFFFFF"
+  },
+  "halftone": {
+    "enabled": false,
+    "cell_px_at_1080p": 7.0,
+    "angle_deg": 45.0,
+    "note": "Désactivée : Borderlands n'utilise pas de trame. Gardée en option pour des effets ponctuels (sorts, UI)."
+  },
+  "outline": {
+    "method": "post_process_sobel",
+    "sources": ["depth", "normal"],
+    "color": "#0E0A12",
+    "width_px_at_1080p": 1.5,
+    "depth_threshold": 0.015,
+    "normal_threshold_deg": 30.0,
+    "fade_start_m": 25.0,
+    "fade_end_m": 70.0,
+    "min_width_px": 1.0,
+    "note": "Trait fin, noir, sur silhouettes ET plis. Blender : Line Art aux mêmes seuils (crease = normal_threshold_deg), épaisseur équivalente en pixels."
+  },
+  "ink_bake": {
+    "note": "Encrage DANS la texture (le cœur du style Borderlands), appliqué à l'import d'un modèle (Tripo ou Blender) par art/style/blender/ink_bake.py.",
+    "edge_lines": { "source": "curvature+normal_edges", "width_px_2k": 3, "color": "#0E0A12", "opacity": 0.9, "jitter": 0.3 },
+    "cavity_lines": { "source": "cavity/AO", "threshold": 0.35, "opacity": 0.85 },
+    "hatching": { "source": "AO", "start": 0.55, "end": 0.25, "angle_deg": 45.0, "spacing_px_2k": 9, "cross_below": 0.35, "opacity": 0.6 },
+    "texture_size": 2048
+  },
+  "light": {
+    "sun_azimuth_deg": 135.0,
+    "sun_elevation_deg": 50.0,
+    "sun_color": "#FFF1DC",
+    "sun_energy": 1.0,
+    "ambient_color": "#5A6FA8",
+    "ambient_strength": 0.35,
+    "shadows": true
+  },
+  "grading": {
+    "saturation": 1.25,
+    "contrast": 1.12,
+    "note": "Couleurs qui « crient » : saturation poussée, contraste net."
+  },
+  "palette": {
+    "ink": "#0E0A12",
+    "paper": "#FFF4E0",
+    "signal_yellow": "#FFCE1F",
+    "vital_red": "#E8392E",
+    "ally_blue": "#2E8BFF",
+    "enemy_magenta": "#FF2E9A",
+    "sky_blue": "#6FB6FF",
+    "grass_green": "#5FBF2E",
+    "dirt_ochre": "#C98A4B",
+    "violet": "#6C3CE0"
+  },
+  "parity_scene": {
+    "resolution": [1280, 720],
+    "camera": { "position": [0.0, 1.4, 3.2], "look_at": [0.0, 0.9, 0.0], "fov_v_deg": 45.0 },
+    "objects": [
+      { "type": "sphere", "radius": 0.45, "position": [-1.1, 0.45, 0.0], "albedo": "#E8392E" },
+      { "type": "cube", "size": 0.7, "position": [1.1, 0.35, 0.0], "rotation_y_deg": 30.0, "albedo": "#2E8BFF" },
+      { "type": "model", "path": "res://assets/models/characters/verrou.glb", "position": [0.0, 0.0, 0.0], "rotation_y_deg": 20.0 },
+      { "type": "plane", "size": 8.0, "position": [0.0, 0.0, 0.0], "albedo": "#C98A4B" }
+    ],
+    "max_mean_abs_diff": 0.06
+  },
+  "references": [
+    "https://vsquad.art/blog/what-art-style-is-borderlands-exploring-the-borderlands-art-style",
+    "https://medium.com/@RetroStyle_Games/borderlands-art-style-858661f64725",
+    "https://godotshaders.com/shader/3d-edge-detection-shader-borderlands-style/",
+    "https://www.creativebloq.com/3d/video-game-design/the-real-key-to-our-success-was-keeping-a-2d-mindset-marvel-rivals-art-director-on-the-games-unique-comic-book-style"
+  ]
+}
