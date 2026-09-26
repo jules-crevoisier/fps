@@ -36,8 +36,17 @@ def mirror_id(vid: str) -> str:
     return f"{m.group(1)}E{m.group(2)}" if m else vid + "_E"
 
 
+def mirrored(plan: dict) -> bool:
+    """Carte symétrique (v1–v6) : la moitié W est reflétée. Carte asymétrique (v7+) :
+    ``mirror.enabled = false``, chaque volume est posé tel quel (moitiés W, C, E explicites)."""
+    return plan.get("mirror", {}).get("enabled", True)
+
+
 def expand(plan: dict) -> list[dict]:
-    """Volumes après miroir : chaque volume « half: W » reçoit son jumeau E (x négatif)."""
+    """Volumes après miroir : chaque volume « half: W » reçoit son jumeau E (x négatif).
+    Sans miroir (carte asymétrique), les volumes sont renvoyés tels quels."""
+    if not mirrored(plan):
+        return [json.loads(json.dumps(v)) for v in plan["volumes"]]
     swap = plan["mirror"]["side_swap"]
     neg = set(plan["mirror"]["negate_offset_on_sides"])
     out = []
@@ -123,15 +132,17 @@ def draw_top(plan: dict, vols: list[dict]) -> Path:
         ax.axvline(x, color="#DAD4C7", lw=0.8 if x % 5 == 0 else 0.25, zorder=0)
     for z in range(int(bz[0]) - 2, int(bz[1]) + 3):
         ax.axhline(z, color="#DAD4C7", lw=0.8 if z % 5 == 0 else 0.25, zorder=0)
-    # couloirs
+    # couloirs (une ou plusieurs zones par couloir : la carte asymétrique a des couloirs coudés)
     for lane in plan["lanes"]:
-        r = lane["region"]
-        ax.add_patch(Rectangle((r["x"][0], r["z"][0]), r["x"][1] - r["x"][0], r["z"][1] - r["z"][0],
-                               fill=False, ec=lane["color"], lw=3, ls="--", zorder=1))
-        ax.text(r["x"][0] + 0.3, r["z"][0] + 0.4, f"{lane['label']} ({lane['range']})",
-                color=lane["color"], fontsize=13, weight="bold", zorder=6, va="top")
+        regs = lane.get("regions") or [lane["region"]]
+        for i, r in enumerate(regs):
+            ax.add_patch(Rectangle((r["x"][0], r["z"][0]), r["x"][1] - r["x"][0], r["z"][1] - r["z"][0],
+                                   fill=False, ec=lane["color"], lw=3, ls="--", zorder=1))
+            if i == 0:
+                ax.text(r["x"][0] + 0.3, r["z"][0] + 0.4, f"{lane['label']} ({lane['range']})",
+                        color=lane["color"], fontsize=13, weight="bold", zorder=6, va="top")
     # volumes, du plus bas au plus haut
-    order = {"ground": 0, "boundary": 1, "slab": 2, "building": 3, "wall": 3, "solid": 3, "landmark": 3,
+    order = {"ground": 0, "boundary": 1, "platform": 2, "slab": 2, "building": 3, "wall": 3, "solid": 3, "landmark": 3,
              "rock": 4, "fence": 4, "cover": 5, "barrier": 5, "stairs": 6, "ramp": 6, "inv_wall": 7, "clip": 7}
     for v in sorted(vols, key=lambda v: order.get(v["kind"], 5)):
         col, alpha = color_of(plan, v)
@@ -143,7 +154,8 @@ def draw_top(plan: dict, vols: list[dict]) -> Path:
             x0, x1 = v["x"]
             z0, z1 = v["z"]
             ls = ":" if v["kind"] in ("inv_wall", "clip", "barrier") else "-"
-            ax.add_patch(Rectangle((x0, z0), x1 - x0, z1 - z0, fc=col if v["kind"] != "ground" else "#E9E3D6",
+            gfc = "#E9E3D6" if v["y"][1] >= -0.5 else "#D3C6AE"  # sol : plateau clair, canyon plus sombre
+            ax.add_patch(Rectangle((x0, z0), x1 - x0, z1 - z0, fc=col if v["kind"] != "ground" else gfc,
                                    ec="#2B2723", lw=1.4 if v["kind"] == "building" else 0.9, ls=ls,
                                    alpha=alpha if v["kind"] != "ground" else 1.0, zorder=order.get(v["kind"], 5)))
             cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
@@ -163,13 +175,36 @@ def draw_top(plan: dict, vols: list[dict]) -> Path:
     for s in mk.get("tdm_spawns", []):
         for pos, _ in _mirrored_points(s, plan):
             ax.plot(pos[0], pos[2], marker="o", ms=5, color="#555", zorder=10)
+    # routes de sprint (équipe 0 bleu, équipe 1 rose) et front partagé de chaque couloir
+    if not mirrored(plan):
+        for lane in plan["lanes"]:
+            for key, col in (("route_w", "#2F6FD0"), ("route_e", "#D0308A")):
+                pts = lane.get(key)
+                if pts:
+                    ax.plot([p[0] for p in pts], [p[1] for p in pts], color=col, lw=1.6, ls="-", alpha=0.75,
+                            zorder=11, marker=".", ms=4)
+            if lane.get("front"):
+                f = lane["front"]
+                ax.plot(f[0], f[2], marker="X", ms=15, color=lane["color"], mec="#1D1A17", zorder=12)
+        # positions fortes (étoile) : bleu équipe 0, rose équipe 1, gris centre
+        for pp in mk.get("strong_positions", []):
+            t = pp.get("team")
+            col = "#2F6FD0" if t == 0 else "#D0308A" if t == 1 else "#777"
+            p = pp["pos"]
+            ax.plot(p[0], p[2], marker="*", ms=22, color=col, mec="#1D1A17", zorder=12)
+            ax.text(p[0] + 0.6, p[2] - 0.6, pp["id"], fontsize=10, weight="bold", color=col, zorder=12)
+        for txt, x, col in (("OUEST — la Ville (équipe 0)", bx[0] + 1, "#2F6FD0"),
+                            ("EST — la Gare de fret et la Mine (équipe 1)", bx[1] - 1, "#D0308A")):
+            ax.text(x, bz[1] + 1.4, txt, fontsize=16, weight="bold", color=col, zorder=12,
+                    ha="left" if x < 0 else "right", va="center")
     ax.set_xlim(bx[0] - 2, bx[1] + 2)
     ax.set_ylim(bz[1] + 2, bz[0] - 2)  # nord en haut (z négatif = nord)
     ax.set_aspect("equal")
     ax.set_xlabel("x (m) — ouest ← → est", fontsize=12)
     ax.set_ylabel("z (m) — nord ↑", fontsize=12)
     ax.set_title("Wasteland — plan coté (vue de dessus, grille 1 m / 5 m) — ▲ bleu/rose : apparitions d'équipe, "
-                 "• : apparitions TDM — cotes : largeur×profondeur h hauteur", fontsize=15)
+                 "• : apparitions TDM, ★ : positions fortes, X : fronts, traits : routes de sprint — "
+                 "cotes : largeur×profondeur h hauteur", fontsize=15)
     OUT.mkdir(parents=True, exist_ok=True)
     path = OUT / "wasteland_plan_top.png"
     fig.savefig(path, bbox_inches="tight")
@@ -180,7 +215,7 @@ def draw_top(plan: dict, vols: list[dict]) -> Path:
 def _mirrored_points(s: dict, plan: dict):
     pos, team = s["pos"], s.get("team", 0)
     yield pos, team
-    if s.get("half") == "W":
+    if s.get("half") == "W" and mirrored(plan):
         yield [-pos[0], pos[1], pos[2]], 1 - team
 
 
@@ -316,9 +351,12 @@ def write_doc(plan: dict, vols: list[dict]) -> Path:
     L.append("Axes : x ouest→est, z nord→sud (z négatif = nord), y vertical ; unités en mètres ; "
              f"bornes x {_fmt(plan['bounds']['x'][0])}…{_fmt(plan['bounds']['x'][1])}, "
              f"z {_fmt(plan['bounds']['z'][0])}…{_fmt(plan['bounds']['z'][1])} ; "
-             "moitié ouest décrite, moitié est = miroir en x (suffixe W → E)." + NL)
+             + ("moitié ouest décrite, moitié est = miroir en x (suffixe W → E)." if mirrored(plan) else
+                "carte ASYMÉTRIQUE : moitiés ouest (W), centre (C) et est (E) décrites explicitement, sans miroir.")
+             + NL)
     for img, alt in (("wasteland_plan_top.png", "Vue de dessus"), ("wasteland_plan_3d.png", "Vue 3D"),
-                     ("wasteland_coupe_ns.png", "Coupe nord-sud"), ("wasteland_coupe_oe.png", "Coupe ouest-est")):
+                     ("wasteland_coupe_ns.png", "Coupe nord-sud"), ("wasteland_coupe_oe.png", "Coupe ouest-est"),
+                     ("wasteland_coupe_sud.png", "Coupe du canyon")):
         L.append(f"![{alt}](img/{img})" + NL)
     L.append("## Métriques" + NL)
     L.append("| Élément | Valeur |")
@@ -343,10 +381,11 @@ def write_doc(plan: dict, vols: list[dict]) -> Path:
     L.append("| Couloir | Portée | Niveau | Zone x | Zone z | Largeurs |")
     L.append("|---|---|---|---|---|---|")
     for ln in plan["lanes"]:
-        r = ln["region"]
+        regs = ln.get("regions") or [ln["region"]]
         widths = " ; ".join(f"{w['what']} {_fmt(w['w'])}" for w in ln.get("widths", []))
-        L.append(f"| {ln['label']} | {ln['range']} | {_fmt(ln['level'])} | {_fmt(r['x'][0])}…{_fmt(r['x'][1])} | "
-                 f"{_fmt(r['z'][0])}…{_fmt(r['z'][1])} | {widths} |")
+        zx = " + ".join(f"{_fmt(r['x'][0])}…{_fmt(r['x'][1])}" for r in regs)
+        zz = " + ".join(f"{_fmt(r['z'][0])}…{_fmt(r['z'][1])}" for r in regs)
+        L.append(f"| {ln['label']} | {ln['range']} | {_fmt(ln['level'])} | {zx} | {zz} | {widths} |")
     L.append("")
 
     def table(title: str, kinds: tuple[str, ...]) -> None:
@@ -397,7 +436,9 @@ def main() -> None:
              draw_section(plan, vols, "x", 0.0, "wasteland_coupe_ns.png",
                           "Coupe nord–sud par le Wagon (x = 0)"),
              draw_section(plan, vols, "z", -14.0, "wasteland_coupe_oe.png",
-                          "Coupe ouest–est le long de la Grand-Rue (z = −14)"),
+                          "Coupe ouest–est le long de la Grand-Rue et des Voies (z = −14)"),
+             draw_section(plan, vols, "z", 16.0, "wasteland_coupe_sud.png",
+                          "Coupe ouest–est dans le Ravin et la Tranchée de la mine (z = 16)"),
              draw_axo(plan, vols),
              write_csv(vols),
              write_doc(plan, vols)]

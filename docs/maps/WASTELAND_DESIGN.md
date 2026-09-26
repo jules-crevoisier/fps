@@ -1,133 +1,137 @@
-# Wasteland v6 — conception (greybox, 4v4 TDM)
+# Wasteland v7 — conception (greybox asymétrique, 4v4 TDM)
 
-Source unique : `data/maps/wasteland_plan.json` (v6-greybox). Plan coté généré : `docs/maps/WASTELAND_PLAN.md`
-(`python tools/maps/render_plan.py`). Images : `docs/maps/img/wasteland_plan_top.png`, `wasteland_plan_3d.png`,
-`wasteland_coupe_ns.png`, `wasteland_coupe_oe.png`.
+Source unique : `data/maps/wasteland_plan.json` (v7-greybox-asym, `mirror.enabled = false`). Plan coté généré :
+`docs/maps/WASTELAND_PLAN.md` (`python tools/maps/render_plan.py`). Contrôles : `python tools/maps/check_plan.py [--md]`.
+Images : `docs/maps/img/wasteland_plan_top.png` (routes de sprint, fronts X, positions fortes ★), `wasteland_plan_3d.png`,
+`wasteland_coupe_ns.png`, `wasteland_coupe_oe.png`, `wasteland_coupe_sud.png`.
 
 ![Vue de dessus](img/wasteland_plan_top.png)
 
 ## Thèse
 
-Une petite ville de l'Ouest en **trois couloirs lisibles**, chacun avec une raison d'y aller, reliés au centre et
-surmontés d'**un seul réseau haut continu**. Le centre est **ouvert** : on s'y bat à courte ou moyenne distance, on y
-revient en 5 s. Chaque position forte a sa réplique en face (balcon contre balcon, galerie contre galerie) et au moins
-deux entrées.
+Verdict v6 : « C'est symétrique, c'est boring à la mort. » La v7 garde ce qui marchait (trois couloirs lisibles,
+bâtiments du nord reliés par un réseau haut, place ouverte avec wagon traversant, canyon large à rampes larges), mais
+**chaque moitié est un lieu différent** : à l'ouest **la Ville** (rue droite, façades à deux niveaux, saloon), à
+l'est **la Gare de fret et la Mine** (voies, portique, poste d'aiguillage, quai surélevé, trémie). Formes, repères,
+hauteurs et tracés diffèrent ; ce qui est égal, ce sont les **temps**, les **positions fortes** et les **lignes de vue**
+(mesurés, tableau plus bas). C'est le principe de Crash / Crossfire / Standoff : des moitiés qui ne se ressemblent pas
+mais qui offrent les mêmes chances.
 
-## Recherche (lue le 2026-09-26)
+## Recherche (2026-09-26)
 
-- Treyarch, *Black Ops 7* (Xbox Wire, 27/10/2025) : « Every lane needs a purpose » ; une position forte dans un couloir
-  appelle une position forte adverse (Toshin : deux bâtiments qui se font face au-dessus de la rue centrale) ; couverts
-  symétriques pour des duels équitables ; aucun point ne doit dominer toute la carte.
-- SuperJump, *Why have three lane maps endured in Call of Duty* : trois routes d'une apparition à l'autre, jamais plus de
-  trois décisions à la fois (règle attribuée à D. Vonderhaar).
-- The Level Design Book, *Map balance* / *Cover* : le couvert règle la portée d'une ligne de vue ; une position est un
-  « camping spot » si on ne peut pas la contourner ou si toutes ses menaces tiennent dans un seul champ de vision.
-- Wiki Call of Duty, *Nuketown* : chaque maison offre trois choix (contourner, traverser le rez, monter à l'étage qui
-  domine le centre et la maison d'en face) ; revers : les cartes compactes favorisent l'encerclement des apparitions.
+- Carte asymétrique en mode sans zone attribuée (Crash est l'exemple cité) : l'asymétrie rend le contrôle de zone
+  dynamique, à condition que chaque côté ait des positions de force équivalentes (Tumblr, *Symmetrical vs
+  Asymmetrical Level Design*, devspecmattross ; overdertoza.com, *Designing Symmetrical vs Asymmetrical Multiplayer Maps*).
+- Crossfire : un côté de combat rapproché (murets, bennes) près du bord de carte, un autre ouvert (Activision,
+  *CoD Mobile Map Snapshot: Crossfire*). Repris ici : la Ville est « intérieurs + galerie », la Gare « cour + quai ».
+- Acquis v6 conservés : trois couloirs, une position forte appelle sa réplique, pas de position qu'on ne peut pas
+  contourner, apparitions sans vue sur la moitié adverse.
 
-Conséquences ici : 3 couloirs, bâtiments traversants, étages qui se font face et se rejoignent, apparitions sans vue
-sur la moitié adverse (contrôlé).
+## Les deux moitiés
 
-## Dimensions
+| | Ouest — la Ville (équipe 0) | Est — la Gare de fret et la Mine (équipe 1) |
+|---|---|---|
+| Idée | la rue principale d'une ville de l'Ouest | ce qui fait vivre la ville : le rail et la mine |
+| Silhouette | rangée continue de façades à 2 niveaux (Hôtel, Magasin), Saloon, Écurie basse ; Arbre du pendu | Halle à 2 niveaux (14 × 22), Bureau du fret, poste d'aiguillage en tour, château d'eau 12,5 m, chevalement 13 m |
+| Hauteurs | sol 0, galerie et balcon 3,2, Colline du Pendu +1,2 | sol 0, **quai +1,2**, Trémie +1,2, portique et étages 3,2 |
+| Couloir nord | Grand-Rue droite (24 × 10) sous une galerie continue | les Voies : cour en L, portique N-S au-dessus des rails, escalier du portique, fourgon de queue |
+| Couloir milieu | traversée du Saloon, balcon sur la place, ruelle + Remise | quai surélevé fermé par la salle d'attente (guichet en chicane), lampisterie traversante dessous |
+| Canyon | Ravin 12 m, aiguilles alternées, 3 rampes | Tranchée 12 m puis 10 m (décrochement à x = 24), terrils, pile d'étais, Recette du puits, 2 rampes |
+| Apparition | grande cour ouverte (Écurie au nord, Saloon en écran) | cour étroite derrière l'estacade à charbon (portes en chicane), sortie nord par la Halle |
 
-Empreinte **84 × 50 m** (x −42…42, z −25…25), moitié ouest miroir de l'est. Au sprint (8,2 m/s), une apparition est à
-~10 s de l'autre en ligne droite ; le premier contact tombe à **5,0–6,7 s** (tableau plus bas) : assez court pour un
-jeu nerveux, assez long pour que l'apparition ne soit pas déjà la ligne de front. À 4 contre 4, quatre zones de combat
-(rue/Banque, place, gué de la carrière, réseau haut) suffisent à occuper 8 joueurs sans couloir mort. Chaque mètre
-retiré par moitié avance le contact d'environ 0,12 s : sous ~82 m de large, on passerait sous 5 s.
-
-Niveaux : sol 0, étage 3,2, carrière −2. Métriques joueur, portes, escaliers inchangées (bloc `metrics`).
+Centre partagé : Banque (deux portes sud décalées de l'axe du coffre), wagon traversant N-S, éolienne sur son bassin
+(repère central ; le château d'eau passe à l'est, où il a un sens ferroviaire).
 
 ## Couloirs
 
-| Couloir | Zone | Largeur | Vue max mesurée | Rôle |
-|---|---|---|---|---|
-| 1 Grand-Rue (nord) | x ±30, z −18…−8 | 10 m façade à façade ; bouche escalier→Banque 5,5 m | 24,7 m | rue à deux étages : rez + galerie au-dessus ; la Banque au centre coupe la rue en deux demi-rues de 24 m |
-| 2 Place (centre) | x ±26, z −8…13 | place 28 × 14 m + terrasse du bord 28 × 6,5 m | 29,5 m | combat courte-moyenne entre deux Saloons qui se font face ; wagon traversant au centre |
-| 3 Carrière (sud, −2 m) | x ±42, z 13…25 | 12 m paroi à paroi ; passages 5–5,5 m | 30,8 m | route basse en lacets, contournement ; gué central où débouchent les rampes de la place |
-
-Sorties de chaque apparition (4 points à x = ±41) : **nord** → Grand-Rue (coude Écurie/Citerne 3 m, Citerne/Saloon 5 m, ou
-à travers l'Écurie) ; **est** → Place (porte L du Saloon) ; **sud** → Carrière (Rampe Cour 4,5 m) ; en plus, sud-est →
-ruelle → Remise ou Rampe Ruelle.
-
-Routes au sprint (symétriques, départ simultané ; contact = vue tenue ≥ 0,5 s sur un adversaire) :
-
-| Couloir | Route jusqu'au centre | Contact même couloir | Contact tout couloir |
+| Couloir | Ouest | Est | Front partagé |
 |---|---|---|---|
-| Grand-Rue | 49,5 m (6,0 s) | 5,1 s (coin sud de la Banque) | 5,0 s |
-| Place | 45,6 m (5,6 s) | 5,1 s (bout nord du wagon) | 5,0 s |
-| Carrière | 63,9 m (7,8 s) | 6,7 s (gué) | 6,7 s |
+| 1 nord | rue droite, galerie au-dessus, passerelle vers le Saloon, escalier du balcon | sortie par la Halle, Voies en L, portique relié au Bureau (pont vers la Banque) et au Poste | intérieur de la Banque (0 ; −11,5) |
+| 2 milieu | Saloon traversant puis place ; balcon 12 m | estacade (chicane) → marches du quai → quai +1,2 → salle d'attente → marches vers la place | bout nord du wagon (0 ; −6) |
+| 3 canyon | rampe de la Cour, lacets entre 4 aiguilles et le Pendu | rampe du Carreau, lacets entre Recette, étais, terrils et la Trémie | gué (0 ; −2 ; 17) |
 
-## Bâtiments : rôle et liaisons
+La place n'est plus un rectangle miroir : partie ouest profonde au nord (jusqu'à la Banque), partie est décalée au sud et
+fermée par le Poste et les marches du quai ; 320 m², dont 284 m² libres (C1/C2 seulement).
 
-| Bâtiment | Taille | Niv. | Rôle | Entrées RDC | Étage |
+## Positions fortes et répliques
+
+Chaque équipe a **3 positions surélevées** (une par couloir), chacune à +3,2 m au-dessus de son couloir, avec au moins
+deux accès et des répliques visibles depuis des directions écartées (mesuré en 3D, œil à œil).
+
+| Équipe | Position | Accès | Répliques (visibles, écart angulaire) |
+|---|---|---|---|
+| 0 | PP1 Galerie de la Grand-Rue (3,2) | Hôtel, Magasin, passerelle, Banque | étage de la Banque en enfilade, rue sous la galerie, passerelle — 3/3, 90° |
+| 0 | PP2 Balcon du Saloon (3,2) | Saloon, escalier du balcon | fenêtre O du Poste, place nord, place sud — 3/3, 72° |
+| 0 | PP3 Colline du Pendu (+1,2 ; +3,2 sur le ravin) | marches terrasse, marches ravin | Trémie en face, gué, terrasse, ravin ouest — 4/4, 180° |
+| 1 | PP4 Portique de signalisation (3,2) | Bureau, Poste, escalier du portique | sortie E de la Banque, devant la Halle, place nord-est — 3/3, 156° |
+| 1 | PP5 Poste d'aiguillage, étage (3,2) | rampe intérieure, portique | balcon du Saloon, place nord-est, place sud-est (fenêtre O) — 3/3, 54° |
+| 1 | PP6 Trémie (+1,2 ; +3,2 sur la tranchée) | marches voie de garage, marches tranchée | Pendu en face, gué, voie de garage, tranchée est — 4/4, 179° |
+| — | PP7 Étage de la Banque (partagé) | 2 réseaux hauts + rampe | galerie (porte O1), pont du Bureau (porte E1) — 2/2, 138° |
+
+Répliques croisées voulues : balcon ↔ poste (27 m, fenêtre contre balcon ouvert), Pendu ↔ Trémie (24 m au-dessus du gué),
+galerie ↔ portique via l'étage de la Banque.
+
+## Équilibre (mesuré par `check_plan.py`)
+
+| Couloir | Sprint apparition → front O / E | Écart (≤ 10 %) | Premier contact O / E | Vue interne max O / E | Écart (≤ 15 %) |
 |---|---|---|---|---|---|
-| Écurie (×2) | 12×12 | 1 | ferme le bout de la rue, cache l'apparition | S (cour), E (rue) | — |
-| Hôtel / Pension | 11×7 | 2 | façade nord de la rue | S (rue), E (→ Magasin) | S1 → galerie ; fenêtres sur rue |
-| Magasin / Épicerie | 13×7 | 2 | façade nord, relie Hôtel et Banque | S L (rue), O (Hôtel), E (Banque) | S1 → galerie |
-| **Banque** (centre) | 12×15 | 2 | bâtiment-héros du couloir nord | O/E (rues), O/E (Magasins), S L (place) | O1/E1 depuis les deux galeries ; fenêtres S sur la place, O/E sur les rues |
-| Coffre (dans la Banque) | 4×3 | — | coupe l'axe des portes de rue, boucle de combat rapproché | — | — |
-| **Saloon** (×2) | 12×12 | 2 | couloir central, se font face à 28 m | O L (cour), N (rue), E L (place) | N1 → passerelle, E1 L → balcon ; fenêtres |
-| Remise (×2) | 4×9 | 1 | ferme la ruelle, traversante en biais | O, E (décalées) | — |
-| **Wagon** (centre) | 3×9 | 1 | pièce centrale, traversante N-S, flancs aveugles | N, S | — |
-| Pompe + château d'eau | 4×5,5 | — | repère, coupe la terrasse du bord | — | — |
+| Nord | 43,7 m (5,33 s) / 46,8 m (5,71 s) | 7,0 % | 5,1 / 5,1 s | 24,7 / 26,1 m | 5,6 % |
+| Milieu | 45,6 m (5,56 s) / 46,3 m (5,65 s) | 1,7 % | 5,1 / 5,1 s | 23,9 / 26,9 m | 12,9 % |
+| Canyon | 61,8 m (7,54 s) / 61,9 m (7,55 s) | 0,1 % | 6,8 / 6,8 s | 28,5 / 26,4 m | 7,8 % |
 
-**Réseau haut** (13 espaces, 9 accès depuis le sol) : galerie 24 × 2,5 m devant Hôtel + Magasin → porte O1/E1 de la
-Banque (les deux équipes s'y rejoignent) ; passerelle 7,5 × 2,5 m au-dessus de la rue → étage du Saloon → balcon
-12 × 2,5 m sur la place → escalier du balcon qui redescend dans la rue. Accès : 7 rampes intérieures (Kit) + 2
-escaliers de balcon. Raisons d'y monter : dominer la rue (galerie), la place (balcon, fenêtres S de la Banque), passer
-de la rue à la place à couvert. Répliques : garde-corps à 1 m (couvert accroupi seulement), balcon adverse à 23 m,
-fenêtres S de la Banque, tirs depuis la rue, chaque étage a au moins 2 entrées.
+Positions surélevées : 3 / 3. Surface marchable (sol + étages + dalles + plateformes) : ouest 2 464 m² (1 953 + 511),
+est 2 575 m² (1 972 + 603), écart 4,5 %. Sprint 8,2 m/s, départ simultané ; « contact » = vue tenue ≥ 0,5 s ; « vue
+interne » = plus longue ligne dont les deux bouts sont dans la même moitié (x < 0 ou x > 0).
 
-## Ce qui change par rapport à la v5, et pourquoi
-
-| Plainte (2026-09-26) | v5 | v6 |
-|---|---|---|
-| « Bâtiments du nord pas reliés, pas envie d'y monter » | Hôtel / Magasin / Forge séparés, étages atteints par des escaliers d'impasse, aucune liaison entre eux | galerie continue devant les façades, passerelle vers le Saloon, balcon sur la place, Banque centrale reliée aux deux galeries ; rez-de-chaussée enchaînés Hôtel ↔ Magasin ↔ Banque ; un seul réseau haut de 13 espaces |
-| « Carrière : pas assez d'espace entre obstacles et rampes, mal agencé » | 8 m de large, passages 3,5 m, rampes 2,5 m posées dans la carrière | 12 m de large, 10 aiguilles de 3,5–4 × 6,5 m alternées N/S à **5 m** d'intervalle, passages 5,5 m ; 6 rampes **4,5 m** creusées dans le plateau (ne mangent plus la carrière), 3 m dégagés aux deux bouts |
-| « Mid collé, pas de place, bâtiments qui ne fonctionnent pas ensemble » | 16 m entre Saloons, wagon 12 × 3 et château d'eau au milieu | place **28 × 14 m** + terrasse 6,5 m, seulement C1/C2 + wagon traversant ; ≥ 3 m partout ; Saloons, Banque et balcons se répondent et se rejoignent |
-
-Aussi : footprint 88 × 45 → 84 × 50 ; repères des autres modes (points, sites, barrières duel) retirés : TDM seul.
-
-## Contrôles (script lancé sur le JSON)
-
-Script : `check_plan.py` (bloc-notes de session, à copier en `tools/maps/check_plan.py` si on le garde). Volumes après
-miroir ; lignes de vue en 3D œil à œil (1,6 m), murs percés de leurs portes et fenêtres, dalles, rampes intérieures du
-Kit ; écarts = distance entre emprises au même niveau.
+## Contrôles (23/23 OK)
 
 | Contrôle | Résultat | Détail |
 |---|---|---|
-| Empreinte 4v4 (70–85 × 45–55 m) | OK | 84 × 50 m = 4 200 m² |
-| Bâtiments : ≥ 2 entrées RDC sur côtés différents | OK | Écurie ES, Hôtel ES, Magasin ESO, Banque ESO, Saloon ENO, Remise EO, Wagon NS |
-| Trémie sur un côté sans porte RDC | OK | toutes conformes |
-| Étages : ≥ 2 routes + reliés à un autre espace haut | OK | Hôtel/Magasin 2 entrées d'étage, Banque/Saloon 3 ; 9 accès depuis le sol dans le réseau |
-| Réseau haut connexe | OK | 13/13 espaces |
-| Écart libre ≥ 3 m entre obstacles | OK | plus petit 3,00 m (Écurie ↔ Citerne) ; aucun passage serré |
-| Aucun volume qui se chevauche | OK | aucun |
-| Rampes ≥ 4 m, 3 m dégagés aux deux bouts ; pied d'escalier dégagé | OK | 6 rampes de 4,5 m |
-| Place ≥ 20 × 14, C1/C2 seulement, centre traversant | OK | 28 × 14 m, Wagon portes N/S |
-| Carrière ≥ 10 m, couverts à 5–8 m, 2 rampes/moitié vers le centre | OK | 12 m ; voisins à 5,0 m ; Rampe Ruelle + Rampe Place |
-| Vue max Grand-Rue ≤ 60 m | OK | 24,7 m |
-| Vue max Place ≤ 30 m | OK | 29,5 m (ruelle ouest → place est, par l'intervalle wagon/pompe) |
-| Vue max Carrière ≤ 40 m | OK | 30,8 m |
-| Apparitions sans vue sur la moitié adverse | OK | aucune ligne |
-| 3 sorties → 3 couloirs ; premier contact 5–8 s | OK | 5,1 / 5,1 / 6,7 s (même couloir), 5,0 s au plus tôt |
+| Empreinte 4v4 | OK | 84 × 50 m |
+| Carte asymétrique | OK | aucun volume reflété : 47 W, 61 E, 11 C |
+| Bâtiments ≥ 2 entrées RDC sur côtés différents | OK | 15 bâtiments, dont Fourgon, Salle d'attente, Lampisterie, Estacade, Recette |
+| Trémie d'escalier sur un côté sans porte | OK | — |
+| Étages ≥ 2 routes + reliés ; réseau haut connexe | OK | 13/13 espaces hauts dans un réseau, 9 accès depuis le sol |
+| Écart ≥ 3 m entre obstacles ; aucun chevauchement | OK | plus petit 3,00 m ; niveaux −2, 0 et +1,2 |
+| Rampes ≥ 4 m, 3 m dégagés ; pied d'escalier dégagé | OK | 5 rampes de 4,5 m, 8 escaliers |
+| Place ≥ 280 m² libres, C1/C2 seulement, centre traversant | OK | 284 m² libres sur 320 ; wagon N-S |
+| Canyon ≥ 10 m, rochers à 5–8 m, ≥ 2 rampes par moitié | OK | 12 m ouest, 10 m est ; voisins à 5,0 m ; 3 + 2 rampes |
+| Vues max nord ≤ 60 / milieu ≤ 30 / canyon ≤ 40 m | OK | 27,1 / 29,5 / 30,4 m |
+| Apparitions sans vue sur la moitié adverse | OK | aucune ligne, dans les deux sens |
+| Routes de sprint praticables ; 3 sorties par équipe | OK | 6 routes ; est : Halle, estacade, rampe du Carreau |
+| Premier contact 5–8 s | OK | 5,1 / 5,1 / 6,8 s |
+| Équilibre (4 contrôles) | OK | tableau ci-dessus |
+
+## Ce qui change par rapport à la v6, et pourquoi
+
+| v6 | v7 | Pourquoi |
+|---|---|---|
+| moitié ouest reflétée en x | moitiés W / C / E décrites séparément (`mirror.enabled = false`) | « symétrique, boring » |
+| est = copie de l'ouest | la Gare de fret et la Mine : voies, portique, poste, quai +1,2, halle, trémie, chevalement | autre lieu, autre silhouette, autres hauteurs |
+| place rectangle 28 × 14 | place en deux parties décalées, bords différents (balcon / poste + marches du quai) | casser le miroir sans perdre l'ouverture |
+| canyon droit 12 m des deux côtés | ravin 12 m à l'ouest ; tranchée 12 puis 10 m avec décrochement, recette et étais à l'est | largeur et tracé qui changent |
+| château d'eau au centre | éolienne au centre, château d'eau dans la cour de la gare | repère qui dit « est » |
+| aiguille N1 ouest | Colline du Pendu (+1,2) ; en face la Trémie (+1,2) | une position forte par couloir et par équipe |
+| porte sud de la Banque en L dans l'axe | deux portes M décalées | coupait une ligne place ↔ intérieur de la Banque qui avançait le contact à 4,9 s |
+| contrôles pour une carte miroir | `check_plan.py` : sol par surfaces, 3 niveaux, régions multi-rectangles, routes O et E, 4 contrôles d'équilibre | mesurer l'équilibre au lieu de le supposer |
+
+Outils : `render_plan.py` sait lire une carte sans miroir (et trace routes, fronts, positions fortes, coupe du canyon) ;
+`check_plan.py` est étendu (nouveau type de volume `platform` = dessus marchable ; écarts mesurés seulement là où le
+milieu de l'écart est un sol du même niveau).
 
 ## Risques ouverts
 
-- **Contact à 5,0 s** : pile au seuil. Si le playtest le trouve trop court, décaler les apparitions de 1–2 m ou passer
-  à 86 m de large. Le calcul suppose un sprint instantané et un départ simultané ; en TDM les réapparitions varient.
-- **Aucune ligne > 31 m** : la carte est courte-moyenne, les fusils longs y sont faibles. Si on veut une vraie ligne
-  longue, retirer le Coffre ouvre ~60 m à travers les portes de la Banque (à tester, risque de ligne d'apparition à
-  apparition).
-- **Étage de la Banque** : position centrale atteinte par les deux galeries, elle peut devenir un hachoir ou provoquer
-  des bascules d'apparition. Répliques prévues : fenêtres S exposées aux balcons (10–16 m), trois entrées.
-- **Dessous des passerelles à 2,95 m** : un saut sous la galerie ou la passerelle cogne la tête (apex 3,16 m).
-  Acceptable ; sinon relever `upper`.
-- **Rampes intérieures du Kit** : Hôtel et Magasin font 7 m de profondeur, donc trémie de 5,5 m pour une rampe de 6 m :
-  vérifier le rendu du Kit. Les 6 rampes de carrière font 6 m pour 2 m de dénivelé (18°).
-- **Le jeu ne lit pas encore ce JSON** : le constructeur devra gérer le sol découpé autour des entailles de rampe, les
-  portes d'étage (`floor: 1`), les dalles `solid_below: false`, les garde-corps `class: rail` (t 0,05) et la clé
-  `plaza`, ajoutée pour les contrôles.
-- **Couverture de la place volontairement légère** (2 couverts par moitié) : à étoffer en C1/C2 après playtest si la
-  traversée paraît trop exposée.
+- **Est plus long au nord** (+7 % : sortie par la Halle) : dans la marge, mais l'équipe est arrive 0,4 s plus tard à la
+  Banque ; si le playtest le sent, descendre la porte ouest de la Halle vers z = −8 (≈ −1 m, −0,12 s).
+- **Place à 284 m² libres et vue max du milieu à 29,5 m** : proches des seuils ; toute couverture ajoutée ou tout volume
+  déplacé près du wagon doit être revérifié (fenêtre sud wagon / bassin).
+- **Chicanes** (salle d'attente + guichet, lampisterie, estacade, fourgon de queue) : elles tiennent les lignes de vue
+  et la protection d'apparition ; un changement de porte les casse. Vérifier aussi que les bots passent le guichet
+  (1,2 m).
+- **Halle 14 × 22 à 2 niveaux** : écran d'apparition et étage de compensation ; masse très présente, à habiller.
+- **Portique de 3,2 m au-dessus des voies sans couvert** (garde-corps seulement) : exposé exprès ; si trop faible, ajouter
+  un C2 sur la dalle.
+- **Le jeu ne lit pas encore ce JSON** : le constructeur devra gérer `mirror.enabled`, le type `platform`, `levels.dock`,
+  les bâtiments posés sur le quai (y0 = 1,2) ou dans le canyon (y0 = −2), les couloirs `route_w/route_e/front/regions`.
+- `tools/maps/gen_wasteland_plan.py` est le générateur v6 (lit un fichier v5 absent) : obsolète, ne pas le relancer ;
+  le JSON v7 est la source.
