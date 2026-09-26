@@ -69,7 +69,7 @@ const _EXPECTED := {
 		"sun_color": "ffd3a0", "sun_elevation_deg": 25.0,
 		"shadow_tint": "5e6aa8", "ground": "c9b79a",
 	},
-	"wasteland": {
+	"shipment": {
 		"sky_zenith": "2f74d8", "sky_horizon": "bfddf2",
 		"sun_color": "ffd99a", "sun_elevation_deg": 32.0,
 		"shadow_tint": "5b6ca6", "ground": "d2a46c",
@@ -112,10 +112,10 @@ func test_map_palette_matches_tokens_json_for_every_map() -> void:
 ## Filmic depuis remplacé) — ce test échouerait sur les anciennes valeurs
 ## `Color("265dad")`/`Color("a8c2d5")` (Wasteland) et `Color("4693ee")`/
 ## `Color("d8eefc")` (Cargo Ship).
-func test_map_palette_wasteland_and_cargo_ship_skies_are_no_longer_darkened() -> void:
-	var wasteland := Cartoon.map_palette("wasteland")
-	assert_that(wasteland["sky_zenith"]).is_equal(Color("2f74d8"))
-	assert_that(wasteland["sky_horizon"]).is_equal(Color("bfddf2"))
+func test_map_palette_shipment_and_cargo_ship_skies_are_no_longer_darkened() -> void:
+	var shipment := Cartoon.map_palette("shipment")
+	assert_that(shipment["sky_zenith"]).is_equal(Color("2f74d8"))
+	assert_that(shipment["sky_horizon"]).is_equal(Color("bfddf2"))
 
 	var cargo_ship := Cartoon.map_palette("cargo_ship")
 	assert_that(cargo_ship["sky_zenith"]).is_equal(Color("3e86e0"))
@@ -130,12 +130,12 @@ func test_map_palette_covers_exactly_the_eight_maps() -> void:
 	assert_int(Cartoon._MAP_PALETTES.size()).is_equal(_EXPECTED.size())
 
 
-func test_map_palette_unknown_map_falls_back_to_wasteland() -> void:
+func test_map_palette_unknown_map_falls_back_to_shipment() -> void:
 	var unknown := Cartoon.map_palette("does_not_exist")
 	var empty := Cartoon.map_palette("")
-	var wasteland := Cartoon.map_palette("wasteland")
-	assert_that(unknown["sky_zenith"]).is_equal(wasteland["sky_zenith"])
-	assert_that(empty["sky_zenith"]).is_equal(wasteland["sky_zenith"])
+	var shipment := Cartoon.map_palette("shipment")
+	assert_that(unknown["sky_zenith"]).is_equal(shipment["sky_zenith"])
+	assert_that(empty["sky_zenith"]).is_equal(shipment["sky_zenith"])
 
 
 # --------------------------------------------------------------------- CHK-07

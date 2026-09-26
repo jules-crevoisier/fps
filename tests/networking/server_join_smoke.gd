@@ -3,8 +3,8 @@
 ## test gdUnit4) du chemin COMPLET d'un serveur dédié réel : un client normal
 ## rejoint et spawn comme joueur, un client à la mauvaise version de
 ## protocole est refusé avec un motif (NetworkManager.last_disconnect_reason).
-## À lancer contre un serveur dédié déjà démarré (voir docs/SERVER.md) :
-##   $GODOT_BIN --headless --path . -- --server   (avec MODE=tdm MAP=wasteland)
+## À lancer contre un serveur dédié déjà démarré () :
+##   $GODOT_BIN --headless --path . -- --server   (avec MODE=tdm MAP=shipment)
 ## Puis, dans un second process :
 ##   Rejoindre normalement :
 ##     godot --headless --path . -s res://tests/networking/server_join_smoke.gd -- --role=join
@@ -17,9 +17,8 @@ extends SceneTree
 const PORT := 7777
 const TIMEOUT_SEC := 10.0
 ## Carte de vérification fixe (assortie à l'appel serveur de la procédure de
-## vérification, voir docs/SERVER.md) — même principe que le
-## `LEVEL` codé en dur de tools/net_smoke.gd.
-const VERIFY_MAP_ID := "wasteland"
+## vérification) -- Shipment est la seule carte du catalogue.
+const VERIFY_MAP_ID := "shipment"
 
 var _role: String = "join"
 var _t: float = 0.0

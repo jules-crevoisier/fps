@@ -1,8 +1,8 @@
 ## StyleTokens.gd
-## GENERE -- NE PAS MODIFIER A LA MAIN.
-## Source : docs/style/tokens.json. Generateur : tools/style/gen_style_tokens.py
-## (tache ART-05, STYLE_BIBLE.md SS7.7). Pour regenerer apres un changement de
-## tokens.json : `python tools/style/gen_style_tokens.py`.
+## Nettoyage du prototype 2026-09-26 ("clean absolument tout") : le générateur
+## (tools/style/gen_style_tokens.py) et sa source (docs/style/tokens.json) ont
+## été supprimés avec le reste de l'outillage de style -- cette table est
+## désormais maintenue à la main directement ici.
 ##
 ## Palette par carte (MatchConfig.map_id) : ciel (sky_zenith/sky_horizon),
 ## soleil (sun_color/sun_elevation_deg), ombre (shadow_tint), sol (ground),
@@ -14,7 +14,7 @@
 class_name StyleTokens
 extends RefCounted
 
-const DEFAULT_MAP_ID := "wasteland"
+const DEFAULT_MAP_ID := "shipment"
 
 ## tokens.json "reserved" : bandes de teinte OKLCH interdites a toute
 ## couleur de base (monde, personnage, cosmetique) au-dela de ce seuil de
@@ -89,7 +89,7 @@ const MAP_PALETTES: Dictionary = {
 		"backdrop_far": Color("ffd9a0"),
 		"fog": Color("ffd7a0"),
 	},
-	"wasteland": {
+	"shipment": {
 		"sky_zenith": Color("2f74d8"),
 		"sky_horizon": Color("bfddf2"),
 		"sun_color": Color("ffd99a"),

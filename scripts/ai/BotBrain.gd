@@ -842,10 +842,10 @@ func _map_knowledge() -> BotMapKnowledge:
 		_map_knowledge_cache = BotMapKnowledge.new(data) if not data.is_empty() else null
 	return _map_knowledge_cache
 
+## Nettoyage du prototype 2026-09-26 : plus aucune carte n'expose de données
+## de connaissance de carte (voir GameMode._bot_knowledge) — `null`
+## inconditionnel, `BotLook` retombe sur ses replis génériques (L1..).
 func _map_bot_knowledge_data() -> Dictionary:
-	match _current_bot_look_map_id():
-		"wasteland":
-			return WastelandBots.data()
 	return {}
 
 ## Identifiant de la carte courante — même lecture que `GameMode._current_map_id`

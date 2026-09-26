@@ -95,7 +95,7 @@ func test_sticker_text_contrast_reaches_chk_26_minimum() -> void:
 ## distingue du rim ennemi (0.6, Cartoon.enemy_color()).
 func test_sky_rim_color_follows_current_map_horizon() -> void:
 	var orig := MatchConfig.map_id
-	for map_id in ["wasteland", "cargo_ship", "port_ferraille"]:
+	for map_id in ["shipment", "cargo_ship", "port_ferraille"]:
 		MatchConfig.map_id = map_id
 		assert_that(PlayerLook.sky_rim_color()).is_equal(Cartoon.map_palette(map_id)["sky_horizon"])
 	MatchConfig.map_id = orig
@@ -103,7 +103,7 @@ func test_sky_rim_color_follows_current_map_horizon() -> void:
 
 func test_sky_rim_color_never_equals_a_team_color() -> void:
 	var orig := MatchConfig.map_id
-	for map_id in ["wasteland", "cargo_ship", "port_ferraille", "val_poussiere", "saint_ombre", "col_du_vautour", "la_fosse", "le_belvedere"]:
+	for map_id in ["shipment", "cargo_ship", "port_ferraille", "val_poussiere", "saint_ombre", "col_du_vautour", "la_fosse", "le_belvedere"]:
 		MatchConfig.map_id = map_id
 		var rim := PlayerLook.sky_rim_color()
 		assert_bool(rim == Cartoon.ally_color()).is_false()

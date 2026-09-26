@@ -1,18 +1,19 @@
 ## QuickStart.gd
-## Prototype minimal (décision 2026-09-26, "strip to minimal prototype") : le
-## jeu n'a plus de menu principal — cette scène de boot (scenes/boot.tscn,
-## run/main_scene dans project.godot) reproduit directement l'ancienne
-## logique MainMenu._on_host()/_start_game() pour une partie locale TDM sur
-## Wasteland, bots activés (4v4 : le joueur + 3 bots alliés contre 4 bots
-## ennemis, difficulté Vétéran) — sans écran à traverser. Settings.gd reste
-## lu normalement (sensibilité/AZERTY depuis user://settings.cfg), juste sans
+## Prototype minimal (décision 2026-09-26, "strip to minimal prototype", puis
+## "clean absolument tout, repart sur de bonnes bases") : le jeu n'a plus de
+## menu principal — cette scène de boot (scenes/boot.tscn, run/main_scene dans
+## project.godot) reproduit directement l'ancienne logique
+## MainMenu._on_host()/_start_game() pour une partie locale TDM sur Shipment,
+## bots activés (4v4 : le joueur + 3 bots alliés contre 4 bots ennemis,
+## difficulté Vétéran) — sans écran à traverser. Settings.gd reste lu
+## normalement (sensibilité/AZERTY depuis user://settings.cfg), juste sans
 ## interface pour les modifier.
 extends Node
 
 func _ready() -> void:
 	Settings.load_all()
 	MatchConfig.set_mode("tdm")
-	MatchConfig.map_id = "wasteland"
+	MatchConfig.map_id = "shipment"
 	MatchConfig.bots_enabled = true
 	MatchConfig.bot_difficulty = MatchConfig.Difficulty.VETERAN
 

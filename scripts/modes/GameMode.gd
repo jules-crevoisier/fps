@@ -346,21 +346,15 @@ func _current_map_id() -> String:
 		return String(parent.get("map_id"))
 	return ""
 
-## Connaissance de carte pour bots (LD-24, docs/research/
-## 09_wasteland_vertical_slice.md §e : `lanes`/`hotspots`/`hp_hold_points`/
-## `nav_links`/`danger_spans`) — lue directement depuis la source PURE et
-## PUBLIQUE de la carte courante (`WastelandBots.data()`, jamais une méthode
-## `_`-préfixée de `MapSetup`, même discipline que `_current_map_id`
-## ci-dessus), utilisée par TDM (patrouille par hotspots/lanes) et Hardpoint
-## (points de tenue distincts) — voir leurs `_compute_bot_goal` respectifs.
-## Dictionary VIDE pour toute carte qui n'expose pas encore ces données
-## ("repli propre sur une carte sans données", LD-25) : TDM/Hardpoint
-## retombent alors sur leur comportement HISTORIQUE (marqueurs de spawn /
-## centre de zone commun), inchangé — les autres cartes ne régressent pas.
+## Connaissance de carte pour bots (lanes/hotspots/nav_links par carte) —
+## nettoyage du prototype 2026-09-26 ("clean absolument tout") : le système
+## de données par carte (WastelandBots.data(), lié à la géométrie procédurale
+## Wasteland) est supprimé avec elle. Shipment (comme toute carte statique
+## générique) n'expose aucune de ces données — Dictionary VIDE inconditionnel,
+## ce qui fait retomber TDM sur son comportement générique (LD-25) : mémoire
+## d'équipe partagée ("dernière position ennemie connue"), sinon marqueurs de
+## spawn de la carte (`_map_patrol_points`) — voir `TDMMode._compute_bot_goal`.
 func _bot_knowledge() -> Dictionary:
-	match _current_map_id():
-		"wasteland":
-			return WastelandBots.data()
 	return {}
 
 ## Points de patrouille STATIQUES de la carte (marqueurs de spawn — connus

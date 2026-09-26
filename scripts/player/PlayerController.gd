@@ -612,6 +612,15 @@ func _look(relative: Vector2) -> void:
 static func effective_look_sensitivity(base_sensitivity: float, aim_held: bool, ads_multiplier: float) -> float:
 	return base_sensitivity * ads_multiplier if aim_held else base_sensitivity
 
+## Lacet (rotation.y) qui fait regarder le point `pos` vers le centre de la
+## carte (origine du monde, cartes centrées sur l'origine). L'avant d'un
+## Node3D est -Z : pour une direction horizontale d, lacet = atan2(-d.x, -d.z),
+## ici d = -pos. Point au centre même : 0 (pas de direction définie).
+static func yaw_towards_center(pos: Vector3) -> float:
+	if Vector2(pos.x, pos.z).length_squared() < 0.0001:
+		return 0.0
+	return atan2(pos.x, pos.z)
+
 ## Replace le joueur au point de spawn (chute hors map, etc.).
 func respawn() -> void:
 	velocity = Vector3.ZERO
@@ -636,6 +645,7 @@ func _do_respawn(pos: Vector3) -> void:
 	spawn_point = pos
 	velocity = Vector3.ZERO
 	global_position = pos
+	rotation.y = yaw_towards_center(pos)
 	# Téléportation : même raison que `respawn()` — sans ce reset,
 	# l'interpolation physique (GF-03) afficherait un glissement fantôme
 	# depuis l'ancienne position pendant le tick suivant.

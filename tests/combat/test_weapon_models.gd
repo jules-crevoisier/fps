@@ -1,23 +1,20 @@
 ## test_weapon_models.gd
-## A3D-20 — critères d'acceptation sur les 7 modèles .glb peints
-## (assets/models/weapons/*.glb, tools/blender/fit_weapon_painted.py) : texture
-## peinte conservée, canon vers le viseur (-Z, tools/blender/make_weapons.py),
-## ancres "Grip" (origine)/"Foregrip"/"Muzzle" présentes et cohérentes (gants +
-## flash au canon, ViewModel.gd), budget <= 8000 tris. IDs 0..6 de
-## WeaponDatabase.PATHS (append-only) : 0 Pistolet, 1 Magnum, 2 Rafale,
-## 3 Marqueur, 4 Ravage, 5 Fracas, 6 Faucheur — voir test_weapon_database.gd.
+## A3D-20 — critères d'acceptation sur le modèle .glb peint du Ravage
+## (assets/models/weapons/ravage.glb) : texture peinte conservée, canon vers
+## le viseur (-Z, ex-tools/blender/make_weapons.py), ancres "Grip"
+## (origine)/"Foregrip"/"Muzzle" présentes et cohérentes (gants + flash au
+## canon, ViewModel.gd), budget <= 8000 tris.
+##
+## Nettoyage du prototype 2026-09-26 ("clean absolument tout") : les 6 autres
+## modèles (pistolet, magnum, rafale, marqueur, fracas, faucheur) et leurs
+## assets sont supprimés -- Ravage est désormais la SEULE arme du jeu
+## (WeaponDatabase.PATHS id 0), ce fichier ne teste plus qu'elle.
 extends GdUnitTestSuite
 
 const MAX_TRIS := 8000
 const PAINTED_MARKER := "_painted"
-const WEAPON_IDS := [0, 1, 2, 3, 4, 5, 6]
-## Radicaux de fichier .glb par id (A3D-20, ordre historique de
-## WeaponDatabase.PATHS AVANT la réduction du prototype à une seule arme —
-## voir tests/combat/test_weapon_database.gd) : ces 7 modèles restent sur le
-## disque (assets, hors périmètre de cette tâche), indépendamment du
-## catalogue de jeu désormais réduit au Ravage seul — ce tableau les retrouve
-## sans dépendre de `WeaponDatabase.PATHS`, qui ne couvre plus que l'id 0.
-const _STEMS_BY_ID := ["pistolet", "magnum", "rafale", "marqueur", "ravage", "fracas", "faucheur"]
+const WEAPON_IDS := [0]
+const _STEMS_BY_ID := ["ravage"]
 
 
 ## Instancie assets/models/weapons/<stem>.glb pour l'id donné — échoue fort

@@ -497,6 +497,9 @@ func _spawn_player(id: int, agent_index: int, is_bot: bool = false, forced_team:
 	var spawn := spawn_override if spawn_override != _NO_SPAWN_OVERRIDE else _get_spawn_position(team)
 	player.position = spawn
 	player.set("spawn_point", spawn)
+	# Regard vers le centre de la carte (les cartes sont centrées sur l'origine,
+	# voir README) : sans ça, une équipe apparaît face à son mur d'enceinte.
+	player.rotation.y = PlayerController.yaw_towards_center(spawn)
 
 	# L'autorité est réglée par PlayerController._enter_tree (basée sur le nom
 	# = id, ou le serveur pour un bot), de façon identique sur tous les pairs.

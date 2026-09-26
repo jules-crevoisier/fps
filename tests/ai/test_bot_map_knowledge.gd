@@ -1,20 +1,16 @@
 ## test_bot_map_knowledge.gd
-## BOT-22 (docs/research/08_bots_humanlike.md §3.7 "Connaissance de Wasteland
-## (K)") — deux familles de tests :
+## BOT-22 — deux familles de tests :
 ##  - §1 BotMapKnowledge, PUR (Dictionary/Vector3, aucun moteur) : exercé
-##    contre une fixture `_bot_knowledge_fixture()` reprenant des coordonnées
-##    RÉELLES du brouillon §3.7 (zones, couloirs, angles, perchoirs,
-##    couvertures, tenues Hardpoint) — voir l'en-tête de BotMapKnowledge.gd
-##    pour l'écart connu (aucune carte n'expose encore cette clé sous
-##    `WastelandLayout.data()["bot_knowledge"]`, LD-24, hors de ma liste de
-##    fichiers). Cette fixture n'est PAS une prétention de données de jeu
-##    finales : uniquement de quoi exercer chaque branche du lecteur pur.
-##  - §2 BotSpots (acceptance BOT-22) : `_sample_navmesh` échantillonne
-##    plusieurs niveaux (pile de rayons verticaux, scène physique minimale
-##    réelle comme tests/ai/test_bot_spots.gd), et le rebake du niveau
-##    "wasteland" atteint les seuils BOT-22 (>= 250 spots, >= 60 % au sol,
-##    < 50 % en sniping) sans écrire `resources/bot_spots/wasteland.tres`
-##    (ce fichier est hors de ma liste — voir rendu de tâche).
+##    contre une fixture `_bot_knowledge_fixture()` — aucune carte du dépôt
+##    n'expose cette clé (le système de connaissance de carte par map_id a
+##    été supprimé avec Wasteland, nettoyage du prototype 2026-09-26 : voir
+##    GameMode._bot_knowledge). Cette fixture n'est PAS une prétention de
+##    données de jeu finales : uniquement de quoi exercer chaque branche du
+##    lecteur pur.
+##  - §2 BotSpots (acceptance) : `_sample_navmesh` échantillonne plusieurs
+##    niveaux (pile de rayons verticaux, scène physique minimale réelle comme
+##    tests/ai/test_bot_spots.gd), et le rebake d'une géométrie représentative
+##    de Shipment (la carte courante) reste cohérent (voir §2.2 plus bas).
 extends GdUnitTestSuite
 
 
@@ -370,49 +366,60 @@ func test_sample_navmesh_finds_both_stacked_levels_at_the_same_column() -> void:
 
 
 # ======================================================================
-#  §2.2 — rebake "wasteland" : seuils numériques BOT-22 (>= 250 spots,
-#  >= 60 % au sol, < 50 % en sniping), sans écrire wasteland.tres (hors de
-#  ma liste de fichiers — le rendu de tâche signale qui doit le regénérer).
+#  §2.2 — rebake "shipment" : nettoyage du prototype 2026-09-26 ("clean
+#  absolument tout") — Wasteland (et son rebake calibré BOT-22 : >= 250
+#  spots, >= 60 % au sol, < 50 % en sniping — des seuils propres à sa
+#  géométrie dense multi-bâtiments) est supprimée. Shipment (scenes/levels/
+#  maps/shipment.tscn) est une petite cour à conteneurs PLATE : ce test
+#  rebâtit une géométrie REPRÉSENTATIVE (même discipline "scène physique
+#  minimale réelle" que le reste de ce fichier, jamais la scène .tscn
+#  elle-même — voir tests/ai/test_bot_spots.gd::test_test_arena_room_...
+#  pour le même principe) et vérifie seulement que le pipeline de bake
+#  reste fonctionnel et cohérent sur une carte plate et ouverte (l'essentiel
+#  des points est au sol) — pas de seuil de sniping (une cour ouverte a
+#  naturellement PLUS de lignes de vue dégagées qu'une carte dense comme
+#  l'était Wasteland, un seuil "< 50 %" hérité n'aurait aucun sens ici).
 # ======================================================================
-const _WASTELAND_OFFSET := Vector3(96000, 0, 0)
-const MIN_SPOTS := 250
-const MIN_GROUND_RATIO := 0.6
-const MAX_SNIPING_RATIO := 0.5
+const _SHIPMENT_OFFSET := Vector3(96000, 0, 0)
+const SHIPMENT_MIN_SPOTS := 100
+const SHIPMENT_MIN_GROUND_RATIO := 0.5
 const GROUND_Y_MAX := 1.0
 
-func test_wasteland_rebake_meets_bot22_ground_and_sniping_thresholds() -> void:
-	var setup := MapSetup.new()
-	setup.map_id = "wasteland"
-	setup.position = _WASTELAND_OFFSET
-	add_child(setup)
-	for i in NAV_SYNC_FRAMES:
-		await get_tree().physics_frame
+func test_shipment_like_room_rebake_is_mostly_ground_level() -> void:
+	var offset := _SHIPMENT_OFFSET
+	var root_node := _room(offset)
+	_floor(root_node, Vector3(0, 0, 0), 40, 40)
+	# Quelques blocs conteneurs (2,6 m de haut) éparpillés, dont un stacké
+	# (5,2 m) -- même esprit que shipment.tscn, sans en dupliquer le layout
+	# exact.
+	var container_xz := [
+		Vector2(-13, -14), Vector2(0, -14), Vector2(13, -14),
+		Vector2(-8, -5), Vector2(8, -5), Vector2(-8, 5), Vector2(8, 5),
+		Vector2(-13, 14), Vector2(13, 14), Vector2(0, 0),
+	]
+	for i in container_xz.size():
+		var xz: Vector2 = container_xz[i]
+		_wall(root_node, Vector3(xz.x, 1.3, xz.y), Vector3(6, 2.6, 2.5))
+	_wall(root_node, Vector3(0, 3.9, 0), Vector3(6, 2.6, 2.5))  # conteneur stacké au centre.
+	var setup := await _bake_room(root_node)
 
-	var space := setup.get_world_3d().direct_space_state
 	var start_ms := Time.get_ticks_msec()
-	var spots := BotSpots.bake("wasteland", setup.nav_region, space)
+	var spots := BotSpots.bake("shipment", setup["nav"], setup["space"])
 	var elapsed_ms := Time.get_ticks_msec() - start_ms
 
 	assert_int(elapsed_ms).append_failure_message("bake=%dms, budget=%dms" % [elapsed_ms, BotSpots.BAKE_BUDGET_MS]).is_less(BotSpots.BAKE_BUDGET_MS)
-	assert_int(spots.spots.size()).append_failure_message("%d spots (attendu >= %d)" % [spots.spots.size(), MIN_SPOTS]).is_greater_equal(MIN_SPOTS)
+	assert_int(spots.spots.size()).append_failure_message(
+		"%d spots (attendu >= %d)" % [spots.spots.size(), SHIPMENT_MIN_SPOTS]).is_greater_equal(SHIPMENT_MIN_SPOTS)
 
 	var ground_count := 0
-	var sniping_count := 0
 	for s in spots.spots:
-		var local_y: float = (s["position"] as Vector3).y - _WASTELAND_OFFSET.y
+		var local_y: float = (s["position"] as Vector3).y - offset.y
 		if local_y < GROUND_Y_MAX:
 			ground_count += 1
-		if s["sniping"]:
-			sniping_count += 1
 	var ground_ratio := float(ground_count) / float(spots.spots.size())
-	var sniping_ratio := float(sniping_count) / float(spots.spots.size())
 	assert_float(ground_ratio).append_failure_message(
-		"%d/%d au sol (%.1f%%, attendu >= %.0f%%)" % [ground_count, spots.spots.size(), ground_ratio * 100.0, MIN_GROUND_RATIO * 100.0]
-	).is_greater_equal(MIN_GROUND_RATIO)
-	assert_float(sniping_ratio).append_failure_message(
-		"%d/%d en sniping (%.1f%%, attendu < %.0f%%)" % [sniping_count, spots.spots.size(), sniping_ratio * 100.0, MAX_SNIPING_RATIO * 100.0]
-	).is_less(MAX_SNIPING_RATIO)
+		"%d/%d au sol (%.1f%%, attendu >= %.0f%% -- carte plate)" %
+		[ground_count, spots.spots.size(), ground_ratio * 100.0, SHIPMENT_MIN_GROUND_RATIO * 100.0]
+	).is_greater_equal(SHIPMENT_MIN_GROUND_RATIO)
 
-	remove_child(setup)
-	setup.free()
-	await get_tree().physics_frame
+	await _teardown_room(root_node)

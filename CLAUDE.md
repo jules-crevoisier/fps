@@ -1,33 +1,40 @@
 # Projet FPS (Godot 4.7) — instructions de session
 
-FPS en ligne free-to-play, 4v4 (match à mort + tactique) / Duel 1v1 / Duo 2v2, 6 agents à capacités,
-bots. Style : cel-shading peint et coloré, encrage épais, personnages décalés — la référence unique
-est `docs/STYLE_BIBLE.md` (+ `docs/style/tokens.json`). Inspirations : `.orchestrator/refs/`
-(planches Wasteland / Cargo Ship + `pinterest/pin_*.jpg`).
+Prototype de FPS rapide en cel-shading. Base volontairement minimale (remise à zéro du 2026-09-26,
+état précédent complet dans le tag git `avant-nettoyage-2026-09-26`) :
 
-## Démarrer une session de travail
+- démarrage direct en partie TDM 4v4 contre des bots (`scenes/boot.tscn` → `scripts/core/QuickStart.gd`) ;
+- une carte : **Shipment** (`scenes/levels/maps/shipment.tscn`), scène Godot ordinaire, éditable dans
+  l'éditeur (pas de génération procédurale), centrée sur l'origine ; points d'apparition = `Marker3D`
+  sous `SpawnPoints` (méta `team`), navigation = `NavigationRegion3D` « NavRegion » ;
+- une arme (Ravage), un personnage (Verrou, la grenouille), aucune capacité ;
+- aucune interface hors réticule et marqueur de touche.
 
-1. `python tools/tasks/plan.py validate` puis `status` puis `waves --max 6`.
-2. `python tools/tasks/plan.py ready --max 6 --brief --json`, puis `plan.py start <ids>`.
-3. Lancer le sprint : `Workflow({scriptPath: "C:/Users/srko/Desktop/fps/.claude/workflows/sprint.js", args: <JSON du ready>})`.
-   Écrire en Python les modifications de fichiers du dépôt (pas de `Set-Content` PowerShell sans
-   `-Encoding utf8` : il corrompt l'UTF-8), et jamais `write_text(newline=...)` invalide (fichier vidé).
-4. `plan.py done|block ...`, puis `powershell -File tools/review/run_review.ps1` et lire
-   `reports/review/<dernier>/summary.md`. Vague suivante.
-
-Procédure complète : `docs/tasks/README.md`. Contexte injecté dans chaque agent : `tasks/context.md`.
+**L'utilisateur crée lui-même les cartes et les modèles.** Ne pas générer de décor, de textures ni de
+cartes sans demande explicite ; se concentrer sur le code de jeu (mouvement, tir, sensations, bots,
+réseau) et sur l'intégration de ce qu'il fournit.
 
 ## Où est quoi
 
-- Plan maître : `docs/ROADMAP.md`. Backlog exécutable : `tasks/backlog.yaml`. Tableau : `docs/tasks/BOARD.md`.
-- Recherche web consolidée : `docs/research/01..07_*.md`. Audit : `docs/audit/bugs.md`, `docs/audit/bots.md`.
-- Revue automatique : `docs/REVIEW.md` (`tools/review/`). Pipeline 3D : `docs/3D_PIPELINE.md` (`tools/blender/`).
-- Godot : `C:\Users\srko\Desktop\Godot_v4.7-stable_win64.exe`. Blender : `C:\Program Files\Blender Foundation\Blender 5.2\blender.exe`.
+- Mode de jeu : `scripts/modes/` (TDM seul). Réseau : `scripts/networking/` (hôte/client, serveur
+  dédié `ServerBoot.gd`). Joueur : `scripts/player/` (états de mouvement). Tir : `scripts/combat/`.
+  Bots : `scripts/ai/`. Chargement de carte : `scripts/levels/maps/MapSetup.gd`.
+- Import de modèles Tripo : `tools/ai3d/bridge_autoexport.py` (Blender en arrière-plan, reçoit le DCC
+  Bridge) et `tools/blender/ai_import_painted.py` (import peint) — voir README. Licences des assets :
+  `THIRD_PARTY_LICENSES.md` + `python tools/ai3d/licence_check.py` (0 violation exigé).
+- Godot : `C:\Users\srko\Desktop\Godot_v4.7-stable_win64.exe`. Blender :
+  `C:\Program Files\Blender Foundation\Blender 5.2\blender.exe`.
 
 ## Règles propres au projet
 
-- Réseau autoritaire serveur ; hôte et bots simulés côté serveur (voir `tasks/context.md`).
-- Tests scopés pendant l'itération, suite complète + revue complète en fin de vague.
-- Toute modification visible (3D, UI, VFX) se vérifie en image (turntable, map_shots, ui_shots) avant
-  d'être déclarée finie, contre la checklist de `docs/STYLE_BIBLE.md`.
-- Branche de travail : `feature/aaa-roadmap` (jamais `main`). Commit seulement sur demande.
+- Réseau autoritaire serveur ; l'hôte et les bots sont simulés côté serveur.
+- Tests : gdUnit4 (`bash tools/test.sh`, ou un dossier : `tools/test.sh res://tests/<dir>`). Tests
+  ciblés pendant l'itération, suite complète avant un commit. Les tests UI se lancent avec
+  `--ignoreHeadlessMode`.
+- Écrire les modifications de fichiers en UTF-8 (jamais `Set-Content` PowerShell sans
+  `-Encoding utf8`).
+- Budget d'usage : un seul agent à la fois (deux au plus), modèle économique par défaut ; faire
+  soi-même les petites modifications ; annoncer l'ampleur avant toute vague plus grosse.
+- Toute modification visible se vérifie en capture d'écran avant d'être déclarée finie.
+- Branche de travail : `feature/aaa-roadmap` (jamais `main`). Commit et push sur demande ou en fin
+  d'étape validée, format `{type} | {description}`.

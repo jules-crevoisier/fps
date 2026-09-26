@@ -509,15 +509,14 @@ static func duck_gain_db(elapsed: float, duration: float = SHOTS_DUCK_DURATION_S
 ## logique de la boucle d'ambiance ("" si l'identifiant est vide/inconnu —
 ## carte legacy sans catalogue, voir MainMenu.FALLBACK_SCENES : pas d'ambiance
 ## plutôt qu'un chargement qui échoue).
-## maps-spec-v2.md : cargo_ship/wasteland n'ont pas encore leur propre boucle
-## dédiée -> empruntent celle de la map v1 la plus proche en ambiance
-## (port_ferraille : quais/eau ; val_poussière : désert/soleil) le temps
-## qu'une boucle dédiée arrive. Ces deux id ne sont PAS dans `Layouts.MAP_IDS`
-## (données hors Layouts.gd, voir layouts/cargo_ship.gd, layouts/wasteland.gd)
-## donc testés AVANT le repli générique ci-dessous.
+## Shipment (carte courante, cour à conteneurs) n'a pas encore sa propre
+## boucle dédiée -> emprunte celle de la map v1 la plus proche en ambiance
+## (port_ferraille : quais/eau) le temps qu'une boucle dédiée arrive. Pas dans
+## `_V1_MAP_IDS` (données v1 encore présentes en assets, mais Layouts.gd
+## lui-même est supprimé, nettoyage du prototype 2026-09-26) donc testé AVANT
+## le repli générique ci-dessous.
 const _AMBIENCE_ALIASES := {
-	"cargo_ship": "ambience_port_ferraille",
-	"wasteland": "ambience_val_poussiere",
+	"shipment": "ambience_port_ferraille",
 }
 
 ## Six maps v1 "dessinées à la main" (ex-`Layouts.MAP_IDS` — le fichier

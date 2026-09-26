@@ -1,23 +1,22 @@
 ## MapCatalog.gd
-## Catalogue des maps (contract-r3.md, interface croisée "MapCatalog") : lu
-## par le menu (R3-UI) pour proposer un choix de carte, et par les tests.
+## Catalogue des maps : lu par les scripts de démarrage (QuickStart.gd) et par
+## les tests.
 ##
-## Nettoyage du prototype 2026-09-26 (« strip to minimal prototype »,
-## UX-37 : « on va garder qu'une seule map finie... pas besoin d'autres
-## map ») : les 7 autres cartes (Port-Ferraille, Val-Poussière, Saint-Ombre,
-## Col du Vautour, La Fosse, Le Belvédère, Cargo Ship) ont été supprimées
-## avec leurs scènes/layouts/tests — Wasteland est désormais la SEULE carte,
-## `all()`/`get_by_id()`/`default_for()` ne connaissent plus qu'elle.
+## Nettoyage du prototype 2026-09-26 (« clean absolument tout, repart sur de
+## bonnes bases ») : Wasteland (géométrie procédurale) est supprimée, remplacée
+## par Shipment (scenes/levels/maps/shipment.tscn) — une petite cour à
+## conteneurs, scène PLATE et éditable (voir MapSetup.gd). Shipment est la
+## SEULE carte : `all()`/`get_by_id()`/`default_for()` ne connaissent qu'elle.
 class_name MapCatalog
 extends RefCounted
 
 static func _full_list() -> Array[Dictionary]:
 	var list: Array[Dictionary] = []
 	list.append({
-		"id": "wasteland", "number": 1, "name": "Wasteland",
-		"description": "Relais pétrolier désertique, fin d'après-midi — asymétrique.",
-		"scene": "res://scenes/levels/maps/wasteland.tscn",
-		"modes": ["tdm"], "size": "4v4", "asymmetric": true,
+		"id": "shipment", "number": 1, "name": "Shipment",
+		"description": "Cour à conteneurs, combat rapproché — symétrique.",
+		"scene": "res://scenes/levels/maps/shipment.tscn",
+		"modes": ["tdm"], "size": "4v4", "asymmetric": false,
 	})
 	return list
 
@@ -30,10 +29,10 @@ static func get_by_id(id: String) -> Dictionary:
 			return m
 	return {}
 
-## Carte par défaut pour un mode donné — Wasteland si elle couvre `mode_id`,
+## Carte par défaut pour un mode donné — Shipment si elle couvre `mode_id`,
 ## sinon la première (et seule) carte du catalogue.
 static func default_for(mode_id: String) -> Dictionary:
-	var wasteland := get_by_id("wasteland")
-	if not wasteland.is_empty() and (wasteland["modes"] as Array).has(mode_id):
-		return wasteland
+	var shipment := get_by_id("shipment")
+	if not shipment.is_empty() and (shipment["modes"] as Array).has(mode_id):
+		return shipment
 	return _full_list()[0]

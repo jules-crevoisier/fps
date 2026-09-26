@@ -56,6 +56,6 @@ func test_map_palette_unknown_map_falls_back_to_default() -> void:
 func test_map_palette_shadow_tint_is_never_grey() -> void:
 	# Blue-violet family (design.md §4 "Shadows: ... never grey") -- the
 	# blue channel must clearly outweigh red and green for every map.
-	for id in ["wasteland", "cargo_ship", "port_ferraille", "val_poussiere", "saint_ombre", "col_du_vautour", "la_fosse", "le_belvedere"]:
+	for id in ["shipment", "cargo_ship", "port_ferraille", "val_poussiere", "saint_ombre", "col_du_vautour", "la_fosse", "le_belvedere"]:
 		var tint: Color = Cartoon.map_palette(id)["shadow_tint"]
 		assert_float(tint.b).is_greater(tint.r)

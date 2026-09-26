@@ -36,8 +36,8 @@ func after_test() -> void:
 # =========================================================== MatchConfig.resolve_scene
 
 func test_resolve_scene_uses_the_catalog_entry_for_a_known_map_id() -> void:
-	var expected: String = str(MapCatalog.get_by_id("wasteland").get("scene", ""))
-	assert_str(MatchConfig.resolve_scene("tdm", "wasteland")).is_equal(expected)
+	var expected: String = str(MapCatalog.get_by_id("shipment").get("scene", ""))
+	assert_str(MatchConfig.resolve_scene("tdm", "shipment")).is_equal(expected)
 
 
 func test_resolve_scene_falls_back_to_the_mode_default_when_map_id_is_empty() -> void:
@@ -53,15 +53,15 @@ func test_resolve_scene_falls_back_to_the_mode_default_when_map_id_is_unknown() 
 # ================================================ NetworkManager.build_accept_payload (serveur)
 
 func test_build_accept_payload_is_accepted_and_carries_the_servers_mode_and_map() -> void:
-	var reply := NetworkManager.build_accept_payload("tdm", "wasteland")
+	var reply := NetworkManager.build_accept_payload("tdm", "shipment")
 	assert_bool(reply["ok"]).is_true()
 	assert_str(reply["mode_id"]).is_equal("tdm")
-	assert_str(reply["map_id"]).is_equal("wasteland")
+	assert_str(reply["map_id"]).is_equal("shipment")
 
 
 func test_build_accept_payload_resolves_the_scene_for_the_given_map() -> void:
-	var reply := NetworkManager.build_accept_payload("tdm", "wasteland")
-	assert_str(reply["scene"]).is_equal(str(MapCatalog.get_by_id("wasteland").get("scene", "")))
+	var reply := NetworkManager.build_accept_payload("tdm", "shipment")
+	assert_str(reply["scene"]).is_equal(str(MapCatalog.get_by_id("shipment").get("scene", "")))
 
 
 func test_build_accept_payload_resolves_the_mode_default_scene_with_an_empty_map_id() -> void:
@@ -95,7 +95,7 @@ func test_parse_accept_payload_defaults_missing_fields_to_empty_strings() -> voi
 # ================================================ Sérialisation bout en bout (aller-retour JSON)
 
 func test_accept_payload_round_trips_through_json_unchanged() -> void:
-	var sent := NetworkManager.build_accept_payload("tdm", "wasteland")
+	var sent := NetworkManager.build_accept_payload("tdm", "shipment")
 	var wire: Variant = JSON.parse_string(JSON.stringify(sent))
 	var received := NetworkManager.parse_accept_payload(wire as Dictionary)
 	assert_str(received["mode_id"]).is_equal(sent["mode_id"])
@@ -127,7 +127,7 @@ func test_client_ends_up_with_the_hosts_map_after_it_had_chosen_a_different_one(
 	MatchConfig.map_id = "carte-locale-perimee"
 
 	# L'hôte joue en réalité sur Wasteland (la seule vraie carte du catalogue).
-	var host_reply := NetworkManager.build_accept_payload("tdm", "wasteland")
+	var host_reply := NetworkManager.build_accept_payload("tdm", "shipment")
 	var wire: Variant = JSON.parse_string(JSON.stringify(host_reply))
 	var config := NetworkManager.parse_accept_payload(wire as Dictionary)
 
@@ -137,6 +137,6 @@ func test_client_ends_up_with_the_hosts_map_after_it_had_chosen_a_different_one(
 
 	assert_str(MatchConfig.mode_id).is_equal("tdm")
 	assert_str(MatchConfig.map_id) \
-		.append_failure_message("le client devrait charger la carte de l'hôte (wasteland), pas sa propre sélection (carte-locale-perimee)") \
-		.is_equal("wasteland")
-	assert_str(str(config["scene"])).is_equal(str(MapCatalog.get_by_id("wasteland").get("scene", "")))
+		.append_failure_message("le client devrait charger la carte de l'hôte (shipment), pas sa propre sélection (carte-locale-perimee)") \
+		.is_equal("shipment")
+	assert_str(str(config["scene"])).is_equal(str(MapCatalog.get_by_id("shipment").get("scene", "")))

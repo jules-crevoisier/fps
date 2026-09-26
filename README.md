@@ -1,108 +1,106 @@
-# FPS — Cartoon Movement Shooter
+# FPS — prototype
 
-FPS cartoon dynamique fait sous **Godot 4.7** (Forward+, Jolt Physics, GDScript).
-Le cœur du projet est un système de mouvement **ultra fluide** : air-strafe façon
-Source, slide avec momentum, et **slide cancel** pour enchaîner la vitesse.
+Prototype de FPS en ligne (Godot 4.7, GDScript), style cel-shading peint. Le jeu
+démarre directement en partie locale : Team Deathmatch sur la carte **Shipment**
+(cour à conteneurs), joueur + 3 bots alliés contre 4 bots ennemis (difficulté
+Vétéran). Un seul agent jouable (Verrou), une seule arme (Ravage). Pas de menu,
+pas de boutique, pas de capacités — juste le mouvement, le tir et les bots.
 
-## Lancer le projet
+## Lancer le jeu
 
-1. Ouvrir le dossier dans Godot 4.7.
-2. Appuyer sur **F5** → le **menu principal** s'ouvre (`scenes/ui/main_menu.tscn`).
-3. **Héberger** (1v1/2v2) ou **Rejoindre** une IP, ou **Terrain d'entraînement**
-   pour tester le mouvement en solo.
+1. Ouvrir le dossier du projet dans Godot 4.7 (`C:\Users\srko\Desktop\Godot_v4.7-stable_win64.exe`),
+   ou double-cliquer `project.godot`.
+2. Appuyer sur **F5**. La partie s'héberge et démarre toute seule
+   (`scenes/boot.tscn` → `scripts/core/QuickStart.gd`).
+3. **Échap** quitte le jeu.
 
-### Tester le multijoueur à 2 fenêtres
-**Debug → Run Multiple Instances → Run 2 Instances**, puis **F5**. Fenêtre 1 :
-*Héberger*. Fenêtre 2 : *Rejoindre* (`127.0.0.1`). Détails et netcode :
-[`docs/MULTIPLAYER.md`](docs/MULTIPLAYER.md).
+Pour tester le réseau à deux fenêtres : **Debug → Run Multiple Instances → Run 2
+Instances**, puis **F5** dans chacune (la première héberge, la seconde rejoint
+en LAN).
 
 ## Contrôles
 
-| Action   | Clavier (position physique → ZQSD sur AZERTY) | Manette |
-|----------|-----------------------------------------------|---------|
-| Déplacement       | W / A / S / D | Stick gauche |
-| Sauter            | Espace | A |
-| Marche lente (sinon **sprint auto**) | Shift (maintenu) | L3 |
-| Accroupi / Slide  | Ctrl (maintien) | B |
-| Dive / Landing-roll | V | LB |
-| Tirer / ADS       | Clic G / Clic D | RT / LT |
-| Recharger         | R | X |
-| Pause             | Échap | Start |
+| Action | Clavier (ZQSD/AZERTY → WASD/QWERTY) | Manette |
+|---|---|---|
+| Déplacement | Z/Q/S/D (W/A/S/D) | Stick gauche |
+| Regarder | Souris | Stick droit |
+| Sauter | Espace | A |
+| Marcher (sinon sprint auto) | Maintenir Shift | L3 |
+| Accroupi / Glissade (slide) | Maintenir Ctrl | B |
+| Plongeon (dive) + roulade au sol | V | LB |
+| Tirer / Viser (ADS) | Clic gauche / Clic droit | RT / LT |
+| Recharger | R | X |
+| Quitter | Échap | Start |
 
-Clavier + manette entièrement **remappables** dans Options, libellés adaptés à la
-disposition système. Détails : [`docs/CONTROLS.md`](docs/CONTROLS.md).
+Le mouvement est hybride : sprint automatique, glissade qui accélère en pente,
+slide-cancel pour garder l'élan, air-strafe façon CS/Valorant, et un plongeon
+suivi d'une roulade de réception (annule l'étourdissement de chute si le timing
+est bon).
 
-Mouvement hybride **MW2019 (sol) + CS/Valorant (air)** :
-- **Sprint automatique** : tu cours à fond dès que tu bouges ; Shift pour marcher.
-- **Crouch en maintien** : tenir Ctrl = accroupi, relâcher = debout.
-- **Slide** : tap Ctrl en courant → glissade qui accélère en descente. Relâcher
-  Ctrl = **slide-cancel** (garde l'élan). Avec **slide-jump** et **slide-hop**.
-- **Air-strafe CS** : tourner la souris en strafant gagne de la vitesse ;
-  un contrôle direct permet de freiner / réorienter dans toutes les directions.
-- **Dolphin dive** (V) : plongée plus haute et plus longue qu'un saut sprint,
-  suivie d'une roulade (galipette caméra).
-- **Stun de chute cartoon** : une grosse chute t'étourdit (étoiles ★ qui tournent),
-  durée selon la hauteur — **annulable** en faisant une roulade au bon timing (V).
+## Lancer les tests
 
-Référence complète de toutes les mécaniques et de leurs réglages :
-[`docs/MOVEMENT.md`](docs/MOVEMENT.md).
-
-## Architecture
+Suite gdUnit4 (headless) :
 
 ```
-fps/
-├── project.godot          # Input map, autoload réseau, scène principale
-├── scenes/
-│   ├── player/            # player.tscn (CharacterBody3D + state machine + étoiles de stun)
-│   ├── levels/            # test_arena.tscn (parcours de test généré par code)
-│   ├── ui/                # HUD, menus (à venir)
-│   └── weapons/           # armes (à venir)
-├── scripts/
-│   ├── core/              # systèmes transverses
-│   ├── movement/          # MovementConfig.gd (tous les réglages, .tres tunables)
-│   ├── player/            # PlayerController.gd, PlayerCamera.gd, StunStars.gd
-│   │   └── states/        # Idle/Walk/Sprint/Crouch/Air/Slide/Dive/Roll/Stun
-│   ├── levels/            # ArenaBuilder.gd (parcours), JumpPad.gd
-│   ├── networking/        # NetworkManager (autoload "Net"), GameWorld
-│   ├── weapons/           # logique d'armes (à venir)
-│   └── ui/                # SpeedHUD.gd (vitesse + état à l'écran)
-├── resources/
-│   └── movement/          # default_movement.tres + variantes de feel
-├── assets/                # audio, models, textures, materials, shaders, fonts
-└── docs/                  # MOVEMENT.md (détail du système + tuning)
+"C:\Users\srko\Desktop\Godot_v4.7-stable_win64.exe" --headless --path . --import
+bash tools/test.sh
 ```
 
-## Tuning du mouvement
+`tools/test.sh` lance d'abord le garde-fou de licence des assets 3D
+(`tools/ai3d/licence_check.py`), puis toute la suite sous `res://tests`. Pour ne
+lancer qu'un dossier : `GODOT_BIN=<chemin> tools/test.sh res://tests/ai`.
 
-Tout se règle sans toucher au code via la ressource
-`resources/movement/default_movement.tres` (inspector). Voir
-[`docs/MOVEMENT.md`](docs/MOVEMENT.md) pour le détail de chaque paramètre.
+La CI (`.github/workflows/ci.yml`) enchaîne : import, suite gdUnit4, sonde de
+gameplay headless (`tools/review/gameplay_probe.gd` + `tools/review/report.py`),
+export Windows/Linux/serveur, puis build + healthcheck de l'image Docker.
 
-## Multijoueur
+## Importer un modèle Tripo
 
-Base posée avec l'API multijoueur haut-niveau de Godot (ENet) :
-`Net.host()` / `Net.join(ip)`. Le `MultiplayerSpawner` réplique les joueurs ;
-l'autorité de chaque perso est donnée à son pair propriétaire.
+1. **Réception automatique** (Tripo Studio → Blender) : lancer Blender avec le
+   watcher du DCC Bridge —
 
-## Roadmap
+   ```
+   "C:\Program Files\Blender Foundation\Blender 5.2\blender.exe" --factory-startup \
+       --python tools/ai3d/bridge_autoexport.py
+   ```
 
-Plan complet vers un jeu en ligne publiable (phases, chiffres cibles, stack,
-sources) : [`docs/ROADMAP.md`](docs/ROADMAP.md). Historique du prototype :
+   Dans Tripo Studio, *Exporter → Envoyer à Blender* : chaque modèle envoyé est
+   récupéré automatiquement dans `assets/incoming/tripo/studio/<nom>.glb`
+   (journal : `assets/incoming/tripo/studio/_bridge_log.txt`). L'extension
+   « Tripo Bridge » doit être installée une fois dans le dossier d'extensions
+   utilisateur de Blender 5.2.
 
-- [x] Système de mouvement complet (sol MW2019, air CS, slide, dive/roll, stun)
-- [x] Arène de test + HUD vitesse/état + respawn à la chute
-- [x] Menu host/join + map 1v1/2v2 (goulag) + spawns par équipe
-- [x] Vie serveur-autoritaire + zones dégâts/soin + mort/respawn + HUD
-- [x] Tir hitscan validé serveur (type BO2 : falloff, headshot, munitions)
-- [x] Système d'armes complet (types, recul, ADS/lunette, inventaire 2 slots, buy menu) — voir [`docs/WEAPONS.md`](docs/WEAPONS.md)
-- [x] Drop/pickup physique + chiffres de dégâts + mannequins d'entraînement
-- [x] Options complètes (rebind clavier/manette, AZERTY/QWERTY, navigation pad)
-- [x] Classes / agents + capacités (hero-shooter) — voir [`docs/AGENTS.md`](docs/AGENTS.md)
-- [x] Map compétitive + écran de sélection d'agent (style Valo)
-- [x] Modes **Hardpoint** + **Team Deathmatch** (choix au menu) — voir [`docs/MODES.md`](docs/MODES.md)
-- [x] Boucle de match : killfeed, scoreboard (Tab), kills/morts, écran de fin + rejouer
-- [ ] Lisibilité multi (couleurs d'équipe, plaques de nom, hitmarkers)
-- [ ] Économie + rounds · Mode SnD
-- [ ] Prédiction client + lag compensation (netcode compétitif)
-- [ ] Modèles 3D armes/persos + animations
-- [ ] Style visuel cartoon (toon shader, outline)
+2. **Import « peinture conservée »** (garde la texture peinte, redimensionne à
+   une hauteur cible, respecte un budget de triangles) :
+
+   ```
+   "C:\Program Files\Blender Foundation\Blender 5.2\blender.exe" -b --factory-startup \
+       --python-exit-code 1 -P tools/blender/ai_import_painted.py -- \
+       --in assets/incoming/tripo/studio/<nom>.glb --height-m 2.0 \
+       --budget-tris 6000 --texture-size 2048 \
+       --out assets/models/props/<nom>.glb
+   ```
+
+3. **Traçabilité de licence** : tout fichier sous `assets/models/**` doit avoir
+   soit une ligne dans `THIRD_PARTY_LICENSES.md`, soit un
+   `<nom_du_fichier>.provenance.json` à côté (voir ce fichier pour le format).
+   Sans l'un des deux, `tools/ai3d/licence_check.py` (et donc `tools/test.sh`)
+   échoue.
+
+## Repère du dépôt
+
+- `scenes/`, `scripts/` — le jeu : `scripts/core` (boot, réglages, style),
+  `scripts/player`/`movement` (déplacement + arme vue-première-personne),
+  `scripts/networking` (autorité serveur, spawns, sync), `scripts/modes`
+  (Team Deathmatch), `scripts/ai` (bots), `scripts/levels/maps` (carte
+  Shipment : `MapSetup.gd` bake juste la navmesh + instancie le mode ; la
+  géométrie elle-même vit dans `scenes/levels/maps/shipment.tscn`, une scène
+  normale éditable dans Godot).
+- `assets/` — modèles, textures, shaders, audio, polices livrés avec le jeu.
+- `resources/` — ressources `.tres` (armes, agents, mouvement, entrées, UI).
+- `tests/` — suite gdUnit4 (`tests/<domaine>/test_*.gd`).
+- `tools/ai3d/`, `tools/blender/` — import de modèles Tripo (voir ci-dessus) et
+  garde-fou de licence.
+- `tools/review/` — sonde de gameplay headless utilisée par la CI.
+- `addons/gdUnit4/` — framework de test.
+- `Dockerfile`, `docker-compose.yml` — image du serveur dédié (Dokploy).
