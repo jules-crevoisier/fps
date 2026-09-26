@@ -13,6 +13,9 @@ extends Node
 func _ready() -> void:
 	Settings.load_all()
 	MatchConfig.set_mode("tdm")
+	# 1v1 (demande utilisateur 2026-09-26) : le joueur contre un seul bot.
+	# `set_mode` remet team_size à la taille du mode : on le fixe APRÈS.
+	MatchConfig.team_size = 1
 	MatchConfig.map_id = "shipment"
 	MatchConfig.bots_enabled = true
 	MatchConfig.bot_difficulty = MatchConfig.Difficulty.VETERAN
