@@ -1,20 +1,13 @@
 ## WeaponDatabase.gd
-## Catalogue de toutes les armes du jeu (classe statique). Sert au catalogue du
-## menu, à la boutique (plus tard) et au loadout par défaut.
+## Catalogue des armes du jeu (classe statique). Prototype à une seule arme
+## (décision 2026-09-26) : le Ravage est la SEULE entrée — tout joueur/bot
+## spawn avec elle, aucune vente/achat/ramassage d'une autre arme n'est
+## possible puisqu'aucune autre n'existe plus dans ce catalogue.
 class_name WeaponDatabase
 extends RefCounted
 
 const PATHS := [
-	"res://resources/weapons/pistolet.tres",
-	"res://resources/weapons/magnum.tres",
-	"res://resources/weapons/rafale.tres",
-	"res://resources/weapons/marqueur.tres",
 	"res://resources/weapons/ravage.tres",
-	"res://resources/weapons/fracas.tres",
-	"res://resources/weapons/faucheur.tres",
-	"res://resources/weapons/eclair.tres",
-	"res://resources/weapons/semeuse.tres",
-	"res://resources/weapons/percuteur.tres",
 ]
 
 static var _cache: Array = []
@@ -46,13 +39,12 @@ static func id_of(c: WeaponConfig) -> int:
 		return -1
 	return all().find(c)
 
-## IDs du loadout de départ (sidearm + fusil), pour l'inventaire serveur.
+## IDs du loadout de départ — le Ravage seul (prototype à une arme).
 static func default_loadout_ids() -> Array[int]:
 	var ids: Array[int] = []
-	for n in ["Ravage", "Pistolet"]:
-		var w := get_by_name(n)
-		if w:
-			ids.append(id_of(w))
+	var w := get_by_name("Ravage")
+	if w:
+		ids.append(id_of(w))
 	return ids
 
 static func type_name(t: int) -> String:

@@ -28,7 +28,6 @@ extends Node3D
 ## tools/bot_smoke.gd (mien) l'activent explicitement.
 @export var allow_bot_fill: bool = false
 
-const AGENT_SELECT := preload("res://scripts/ui/AgentSelectScreen.gd")
 const BOT_NAV := preload("res://scripts/ai/BotNavMesh.gd")
 
 ## Courts prénoms français pour les bots ("BOT <nom>" — contract-r3.md).
@@ -134,19 +133,15 @@ var _round_index: int = 0
 ## joueur — sert au champ `time_since_spawn` d'un `kill` (indicateur "morts
 ## < 3 s après un spawn", docs/research/05_fun_retention.md §3.3).
 var _spawn_time: Dictionary = {}
-## Dernier tir confirmé (headshot ou non) par id de TIREUR, et dernière
-## capacité activée par id de JOUEUR — alimentés par `_on_own_hit_confirmed`/
-## `_on_own_ability_used` (écoute des signaux PUBLICS Weapon.hit_confirmed /
-## AbilityController.ability_used sur l'entité qu'un pair simule lui-même :
-## voir `_on_player_node_spawned`) ou reportés au serveur par
-## `_report_headshot`/`_report_ability_used` quand ce pair n'est pas le
-## serveur. Fenêtre de fraîcheur courte : un headshot/une capacité trop
-## ancien(ne) au moment du kill n'est plus attribué(e) (évite d'attribuer à
-## tort un vieux tir/une vieille capacité à un kill sans rapport).
+## Dernier tir confirmé (headshot ou non) par id de TIREUR — alimenté par
+## `_on_own_hit_confirmed` (écoute du signal PUBLIC Weapon.hit_confirmed sur
+## l'entité qu'un pair simule lui-même : voir `_on_player_node_spawned`) ou
+## reporté au serveur par `_report_headshot` quand ce pair n'est pas le
+## serveur. Fenêtre de fraîcheur courte : un headshot trop ancien au moment
+## du kill n'est plus attribué (évite d'attribuer à tort un vieux tir à un
+## kill sans rapport).
 var _last_headshot: Dictionary = {}
-var _last_ability: Dictionary = {}
 const _HEADSHOT_FRESHNESS_S := 2.0
-const _ABILITY_FRESHNESS_S := 5.0
 ## id d'expéditeur -> Array[float] (horodatages Unix de ses derniers pings
 ## ENVOYÉS, encore dans la fenêtre glissante -- UX-10, « au plus 3 pings par
 ## 5 s et par joueur »). Voir section « SYSTÈME DE PING » plus bas.
@@ -215,49 +210,13 @@ func _ready() -> void:
 		call_deferred("_fill_bots_if_needed")
 		return
 
-	if agent_select:
-		_open_agent_select()
-	else:
-		_spawn_local()
-
-func _open_agent_select() -> void:
-	var screen := AGENT_SELECT.new()
-	_agent_select_screen = screen
-	add_child(screen)
-	# UX-11 : chaque changement de survol non verrouillé est diffusé à
-	# l'équipe (≤ 200 ms, RPC fiable directe — même mécanisme que
-	# `_sync_stats`/`_killfeed` déjà utilisés côté serveur->clients ici).
-	screen.agent_picked.connect(_on_local_agent_picked)
-	screen.locked.connect(func():
-		# Annonce le verrouillage AVANT `_spawn_local()` : les deux RPC
-		# (verrouillage puis demande de spawn) partent sur le même canal
-		# fiable, donc dans cet ordre côté serveur (voir `resolve_final_agent_index`,
-		# qui a besoin du verrouillage déjà appliqué au moment du spawn).
-		_on_local_agent_locked()
-		if is_instance_valid(screen):
-			screen.queue_free()
-		_agent_select_screen = null
-		# UX-11 : "à l'ouverture, le dernier agent joué est survolé" — le choix
-		# VERROUILLÉ par ce joueur (jamais un survol non confirmé) devient sa
-		# présélection persistante pour la prochaine ouverture de cet écran.
-		AgentDatabase.record_played(AgentDatabase.selected_index)
-		# Action LOCALE au pair (pas un état de match autoritaire) : écrite
-		# directement, sans passer par le serveur (Telemetry.GAME_EVENTS ne
-		# la liste pas — voir sa doc d'en-tête).
-		Telemetry.record(Telemetry.EVENT_AGENT_SELECTED, {
-			"player_id": multiplayer.get_unique_id(),
-			"agent_id": AgentDatabase.selected().agent_name,
-		}, _match_id, false)
-		_spawn_local())
-	var id := multiplayer.get_unique_id()
-	if multiplayer.is_server():
-		# L'hôte est simulé côté serveur (architecture) : appel direct au lieu
-		# d'un RPC à soi-même pour rejoindre la sélection d'équipe.
-		var team := assign_agent_select_team(id)
-		record_agent_pick(id, AgentDatabase.selected_index, false)
-		_broadcast_agent_picks(team)
-	else:
-		_server_join_agent_select.rpc_id(1, AgentDatabase.selected_index)
+	# Prototype à un seul agent (décision 2026-09-26, "strip to minimal
+	# prototype") : plus d'écran de sélection d'agent (AgentSelectScreen,
+	# supprimé avec le reste de l'interface) — spawn direct, toujours avec
+	# AgentDatabase.selected_index (figé à 0, l'unique agent Verrou). `agent_select`
+	# reste un export inerte (compatibilité des scènes existantes qui le
+	# positionnent encore) : sa valeur n'est plus lue ici.
+	_spawn_local()
 
 func _spawn_local() -> void:
 	if multiplayer.is_server():
@@ -467,18 +426,6 @@ func _apply_remote_agent_pick(id: int, agent_index: int, locked: bool) -> void:
 	elif locked:
 		_notify_pick_rejected(id, clampi(agent_index, 0, AgentDatabase.all().size() - 1))
 
-func _on_local_agent_picked(index: int) -> void:
-	if multiplayer.is_server():
-		_apply_remote_agent_pick(multiplayer.get_unique_id(), index, false)
-	else:
-		_server_agent_pick.rpc_id(1, index, false)
-
-func _on_local_agent_locked() -> void:
-	if multiplayer.is_server():
-		_apply_remote_agent_pick(multiplayer.get_unique_id(), AgentDatabase.selected_index, true)
-	else:
-		_server_agent_pick.rpc_id(1, AgentDatabase.selected_index, true)
-
 ## Le client annonce qu'il rejoint la sélection d'agent, avec sa présélection
 ## COURANTE (dernier agent joué, voir AgentSelectScreen._ready) : le serveur
 ## lui assigne une équipe et diffuse l'état à ses coéquipiers.
@@ -631,34 +578,14 @@ func _on_player_died(killer_id: int, player: Node) -> void:
 	if weapon and weapon.has_method("server_refill_ammo"):
 		weapon.server_refill_ammo()
 
-## Économie d'ultime (§3.4, docs/research/10_ammo_kits_input.md, AGT-02) --
-## l'ancienne économie (0,05 pt/dégât + 2 pts/kill, soit ~7 pts pour un kill à
-## 100 dégâts) rechargeait l'ultime en un seul kill, pour un coût de 7 à 9.
-## Ramenée à 0,01 pt/dégât + 1 pt/kill : un kill à 100 dégâts vaut 2 pts, un
-## ultime à coût 8 se charge en ≈ 3 à 4 kills (voir les tests dédiés de
-## test_ability_state.gd, qui référencent ces constantes).
-const ULT_DAMAGE_RATE := 0.01
-const ULT_KILL_POINTS := 1.0
-## Litige (SnD)/Duel-Duo (mode à manches) : le gain continu
-## (`AbilityState.ult_charge_rate`) est nul (coupé par
-## `AbilityController._sync_ult_charge_rate`) et remplacé par ce bonus fixe à
-## la pose ou au désamorçage (§3.4). Appelé par `SnDMode._do_plant`/`_do_defuse`
-## (scripts/modes/SnDMode.gd) via `charge_ult_for_objective` ci-dessous.
-const ULT_OBJECTIVE_POINTS := 1.0
-
-## Charge l'ultime de l'ATTAQUANT à chaque dégât infligé (ULT_DAMAGE_RATE pt
-## / dégât), en plus du bonus fixe sur kill (_record_kill). Alimente aussi
-## l'AssistTracker PARTAGÉ à CHAQUE dégât serveur, quel que soit l'attaquant
-## (dégât d'environnement/de soi-même compris -- `record_damage` les ignore
-## lui-même, voir sa doc) : une mort ferme cette fenêtre plus bas
+## Alimente l'AssistTracker PARTAGÉ à CHAQUE dégât serveur, quel que soit
+## l'attaquant (dégât d'environnement/de soi-même compris -- `record_damage`
+## les ignore lui-même, voir sa doc) : une mort ferme cette fenêtre plus bas
 ## (`_record_kill`).
 func _on_player_damaged(amount: float, attacker_id: int, victim_id: int) -> void:
 	if not multiplayer.is_server():
 		return
 	_assists.record_damage(victim_id, attacker_id, amount, Time.get_unix_time_from_system())
-	if attacker_id <= 0:
-		return
-	_charge_ult(attacker_id, amount * ULT_DAMAGE_RATE)
 
 # ---- Kills / stats / killfeed (serveur) ----
 func _record_kill(killer_id: int, victim_id: int) -> void:
@@ -669,68 +596,19 @@ func _record_kill(killer_id: int, victim_id: int) -> void:
 	if killer_id > 0 and killer_id != victim_id and player_info.has(killer_id):
 		player_info[killer_id].kills += 1
 		kteam = int(player_info[killer_id].team)
-		_charge_ult(killer_id, ULT_KILL_POINTS)
-		# Passif du TUEUR (AGT-01 socle commun, §3.5 -- ex. Mèche courte de
-		# Vif) : câblage laissé prêt par AGT-01, appelé ici.
-		_notify_on_kill(killer_id, victim_id)
-	# AssistTracker : ferme la fenêtre d'assistance de la victime dans TOUS
-	# les cas (mort environnementale/de soi-même comprise -- voir la doc de
-	# `assists_for_kill`), puis notifie le passif de chaque assistant retenu
-	# (>= 40 dégâts cumulés dans les 5 s précédentes, tueur exclu).
-	for assister_id in _assists.assists_for_kill(victim_id, killer_id, Time.get_unix_time_from_system()):
-		_notify_on_assist(assister_id, victim_id)
 	# Le mode peut réagir (TDM : kill = point d'équipe).
 	var mode := get_tree().get_first_node_in_group("game_mode")
 	if mode and mode.has_method("on_kill"):
 		mode.on_kill(killer_id, victim_id, kteam, vteam)
-	# Killfeed — arme/capacité ET headshot pour TOUT kill (relance QA UX-01,
-	# bot contre bot compris) : mêmes résolveurs que `_log_kill_event`
-	# ci-dessous (télémétrie), jamais une seconde logique qui pourrait diverger.
+	# Killfeed — arme ET headshot pour TOUT kill (relance QA UX-01, bot contre
+	# bot compris) : mêmes résolveurs que `_log_kill_event` ci-dessous
+	# (télémétrie), jamais une seconde logique qui pourrait diverger.
 	var kname: String = player_info[killer_id].name if (killer_id > 0 and player_info.has(killer_id)) else "Environnement"
 	var vname: String = player_info[victim_id].name if player_info.has(victim_id) else "?"
-	var active_ability := _fresh_active_ability(killer_id)
-	var weapon_or_ability := active_ability if active_ability != "" else _kill_weapon_name(killer_id)
+	var weapon_or_ability := _kill_weapon_name(killer_id)
 	_killfeed.rpc(kname, vname, kteam, weapon_or_ability, _fresh_headshot(killer_id))
 	_sync_stats.rpc(player_info)
 	_log_kill_event(killer_id, victim_id, kteam, vteam)
-
-## Nœud AbilityController ("Abilities") de `player_id`, ou `null` si le
-## joueur est absent/déconnecté -- chemin partagé par `_charge_ult` et les
-## hooks passif ci-dessous.
-func _abilities_of(player_id: int) -> Node:
-	var pnode := get_node(players_root).get_node_or_null(str(player_id))
-	return pnode.get_node_or_null("Abilities") if pnode else null
-
-func _charge_ult(player_id: int, points: float = ULT_KILL_POINTS) -> void:
-	var ab := _abilities_of(player_id)
-	# Appel DIRECT (pas de RPC) : on est déjà côté serveur, et
-	# AbilityController.server_add_ult pousse lui-même la correction au
-	# propriétaire une fois l'état autoritaire mis à jour.
-	if ab and ab.has_method("server_add_ult"):
-		ab.server_add_ult(points)
-
-## Point d'entrée POSE/DÉSAMORÇAGE (Litige/SnD, §3.4) : +1 pt d'ultime pour
-## `player_id`. Voir la doc de ULT_OBJECTIVE_POINTS ci-dessus. Appelé par
-## `SnDMode._do_plant`/`_do_defuse` via son propre relais `_charge_ult_for_objective`
-## (groupe "match", `has_method` -- SnDMode.gd n'a jamais de dépendance dure
-## sur ce script).
-func charge_ult_for_objective(player_id: int) -> void:
-	_charge_ult(player_id, ULT_OBJECTIVE_POINTS)
-
-## Notifie le passif du TUEUR (AbilityController.server_on_kill, AGT-01, §3.5)
-## -- ex. Mèche courte de Vif (+1 charge de Ruée). Sans effet si l'agent n'a
-## pas de passif ou si `killer_id` est introuvable (server_on_kill se garde
-## lui-même côté serveur).
-func _notify_on_kill(killer_id: int, victim_id: int) -> void:
-	var ab := _abilities_of(killer_id)
-	if ab and ab.has_method("server_on_kill"):
-		ab.server_on_kill(victim_id)
-
-## Idem pour chaque ASSISTANCE (AbilityController.server_on_assist, AGT-01).
-func _notify_on_assist(assister_id: int, victim_id: int) -> void:
-	var ab := _abilities_of(assister_id)
-	if ab and ab.has_method("server_on_assist"):
-		ab.server_on_assist(victim_id)
 
 @rpc("authority", "call_local", "reliable")
 func _sync_stats(data: Dictionary) -> void:
@@ -1544,25 +1422,15 @@ func _fresh_headshot(killer_id: int) -> bool:
 		return bool(_last_headshot[killer_id].headshot)
 	return false
 
-## Dernière capacité ACTIVÉE par le TIREUR encore FRAÎCHE (voir `_last_ability`/
-## `_ABILITY_FRESHNESS_S`) — "" au-delà de la fenêtre ou si inconnue, jamais
-## une donnée inventée. Partagé par le killfeed ET la télémétrie.
-func _fresh_active_ability(killer_id: int) -> String:
-	var now := Time.get_unix_time_from_system()
-	if _last_ability.has(killer_id) and now - float(_last_ability[killer_id].t) <= _ABILITY_FRESHNESS_S:
-		return String(_last_ability[killer_id].name)
-	return ""
-
 ## Construit et écrit l'événement `kill` — appelée uniquement depuis
 ## `_record_kill`, déjà exécutée seulement côté serveur. `weapon`/
 ## `movement_state` : lus depuis les nœuds/API PUBLICS du tueur au moment du
 ## kill (Weapon.cfg(), PlayerController.anim_state décodé par
 ## CharacterAnimator.unpack_locomotion), sans dépendre d'aucun fichier hors
-## du périmètre de cette tâche. `headshot`/`active_ability` : voir
-## `_fresh_headshot`/`_fresh_active_ability` ci-dessus (mêmes résolveurs que le
-## killfeed) — au-delà de leur fenêtre de fraîcheur, valeur par défaut
-## `false`/"" (un kill SANS tir/capacité récent connu, jamais une donnée
-## inventée).
+## du périmètre de cette tâche. `headshot` : voir `_fresh_headshot`
+## ci-dessus (même résolveur que le killfeed) — au-delà de sa fenêtre de
+## fraîcheur, valeur par défaut `false` (un kill SANS tir récent connu,
+## jamais une donnée inventée).
 func _log_kill_event(killer_id: int, victim_id: int, kteam: int, vteam: int) -> void:
 	var players := get_node(players_root)
 	var victim_node := players.get_node_or_null(str(victim_id))
@@ -1580,14 +1448,17 @@ func _log_kill_event(killer_id: int, victim_id: int, kteam: int, vteam: int) -> 
 				movement_state = names[loco]
 	var now := Time.get_unix_time_from_system()
 	var headshot := _fresh_headshot(killer_id)
-	var active_ability := _fresh_active_ability(killer_id)
 	var spawned_at: float = _spawn_time.get(victim_id, now)
 	Telemetry.record(Telemetry.EVENT_KILL, {
 		"killer_id": killer_id, "victim_id": victim_id,
 		"killer_team": kteam, "victim_team": vteam,
 		"killer_pos": _vec_to_array(killer_pos), "victim_pos": _vec_to_array(victim_pos),
 		"weapon": weapon_name, "distance": killer_pos.distance_to(victim_pos),
-		"movement_state": movement_state, "active_ability": active_ability,
+		"movement_state": movement_state,
+		# "" : prototype à interface minimale (2026-09-26) -- plus aucune
+		# capacité ne peut être active (Telemetry._REQUIRED_FIELDS["kill"]
+		# garde ce champ dans son schéma versionné, contrat inchangé ici).
+		"active_ability": "",
 		"headshot": headshot, "time_since_spawn": now - spawned_at,
 	}, _match_id, true)
 
@@ -1630,9 +1501,6 @@ func _on_player_node_spawned(node: Node) -> void:
 	var weapon := node.get_node_or_null("Weapon")
 	if weapon and weapon.has_signal("hit_confirmed"):
 		weapon.hit_confirmed.connect(_on_own_hit_confirmed.bind(id))
-	var abilities := node.get_node_or_null("Abilities")
-	if abilities and abilities.has_signal("ability_used"):
-		abilities.ability_used.connect(_on_own_ability_used.bind(id))
 
 func _on_own_hit_confirmed(_pos: Vector3, _dmg: float, headshot: bool, _is_kill: bool, shooter_id: int) -> void:
 	_store_headshot(shooter_id, headshot)
@@ -1651,29 +1519,6 @@ func _store_headshot(shooter_id: int, headshot: bool) -> void:
 func _report_headshot(headshot: bool) -> void:
 	if multiplayer.is_server():
 		_store_headshot(multiplayer.get_remote_sender_id(), headshot)
-
-## Événement `ability_used` (capacité) — écrit LOCALEMENT par le pair qui
-## simule l'entité (hors `Telemetry.GAME_EVENTS` : action propre à un joueur,
-## pas un état de match autoritaire), et mis en cache pour la corrélation
-## avec un `kill` à venir (`_last_ability`, voir `_log_kill_event`).
-func _on_own_ability_used(_slot: String, ability_name: String, player_id: int) -> void:
-	_store_ability(player_id, ability_name)
-	Telemetry.record(Telemetry.EVENT_ABILITY_USED, {
-		"player_id": player_id, "ability_id": ability_name,
-	}, _match_id, false)
-	if not multiplayer.is_server():
-		_report_ability_used.rpc_id(1, ability_name)
-
-func _store_ability(player_id: int, ability_name: String) -> void:
-	_last_ability[player_id] = {"name": ability_name, "t": Time.get_unix_time_from_system()}
-
-## Corrèle la capacité récente d'un pair non-serveur (déjà écrite dans SON
-## PROPRE journal par `_on_own_ability_used`) — ne réémet PAS l'événement
-## côté serveur, seulement le cache utilisé par `_log_kill_event`.
-@rpc("any_peer", "call_remote", "reliable")
-func _report_ability_used(ability_name: String) -> void:
-	if multiplayer.is_server():
-		_store_ability(multiplayer.get_remote_sender_id(), ability_name)
 
 # ======================================================================
 #  SYSTÈME DE PING (UX-10, docs/research/04_ui_ux.md §2.8/§4 tâche UX-10) --

@@ -1,16 +1,12 @@
 ## test_weapon_database.gd
 ## Spec (contract-p0.md, WeaponDatabase "add"): get_by_id / id_of / default_loadout_ids.
-## IDs are the index in WeaponDatabase.PATHS (append-only order):
-## 0 Pistolet, 1 Magnum, 2 Rafale, 3 Marqueur, 4 Ravage, 5 Fracas, 6 Faucheur.
+## Prototype à une seule arme (décision 2026-09-26) : id 0 = Ravage, seule
+## entrée de WeaponDatabase.PATHS.
 extends GdUnitTestSuite
 
 
 func test_get_by_id_returns_matching_weapon_config() -> void:
-	var pistolet := WeaponDatabase.get_by_id(0)
-	assert_object(pistolet).is_not_null()
-	assert_str(pistolet.weapon_name).is_equal("Pistolet")
-
-	var ravage := WeaponDatabase.get_by_id(4)
+	var ravage := WeaponDatabase.get_by_id(0)
 	assert_object(ravage).is_not_null()
 	assert_str(ravage.weapon_name).is_equal("Ravage")
 
@@ -38,9 +34,7 @@ func test_id_of_unknown_config_returns_negative_one() -> void:
 	assert_int(WeaponDatabase.id_of(unknown)).is_equal(-1)
 
 
-func test_default_loadout_ids_contains_ravage_and_pistolet() -> void:
+func test_default_loadout_ids_contains_only_ravage() -> void:
 	var ravage_id := WeaponDatabase.id_of(WeaponDatabase.get_by_name("Ravage"))
-	var pistolet_id := WeaponDatabase.id_of(WeaponDatabase.get_by_name("Pistolet"))
-
 	var ids := WeaponDatabase.default_loadout_ids()
-	assert_array(ids).contains([ravage_id, pistolet_id])
+	assert_array(ids).is_equal([ravage_id])

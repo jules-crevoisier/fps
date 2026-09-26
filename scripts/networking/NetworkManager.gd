@@ -36,7 +36,12 @@ signal match_config_received(mode_id: String, map_id: String, scene: String)
 const DEFAULT_PORT: int = 7777
 const DEFAULT_IP: String = "127.0.0.1"
 const MAX_PLAYERS: int = 16
-const MAIN_MENU := "res://scenes/ui/main_menu.tscn"
+## Prototype à interface minimale (2026-09-26) : plus de menu principal — un
+## pair qui perd sa connexion (hôte disparu, authentification refusée)
+## retombe sur la scène de boot (scenes/boot.tscn, QuickStart.gd), qui
+## relance directement une partie locale, au lieu d'un écran de menu qui
+## n'existe plus.
+const MAIN_MENU := "res://scenes/boot.tscn"
 ## Motif de refus par défaut quand le serveur n'a pas pu (dé)coder de raison
 ## explicite (ne devrait arriver que sur un paquet corrompu/tronqué).
 const DEFAULT_REJECT_REASON := "Connexion refusée par le serveur."

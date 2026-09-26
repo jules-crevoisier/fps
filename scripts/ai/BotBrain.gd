@@ -54,7 +54,6 @@ var _heard_until: float = 0.0
 var _strafe_dir: int = 1
 var _strafe_timer: float = 2.0
 var _repath_timer: float = 0.0
-var _bought_this_phase: bool = false
 var _rng := RandomNumberGenerator.new()
 
 # --- Regard hors combat (BOT-25, BotLook) -------------------------------
@@ -214,7 +213,6 @@ func _physics_process(delta: float) -> void:
 	_tick_movement(delta)
 	_tick_damage_orientation(delta)
 	_tick_objective()
-	_tick_ability()
 
 func _now() -> float:
 	return Time.get_ticks_msec() / 1000.0
@@ -1144,32 +1142,3 @@ func _tick_objective() -> void:
 		return
 	if mode.has_method("bot_set_holding"):
 		mode.bot_set_holding(str(player.name).to_int(), _target_id == -1)
-	var buy_phase: bool = bool(mode.get("buy_phase")) if mode.get("buy_phase") != null else false
-	if buy_phase and mode.has_method("server_try_purchase"):
-		_maybe_buy()
-	else:
-		_bought_this_phase = false
-
-func _maybe_buy() -> void:
-	if _bought_this_phase:
-		return
-	_bought_this_phase = true
-	var w := player.get_node_or_null("Weapon")
-	if w == null:
-		return
-	var ids := WeaponDatabase.default_loadout_ids()
-	if not ids.is_empty():
-		w.buy(ids[0])
-
-## Utilisation RARE d'une capacité (contract-r3.md : "rare ability use") — un
-## simple tirage à chaque tick ; AbilityController ignore la requête si le
-## mode les désactive (Duel/Duo) ou si aucune charge n'est disponible.
-func _tick_ability() -> void:
-	player.input.ability_pressed = ""
-	if _rng.randf() >= 0.002:
-		return
-	var ab := player.get_node_or_null("Abilities")
-	if ab == null or ab.agent == null or ab.agent.abilities.is_empty():
-		return
-	var pick: Ability = ab.agent.abilities[_rng.randi() % ab.agent.abilities.size()]
-	player.input.ability_pressed = pick.slot

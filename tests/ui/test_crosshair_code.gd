@@ -10,8 +10,6 @@
 ## jamais réécrit ici).
 extends GdUnitTestSuite
 
-const OPTIONS_MENU_SCRIPT := preload("res://scripts/ui/OptionsMenu.gd")
-
 
 # ------------------------------------------------------------ normalize_settings : défauts + bornes
 func test_normalize_settings_of_empty_dict_returns_full_defaults() -> void:
@@ -236,88 +234,3 @@ func test_apply_settings_default_dictionary_matches_the_legacy_fixed_crosshair()
 	assert_float(Crosshair.DEFAULT_SETTINGS.inner_length).is_equal_approx(Crosshair.LINE_LENGTH_PX, 0.001)
 	assert_float(Crosshair.DEFAULT_SETTINGS.inner_thickness).is_equal_approx(Crosshair.LINE_THICKNESS_PX, 0.001)
 	assert_float(Crosshair.DEFAULT_SETTINGS.dot_size).is_equal_approx(Crosshair.CENTER_DOT_PX, 0.001)
-
-
-# ------------------------------------------------------------ Intégration : OptionsMenu -> CrosshairEditor
-## Instance RÉELLE d'OptionsMenu.gd, montée dans l'arbre (même patron que
-## tests/ui/test_main_menu.gd `_menu()`) : `_ready()` construit les 5 pages
-## sans appel réseau. Les méthodes préfixées `_` (`_open_crosshair_editor`,
-## `_apply_preset`, …) sont appelées directement, comme d'autres suites du
-## dépôt le font déjà (voir tests/ui/test_main_menu.gd, tête de fichier).
-func _options_menu() -> Control:
-	var m: Control = OPTIONS_MENU_SCRIPT.new()
-	add_child(m)
-	auto_free(m)
-	return m
-
-
-func test_options_menu_opens_the_crosshair_editor_from_its_viseur_page() -> void:
-	var menu := _options_menu()
-	await get_tree().process_frame
-	menu._open_crosshair_editor()
-	await get_tree().process_frame
-	assert_object(menu._crosshair_editor).append_failure_message(
-		"la page 'Viseur' d'OptionsMenu doit ouvrir CrosshairEditor.gd").is_not_null()
-
-
-func test_crosshair_editor_builds_two_live_previews_matching_the_current_draft() -> void:
-	# Acceptance UX-03 : "l'aperçu change en temps réel sur un fond ciel + un
-	# fond sable" -- les DEUX nœuds Crosshair de l'aperçu doivent exister et
-	# refléter EXACTEMENT le brouillon courant dès la construction.
-	var menu := _options_menu()
-	await get_tree().process_frame
-	menu._open_crosshair_editor()
-	await get_tree().process_frame
-	var editor: Control = menu._crosshair_editor
-	assert_object(editor._sky_crosshair).is_not_null()
-	assert_object(editor._sand_crosshair).is_not_null()
-	assert_dict(editor._sky_crosshair.settings).is_equal(editor._draft)
-	assert_dict(editor._sand_crosshair.settings).is_equal(editor._draft)
-
-
-func test_crosshair_editor_preset_button_updates_both_previews_in_real_time() -> void:
-	var menu := _options_menu()
-	await get_tree().process_frame
-	menu._open_crosshair_editor()
-	await get_tree().process_frame
-	var editor: Control = menu._crosshair_editor
-	editor._apply_preset("thick_cross")
-	assert_dict(editor._draft).is_equal(Crosshair.PRESETS.thick_cross)
-	assert_dict(editor._sky_crosshair.settings).append_failure_message(
-		"l'aperçu 'ciel' doit suivre le préréglage en temps réel").is_equal(Crosshair.PRESETS.thick_cross)
-	assert_dict(editor._sand_crosshair.settings).append_failure_message(
-		"l'aperçu 'sable' doit suivre le préréglage en temps réel").is_equal(Crosshair.PRESETS.thick_cross)
-
-
-func test_crosshair_editor_import_code_updates_both_previews() -> void:
-	var menu := _options_menu()
-	await get_tree().process_frame
-	menu._open_crosshair_editor()
-	await get_tree().process_frame
-	var editor: Control = menu._crosshair_editor
-	var imported := Crosshair.normalize_settings({"inner_gap": 22.0, "color": Color(0.1, 0.9, 0.4)})
-	editor._code_field.text = Crosshair.encode(imported)
-	editor._import_code()
-	assert_dict(editor._draft).is_equal(imported)
-	assert_dict(editor._sky_crosshair.settings).is_equal(imported)
-
-
-func test_crosshair_editor_persists_the_draft_into_settings() -> void:
-	var menu := _options_menu()
-	await get_tree().process_frame
-	menu._open_crosshair_editor()
-	await get_tree().process_frame
-	var editor: Control = menu._crosshair_editor
-	editor._apply_preset("dot")
-	assert_dict(Settings.crosshair_settings).append_failure_message(
-		"CrosshairEditor doit écrire le brouillon dans Settings.crosshair_settings à chaque changement"
-	).is_equal(Crosshair.PRESETS.dot)
-
-
-func test_closing_the_crosshair_editor_clears_the_menu_reference() -> void:
-	var menu := _options_menu()
-	await get_tree().process_frame
-	menu._open_crosshair_editor()
-	await get_tree().process_frame
-	menu._close_crosshair_editor()
-	assert_object(menu._crosshair_editor).is_null()

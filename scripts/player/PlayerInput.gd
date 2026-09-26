@@ -48,7 +48,6 @@ var drop_pressed: bool = false
 var weapon_slot_pressed: int = -1  ## -1 = aucun ; sinon index de slot (0/1).
 var weapon_next_pressed: bool = false
 var weapon_prev_pressed: bool = false
-var ability_pressed: String = ""  ## "" ou "C"/"Q"/"E"/"X".
 
 ## true pour un joueur simulé par le serveur (bot) : jamais de lecture
 ## périphérique, voir BotBrain.
@@ -111,7 +110,6 @@ func clear() -> void:
 	weapon_slot_pressed = -1
 	weapon_next_pressed = false
 	weapon_prev_pressed = false
-	ability_pressed = ""
 
 ## Lit le singleton Input et remplit TOUS les champs — fonction pure de
 ## mappage (aucune décision "dois-je lire ?", qui vit dans `_physics_process` :
@@ -151,9 +149,6 @@ func gather_from_devices() -> void:
 		Input.is_action_just_pressed("weapon_1"), Input.is_action_just_pressed("weapon_2"))
 	weapon_next_pressed = Input.is_action_just_pressed("weapon_next")
 	weapon_prev_pressed = Input.is_action_just_pressed("weapon_prev")
-	ability_pressed = ability_from_presses(
-		Input.is_action_just_pressed("ability_c"), Input.is_action_just_pressed("ability_q"),
-		Input.is_action_just_pressed("ability_e"), Input.is_action_just_pressed("ultimate"))
 
 ## --- Parties pures (testées directement, sans passer par le singleton Input) ---
 
@@ -164,38 +159,6 @@ static func slot_from_presses(slot0_pressed: bool, slot1_pressed: bool) -> int:
 	if slot1_pressed:
 		return 1
 	return -1
-
-## "" ou "C"/"Q"/"E"/"X" — mappe directement sur Ability.slot (voir
-## scripts/agents/AbilityController.gd, qui n'a plus besoin de _action_for).
-static func ability_from_presses(c_pressed: bool, q_pressed: bool, e_pressed: bool, ult_pressed: bool) -> String:
-	if c_pressed:
-		return "C"
-	if q_pressed:
-		return "Q"
-	if e_pressed:
-		return "E"
-	if ult_pressed:
-		return "X"
-	return ""
-
-## UX-13 (docs/research/10_ammo_kits_input.md §4.2 point 7) : traduit un
-## `Ability.slot` ("C"/"Q"/"E"/"X", identifiant RÉSEAU/bots interne, voir
-## AgentDatabase.SLOTS) vers le NOM D'ACTION InputMap correspondant, celui
-## que `Settings.binding_text`/`KeyLabel.for_action` savent lire pour en
-## tirer le libellé de touche RÉEL (AZERTY/QWERTY). `Ability.slot` reste
-## l'identifiant interne — il ne doit plus jamais être affiché tel quel
-## (AbilityBar/AgentSelectScreen/AgentMenu appellent
-## `KeyLabel.for_action(action_for_slot(slot))`, jamais `slot` seul).
-## Fonction pure : aucune slot inconnue ne doit planter l'appelant, elle
-## retombe sur "" (KeyLabel.for_action("") -> "—" hors headless, comme une
-## touche non liée).
-static func action_for_slot(slot: String) -> String:
-	match slot:
-		"C": return "ability_c"
-		"Q": return "ability_q"
-		"E": return "ability_e"
-		"X": return "ultimate"
-	return ""
 
 ## Maintien (`hold_enabled` vrai — comportement brut inchangé, le résultat
 ## suit directement `held`) OU bascule (`hold_enabled` faux, UX-06 :

@@ -1,24 +1,19 @@
 ## test_agent_palette.gd
-## Spec (tâche ART-14, STYLE_BIBLE.md v3 §4.4 « Les six agents » + jetons
-## machine docs/style/tokens.json) : les couleurs-clés d'AgentDatabase (donc
-## AgentConfig.color) doivent égaler celles de tokens.json "agents.*.key" —
-## les valeurs v2 sont remplacées (Guet tombait dans la bande verte réservée,
-## Verrou frôlait la bande violette, voir le commentaire au-dessus de
-## AgentDatabase._guet()/._verrou()). Le §4.4 promet aussi qu'« aucune
-## couleur d'agent ne tombe dans une bande réservée » (tokens.json
+## Spec (tâche ART-14, STYLE_BIBLE.md v3 §4.4 + jetons machine
+## docs/style/tokens.json) : les couleurs-clés d'AgentDatabase (donc
+## AgentConfig.color) doivent égaler celles de tokens.json "agents.*.key".
+## Prototype à un seul agent (décision 2026-09-26) : Verrou est désormais le
+## SEUL agent d'AgentDatabase — les cinq autres couleurs-clés (Vif/Choc/
+## Vanne/Guet/Roseau) ont disparu avec leurs agents. Le §4.4 promet aussi
+## qu'« aucune couleur d'agent ne tombe dans une bande réservée » (tokens.json
 ## "reserved" : teintes OKLCH 300-355° et 105-145° au-delà de C 0.08,
 ## exclusives à la surbrillance ennemie) et qu'« aucun texte d'autocollant »
 ## sur la couleur-clé ne descend sous 4.5:1 (CHK-26).
 extends GdUnitTestSuite
 
-## docs/style/tokens.json "agents.*.key" == STYLE_BIBLE.md §4.4, tableau des
-## six agents.
+## docs/style/tokens.json "agents.*.key" == STYLE_BIBLE.md §4.4 — un seul
+## agent survit à la réduction du prototype.
 const _EXPECTED_KEY_COLOR := {
-	"Vif": "ee6a24",
-	"Choc": "be2d25",
-	"Vanne": "f2b51d",
-	"Guet": "5157b8",
-	"Roseau": "2e9c8a",
 	"Verrou": "2a5fc4",
 }
 
@@ -27,11 +22,6 @@ const _EXPECTED_KEY_COLOR := {
 ## `Cartoon.PAPER` `#E6E1D6`, réservé aux socles neutres du monde — ce sont
 ## deux jetons différents, voir Cartoon.gd et tokens.json "color.papier.text").
 const _TEXT_ON_KEY := {
-	"Vif": "ink",
-	"Choc": "papier",
-	"Vanne": "ink",
-	"Guet": "papier",
-	"Roseau": "ink",
 	"Verrou": "papier",
 }
 
@@ -60,7 +50,7 @@ func test_agent_colors_match_style_bible_v3_keys() -> void:
 		).is_equal(expected)
 
 
-func test_all_six_agents_are_covered() -> void:
+func test_the_only_agent_is_covered() -> void:
 	var names: Array = []
 	for agent in AgentDatabase.all():
 		names.append((agent as AgentConfig).agent_name)

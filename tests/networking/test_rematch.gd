@@ -6,9 +6,12 @@
 ## remis à zéro) si la MAJORITÉ des humains connus à la fin du match n'a pas
 ## quitté ; sinon la revanche automatique est simplement abandonnée. Les stats
 ## par joueur (kills/morts) sont remises à zéro, les bots sont gardés, les
-## équipes rééquilibrées. « Menu » (EndPanel) efface proprement tout affichage
-## de compte à rebours, sans dépendre de GameHUD.gd (hors de ma liste de
-## fichiers -- voir sa docstring dans EndPanel.gd).
+## équipes rééquilibrées.
+## Prototype à interface minimale (2026-09-26) : EndPanel.gd (l'écran de fin
+## qui affichait ce compte à rebours) a été supprimé avec le reste du HUD —
+## les tests qui le couvraient sont partis avec lui ; ce fichier ne garde que
+## la logique SERVEUR (GameWorld) du compte à rebours/rééquilibrage, qui ne
+## dépend d'aucun écran.
 ##
 ## Style des doubles : `_TestGameWorld` court-circuite `_ready()` (réseau/
 ## télémétrie/sélection d'agent, hors sujet ici), exactement comme
@@ -26,8 +29,6 @@
 ## GameWorld.gd), donc un réglage court ne coûte jamais une seconde réelle
 ## pleine par tic.
 extends GdUnitTestSuite
-
-const END_PANEL_SCRIPT := preload("res://scripts/ui/hud/EndPanel.gd")
 
 
 ## Double minimal d'un mode de jeu -- `winner`/`respawns_immediately`/
@@ -62,15 +63,6 @@ class _TestGameWorld extends GameWorld:
 		set_multiplayer_authority(1)
 		add_to_group("match")
 
-
-## Double minimal du nœud « match » (GameWorld) pour les tests EndPanel --
-## même patron que `FakeMatch` de tests/ui/test_team_relative.gd (« Scoreboard/
-## EndPanel ne lisent que player_info, jamais GameWorld.gd lui-même »), avec
-## en plus le signal `rematch_countdown` (FUN-01) que EndPanel.gd s'abonne à
-## suivre.
-class _FakeMatchWithCountdown extends Node:
-	var player_info: Dictionary = {}
-	signal rematch_countdown(seconds_left: int)
 
 
 func _new_world(countdown_s: float = 0.06) -> GameWorld:
@@ -444,82 +436,3 @@ func test_rematch_countdown_signal_reports_minus_one_when_the_rematch_is_abandon
 	assert_int(ticks[ticks.size() - 1]).append_failure_message(
 		"tous les humains sont partis : la dernière diffusion doit signaler l'annulation (-1)"
 	).is_equal(-1)
-
-
-# ======================================================================
-#  8. EndPanel : affichage du compte à rebours + « Menu » quitte proprement.
-# ======================================================================
-
-func _new_end_panel() -> EndPanel:
-	var panel: EndPanel = END_PANEL_SCRIPT.new()
-	add_child(panel)
-	auto_free(panel)
-	return panel
-
-
-func _new_fake_match_with_countdown() -> _FakeMatchWithCountdown:
-	var m := _FakeMatchWithCountdown.new()
-	add_child(m)
-	auto_free(m)
-	return m
-
-
-func test_end_panel_shows_the_broadcast_countdown() -> void:
-	var panel := _new_end_panel()
-	var match_node := _new_fake_match_with_countdown()
-	panel.show_result(0, 3, 1, match_node, 0)
-
-	match_node.rematch_countdown.emit(7)
-
-	assert_str(panel._rematch_label.text).append_failure_message(
-		"le bandeau de revanche doit afficher le compte à rebours diffusé par GameWorld"
-	).is_not_empty()
-
-
-func test_end_panel_menu_button_clears_the_rematch_countdown_label() -> void:
-	var panel := _new_end_panel()
-	var match_node := _new_fake_match_with_countdown()
-	panel.show_result(0, 3, 1, match_node, 0)
-	match_node.rematch_countdown.emit(7)
-	assert_str(panel._rematch_label.text).append_failure_message(
-		"préalable du test : le bandeau doit afficher un compte à rebours avant le clic"
-	).is_not_empty()
-
-	var menu_emitted: Array = []
-	panel.menu_pressed.connect(func() -> void: menu_emitted.append(true))
-	panel._menu_button.pressed.emit()
-
-	assert_str(panel._rematch_label.text).append_failure_message(
-		"FUN-01 : « Menu » doit effacer proprement l'affichage du compte à rebours"
-	).is_empty()
-	assert_bool(menu_emitted.is_empty()).append_failure_message(
-		"« Menu » doit toujours émettre menu_pressed (comportement existant inchangé)"
-	).is_false()
-
-
-func test_end_panel_hide_result_clears_the_rematch_countdown_label() -> void:
-	var panel := _new_end_panel()
-	var match_node := _new_fake_match_with_countdown()
-	panel.show_result(0, 3, 1, match_node, 0)
-	match_node.rematch_countdown.emit(5)
-	assert_str(panel._rematch_label.text).is_not_empty()
-
-	panel.hide_result()
-
-	assert_str(panel._rematch_label.text).append_failure_message(
-		"hide_result() doit effacer tout affichage résiduel du compte à rebours"
-	).is_empty()
-
-
-func test_end_panel_countdown_minus_one_clears_the_label() -> void:
-	var panel := _new_end_panel()
-	var match_node := _new_fake_match_with_countdown()
-	panel.show_result(0, 3, 1, match_node, 0)
-	match_node.rematch_countdown.emit(4)
-	assert_str(panel._rematch_label.text).is_not_empty()
-
-	match_node.rematch_countdown.emit(-1)
-
-	assert_str(panel._rematch_label.text).append_failure_message(
-		"-1 (revanche automatique abandonnée) doit effacer le bandeau"
-	).is_empty()

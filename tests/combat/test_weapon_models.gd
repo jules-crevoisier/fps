@@ -11,14 +11,24 @@ extends GdUnitTestSuite
 const MAX_TRIS := 8000
 const PAINTED_MARKER := "_painted"
 const WEAPON_IDS := [0, 1, 2, 3, 4, 5, 6]
+## Radicaux de fichier .glb par id (A3D-20, ordre historique de
+## WeaponDatabase.PATHS AVANT la réduction du prototype à une seule arme —
+## voir tests/combat/test_weapon_database.gd) : ces 7 modèles restent sur le
+## disque (assets, hors périmètre de cette tâche), indépendamment du
+## catalogue de jeu désormais réduit au Ravage seul — ce tableau les retrouve
+## sans dépendre de `WeaponDatabase.PATHS`, qui ne couvre plus que l'id 0.
+const _STEMS_BY_ID := ["pistolet", "magnum", "rafale", "marqueur", "ravage", "fracas", "faucheur"]
 
 
 ## Instancie assets/models/weapons/<stem>.glb pour l'id donné — échoue fort
 ## (jamais un skip silencieux) si le modèle ou son fichier sont introuvables :
-## les 7 armes sont censées être TOUTES livrées par cette tâche.
+## les 7 armes sont censées être TOUTES livrées par cette tâche. Construit le
+## chemin depuis `_STEMS_BY_ID` (jamais `Weapon.model_path_for`, qui ne
+## résout plus que l'id 0 du catalogue réduit au Ravage seul — voir sa
+## docstring) : ce fichier vérifie les ASSETS livrés, indépendamment du
+## catalogue de jeu courant.
 func _load_model(id: int) -> Node3D:
-	var path := Weapon.model_path_for(id)
-	assert_str(path).append_failure_message("id %d : chemin de modèle vide" % id).is_not_empty()
+	var path := "res://assets/models/weapons/%s.glb" % _STEMS_BY_ID[id]
 	assert_bool(ResourceLoader.exists(path)).append_failure_message(
 		"id %d : modèle introuvable (%s)" % [id, path]).is_true()
 	var scene: PackedScene = load(path)
@@ -46,8 +56,7 @@ func _tri_count(root: Node3D) -> int:
 
 
 func _weapon_label(id: int) -> String:
-	var cfg := WeaponDatabase.get_by_id(id)
-	return "%d (%s)" % [id, cfg.weapon_name if cfg else "?"]
+	return "%d (%s)" % [id, _STEMS_BY_ID[id]]
 
 
 # ======================================================================
@@ -134,7 +143,7 @@ func test_muzzle_and_foregrip_anchors_match_the_backed_up_bpy_reference() -> voi
 	# (assets/models/weapons/_bpy/<id>.glb, jamais recalculées), pas seulement
 	# "présentes quelque part" — voir fit_weapon_painted.py::add_anchor_empty.
 	for id in WEAPON_IDS:
-		var stem: String = (WeaponDatabase.PATHS[id] as String).get_file().get_basename()
+		var stem: String = _STEMS_BY_ID[id]
 		var backup_path := "res://assets/models/weapons/_bpy/%s.glb" % stem
 		assert_bool(ResourceLoader.exists(backup_path)).append_failure_message(
 			"%s : sauvegarde bpy introuvable (%s) — impossible de vérifier les ancres" %

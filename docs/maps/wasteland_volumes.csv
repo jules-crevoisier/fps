@@ -1,0 +1,99 @@
+id,kind,label,x0,x1,z0,z1,y0,y1,largeur,profondeur,hauteur,etages,portes,fenetres
+G_PlateauW,ground,Plateau ouest,-42.0,0.0,-25.0,7.0,-2.0,0.0,42.0,32.0,2.0,,0,0
+G_PlateauE,ground,Plateau est,-0.0,42.0,-25.0,7.0,-2.0,0.0,42.0,32.0,2.0,,0,0
+G_BordW1,ground,Bord de carriere,-37.5,-26.25,7.0,13.0,-2.0,0.0,11.25,6.0,2.0,,0,0
+G_BordE1,ground,Bord de carriere,26.25,37.5,7.0,13.0,-2.0,0.0,11.25,6.0,2.0,,0,0
+G_BordW2,ground,Bord de carriere,-21.75,-10.25,7.0,13.0,-2.0,0.0,11.5,6.0,2.0,,0,0
+G_BordE2,ground,Bord de carriere,10.25,21.75,7.0,13.0,-2.0,0.0,11.5,6.0,2.0,,0,0
+G_BordW3,ground,Bord de carriere,-5.75,0.0,7.0,13.0,-2.0,0.0,5.75,6.0,2.0,,0,0
+G_BordE3,ground,Bord de carriere,-0.0,5.75,7.0,13.0,-2.0,0.0,5.75,6.0,2.0,,0,0
+G_EntailleW1,ground,Fond d'entaille,-42.0,-37.5,7.0,13.0,-4.0,-2.0,4.5,6.0,2.0,,0,0
+G_EntailleE1,ground,Fond d'entaille,37.5,42.0,7.0,13.0,-4.0,-2.0,4.5,6.0,2.0,,0,0
+G_EntailleW2,ground,Fond d'entaille,-26.25,-21.75,7.0,13.0,-4.0,-2.0,4.5,6.0,2.0,,0,0
+G_EntailleE2,ground,Fond d'entaille,21.75,26.25,7.0,13.0,-4.0,-2.0,4.5,6.0,2.0,,0,0
+G_EntailleW3,ground,Fond d'entaille,-10.25,-5.75,7.0,13.0,-4.0,-2.0,4.5,6.0,2.0,,0,0
+G_EntailleE3,ground,Fond d'entaille,5.75,10.25,7.0,13.0,-4.0,-2.0,4.5,6.0,2.0,,0,0
+G_Carriere,ground,Carriere (-2 m),-42.0,42.0,13.0,25.0,-4.0,-2.0,84.0,12.0,2.0,,0,0
+CliffN,boundary,Falaise nord,-42.0,42.0,-26.0,-25.0,0.0,6.0,84.0,1.0,6.0,,0,0
+CliffS,boundary,Paroi sud,-42.0,42.0,25.0,26.0,-2.0,4.0,84.0,1.0,6.0,,0,0
+CliffW,boundary,Falaise ouest,-43.0,-42.0,-25.0,25.0,-2.0,6.0,1.0,50.0,8.0,,0,0
+CliffE,boundary,Falaise est,42.0,43.0,-25.0,25.0,-2.0,6.0,1.0,50.0,8.0,,0,0
+EcurieW,building,Ecurie FUEL,-42.0,-30.0,-25.0,-13.0,0.0,3.6,12.0,12.0,3.6,1,2,2
+EcurieE,building,Ecurie GAS,30.0,42.0,-25.0,-13.0,0.0,3.6,12.0,12.0,3.6,1,2,2
+HotelW,building,Hotel,-30.0,-19.0,-25.0,-18.0,0.0,6.4,11.0,7.0,6.4,2,3,3
+HotelE,building,Pension,19.0,30.0,-25.0,-18.0,0.0,6.4,11.0,7.0,6.4,2,3,3
+MagasinW,building,Magasin,-19.0,-6.0,-25.0,-18.0,0.0,6.4,13.0,7.0,6.4,2,4,3
+MagasinE,building,Epicerie,6.0,19.0,-25.0,-18.0,0.0,6.4,13.0,7.0,6.4,2,4,3
+BanqueC,building,Banque,-6.0,6.0,-25.0,-10.0,0.0,6.4,12.0,15.0,6.4,2,7,4
+CoffreC,wall,Coffre (bloque l'axe des portes),-2.0,2.0,-16.0,-13.0,0.0,3.2,4.0,3.0,3.2,,0,0
+GalerieW,slab,Galerie,-30.0,-6.0,-18.0,-15.5,2.95,3.2,24.0,2.5,0.25,,0,0
+GalerieE,slab,Galerie,6.0,30.0,-18.0,-15.5,2.95,3.2,24.0,2.5,0.25,,0,0
+GardeCorpsGalerieW1,fence,Garde-corps galerie,-30.0,-20.5,-15.525,-15.475,3.2,4.2,9.5,0.05,1.0,,0,0
+GardeCorpsGalerieE1,fence,Garde-corps galerie,20.5,30.0,-15.525,-15.475,3.2,4.2,9.5,0.05,1.0,,0,0
+GardeCorpsGalerieW2,fence,Garde-corps galerie,-18.0,-12.0,-15.525,-15.475,3.2,4.2,6.0,0.05,1.0,,0,0
+GardeCorpsGalerieE2,fence,Garde-corps galerie,12.0,18.0,-15.525,-15.475,3.2,4.2,6.0,0.05,1.0,,0,0
+GardeCorpsGalerieW3,fence,Garde-corps galerie,-12.0,-6.0,-15.525,-15.475,3.2,4.2,6.0,0.05,1.0,,0,0
+GardeCorpsGalerieE3,fence,Garde-corps galerie,6.0,12.0,-15.525,-15.475,3.2,4.2,6.0,0.05,1.0,,0,0
+PasserelleW,slab,Passerelle,-20.5,-18.0,-15.5,-8.0,2.95,3.2,2.5,7.5,0.25,,0,0
+PasserelleE,slab,Passerelle,18.0,20.5,-15.5,-8.0,2.95,3.2,2.5,7.5,0.25,,0,0
+GardeCorpsPasserelleW1,fence,Garde-corps passerelle,-20.525,-20.475,-15.5,-8.0,3.2,4.2,0.05,7.5,1.0,,0,0
+GardeCorpsPasserelleE1,fence,Garde-corps passerelle,20.475,20.525,-15.5,-8.0,3.2,4.2,0.05,7.5,1.0,,0,0
+GardeCorpsPasserelleW2,fence,Garde-corps passerelle,-18.025,-17.975,-15.5,-8.0,3.2,4.2,0.05,7.5,1.0,,0,0
+GardeCorpsPasserelleE2,fence,Garde-corps passerelle,17.975,18.025,-15.5,-8.0,3.2,4.2,0.05,7.5,1.0,,0,0
+SaloonW,building,Saloon FUEL,-26.0,-14.0,-8.0,4.0,0.0,6.4,12.0,12.0,6.4,2,5,5
+SaloonE,building,Saloon GAS,14.0,26.0,-8.0,4.0,0.0,6.4,12.0,12.0,6.4,2,5,5
+BalconSaloonW,slab,Balcon du Saloon,-14.0,-11.5,-8.0,4.0,2.95,3.2,2.5,12.0,0.25,,0,0
+BalconSaloonE,slab,Balcon du Saloon,11.5,14.0,-8.0,4.0,2.95,3.2,2.5,12.0,0.25,,0,0
+GardeCorpsBalconW1,fence,Garde-corps balcon,-11.525,-11.475,-8.0,-2.0,3.2,4.2,0.05,6.0,1.0,,0,0
+GardeCorpsBalconE1,fence,Garde-corps balcon,11.475,11.525,-8.0,-2.0,3.2,4.2,0.05,6.0,1.0,,0,0
+GardeCorpsBalconW3,fence,Garde-corps balcon,-11.525,-11.475,-2.0,4.0,3.2,4.2,0.05,6.0,1.0,,0,0
+GardeCorpsBalconE3,fence,Garde-corps balcon,11.475,11.525,-2.0,4.0,3.2,4.2,0.05,6.0,1.0,,0,0
+GardeCorpsBalconW2,fence,Garde-corps balcon,-14.0,-11.5,3.975,4.025,3.2,4.2,2.5,0.05,1.0,,0,0
+GardeCorpsBalconE2,fence,Garde-corps balcon,11.5,14.0,3.975,4.025,3.2,4.2,2.5,0.05,1.0,,0,0
+EscalierBalconW,stairs,Escalier du balcon (rue),-12.75,-12.75,-13.0,-8.0,0.0,3.2,2.5,,,,,
+EscalierBalconE,stairs,Escalier du balcon (rue),12.75,12.75,-13.0,-8.0,0.0,3.2,2.5,,,,,
+WagonC,building,Wagon (traversant N-S),-1.5,1.5,-4.5,4.5,0.0,3.4,3.0,9.0,3.4,1,2,0
+PompeC,solid,Pompe (socle du chateau d'eau),-2.0,2.0,7.5,13.0,0.0,3.0,4.0,5.5,3.0,,0,0
+ChateauPiedNW,landmark,Pied NO,-1.9,-1.5,7.6,8.0,3.0,8.0,0.4,0.4,5.0,,0,0
+ChateauPiedNE,landmark,Pied NE,1.5,1.9,7.6,8.0,3.0,8.0,0.4,0.4,5.0,,0,0
+ChateauPiedSW,landmark,Pied SO,-1.9,-1.5,10.1,10.5,3.0,8.0,0.4,0.4,5.0,,0,0
+ChateauPiedSE,landmark,Pied SE,1.5,1.9,10.1,10.5,3.0,8.0,0.4,0.4,5.0,,0,0
+ChateauCuveC,landmark,Cuve du chateau d'eau,-2.2,2.2,7.5,10.5,8.0,12.0,4.4,3.0,4.0,,0,0
+AbreuvoirPlaceW,cover,Abreuvoir place,-10.0,-8.0,-5.0,-4.0,0.0,1.0,2.0,1.0,1.0,,0,0
+AbreuvoirPlaceE,cover,Abreuvoir place,8.0,10.0,-5.0,-4.0,0.0,1.0,2.0,1.0,1.0,,0,0
+CaissesBanqueW,cover,Caisses Banque,-6.0,-3.5,-10.0,-7.5,0.0,2.2,2.5,2.5,2.2,,0,0
+CaissesBanqueE,cover,Caisses Banque,3.5,6.0,-10.0,-7.5,0.0,2.2,2.5,2.5,2.2,,0,0
+RemiseW,building,Remise,-18.0,-14.0,4.0,13.0,0.0,3.4,4.0,9.0,3.4,1,2,1
+RemiseE,building,Remise,14.0,18.0,4.0,13.0,0.0,3.4,4.0,9.0,3.4,1,2,1
+TonneauxPlaceW,cover,Tonneaux place,-9.0,-7.5,0.0,1.5,0.0,1.4,1.5,1.5,1.4,,0,0
+TonneauxPlaceE,cover,Tonneaux place,7.5,9.0,0.0,1.5,0.0,1.4,1.5,1.5,1.4,,0,0
+CharretteRueW,cover,Charrette rue,-26.0,-23.0,-13.5,-11.5,0.0,2.2,3.0,2.0,2.2,,0,0
+CharretteRueE,cover,Charrette rue,23.0,26.0,-13.5,-11.5,0.0,2.2,3.0,2.0,2.2,,0,0
+CiterneW,cover,Citerne FUEL,-34.0,-31.0,-10.0,-7.0,0.0,2.2,3.0,3.0,2.2,,0,0
+CiterneE,cover,Citerne GAS,31.0,34.0,-10.0,-7.0,0.0,2.2,3.0,3.0,2.2,,0,0
+CaisseCourW,cover,Caisses cour,-33.0,-31.5,0.0,2.0,0.0,1.4,1.5,2.0,1.4,,0,0
+CaisseCourE,cover,Caisses cour,31.5,33.0,0.0,2.0,0.0,1.4,1.5,2.0,1.4,,0,0
+PalissadeW2,fence,Palissade,-37.5,-26.25,12.8,13.0,0.0,2.2,11.25,0.2,2.2,,0,0
+PalissadeE2,fence,Palissade,26.25,37.5,12.8,13.0,0.0,2.2,11.25,0.2,2.2,,0,0
+ParapetW3,fence,Parapet,-21.75,-18.0,12.8,13.0,0.0,1.0,3.75,0.2,1.0,,0,0
+ParapetE3,fence,Parapet,18.0,21.75,12.8,13.0,0.0,1.0,3.75,0.2,1.0,,0,0
+ParapetW5,fence,Parapet,-14.0,-10.25,12.8,13.0,0.0,1.0,3.75,0.2,1.0,,0,0
+ParapetE5,fence,Parapet,10.25,14.0,12.8,13.0,0.0,1.0,3.75,0.2,1.0,,0,0
+ParapetW4,fence,Parapet,-5.75,-2.0,12.8,13.0,0.0,1.0,3.75,0.2,1.0,,0,0
+ParapetE4,fence,Parapet,2.0,5.75,12.8,13.0,0.0,1.0,3.75,0.2,1.0,,0,0
+RampeW1,ramp,Rampe Cour,-39.75,-39.75,7.0,13.0,0.0,-2.0,4.5,,,,,
+RampeE1,ramp,Rampe Cour,39.75,39.75,7.0,13.0,0.0,-2.0,4.5,,,,,
+RampeW2,ramp,Rampe Ruelle,-24.0,-24.0,7.0,13.0,0.0,-2.0,4.5,,,,,
+RampeE2,ramp,Rampe Ruelle,24.0,24.0,7.0,13.0,0.0,-2.0,4.5,,,,,
+RampeW3,ramp,Rampe Place,-8.0,-8.0,7.0,13.0,0.0,-2.0,4.5,,,,,
+RampeE3,ramp,Rampe Place,8.0,8.0,7.0,13.0,0.0,-2.0,4.5,,,,,
+RocherS0W,rock,Aiguille du Gue,-6.5,-2.5,18.5,25.0,-2.0,1.8,4.0,6.5,3.8,,0,0
+RocherS0E,rock,Aiguille du Gue,2.5,6.5,18.5,25.0,-2.0,1.8,4.0,6.5,3.8,,0,0
+RocherN1W,rock,Aiguille N1,-15.5,-11.5,13.0,19.5,-2.0,1.8,4.0,6.5,3.8,,0,0
+RocherN1E,rock,Aiguille N1,11.5,15.5,13.0,19.5,-2.0,1.8,4.0,6.5,3.8,,0,0
+RocherS1W,rock,Aiguille S1,-24.5,-20.5,18.5,25.0,-2.0,1.8,4.0,6.5,3.8,,0,0
+RocherS1E,rock,Aiguille S1,20.5,24.5,18.5,25.0,-2.0,1.8,4.0,6.5,3.8,,0,0
+RocherN2W,rock,Aiguille N2,-33.5,-29.5,13.0,19.5,-2.0,1.8,4.0,6.5,3.8,,0,0
+RocherN2E,rock,Aiguille N2,29.5,33.5,13.0,19.5,-2.0,1.8,4.0,6.5,3.8,,0,0
+RocherS2W,rock,Aiguille S2,-42.0,-38.5,18.5,25.0,-2.0,1.8,3.5,6.5,3.8,,0,0
+RocherS2E,rock,Aiguille S2,38.5,42.0,18.5,25.0,-2.0,1.8,3.5,6.5,3.8,,0,0

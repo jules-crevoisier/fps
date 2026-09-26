@@ -3,14 +3,13 @@
   "meta": {
     "id": "wasteland",
     "name": "Wasteland",
-    "version": "v5-greybox",
-    "date": "2026-09-25",
+    "version": "v6-greybox",
+    "date": "2026-09-26",
     "doc": "docs/maps/WASTELAND_PLAN.md",
     "units": "m",
     "axes": "x ouest->est, z nord->sud (nord = z negatif), y vers le haut ; origine = centre de la place de la Gare, sol du plateau",
-    "note": "Source unique : wasteland.gd, wasteland_bots.gd, wasteland_markers.gd et tools/maps/render_plan.py lisent ce fichier. Moitie 'W' reflechie par la regle 'mirror', moitie 'C' posee telle quelle."
+    "note": "Source unique : wasteland.gd, wasteland_bots.gd, wasteland_markers.gd et tools/maps/render_plan.py lisent ce fichier. Moitie 'W' reflechie par la regle 'mirror', moitie 'C' posee telle quelle. v6 : refonte (docs/maps/WASTELAND_DESIGN.md)."
   },
-
   "metrics": {
     "reference_files": ["scripts/movement/MovementConfig.gd", "scripts/levels/maps/MapSetup.gd", "scenes/player/player.tscn", "scripts/levels/maps/Kit.gd"],
     "player": {"radius": 0.4, "height": 1.8, "crouch_height": 0.9, "eye": 1.6, "walk": 5.2, "sprint": 8.2, "crouch_speed": 3.2, "jump_velocity": 7.2, "gravity": 19.0, "step_up": 0.4, "fall_stun_min": 6.0},
@@ -32,10 +31,15 @@
     "marker_lift": 1.0,
     "perimeter_wall_h": 12.0
   },
-
-  "levels": {"canyon": -2.0, "ground": 0.0, "upper": 3.2},
-  "bounds": {"x": [-44.0, 44.0], "z": [-25.0, 20.0]},
-
+  "levels": {
+    "canyon": -2.0,
+    "ground": 0.0,
+    "upper": 3.2
+  },
+  "bounds": {
+    "x": [-42.0, 42.0],
+    "z": [-25.0, 25.0]
+  },
   "mirror": {
     "axis_x": 0.0,
     "side_swap": {"W": "E", "E": "W", "N": "N", "S": "S"},
@@ -43,7 +47,6 @@
     "id_rule": "suffixe final W -> E (ou W suivi de chiffres -> E + chiffres)",
     "label_key": "label_e"
   },
-
   "materials": {
     "wall": {"color": "#A39E94"},
     "floor": {"color": "#CFC9BC"},
@@ -53,183 +56,127 @@
     "grid": {"minor": 1.0, "major": 5.0, "minor_line": 0.02, "major_line": 0.05, "minor_darken": 0.12, "major_darken": 0.28},
     "by_kind": {"ground": "floor", "slab": "floor", "building": "wall", "wall": "wall", "solid": "wall", "landmark": "wall", "cover": "cover", "fence": "cover", "rock": "cover", "stairs": "stairs", "ramp": "stairs", "boundary": "oob", "barrier": "oob", "inv_wall": "oob", "clip": "oob"}
   },
-
   "volumes": [
-    {"id": "G_PlateauW", "kind": "ground", "half": "W", "x": [-44.0, -2.0], "z": [-25.0, 12.0], "y": [-2.0, 0.0], "label": "Plateau ouest", "label_e": "Plateau est"},
-    {"id": "G_PlateauC", "kind": "ground", "half": "C", "x": [-2.0, 2.0], "z": [-25.0, 8.0], "y": [-2.0, 0.0], "label": "Plateau centre"},
-    {"id": "G_Canyon", "kind": "ground", "half": "C", "x": [-44.0, 44.0], "z": [12.0, 20.0], "y": [-4.0, -2.0], "label": "Canyon"},
-
-    {"id": "CliffN", "kind": "boundary", "half": "C", "x": [-44.0, 44.0], "z": [-26.0, -25.0], "y": [0.0, 6.0], "label": "Falaise nord"},
-    {"id": "CliffS", "kind": "boundary", "half": "C", "x": [-44.0, 44.0], "z": [20.0, 21.0], "y": [-2.0, 4.0], "label": "Paroi sud"},
-    {"id": "CliffW", "kind": "boundary", "half": "W", "x": [-45.0, -44.0], "z": [-25.0, 20.0], "y": [-2.0, 6.0], "label": "Falaise ouest", "label_e": "Falaise est"},
-
-    {"id": "PosteC", "kind": "solid", "half": "C", "x": [-4.0, 4.0], "z": [-25.0, -16.0], "y": [0.0, 6.4], "label": "Poste"},
-    {"id": "DiligenceC", "kind": "solid", "half": "C", "x": [-2.0, 2.0], "z": [-16.0, -11.0], "y": [0.0, 3.4], "label": "Diligence"},
-    {"id": "WagonC", "kind": "building", "half": "C", "x": [-6.0, 6.0], "z": [-2.5, 0.5], "y": [0.0, 3.4], "floors": 1, "stair_side": "N", "roof": {"pitch_deg": 24.0}, "pp": "PP5", "label": "Wagon",
-      "doors": [{"side": "W", "floor": 0, "offset": 0.0, "type": "M"}, {"side": "E", "floor": 0, "offset": 0.0, "type": "M"}, {"side": "S", "floor": 0, "offset": -3.0, "type": "M"}, {"side": "S", "floor": 0, "offset": 3.0, "type": "M"}],
-      "windows": [{"side": "N", "floor": 0, "offset": -3.0}, {"side": "N", "floor": 0, "offset": 0.0}, {"side": "N", "floor": 0, "offset": 3.0}]},
-    {"id": "ChateauSocleC", "kind": "solid", "half": "C", "x": [-1.5, 1.5], "z": [3.5, 6.5], "y": [0.0, 2.2], "label": "Chateau d'eau"},
-    {"id": "ChateauPiedNW", "kind": "landmark", "half": "W", "x": [-1.5, -1.1], "z": [3.5, 3.9], "y": [2.2, 8.0], "label": "Pied NO", "label_e": "Pied NE"},
-    {"id": "ChateauPiedSW", "kind": "landmark", "half": "W", "x": [-1.5, -1.1], "z": [6.1, 6.5], "y": [2.2, 8.0], "label": "Pied SO", "label_e": "Pied SE"},
-    {"id": "ChateauCuveC", "kind": "landmark", "half": "C", "x": [-1.8, 1.8], "z": [3.2, 6.8], "y": [8.0, 12.0], "label": "Cuve"},
-    {"id": "DescenteC", "kind": "ramp", "half": "C", "from": [0.0, 0.0, 8.0], "to": [0.0, -2.0, 13.0], "w": 4.0, "label": "Descente"},
-    {"id": "MuretDescenteW", "kind": "cover", "class": "C1", "half": "W", "x": [-2.5, -2.0], "z": [8.0, 12.0], "y": [0.0, 1.0], "label": "Muret O", "label_e": "Muret E"},
-
-    {"id": "ForgeW", "kind": "building", "half": "W", "x": [-36.0, -29.0], "z": [-25.0, -15.0], "y": [0.0, 3.6], "floors": 1, "stair_side": "N", "label": "Forge", "label_e": "Marechal",
-      "doors": [{"side": "S", "floor": 0, "offset": 0.0, "type": "L"}, {"side": "W", "floor": 0, "offset": 3.0, "type": "M"}],
-      "windows": [{"side": "W", "floor": 0, "offset": -3.0}]},
-    {"id": "HotelW", "kind": "building", "half": "W", "x": [-26.5, -16.5], "z": [-25.0, -19.0], "y": [0.0, 6.4], "floors": 2, "stair_side": "N", "pp": "PP1", "label": "Hotel", "label_e": "Banque",
-      "doors": [{"side": "S", "floor": 0, "offset": -2.5, "type": "M"}, {"side": "S", "floor": 0, "offset": 2.5, "type": "M"}, {"side": "W", "floor": 1, "offset": -2.0, "type": "M"}, {"side": "E", "floor": 1, "offset": -2.0, "type": "M"}],
-      "windows": [{"side": "S", "floor": 1, "offset": -3.5}, {"side": "S", "floor": 1, "offset": 0.0}, {"side": "S", "floor": 1, "offset": 3.5}]},
-    {"id": "StairImpasseW", "kind": "stairs", "half": "W", "from": [-27.75, 0.0, -18.0], "to": [-27.75, 3.2, -23.0], "w": 2.5, "label": "Escalier Impasse"},
-    {"id": "LandingImpasseW", "kind": "slab", "half": "W", "x": [-29.0, -26.5], "z": [-25.0, -23.0], "y": [0.0, 3.2], "solid_below": true, "label": "Palier Impasse"},
-    {"id": "StairPassageW", "kind": "stairs", "half": "W", "from": [-15.5, 0.0, -18.0], "to": [-15.5, 3.2, -23.0], "w": 2.0, "label": "Escalier Passage"},
-    {"id": "LandingPassageW", "kind": "slab", "half": "W", "x": [-16.5, -14.5], "z": [-25.0, -23.0], "y": [0.0, 3.2], "solid_below": true, "label": "Palier Passage"},
-    {"id": "MagasinW", "kind": "building", "half": "W", "x": [-12.5, -4.0], "z": [-25.0, -19.0], "y": [0.0, 3.6], "floors": 1, "stair_side": "N", "label": "Magasin", "label_e": "Epicerie",
-      "doors": [{"side": "S", "floor": 0, "offset": -3.0, "type": "M"}, {"side": "S", "floor": 0, "offset": 3.0, "type": "M"}, {"side": "W", "floor": 0, "offset": 1.0, "type": "M"}],
-      "windows": [{"side": "S", "floor": 0, "offset": 0.0}]},
-
-    {"id": "EchoppesW", "kind": "building", "half": "W", "x": [-34.0, -21.0], "z": [-9.0, 5.0], "y": [0.0, 3.6], "floors": 1, "stair_side": "N", "label": "Echoppes", "label_e": "Bazar",
-      "doors": [{"side": "W", "floor": 0, "offset": -3.0, "type": "L"}, {"side": "W", "floor": 0, "offset": 3.0, "type": "L"}, {"side": "N", "floor": 0, "offset": -3.5, "type": "L"}, {"side": "E", "floor": 0, "offset": 0.0, "type": "L"}, {"side": "S", "floor": 0, "offset": 4.0, "type": "L"}],
-      "windows": [{"side": "N", "floor": 0, "offset": 1.5}, {"side": "N", "floor": 0, "offset": 4.5}]},
-    {"id": "CloisonEchoppesNW", "kind": "wall", "half": "W", "x": [-27.625, -27.375], "z": [-9.0, -3.0], "y": [0.0, 3.6], "label": "Cloison N", "label_e": "Cloison N"},
-    {"id": "CloisonEchoppesSW", "kind": "wall", "half": "W", "x": [-27.625, -27.375], "z": [-1.0, 5.0], "y": [0.0, 3.6], "label": "Cloison S", "label_e": "Cloison S"},
-    {"id": "SaloonW", "kind": "building", "half": "W", "x": [-16.0, -8.0], "z": [-11.0, 5.0], "y": [0.0, 6.4], "floors": 2, "stair_side": "S", "pp": "PP3", "label": "Saloon bleu", "label_e": "Saloon rouge",
-      "doors": [{"side": "N", "floor": 0, "offset": 1.5, "type": "L"}, {"side": "W", "floor": 0, "offset": -4.0, "type": "L"}, {"side": "E", "floor": 0, "offset": 4.5, "type": "L"}, {"side": "W", "floor": 1, "offset": 0.5, "type": "M"}, {"side": "E", "floor": 1, "offset": -3.0, "type": "L"}],
-      "windows": [{"side": "N", "floor": 1, "offset": -2.5}, {"side": "N", "floor": 1, "offset": 1.5}, {"side": "S", "floor": 1, "offset": -2.0}, {"side": "S", "floor": 1, "offset": 2.0}, {"side": "E", "floor": 0, "offset": -4.0}]},
-    {"id": "StairRuelleW", "kind": "stairs", "half": "W", "from": [-17.0, 0.0, 3.5], "to": [-17.0, 3.2, -1.5], "w": 2.0, "label": "Escalier Ruelle"},
-    {"id": "LandingRuelleW", "kind": "slab", "half": "W", "x": [-18.0, -16.0], "z": [-3.5, -1.5], "y": [0.0, 3.2], "solid_below": true, "label": "Palier Ruelle"},
-    {"id": "StairGalerieW", "kind": "stairs", "half": "W", "from": [-7.0, 0.0, -14.0], "to": [-7.0, 3.2, -9.0], "w": 2.0, "label": "Escalier Galerie"},
-    {"id": "BalconW", "kind": "slab", "half": "W", "x": [-8.0, -6.0], "z": [-9.0, -3.0], "y": [2.95, 3.2], "solid_below": false, "label": "Galerie PP3", "label_e": "Galerie PP4"},
-    {"id": "GardeCorpsBalconW", "kind": "fence", "class": "rail", "half": "W", "from": [-6.0, -9.0], "to": [-6.0, -3.0], "y": 3.2, "h": 1.0, "t": 0.1, "label": "Garde-corps"},
-
-    {"id": "CiterneW", "kind": "cover", "class": "C3", "half": "W", "x": [-43.0, -39.0], "z": [-15.0, -11.0], "y": [0.0, 2.2], "label": "Citerne FUEL", "label_e": "Citerne GAS"},
-    {"id": "CaisseSpawnW", "kind": "cover", "class": "C3", "half": "W", "x": [-38.5, -36.5], "z": [-4.0, 0.0], "y": [0.0, 2.2], "label": "Caisse spawn"},
-    {"id": "CharretteW", "kind": "cover", "class": "C3", "half": "W", "x": [-26.0, -23.0], "z": [-14.0, -11.5], "y": [0.0, 2.2], "label": "Charrette"},
-    {"id": "AbreuvoirForgeW", "kind": "cover", "class": "C1", "half": "W", "x": [-32.0, -30.0], "z": [-13.0, -12.0], "y": [0.0, 1.0], "label": "Abreuvoir"},
-    {"id": "CaissesRueW", "kind": "cover", "class": "C2", "half": "W", "x": [-20.0, -18.5], "z": [-16.5, -15.0], "y": [0.0, 1.4], "label": "Caisses rue"},
-    {"id": "AbreuvoirMagasinW", "kind": "cover", "class": "C1", "half": "W", "x": [-12.0, -10.0], "z": [-17.0, -16.0], "y": [0.0, 1.0], "label": "Abreuvoir"},
-    {"id": "ComptoirW", "kind": "cover", "class": "C1", "half": "W", "x": [-31.0, -29.0], "z": [0.0, 1.0], "y": [0.0, 1.0], "label": "Comptoir"},
-    {"id": "PileTraversesNW", "kind": "cover", "class": "C3", "half": "W", "x": [-6.0, -4.0], "z": [-7.5, -6.0], "y": [0.0, 2.2], "label": "Traverses N"},
-    {"id": "TraversesSW", "kind": "cover", "class": "C3", "half": "W", "x": [-6.0, -4.0], "z": [3.0, 5.0], "y": [0.0, 2.2], "label": "Traverses S"},
-    {"id": "RemiseW", "kind": "cover", "class": "C3", "half": "W", "x": [-31.0, -27.0], "z": [5.0, 8.0], "y": [0.0, 2.2], "label": "Remise"},
-    {"id": "ChariotW", "kind": "cover", "class": "C3", "half": "W", "x": [-37.0, -34.0], "z": [9.5, 12.0], "y": [0.0, 2.2], "label": "Chariot"},
-    {"id": "CaissesQuaiW", "kind": "cover", "class": "C3", "half": "W", "x": [-25.0, -23.0], "z": [8.0, 10.0], "y": [0.0, 2.2], "label": "Caisses quai"},
-    {"id": "CuveW", "kind": "cover", "class": "C3", "half": "W", "x": [-12.0, -9.0], "z": [9.5, 12.0], "y": [0.0, 2.2], "label": "Cuve"},
-
-    {"id": "ParapetW1", "kind": "fence", "class": "C1", "half": "W", "from": [-44.0, 11.9], "to": [-42.0, 11.9], "y": 0.0, "h": 1.0, "t": 0.2, "label": "Parapet"},
-    {"id": "ParapetW2", "kind": "fence", "class": "C1", "half": "W", "from": [-39.5, 11.9], "to": [-37.0, 11.9], "y": 0.0, "h": 1.0, "t": 0.2, "label": "Parapet"},
-    {"id": "ParapetW3", "kind": "fence", "class": "C1", "half": "W", "from": [-34.0, 11.9], "to": [-21.0, 11.9], "y": 0.0, "h": 1.0, "t": 0.2, "label": "Parapet"},
-    {"id": "ParapetW4", "kind": "fence", "class": "C1", "half": "W", "from": [-18.5, 11.9], "to": [-12.0, 11.9], "y": 0.0, "h": 1.0, "t": 0.2, "label": "Parapet"},
-    {"id": "ParapetW5", "kind": "fence", "class": "C1", "half": "W", "from": [-9.0, 11.9], "to": [-2.5, 11.9], "y": 0.0, "h": 1.0, "t": 0.2, "label": "Parapet"},
-
-    {"id": "LandingCanyonW1", "kind": "slab", "half": "W", "x": [-42.0, -39.5], "z": [12.0, 14.5], "y": [-2.0, 0.0], "solid_below": true, "label": "Palier canyon 1"},
-    {"id": "RampeCanyonW1", "kind": "ramp", "half": "W", "from": [-39.5, 0.0, 13.25], "to": [-33.5, -2.0, 13.25], "w": 2.5, "label": "Rampe canyon 1"},
-    {"id": "LandingCanyonW2", "kind": "slab", "half": "W", "x": [-21.0, -18.5], "z": [12.0, 14.5], "y": [-2.0, 0.0], "solid_below": true, "label": "Palier canyon 2"},
-    {"id": "RampeCanyonW2", "kind": "ramp", "half": "W", "from": [-18.5, 0.0, 13.25], "to": [-12.5, -2.0, 13.25], "w": 2.5, "label": "Rampe canyon 2"},
-    {"id": "RocherS1W", "kind": "rock", "half": "W", "x": [-31.0, -27.0], "z": [15.5, 20.0], "y": [-2.0, 1.8], "label": "Aiguille S1"},
-    {"id": "RocherN1W", "kind": "rock", "half": "W", "x": [-25.0, -21.0], "z": [12.0, 16.5], "y": [-2.0, 1.8], "label": "Aiguille N1"},
-    {"id": "RocherS2W", "kind": "rock", "half": "W", "x": [-11.0, -8.0], "z": [15.5, 20.0], "y": [-2.0, 1.8], "label": "Aiguille S2"},
-    {"id": "RocherGueW", "kind": "rock", "half": "W", "x": [-6.0, -4.0], "z": [12.0, 16.5], "y": [-2.0, 1.8], "label": "Aiguille Gue"},
-
-    {"id": "BarriereRueW", "kind": "barrier", "half": "W", "modes": ["duel", "duo"], "x": [-12.75, -12.25], "z": [-19.0, -11.0], "y": [0.0, 2.2], "label": "Barriere rue"},
-    {"id": "MurBarriereRueW", "kind": "inv_wall", "half": "W", "modes": ["duel", "duo"], "from": [-12.5, -19.0], "to": [-12.5, -11.0], "y": 0.0, "h": 12.0, "label": "Mur duel rue"},
-    {"id": "PanneauMagasinW", "kind": "barrier", "half": "W", "modes": ["duel", "duo"], "x": [-13.0, -12.5], "z": [-22.0, -20.0], "y": [0.0, 2.4], "label": "Panneau porte"},
-    {"id": "BarriereRuelleW", "kind": "barrier", "half": "W", "modes": ["duel", "duo"], "x": [-21.0, -16.0], "z": [-9.25, -8.75], "y": [0.0, 2.2], "label": "Barriere ruelle"},
-    {"id": "MurBarriereRuelleW", "kind": "inv_wall", "half": "W", "modes": ["duel", "duo"], "from": [-21.0, -9.0], "to": [-16.0, -9.0], "y": 0.0, "h": 12.0, "label": "Mur duel ruelle"},
-    {"id": "PanneauEchoppesW", "kind": "barrier", "half": "W", "modes": ["duel", "duo"], "x": [-21.0, -20.5], "z": [-3.5, -0.5], "y": [0.0, 2.4], "label": "Panneau porte"},
-    {"id": "BarriereArriereW", "kind": "barrier", "half": "W", "modes": ["duel", "duo"], "x": [-21.25, -20.75], "z": [5.0, 12.0], "y": [0.0, 2.2], "label": "Barriere arriere-cour"},
-    {"id": "BarriereCanyonW", "kind": "barrier", "half": "W", "modes": ["duel", "duo"], "x": [-21.25, -20.75], "z": [14.5, 20.0], "y": [-2.0, 0.2], "label": "Barriere canyon"},
-    {"id": "MurBarriereSudW", "kind": "inv_wall", "half": "W", "modes": ["duel", "duo"], "from": [-21.0, 5.0], "to": [-21.0, 20.0], "y": -2.0, "h": 14.0, "label": "Mur duel sud"}
+    {"id": "G_PlateauW", "kind": "ground", "half": "W", "x": [-42.0, 0.0], "z": [-25.0, 7.0], "y": [-2.0, 0.0], "label": "Plateau ouest", "label_e": "Plateau est"},
+    {"id": "G_BordW1", "kind": "ground", "half": "W", "x": [-37.5, -26.25], "z": [7.0, 13.0], "y": [-2.0, 0.0], "label": "Bord de carriere", "label_e": "Bord de carriere"},
+    {"id": "G_BordW2", "kind": "ground", "half": "W", "x": [-21.75, -10.25], "z": [7.0, 13.0], "y": [-2.0, 0.0], "label": "Bord de carriere", "label_e": "Bord de carriere"},
+    {"id": "G_BordW3", "kind": "ground", "half": "W", "x": [-5.75, 0.0], "z": [7.0, 13.0], "y": [-2.0, 0.0], "label": "Bord de carriere", "label_e": "Bord de carriere"},
+    {"id": "G_EntailleW1", "kind": "ground", "half": "W", "x": [-42.0, -37.5], "z": [7.0, 13.0], "y": [-4.0, -2.0], "label": "Fond d'entaille", "label_e": "Fond d'entaille"},
+    {"id": "G_EntailleW2", "kind": "ground", "half": "W", "x": [-26.25, -21.75], "z": [7.0, 13.0], "y": [-4.0, -2.0], "label": "Fond d'entaille", "label_e": "Fond d'entaille"},
+    {"id": "G_EntailleW3", "kind": "ground", "half": "W", "x": [-10.25, -5.75], "z": [7.0, 13.0], "y": [-4.0, -2.0], "label": "Fond d'entaille", "label_e": "Fond d'entaille"},
+    {"id": "G_Carriere", "kind": "ground", "half": "C", "x": [-42.0, 42.0], "z": [13.0, 25.0], "y": [-4.0, -2.0], "label": "Carriere (-2 m)"},
+    {"id": "CliffN", "kind": "boundary", "half": "C", "x": [-42.0, 42.0], "z": [-26.0, -25.0], "y": [0.0, 6.0], "label": "Falaise nord"},
+    {"id": "CliffS", "kind": "boundary", "half": "C", "x": [-42.0, 42.0], "z": [25.0, 26.0], "y": [-2.0, 4.0], "label": "Paroi sud"},
+    {"id": "CliffW", "kind": "boundary", "half": "W", "x": [-43.0, -42.0], "z": [-25.0, 25.0], "y": [-2.0, 6.0], "label": "Falaise ouest", "label_e": "Falaise est"},
+    {"id": "EcurieW", "kind": "building", "half": "W", "x": [-42.0, -30.0], "z": [-25.0, -13.0], "y": [0.0, 3.6], "label": "Ecurie FUEL", "label_e": "Ecurie GAS", "floors": 1, "stair_side": "N", "roof": {"pitch_deg": 27.0}, "doors": [{"side": "S", "floor": 0, "offset": 2.0, "type": "L"}, {"side": "E", "floor": 0, "offset": 2.5, "type": "L"}], "windows": [{"side": "E", "floor": 0, "offset": -1.0}, {"side": "S", "floor": 0, "offset": -3.0}]},
+    {"id": "HotelW", "kind": "building", "half": "W", "x": [-30.0, -19.0], "z": [-25.0, -18.0], "y": [0.0, 6.4], "label": "Hotel", "label_e": "Pension", "floors": 2, "stair_side": "N", "pp": "PP1", "doors": [{"side": "S", "floor": 0, "offset": -2.5, "type": "M"}, {"side": "E", "floor": 0, "offset": 1.5, "type": "M"}, {"side": "S", "floor": 1, "offset": 2.5, "type": "M"}], "windows": [{"side": "S", "floor": 0, "offset": 2.5}, {"side": "S", "floor": 1, "offset": -2.5}, {"side": "E", "floor": 1, "offset": -1.5}]},
+    {"id": "MagasinW", "kind": "building", "half": "W", "x": [-19.0, -6.0], "z": [-25.0, -18.0], "y": [0.0, 6.4], "label": "Magasin", "label_e": "Epicerie", "floors": 2, "stair_side": "N", "doors": [{"side": "S", "floor": 0, "offset": -1.5, "type": "L"}, {"side": "W", "floor": 0, "offset": 1.5, "type": "M"}, {"side": "E", "floor": 0, "offset": 1.5, "type": "M"}, {"side": "S", "floor": 1, "offset": 3.5, "type": "M"}], "windows": [{"side": "S", "floor": 0, "offset": 3.5}, {"side": "S", "floor": 1, "offset": -3.0}, {"side": "S", "floor": 1, "offset": 0.5}]},
+    {"id": "BanqueC", "kind": "building", "half": "C", "x": [-6.0, 6.0], "z": [-25.0, -10.0], "y": [0.0, 6.4], "label": "Banque", "floors": 2, "stair_side": "N", "pp": "PP5", "doors": [{"side": "W", "floor": 0, "offset": -2.5, "type": "M"}, {"side": "E", "floor": 0, "offset": -2.5, "type": "M"}, {"side": "W", "floor": 0, "offset": 3.5, "type": "M"}, {"side": "E", "floor": 0, "offset": 3.5, "type": "M"}, {"side": "S", "floor": 0, "offset": 0.0, "type": "L"}, {"side": "W", "floor": 1, "offset": 0.75, "type": "M"}, {"side": "E", "floor": 1, "offset": 0.75, "type": "M"}], "windows": [{"side": "S", "floor": 1, "offset": -3.5}, {"side": "S", "floor": 1, "offset": 3.5}, {"side": "W", "floor": 1, "offset": 5.0}, {"side": "E", "floor": 1, "offset": 5.0}]},
+    {"id": "CoffreC", "kind": "wall", "half": "C", "x": [-2.0, 2.0], "z": [-16.0, -13.0], "y": [0.0, 3.2], "label": "Coffre (bloque l'axe des portes)"},
+    {"id": "GalerieW", "kind": "slab", "half": "W", "x": [-30.0, -6.0], "z": [-18.0, -15.5], "y": [2.95, 3.2], "label": "Galerie", "label_e": "Galerie", "solid_below": false},
+    {"id": "GardeCorpsGalerieW1", "kind": "fence", "class": "rail", "half": "W", "from": [-30.0, -15.5], "to": [-20.5, -15.5], "y": 3.2, "h": 1.0, "t": 0.05, "label": "Garde-corps galerie"},
+    {"id": "GardeCorpsGalerieW2", "kind": "fence", "class": "rail", "half": "W", "from": [-18.0, -15.5], "to": [-12.0, -15.5], "y": 3.2, "h": 1.0, "t": 0.05, "label": "Garde-corps galerie"},
+    {"id": "GardeCorpsGalerieW3", "kind": "fence", "class": "rail", "half": "W", "from": [-12.0, -15.5], "to": [-6.0, -15.5], "y": 3.2, "h": 1.0, "t": 0.05, "label": "Garde-corps galerie"},
+    {"id": "PasserelleW", "kind": "slab", "half": "W", "x": [-20.5, -18.0], "z": [-15.5, -8.0], "y": [2.95, 3.2], "label": "Passerelle", "label_e": "Passerelle", "solid_below": false},
+    {"id": "GardeCorpsPasserelleW1", "kind": "fence", "class": "rail", "half": "W", "from": [-20.5, -15.5], "to": [-20.5, -8.0], "y": 3.2, "h": 1.0, "t": 0.05, "label": "Garde-corps passerelle"},
+    {"id": "GardeCorpsPasserelleW2", "kind": "fence", "class": "rail", "half": "W", "from": [-18.0, -15.5], "to": [-18.0, -8.0], "y": 3.2, "h": 1.0, "t": 0.05, "label": "Garde-corps passerelle"},
+    {"id": "SaloonW", "kind": "building", "half": "W", "x": [-26.0, -14.0], "z": [-8.0, 4.0], "y": [0.0, 6.4], "label": "Saloon FUEL", "label_e": "Saloon GAS", "floors": 2, "stair_side": "S", "pp": "PP3", "doors": [{"side": "W", "floor": 0, "offset": 4.5, "type": "L"}, {"side": "N", "floor": 0, "offset": 3.5, "type": "M"}, {"side": "E", "floor": 0, "offset": 0.0, "type": "L"}, {"side": "N", "floor": 1, "offset": 1.75, "type": "M"}, {"side": "E", "floor": 1, "offset": -2.0, "type": "L"}], "windows": [{"side": "E", "floor": 1, "offset": 3.5}, {"side": "S", "floor": 1, "offset": -3.0}, {"side": "S", "floor": 1, "offset": 3.0}, {"side": "W", "floor": 1, "offset": 2.0}, {"side": "N", "floor": 1, "offset": -3.0}]},
+    {"id": "BalconSaloonW", "kind": "slab", "half": "W", "x": [-14.0, -11.5], "z": [-8.0, 4.0], "y": [2.95, 3.2], "label": "Balcon du Saloon", "label_e": "Balcon du Saloon", "solid_below": false},
+    {"id": "GardeCorpsBalconW1", "kind": "fence", "class": "rail", "half": "W", "from": [-11.5, -8.0], "to": [-11.5, -2.0], "y": 3.2, "h": 1.0, "t": 0.05, "label": "Garde-corps balcon"},
+    {"id": "GardeCorpsBalconW3", "kind": "fence", "class": "rail", "half": "W", "from": [-11.5, -2.0], "to": [-11.5, 4.0], "y": 3.2, "h": 1.0, "t": 0.05, "label": "Garde-corps balcon"},
+    {"id": "GardeCorpsBalconW2", "kind": "fence", "class": "rail", "half": "W", "from": [-14.0, 4.0], "to": [-11.5, 4.0], "y": 3.2, "h": 1.0, "t": 0.05, "label": "Garde-corps balcon"},
+    {"id": "EscalierBalconW", "kind": "stairs", "half": "W", "from": [-12.75, 0.0, -13.0], "to": [-12.75, 3.2, -8.0], "w": 2.5, "label": "Escalier du balcon (rue)"},
+    {"id": "WagonC", "kind": "building", "half": "C", "x": [-1.5, 1.5], "z": [-4.5, 4.5], "y": [0.0, 3.4], "label": "Wagon (traversant N-S)", "floors": 1, "stair_side": "W", "roof": {"pitch_deg": 24.0}, "pp": "PP6", "doors": [{"side": "N", "floor": 0, "offset": 0.0, "type": "M"}, {"side": "S", "floor": 0, "offset": 0.0, "type": "M"}], "windows": []},
+    {"id": "PompeC", "kind": "solid", "half": "C", "x": [-2.0, 2.0], "z": [7.5, 13.0], "y": [0.0, 3.0], "label": "Pompe (socle du chateau d'eau)"},
+    {"id": "ChateauPiedNW", "kind": "landmark", "half": "W", "x": [-1.9, -1.5], "z": [7.6, 8.0], "y": [3.0, 8.0], "label": "Pied NO", "label_e": "Pied NE"},
+    {"id": "ChateauPiedSW", "kind": "landmark", "half": "W", "x": [-1.9, -1.5], "z": [10.1, 10.5], "y": [3.0, 8.0], "label": "Pied SO", "label_e": "Pied SE"},
+    {"id": "ChateauCuveC", "kind": "landmark", "half": "C", "x": [-2.2, 2.2], "z": [7.5, 10.5], "y": [8.0, 12.0], "label": "Cuve du chateau d'eau"},
+    {"id": "AbreuvoirPlaceW", "kind": "cover", "half": "W", "x": [-10.0, -8.0], "z": [-5.0, -4.0], "y": [0.0, 1.0], "label": "Abreuvoir place", "class": "C1"},
+    {"id": "CaissesBanqueW", "kind": "cover", "half": "W", "x": [-6.0, -3.5], "z": [-10.0, -7.5], "y": [0.0, 2.2], "label": "Caisses Banque", "class": "C3"},
+    {"id": "RemiseW", "kind": "building", "half": "W", "x": [-18.0, -14.0], "z": [4.0, 13.0], "y": [0.0, 3.4], "label": "Remise", "label_e": "Remise", "floors": 1, "stair_side": "N", "roof": {"pitch_deg": 27.0}, "doors": [{"side": "W", "floor": 0, "offset": -2.5, "type": "M"}, {"side": "E", "floor": 0, "offset": 2.0, "type": "M"}], "windows": [{"side": "S", "floor": 0, "offset": 0.0}]},
+    {"id": "TonneauxPlaceW", "kind": "cover", "half": "W", "x": [-9.0, -7.5], "z": [0.0, 1.5], "y": [0.0, 1.4], "label": "Tonneaux place", "class": "C2"},
+    {"id": "CharretteRueW", "kind": "cover", "half": "W", "x": [-26.0, -23.0], "z": [-13.5, -11.5], "y": [0.0, 2.2], "label": "Charrette rue", "class": "C3"},
+    {"id": "CiterneW", "kind": "cover", "half": "W", "x": [-34.0, -31.0], "z": [-10.0, -7.0], "y": [0.0, 2.2], "label": "Citerne FUEL", "label_e": "Citerne GAS", "class": "C3"},
+    {"id": "CaisseCourW", "kind": "cover", "half": "W", "x": [-33.0, -31.5], "z": [0.0, 2.0], "y": [0.0, 1.4], "label": "Caisses cour", "class": "C2"},
+    {"id": "PalissadeW2", "kind": "fence", "class": "C3", "half": "W", "from": [-37.5, 12.9], "to": [-26.25, 12.9], "y": 0.0, "h": 2.2, "t": 0.2, "label": "Palissade"},
+    {"id": "ParapetW3", "kind": "fence", "class": "C1", "half": "W", "from": [-21.75, 12.9], "to": [-18.0, 12.9], "y": 0.0, "h": 1.0, "t": 0.2, "label": "Parapet"},
+    {"id": "ParapetW5", "kind": "fence", "class": "C1", "half": "W", "from": [-14.0, 12.9], "to": [-10.25, 12.9], "y": 0.0, "h": 1.0, "t": 0.2, "label": "Parapet"},
+    {"id": "ParapetW4", "kind": "fence", "class": "C1", "half": "W", "from": [-5.75, 12.9], "to": [-2.0, 12.9], "y": 0.0, "h": 1.0, "t": 0.2, "label": "Parapet"},
+    {"id": "RampeW1", "kind": "ramp", "half": "W", "from": [-39.75, 0.0, 7.0], "to": [-39.75, -2.0, 13.0], "w": 4.5, "label": "Rampe Cour"},
+    {"id": "RampeW2", "kind": "ramp", "half": "W", "from": [-24.0, 0.0, 7.0], "to": [-24.0, -2.0, 13.0], "w": 4.5, "label": "Rampe Ruelle"},
+    {"id": "RampeW3", "kind": "ramp", "half": "W", "from": [-8.0, 0.0, 7.0], "to": [-8.0, -2.0, 13.0], "w": 4.5, "label": "Rampe Place"},
+    {"id": "RocherS0W", "kind": "rock", "half": "W", "x": [-6.5, -2.5], "z": [18.5, 25.0], "y": [-2.0, 1.8], "label": "Aiguille du Gue", "label_e": "Aiguille du Gue"},
+    {"id": "RocherN1W", "kind": "rock", "half": "W", "x": [-15.5, -11.5], "z": [13.0, 19.5], "y": [-2.0, 1.8], "label": "Aiguille N1", "label_e": "Aiguille N1"},
+    {"id": "RocherS1W", "kind": "rock", "half": "W", "x": [-24.5, -20.5], "z": [18.5, 25.0], "y": [-2.0, 1.8], "label": "Aiguille S1", "label_e": "Aiguille S1"},
+    {"id": "RocherN2W", "kind": "rock", "half": "W", "x": [-33.5, -29.5], "z": [13.0, 19.5], "y": [-2.0, 1.8], "label": "Aiguille N2", "label_e": "Aiguille N2"},
+    {"id": "RocherS2W", "kind": "rock", "half": "W", "x": [-42.0, -38.5], "z": [18.5, 25.0], "y": [-2.0, 1.8], "label": "Aiguille S2", "label_e": "Aiguille S2"}
   ],
-
   "markers": {
     "team_spawns": [
-      {"team": 0, "half": "W", "pos": [-41.0, 0.0, -8.0], "look": [1.0, 0.0]},
+      {"team": 0, "half": "W", "pos": [-41.0, 0.0, -9.0], "look": [1.0, 0.0]},
+      {"team": 0, "half": "W", "pos": [-41.0, 0.0, -6.5], "look": [1.0, 0.0]},
       {"team": 0, "half": "W", "pos": [-41.0, 0.0, -4.0], "look": [1.0, 0.0]},
-      {"team": 0, "half": "W", "pos": [-41.0, 0.0, 0.0], "look": [1.0, 0.0]},
-      {"team": 0, "half": "W", "pos": [-41.0, 0.0, 4.0], "look": [1.0, 0.0]}
+      {"team": 0, "half": "W", "pos": [-41.0, 0.0, -1.5], "look": [1.0, 0.0]}
     ],
     "tdm_spawns": [
-      {"half": "W", "pos": [-40.5, 0.0, -21.5], "pocket": "coin NO"},
-      {"half": "W", "pos": [-38.5, 0.0, -17.5], "pocket": "cour"},
-      {"half": "W", "pos": [-37.5, 0.0, -9.0], "pocket": "cour"},
-      {"half": "W", "pos": [-38.5, 0.0, 3.0], "pocket": "cour"},
-      {"half": "W", "pos": [-39.5, 0.0, 7.5], "pocket": "cour"},
-      {"half": "W", "pos": [-41.0, -2.0, 16.5], "pocket": "canyon"},
-      {"half": "W", "pos": [-36.0, -2.0, 17.5], "pocket": "canyon"},
-      {"half": "W", "pos": [-32.5, 0.0, -21.0], "pocket": "forge"},
-      {"half": "W", "pos": [-31.0, 0.0, -5.0], "pocket": "echoppes"},
-      {"half": "W", "pos": [-24.5, 0.0, 1.0], "pocket": "echoppes"},
-      {"half": "W", "pos": [-29.0, 0.0, 10.0], "pocket": "arriere-cour"},
-      {"half": "W", "pos": [-18.5, 0.0, 8.0], "pocket": "arriere-cour"}
+      {"half": "W", "pos": [-38.0, 0.0, -10.0], "pocket": "cour"},
+      {"half": "W", "pos": [-36.5, 0.0, 4.0], "pocket": "cour"},
+      {"half": "W", "pos": [-29.5, 0.0, 1.0], "pocket": "cour"},
+      {"half": "W", "pos": [-37.0, 0.0, -4.0], "pocket": "cour"},
+      {"half": "W", "pos": [-38.0, 0.0, -19.0], "pocket": "ecurie"},
+      {"half": "W", "pos": [-33.0, 0.0, -22.0], "pocket": "ecurie"},
+      {"half": "W", "pos": [-27.0, 0.0, -21.5], "pocket": "hotel"},
+      {"half": "W", "pos": [-22.0, 0.0, -5.0], "pocket": "saloon"},
+      {"half": "W", "pos": [-30.0, 0.0, 9.0], "pocket": "ruelle"},
+      {"half": "W", "pos": [-35.5, -2.0, 15.0], "pocket": "carriere"},
+      {"half": "W", "pos": [-33.0, -2.0, 22.0], "pocket": "carriere"},
+      {"half": "W", "pos": [-15.0, 0.0, -22.0], "pocket": "magasin"}
     ],
     "strong_positions": [
-      {"id": "PP1", "half": "W", "mirror_id": "PP2", "pos": [-24.5, 3.2, -20.5], "counter": "PP4", "label": "Hotel etage", "label_e": "Banque etage"},
-      {"id": "PP3", "half": "W", "mirror_id": "PP4", "pos": [-7.0, 3.2, -6.0], "counter": "PP4", "label": "Galerie Saloon bleu", "label_e": "Galerie Saloon rouge"},
-      {"id": "PP5", "half": "C", "pos": [0.0, 0.0, -1.0], "counter": "PP3+PP4", "label": "Wagon"}
+      {"id": "PP1", "half": "W", "mirror_id": "PP2", "pos": [-24.5, 3.2, -16.75], "counter": "rue (tir vers le haut), Banque etage, passerelle", "label": "Galerie Hotel/Magasin", "label_e": "Galerie Pension/Epicerie"},
+      {"id": "PP3", "half": "W", "mirror_id": "PP4", "pos": [-12.75, 3.2, -2.0], "counter": "balcon adverse (23 m), Banque etage (fenetres S), place", "label": "Balcon Saloon FUEL", "label_e": "Balcon Saloon GAS"},
+      {"id": "PP5", "half": "C", "pos": [0.0, 3.2, -12.0], "counter": "2 galeries (portes O1/E1), rampe interieure, balcons", "label": "Banque etage"},
+      {"id": "PP6", "half": "C", "pos": [0.0, 0.0, -1.0], "counter": "2 portes N/S, contournement", "label": "Wagon"}
     ],
-    "hardpoints": [
-      {"id": "P1", "label": "Wagon", "x": [-7.0, 7.0], "z": [-3.5, 1.5], "y": [0.0, 3.4]},
-      {"id": "P2", "label": "Magasin ouest", "x": [-12.25, -4.25], "z": [-24.75, -19.25], "y": [0.0, 3.6]},
-      {"id": "P3", "label": "Quai est (bord du canyon)", "x": [9.5, 15.5], "z": [6.5, 11.5], "y": [0.0, 3.0]}
-    ],
-    "hardpoint_order": ["P1", "P2", "P3"],
-    "snd_sites": [
-      {"id": "A", "label": "Banque (rez-de-chaussee)", "x": [17.5, 25.5], "z": [-24.0, -20.0], "y": [0.0, 3.0]},
-      {"id": "B", "label": "Quai est", "x": [19.0, 25.0], "z": [6.5, 11.5], "y": [0.0, 3.0]}
-    ],
-    "snd_attackers_half": "W",
-    "duel_zone": {"x": [-3.0, 3.0], "z": [-8.0, -4.0], "y": [0.0, 3.0]},
-    "duel_spawns": [{"half": "W", "pos": [-18.0, 0.0, 8.5]}],
-    "duo_extra_spawns": [{"half": "W", "pos": [-10.0, 0.0, -14.0]}],
     "fronts": [
-      {"half": "W", "pos": [-4.0, 0.0, -12.5], "label": "bouche Grand-Rue"},
-      {"half": "W", "pos": [-7.0, 0.0, 2.0], "label": "place"},
-      {"half": "W", "pos": [-6.0, -2.0, 18.5], "label": "gue"}
+      {"half": "W", "pos": [-7.5, 0.0, -9.0], "label": "bouche de rue (Banque)"},
+      {"half": "W", "pos": [-3.5, 0.0, -7.0], "label": "place (bout N du wagon)"},
+      {"half": "W", "pos": [-5.0, -2.0, 15.0], "label": "gue"}
     ],
-    "flip_line_x": 12.0
+    "flip_line_x": 14.0
   },
-
   "lanes": [
-    {"id": "grand_rue", "label": "1 - Grand-Rue", "range": "moyenne-longue", "level": 0.0, "color": "#E0703A",
-      "region": {"x": [-44.0, 44.0], "z": [-19.0, -9.0]},
-      "widths": [{"what": "facade a facade (Hotel/Magasin -> Echoppes/Saloon)", "w": 8.0}, {"what": "devant la Forge", "w": 6.0}, {"what": "bouche de place (escalier Galerie -> Diligence)", "w": 4.0}],
-      "route_w": [[-41.0, -8.0], [-38.5, -14.0], [-30.0, -17.5], [-17.0, -17.5], [-8.0, -15.5], [-4.5, -13.0], [-4.0, -10.0], [0.0, -9.0]]},
-    {"id": "interieurs", "label": "2 - Interieurs", "range": "courte", "level": 0.0, "color": "#2FA37A",
-      "region": {"x": [-34.0, 34.0], "z": [-11.0, 5.0]},
-      "widths": [{"what": "portes de lane (type L)", "w": 2.4}, {"what": "salles des Echoppes", "w": 6.5}, {"what": "Ruelle (hors escalier)", "w": 3.0}, {"what": "Saloon rez-de-chaussee", "w": 7.5}, {"what": "couloir Saloon/Wagon", "w": 2.0}],
-      "route_w": [[-41.0, -4.0], [-34.0, -5.0], [-29.0, -2.5], [-21.0, -2.0], [-19.5, -5.0], [-16.0, -7.0], [-10.0, -3.0], [-8.0, 1.5], [-7.0, 0.0], [-7.0, -1.0], [0.0, -1.0]]},
-    {"id": "canyon", "label": "3 - Canyon (-2 m)", "range": "moyenne serree", "level": -2.0, "color": "#5A4FB0",
-      "region": {"x": [-44.0, 44.0], "z": [12.0, 20.0]},
-      "widths": [{"what": "paroi a paroi", "w": 8.0}, {"what": "passage entre aiguille et paroi", "w": 3.5}, {"what": "rampe + passage", "w": 5.5}],
-      "route_w": [[-41.0, 0.0], [-40.5, 8.0], [-40.75, 13.25], [-33.5, 13.25], [-29.0, 13.75], [-26.0, 17.5], [-21.0, 18.0], [-14.0, 17.0], [-9.5, 13.75], [-7.0, 14.5], [-6.75, 17.75], [-3.0, 18.0], [0.0, 16.5]]}
+    {"id": "grand_rue", "label": "1 - Grand-Rue", "range": "moyenne, demi-rue 24 m", "level": 0.0, "color": "#E0703A", "region": {"x": [-30.0, 30.0], "z": [-18.5, -8.0]}, "widths": [{"what": "facade a facade (Hotel/Magasin -> Saloon)", "w": 10.0}, {"what": "bouche de rue (escalier balcon -> Banque)", "w": 5.5}, {"what": "coude de la cour (Ecurie -> Citerne -> Saloon)", "w": 3.0}], "route_w": [[-41.0, -6.5], [-35.0, -11.5], [-28.0, -15.0], [-10.0, -15.0], [-7.5, -7.0], [-3.0, -6.5], [0.0, -6.5]]},
+    {"id": "place", "label": "2 - Place", "range": "courte-moyenne, 28 m", "level": 0.0, "color": "#2FA37A", "region": {"x": [-26.0, 26.0], "z": [-8.0, 13.0]}, "widths": [{"what": "place facade a facade (Saloons)", "w": 28.0}, {"what": "place : Banque -> chateau d'eau", "w": 16.5}, {"what": "wagon -> Banque / -> pompe", "w": 4.5}, {"what": "ruelle arriere (Saloon -> bord)", "w": 9.0}], "route_w": [[-41.0, -4.0], [-26.0, 2.5], [-22.0, -2.6], [-18.0, -2.6], [-14.0, -2.0], [-5.0, -4.0], [-2.5, -5.5], [0.0, -6.0]]},
+    {"id": "carriere", "label": "3 - Carriere (-2 m)", "range": "moyenne, lacets de 5 m", "level": -2.0, "color": "#5A4FB0", "region": {"x": [-42.0, 42.0], "z": [13.0, 25.0]}, "widths": [{"what": "paroi a paroi", "w": 12.0}, {"what": "rampes", "w": 4.5}, {"what": "passage rocher / paroi (mini)", "w": 3.5}], "route_w": [[-41.0, -1.5], [-39.75, 4.0], [-39.75, 7.0], [-39.75, 13.0], [-38.0, 16.0], [-31.5, 22.0], [-22.5, 16.0], [-13.5, 22.0], [-4.5, 16.0], [0.0, 16.0]]}
   ],
-
   "sight_regions": [
-    {"id": "grand_rue", "level": 0.0, "x": [-44.0, 44.0], "z": [-19.0, -9.0], "cap": 42.0},
-    {"id": "place", "level": 0.0, "x": [-8.0, 8.0], "z": [-11.0, 8.0], "cap": 40.0},
-    {"id": "interieurs", "level": 0.0, "x": [-34.0, 34.0], "z": [-9.0, 5.0], "inside": ["EchoppesW", "EchoppesE", "SaloonW", "SaloonE", "WagonC"], "cap": 18.0},
-    {"id": "arriere_cours", "level": 0.0, "x": [-44.0, 44.0], "z": [5.0, 12.0], "cap": 30.0},
-    {"id": "canyon", "level": -2.0, "x": [-44.0, 44.0], "z": [12.0, 20.0], "cap": 25.0}
+    {"id": "grand_rue", "level": 0.0, "x": [-30.0, 30.0], "z": [-18.0, -8.0], "cap": 60.0},
+    {"id": "place", "level": 0.0, "x": [-26.0, 26.0], "z": [-10.0, 13.0], "cap": 30.0},
+    {"id": "carriere", "level": -2.0, "x": [-42.0, 42.0], "z": [13.0, 25.0], "cap": 40.0}
   ],
-
+  "plaza": {
+    "x": [-14.0, 14.0],
+    "z": [-7.5, 6.5],
+    "centerpiece": "WagonC"
+  },
   "callouts": [
-    {"half": "C", "name": "Wagon", "x": [-6.0, 6.0], "z": [-2.5, 0.5]},
-    {"half": "C", "name": "Chateau d'eau", "x": [-2.5, 2.5], "z": [2.5, 12.0]},
-    {"half": "C", "name": "Gue", "x": [-4.0, 4.0], "z": [12.0, 20.0]},
-    {"half": "C", "name": "Poste", "x": [-4.0, 4.0], "z": [-25.0, -11.0]},
-    {"half": "C", "name": "Place", "x": [-8.0, 8.0], "z": [-11.0, 5.0]},
-    {"half": "W", "name": "Forge", "name_e": "Marechal", "x": [-36.0, -29.0], "z": [-25.0, -15.0]},
-    {"half": "W", "name": "Hotel", "name_e": "Banque", "x": [-29.0, -14.5], "z": [-25.0, -19.0]},
-    {"half": "W", "name": "Magasin", "name_e": "Epicerie", "x": [-14.5, -4.0], "z": [-25.0, -19.0]},
-    {"half": "W", "name": "Echoppes", "name_e": "Bazar", "x": [-34.0, -21.0], "z": [-9.0, 5.0]},
-    {"half": "W", "name": "Ruelle FUEL", "name_e": "Ruelle GAS", "x": [-21.0, -16.0], "z": [-9.0, 5.0]},
-    {"half": "W", "name": "Saloon bleu", "name_e": "Saloon rouge", "x": [-16.0, -8.0], "z": [-11.0, 5.0]},
-    {"half": "W", "name": "Cour FUEL", "name_e": "Cour GAS", "x": [-44.0, -36.0], "z": [-25.0, 12.0]},
-    {"half": "W", "name": "Rue FUEL", "name_e": "Rue GAS", "x": [-36.0, -4.0], "z": [-19.0, -9.0]},
-    {"half": "W", "name": "Arriere FUEL", "name_e": "Arriere GAS", "x": [-36.0, -2.0], "z": [5.0, 12.0]},
-    {"half": "W", "name": "Eolienne", "name_e": "Wagonnet", "x": [-44.0, -20.0], "z": [12.0, 20.0]},
-    {"half": "W", "name": "Gorge FUEL", "name_e": "Gorge GAS", "x": [-20.0, -4.0], "z": [12.0, 20.0]}
+    {"half": "C", "name": "Banque", "x": [-6.0, 6.0], "z": [-25.0, -10.0]},
+    {"half": "C", "name": "Place", "x": [-14.0, 14.0], "z": [-7.5, 6.5]},
+    {"half": "C", "name": "Wagon", "x": [-1.5, 1.5], "z": [-4.5, 4.5]},
+    {"half": "C", "name": "Chateau d'eau", "x": [-2.0, 2.0], "z": [7.5, 13.0]},
+    {"half": "C", "name": "Gue", "x": [-4.0, 4.0], "z": [13.0, 25.0]},
+    {"half": "W", "name": "Cour FUEL", "name_e": "Cour GAS", "x": [-42.0, -26.0], "z": [-13.0, 13.0]},
+    {"half": "W", "name": "Ecurie", "name_e": "Ecurie", "x": [-42.0, -30.0], "z": [-25.0, -13.0]},
+    {"half": "W", "name": "Hotel", "name_e": "Pension", "x": [-30.0, -19.0], "z": [-25.0, -18.0]},
+    {"half": "W", "name": "Magasin", "name_e": "Epicerie", "x": [-19.0, -6.0], "z": [-25.0, -18.0]},
+    {"half": "W", "name": "Galerie FUEL", "name_e": "Galerie GAS", "x": [-30.0, -6.0], "z": [-18.0, -15.5]},
+    {"half": "W", "name": "Passerelle", "name_e": "Passerelle", "x": [-20.5, -18.0], "z": [-15.5, -8.0]},
+    {"half": "W", "name": "Rue FUEL", "name_e": "Rue GAS", "x": [-30.0, -6.0], "z": [-18.0, -8.0]},
+    {"half": "W", "name": "Saloon FUEL", "name_e": "Saloon GAS", "x": [-26.0, -14.0], "z": [-8.0, 4.0]},
+    {"half": "W", "name": "Balcon FUEL", "name_e": "Balcon GAS", "x": [-14.0, -11.5], "z": [-8.0, 4.0]},
+    {"half": "W", "name": "Ruelle FUEL", "name_e": "Ruelle GAS", "x": [-26.0, -18.0], "z": [4.0, 13.0]},
+    {"half": "W", "name": "Remise", "name_e": "Remise", "x": [-18.0, -14.0], "z": [4.0, 13.0]},
+    {"half": "W", "name": "Carriere FUEL", "name_e": "Carriere GAS", "x": [-42.0, -4.0], "z": [13.0, 25.0]}
   ]
 }

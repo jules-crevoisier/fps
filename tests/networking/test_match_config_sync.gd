@@ -105,20 +105,24 @@ func test_accept_payload_round_trips_through_json_unchanged() -> void:
 
 # ================================================ BUG-02 : le client reçoit le choix du SERVEUR
 
-## Reproduit le scénario du bug : le client avait choisi un mode/une carte
-## dans SON propre menu (comme `MainMenu._apply_match_config()` le fait avant
-## `_net.join()`), mais l'hôte a réellement lancé autre chose. Après le
+## Reproduit le scénario du bug : le client avait choisi une carte dans SON
+## propre menu, mais l'hôte a réellement lancé une autre carte. Après le
 ## handshake (build_accept_payload côté serveur -> JSON -> parse_accept_payload
 ## côté client -> application à MatchConfig, exactement le chemin de
-## `_client_apply_server_decision`), le client doit se retrouver avec le
-## mode/la carte/la scène du SERVEUR, jamais sa sélection locale d'origine.
+## `_client_apply_server_decision`), le client doit se retrouver avec la
+## carte/la scène du SERVEUR, jamais sa sélection locale d'origine.
+## Prototype à un seul mode (2026-09-26, "MatchConfig lists only tdm") : le
+## mode ne peut plus diverger (set_mode retombe toujours sur "tdm"), donc ce
+## test ne fait plus varier que la CARTE — la mécanique BUG-02 qu'il vérifie
+## (le client adopte la décision du serveur, jamais la sienne) reste
+## exactement la même.
 func test_client_ends_up_with_the_hosts_map_after_it_had_chosen_a_different_one() -> void:
 	# Sélection locale du client avant de rejoindre.
 	MatchConfig.set_mode("tdm")
 	MatchConfig.map_id = "port_ferraille"
 
-	# L'hôte joue en réalité une partie SnD sur Cargo Ship.
-	var host_reply := NetworkManager.build_accept_payload("snd", "cargo_ship")
+	# L'hôte joue en réalité sur Cargo Ship.
+	var host_reply := NetworkManager.build_accept_payload("tdm", "cargo_ship")
 	var wire: Variant = JSON.parse_string(JSON.stringify(host_reply))
 	var config := NetworkManager.parse_accept_payload(wire as Dictionary)
 
@@ -126,26 +130,8 @@ func test_client_ends_up_with_the_hosts_map_after_it_had_chosen_a_different_one(
 	MatchConfig.set_mode(str(config["mode_id"]))
 	MatchConfig.map_id = str(config["map_id"])
 
-	assert_str(MatchConfig.mode_id) \
-		.append_failure_message("le client devrait charger le mode de l'hôte (snd), pas sa propre sélection (tdm)") \
-		.is_equal("snd")
+	assert_str(MatchConfig.mode_id).is_equal("tdm")
 	assert_str(MatchConfig.map_id) \
 		.append_failure_message("le client devrait charger la carte de l'hôte (cargo_ship), pas sa propre sélection (port_ferraille)") \
 		.is_equal("cargo_ship")
 	assert_str(str(config["scene"])).is_equal(str(MapCatalog.get_by_id("cargo_ship").get("scene", "")))
-
-
-## Même scénario mais avec un mode qui change aussi la taille d'équipe
-## (`MatchConfig.team_size_for`) : le client avait choisi TDM (4v4) mais
-## l'hôte joue en Duel (1v1) — `team_size` doit lui aussi suivre le serveur.
-func test_client_team_size_follows_the_hosts_mode_not_its_own() -> void:
-	MatchConfig.set_mode("tdm")
-	MatchConfig.map_id = ""
-	assert_int(MatchConfig.team_size).is_equal(4)
-
-	var host_reply := NetworkManager.build_accept_payload("duel", "la_fosse")
-	var config := NetworkManager.parse_accept_payload(host_reply)
-	MatchConfig.set_mode(str(config["mode_id"]))
-	MatchConfig.map_id = str(config["map_id"])
-
-	assert_int(MatchConfig.team_size).is_equal(1)

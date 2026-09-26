@@ -114,17 +114,6 @@ func test_weapon_nudge_for_matches_tuned_constant_for_each_painted_weapon() -> v
 	assert_vector(ViewModel.weapon_nudge_for(6)).is_equal_approx(Vector3(0.289, -0.118, 0.0), Vector3.ONE * 0.001)
 
 
-func test_weapon_scale_and_nudge_fall_back_to_category_for_a_weapon_not_yet_painted() -> void:
-	# Percuteur (id 9, catégorie RIFLE, ART-13 pas encore livré à l'heure de
-	# FP-01) : pas d'entrée par arme -> repli sur le réglage de catégorie
-	# hérité d'ART-12, PAS sur celui, propre à Marqueur/Ravage, ci-dessus.
-	var percuteur_id := WeaponDatabase.get_by_name("Percuteur")
-	assert_object(percuteur_id).is_not_null()
-	var id := WeaponDatabase.id_of(percuteur_id)
-	assert_float(ViewModel.weapon_scale_for(id)).is_equal_approx(1.46, 0.001)
-	assert_vector(ViewModel.weapon_nudge_for(id)).is_equal_approx(Vector3(0.10, -0.09, 0.0), Vector3.ONE * 0.001)
-
-
 func test_weapon_scale_and_nudge_default_to_neutral_for_an_unknown_id() -> void:
 	# Hors limites de WeaponDatabase.PATHS (jamais censé arriver hors tests) :
 	# repli neutre, jamais un crash (WeaponDatabase.get_by_id renvoie null).

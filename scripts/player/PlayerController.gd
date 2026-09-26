@@ -763,26 +763,22 @@ func ground_move(target_speed: float, accel: float, friction: float, delta: floa
 	velocity.x = hv.x
 	velocity.z = hv.z
 
-## Effets de statut EFFECTIFS de ce joueur (StatusEffects, via le nœud
-## "Abilities" -- voir AbilityController.status()). `null`/absent (ex. scène
-## de test minimale sans nœud "Abilities") -> repli neutre, aucun effet.
-func _status_effects() -> StatusEffects:
-	var ab := get_node_or_null("Abilities")
-	if ab == null or not ab.has_method("status"):
-		return null
-	return ab.status()
-
+## Prototype à interface minimale (2026-09-26) : plus aucune capacité ne pose
+## d'effet de statut (Glu de Verrou et consorts ont disparu avec tout le
+## système de capacités, "Abilities" n'existe plus sur player.tscn) — ces
+## deux fonctions gardent leur signature PUBLIQUE (`_status_speed_mult`
+## appelée par `ground_move` ci-dessus, `is_jump_locked` par `can_jump`
+## ci-dessous et par les states qui décident d'une entrée en Dive/Slide) mais
+## retombent désormais TOUJOURS sur le neutre : aucun effet.
 func _status_speed_mult() -> float:
-	var st := _status_effects()
-	return st.speed_mult() if st != null else 1.0
+	return 1.0
 
-## true si un statut (ex. Glu de Verrou : "ne peut ni sauter, ni glisser, ni
-## plonger") verrouille le saut de ce joueur. Public : réutilisable par les
+## true si un statut verrouille le saut de ce joueur — toujours faux
+## désormais (voir la docstring ci-dessus). Public : réutilisable par les
 ## states qui décident d'une entrée en Dive/Slide (scripts/player/states/*),
 ## en plus de `can_jump()` qui le lit déjà ci-dessous.
 func is_jump_locked() -> bool:
-	var st := _status_effects()
-	return st != null and st.is_jump_locked()
+	return false
 
 ## Contrôle directionnel DIRECT en l'air : freine / réoriente vers wish_dir.
 ## Toute AUGMENTATION de vitesse est ramenée à la vitesse d'entrée → ce contrôle

@@ -25,7 +25,7 @@ func after_test() -> void:
 func _release_all() -> void:
 	for a in ["move_left", "move_right", "move_forward", "move_back", "jump", "crouch", "walk",
 			"dive", "fire", "aim", "reload", "pickup", "drop", "weapon_1", "weapon_2",
-			"weapon_next", "weapon_prev", "ability_c", "ability_q", "ability_e", "ultimate"]:
+			"weapon_next", "weapon_prev"]:
 		Input.action_release(a)
 
 
@@ -47,31 +47,11 @@ func test_slot_from_presses_prefers_first_on_conflict() -> void:
 	assert_int(PlayerInput.slot_from_presses(true, true)).is_equal(0)
 
 
-func test_ability_from_presses_none() -> void:
-	assert_str(PlayerInput.ability_from_presses(false, false, false, false)).is_equal("")
-
-
-func test_ability_from_presses_c() -> void:
-	assert_str(PlayerInput.ability_from_presses(true, false, false, false)).is_equal("C")
-
-
-func test_ability_from_presses_q() -> void:
-	assert_str(PlayerInput.ability_from_presses(false, true, false, false)).is_equal("Q")
-
-
-func test_ability_from_presses_e() -> void:
-	assert_str(PlayerInput.ability_from_presses(false, false, true, false)).is_equal("E")
-
-
-func test_ability_from_presses_ultimate_is_x() -> void:
-	assert_str(PlayerInput.ability_from_presses(false, false, false, true)).is_equal("X")
-
-
 # ---- gather_from_devices() : mappage Input -> champs (état "held", fiable
 # en headless ; les actions "just_pressed" dépendent d'une transition de
 # frame qu'un test unitaire sans boucle ne peut pas fiablement simuler, donc
 # non couvertes ici — le mappage discret correspondant est testé ci-dessus,
-# sur `slot_from_presses`/`ability_from_presses` directement). ----
+# sur `slot_from_presses` directement). ----
 
 func test_move_vector_forward() -> void:
 	Input.action_press("move_forward")
@@ -113,5 +93,4 @@ func test_clear_resets_every_field() -> void:
 	assert_bool(_input.fire_pressed).is_false()
 	assert_bool(_input.aim_held).is_false()
 	assert_int(_input.weapon_slot_pressed).is_equal(-1)
-	assert_str(_input.ability_pressed).is_equal("")
 	assert_float(_input.move.x).is_equal_approx(0.0, 0.0001)

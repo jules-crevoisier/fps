@@ -12,7 +12,15 @@ extends RefCounted
 enum Difficulty { RECRUE, VETERAN, ELITE }
 
 ## Identifiants de mode reconnus par MapSetup (scripts/levels/maps/).
-const MODES := ["tdm", "hardpoint", "snd", "duel", "duo"]
+## Prototype à un seul mode (décision 2026-09-26, "strip to minimal
+## prototype") : TDM seul est sélectionnable. Hardpoint/SnD/Duel/Duo restent
+## définis côté scripts/modes/ et scripts/levels/maps/MapSetup.gd (protégé,
+## regénéré séparément — MapSetup._build_game_mode instancie encore
+## HardpointMode/SnDMode/DuelMode par branche `match`) : cette liste réduite
+## garantit qu'aucun id autre que "tdm" ne peut plus être choisi (set_mode
+## retombe sur "tdm" pour tout id absent d'ici), donc que ces branches ne
+## sont plus jamais atteintes en jeu, sans casser leur compilation.
+const MODES := ["tdm"]
 
 static var mode_id: String = "tdm"
 ## Identifiant MapCatalog ; vide = carte par défaut du mode.

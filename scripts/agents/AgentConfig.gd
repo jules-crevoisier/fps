@@ -1,6 +1,9 @@
 ## AgentConfig.gd
-## Un agent / une classe : nom, rôle, couleur d'identité, et sa liste de
-## capacités (instances d'Ability). Construits dans AgentDatabase.
+## Un agent / une classe : nom, rôle, couleur d'identité. Construit dans
+## AgentDatabase. Prototype à un seul personnage (décision 2026-09-26, "strip
+## to minimal prototype") : plus aucune capacité/passif — les champs
+## `abilities`/`passive` (Ability/Passive, supprimés avec tout le système de
+## capacités) ont disparu avec eux.
 class_name AgentConfig
 extends Resource
 
@@ -9,10 +12,3 @@ extends Resource
 @export var role: String = ""
 @export var description: String = ""
 @export var color: Color = Color.WHITE
-@export var abilities: Array = []  # Array[Ability]
-## Passif TOUJOURS actif de cet agent (docs/research/10_ammo_kits_input.md
-## §3.5), sans touche ni cooldown. `null` = agent sans passif -- repli sûr :
-## chaque hook a un no-op par défaut sur `Passive` elle-même, et
-## AbilityController garde en plus ses propres gardes (`agent.passive != null`)
-## avant d'appeler quoi que ce soit.
-@export var passive: Passive = null

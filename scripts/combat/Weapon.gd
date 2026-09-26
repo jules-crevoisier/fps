@@ -53,12 +53,6 @@ const PICKUP_RANGE := 2.0   # distance max (m) pour valider un ramassage côté 
 ## Fin de rechargement anticipée acceptée par le serveur (s) : absorbe la gigue
 ## réseau entre la fin prédite chez le joueur et la fin serveur.
 const RELOAD_TOLERANCE := 0.15
-## Fenêtre d'achat en arène (Mêlée/Borne, §2.6) : au-delà de ce délai depuis le
-## spawn, la boutique ne recharge plus l'inventaire EN COURS DE VIE — elle ne
-## fait plus que choisir le loadout du PROCHAIN respawn (§2.2), pour fermer la
-## recharge gratuite en plein combat (§2.1 constat 3). Hors arène (round/
-## infinite), aucune restriction ici : voir `arena_buy_allowed`.
-const ARENA_BUY_WINDOW := 10.0
 
 var player: PlayerController
 var camera: Camera3D
@@ -92,11 +86,6 @@ var _server_inv: Inventory
 var _server_limiters: Dictionary = {}   # weapon_id -> RateLimiter
 var _pending_shots: Array = []          # [sender_id, origin, dirs, WeaponConfig]
 var rejected_shots: int = 0
-## Temps écoulé (s) depuis le dernier spawn/refill de CE joueur (voir
-## `server_refill_ammo`, remis à zéro à chaque appel — GF-20 : seul appelant,
-## à chaque respawn en arène) — sert UNIQUEMENT à `arena_buy_allowed`
-## (`_server_buy`), jamais lu en dehors du serveur.
-var _server_time_since_spawn: float = 0.0
 ## Horloge de SIMULATION serveur (cumul du delta physique de CE nœud, jamais
 ## remise à zéro) — voir `_server_tick`/`_server_fire` (BUG-26) : source de
 ## temps du limiteur de cadence, à la place de `Time.get_ticks_msec()`
@@ -160,7 +149,6 @@ func _ready() -> void:
 	if multiplayer.is_server():
 		_server_inv = Inventory.new(SLOTS)
 		_server_inv.set_loadout(WeaponDatabase.default_loadout_ids(), _ammo_rule())
-		_server_time_since_spawn = 0.0
 		_broadcast_current_id.rpc(_server_inv.current_id())
 	_emit_local()
 
@@ -222,21 +210,6 @@ func _emit_local() -> void:
 func _owner_id() -> int:
 	return str(player.name).to_int() if player else -1
 
-## Passif de l'agent EN COURS de CE joueur (AGT-09, docs/research/
-## 10_ammo_kits_input.md §3.5) : résolu via son nœud "Abilities" (jamais un
-## champ dupliqué ici) -- `null` si l'agent n'a pas de passif, ou si le nœud
-## "Abilities" n'existe pas encore (repli sûr, mêmes gardes que partout dans
-## ce fichier). Utilisé côté PROPRIÉTAIRE (prédiction de dispersion/recul,
-## voir `_fire_local`) : chaque pair résout SON PROPRE agent, jamais celui
-## d'un autre joueur.
-func _agent_passive() -> Passive:
-	if player == null:
-		return null
-	var ctrl := player.get_node_or_null("Abilities") as AbilityController
-	if ctrl == null or ctrl.agent == null:
-		return null
-	return ctrl.agent.passive
-
 ## Règle de munitions du mode courant (`Inventory.RULE_ROUND`/`RULE_ARENA`/
 ## `RULE_INFINITE`, docs/research/10_ammo_kits_input.md §2.2) — lue à CHAQUE
 ## appel (jamais mise en cache : le groupe "game_mode" peut ne pas encore
@@ -262,22 +235,6 @@ func _ammo_rule() -> String:
 		return Inventory.RULE_INFINITE
 	var v = mode.get("ammo_rule")
 	return String(v) if v != null else Inventory.RULE_ARENA
-
-## Fenêtre d'achat en arène (§2.6) : la boutique ne recharge gratuitement
-## l'inventaire EN COURS DE VIE que dans les `ARENA_BUY_WINDOW` premières
-## secondes après le spawn — au-delà, `_server_buy` la refuse (elle continuera
-## de choisir le loadout du PROCHAIN respawn, §2.2, par la prédiction du
-## propriétaire qui n'est pas corrigée tant que le serveur ne pousse rien).
-## Hors arène (round : le Litige a sa propre phase d'achat/`buy_phase`, le
-## Duel n'a pas de boutique du tout — `DuelMode.server_try_purchase` renvoie
-## faux ; infinite : entraînement, libre), aucune restriction ICI. Pure et
-## statique : testée directement (tests/combat/test_inventory.gd), sans scène
-## ni pair réseau — voir la docstring de RELOAD_TOLERANCE pour la même
-## philosophie de tolérance/limite en constante nommée.
-static func arena_buy_allowed(ammo_rule: String, time_since_spawn: float) -> bool:
-	if ammo_rule != Inventory.RULE_ARENA:
-		return true
-	return time_since_spawn <= ARENA_BUY_WINDOW
 
 # ======================================================================
 #  PROPRIÉTAIRE — entrée, prédiction, cosmétique
@@ -436,19 +393,11 @@ func _fire_local(c: WeaponConfig) -> void:
 	var move_spread := WeaponFeel.move_spread_deg(c, player.horizontal_speed(), player.config.sprint_speed, sliding)
 	var air_spread := c.air_spread_add if airborne else 0.0
 	var base_deg := c.spread_aim if aiming else c.spread_hip
-	# Passif Sang-froid de Verrou (AGT-08/AGT-09, docs/research/
-	# 10_ammo_kits_input.md §3.3 : « dispersion -30 %, recul vertical -20 % »
-	# immobile ou accroupi) : `Passive.spread_mult` vaut 1.0 par défaut pour
-	# tout autre agent (aucun effet, comportement inchangé) -- voir
-	# `WeaponFeel.total_spread_deg`/`steady_spread_mult`, déjà préparés pour ce
-	# multiplicateur.
-	var passive := _agent_passive()
-	var passive_spread_mult := passive.spread_mult(player) if passive else 1.0
 	# Dispersion additionnelle pendant le Stun (GF-29/MV-03, MovementConfig.
 	# stun_fire_spread_add = 3° par défaut) : le stun de chute adouci ne fige
 	# plus le tir (voir `_can_act` ci-dessus), il le rend seulement moins précis.
 	var stun_spread := player.config.stun_fire_spread_add if player.state_machine.current_name == "Stun" else 0.0
-	var spread := deg_to_rad(WeaponFeel.total_spread_deg(base_deg, move_spread, air_spread, passive_spread_mult, stun_spread))
+	var spread := deg_to_rad(WeaponFeel.total_spread_deg(base_deg, move_spread, air_spread, 1.0, stun_spread))
 
 	# Dispersion en DISQUE, dans le repère CAMÉRA (GF-13, WeaponFeel.spread_dir) :
 	# remplace l'ancienne dispersion carrée qui tournait autour de Vector3.UP
@@ -458,7 +407,7 @@ func _fire_local(c: WeaponConfig) -> void:
 	for i in n:
 		var s := spread
 		if c.pellets > 1:
-			s = deg_to_rad(c.pellet_spread) * passive_spread_mult
+			s = deg_to_rad(c.pellet_spread)
 		dirs.append(WeaponFeel.spread_dir(base_dir, camera.global_transform.basis, s))
 
 	var muzzle := _muzzle_position()
@@ -467,12 +416,7 @@ func _fire_local(c: WeaponConfig) -> void:
 
 	# Recul (vrai recoil : déplace la visée, récupère ensuite) — motif fixe
 	# (recoil_pattern/pattern_shots) puis aléatoire au-delà (WeaponFeel).
-	# `recoil_mult` (Sang-froid, duck-typé -- voir sa docstring) ne réduit QUE
-	# la composante VERTICALE, jamais l'aléatoire horizontal (§3.3).
-	var passive_recoil_mult := 1.0
-	if passive and passive.has_method("recoil_mult"):
-		passive_recoil_mult = passive.recoil_mult(player)
-	var kick := WeaponFeel.recoil_for_shot(c, _spray_shot_index, null, passive_recoil_mult)
+	var kick := WeaponFeel.recoil_for_shot(c, _spray_shot_index)
 	_spray_shot_index += 1
 	var rmult := c.recoil_aim_mult if aiming else 1.0
 	var rp := deg_to_rad(kick.y) * rmult
@@ -486,15 +430,6 @@ func _request_drop() -> void:
 	_inv.remove_current()
 	_emit_local()
 	_do_request_drop()
-
-## Achat (boutique) : prédit localement, le serveur corrige s'il refuse
-## (buy_enabled=false, id invalide…) en renvoyant l'inventaire.
-func buy(weapon_id: int) -> void:
-	if player == null or not player.is_multiplayer_authority():
-		return
-	_inv.give(weapon_id, _ammo_rule())
-	_emit_local()
-	_do_request_buy(weapon_id)
 
 ## Demande de ramassage d'une arme au sol (appelé par WorldWeapon, qui gère
 ## déjà son propre anti-spam). Prédit localement avec l'id connu du client.
@@ -529,16 +464,6 @@ func _do_request_fire(origin: Vector3, dirs: Array, weapon_id: int) -> void:
 @rpc("any_peer", "call_remote", "reliable")
 func request_fire(origin: Vector3, dirs: Array, weapon_id: int) -> void:
 	_server_fire(multiplayer.get_remote_sender_id(), origin, dirs, weapon_id)
-
-func _do_request_buy(weapon_id: int) -> void:
-	if multiplayer.is_server():
-		_server_buy(_owner_id(), weapon_id)
-	else:
-		request_buy.rpc_id(1, weapon_id)
-
-@rpc("any_peer", "call_remote", "reliable")
-func request_buy(weapon_id: int) -> void:
-	_server_buy(multiplayer.get_remote_sender_id(), weapon_id)
 
 func _do_request_pickup(uid: int) -> void:
 	if multiplayer.is_server():
@@ -585,7 +510,6 @@ func request_reload() -> void:
 # ======================================================================
 func _server_tick(delta: float) -> void:
 	_server_clock += delta
-	_server_time_since_spawn += delta
 	if _server_inv == null:
 		return
 	# Fin de rechargement : le propriétaire l'a prédite lui-même, pas de synchro.
@@ -701,32 +625,6 @@ func _remote_shot_fx(weapon_id: int, origin: Vector3, dirs: Array) -> void:
 	for d in dirs:
 		_fire_visuals(muzzle, origin, d, range_m)
 
-func _server_buy(sender_id: int, weapon_id: int) -> void:
-	if not multiplayer.is_server() or sender_id != _owner_id():
-		return
-	var rule := _ammo_rule()
-	if _buy_enabled() and arena_buy_allowed(rule, _server_time_since_spawn) \
-			and WeaponDatabase.get_by_id(weapon_id) != null and _try_purchase(sender_id, weapon_id):
-		_server_inv.give(weapon_id, rule)
-		_broadcast_current_id.rpc(_server_inv.current_id())
-		return  # identique à la prédiction du propriétaire
-	_push_server_sync()
-
-## Boutique : délègue au mode de jeu s'il définit sa propre règle d'achat
-## (ex. crédits SnD) ; sinon autorisé par défaut (training).
-func _try_purchase(peer_id: int, weapon_id: int) -> bool:
-	var mode := player.get_tree().get_first_node_in_group("game_mode")
-	if mode and mode.has_method("server_try_purchase"):
-		return mode.server_try_purchase(peer_id, weapon_id)
-	return true
-
-func _buy_enabled() -> bool:
-	var m := player.get_tree().get_first_node_in_group("match")
-	if m == null:
-		return true
-	var v = m.get("buy_enabled")
-	return true if v == null else bool(v)
-
 ## Manche verrouillée (BUY/PREROUND, GameWorld.round_locked — R-B1, serveur
 ## autoritaire) : aucun tir accepté tant que c'est le cas. Groupe "match"
 ## absent (training) ou propriété absente => pas de verrou.
@@ -766,9 +664,6 @@ func server_refill_ammo() -> void:
 			_server_inv.reserve[i] = Inventory.reserve_for(c, rule)
 	_server_inv.reloading = false
 	_server_inv.reload_left = 0.0
-	# GF-21 §2.6 : ce respawn (seul appelant, GameWorld._on_player_died) rouvre
-	# la fenêtre d'achat gratuite de l'arène pour ARENA_BUY_WINDOW secondes.
-	_server_time_since_spawn = 0.0
 	_push_server_sync()
 
 ## GF-22 (docs/research/10_ammo_kits_input.md §2.4, « Cartouchière ») : ajoute
@@ -959,8 +854,7 @@ func _resolve_ray(space: PhysicsDirectSpaceState3D, origin: Vector3, dir: Vector
 	var collider: Node = hit.collider
 	var hp := collider.get_node_or_null("Health") as Health
 	if hp == null:
-		_notify_wall_shot(collider, shooter_id)  # AGT-09 : passif Relevé -- pas une cible (mur, décor).
-		return {}
+		return {}  # pas une cible (mur, décor).
 	if hp.is_dead:
 		return {}
 	var dist: float = origin.distance_to(hit.position)
@@ -980,35 +874,6 @@ func _resolve_ray(space: PhysicsDirectSpaceState3D, origin: Vector3, dir: Vector
 		dmg *= c.headshot_mult
 	var target_id: int = target.name.to_int() if target else 0
 	return {"health": hp, "pos": hit.position, "dmg": dmg, "headshot": headshot, "target_id": target_id}
-
-## Passif Relevé de Vanne (AGT-05/AGT-09, docs/research/10_ammo_kits_input.md
-## §3.3) : « tout ennemi qui tire dans un de ses murs est marqué pour son
-## équipe ». `collider` vient d'un rayon qui a touché QUELQUE CHOSE sans
-## Health (donc jamais un joueur, mort ou vivant) -- un mur posé par
-## `AbilityController._spawn_barrier` porte sa métadonnée `wall_owner_id`
-## (AGT-09) ; tout autre décor (sans cette métadonnée) ne fait rien ici.
-## `shooter_id` est le TIREUR (déjà résolu par `_server_fire`/`_resolve_shot`),
-## jamais `_owner_id()` (ce nœud Weapon appartient au tireur, mais le MUR
-## appartient à sa victime potentielle -- un joueur peut très bien tirer dans
-## son PROPRE mur, `Releve.on_wall_shot` l'ignore déjà via la vérif d'équipe).
-func _notify_wall_shot(collider: Node, shooter_id: int) -> void:
-	if not collider.has_meta("wall_owner_id"):
-		return
-	var owner_id := int(collider.get_meta("wall_owner_id"))
-	if owner_id == shooter_id or player == null:
-		return  # tir dans son propre mur : jamais une marque (Releve.on_wall_shot le vérifie aussi par équipe).
-	var players_root := player.get_parent()
-	if players_root == null:
-		return
-	var wall_owner := players_root.get_node_or_null(str(owner_id)) as PlayerController
-	var attacker := players_root.get_node_or_null(str(shooter_id)) as PlayerController
-	if wall_owner == null or attacker == null:
-		return
-	var owner_ctrl := wall_owner.get_node_or_null("Abilities") as AbilityController
-	if owner_ctrl == null or owner_ctrl.agent == null or owner_ctrl.agent.passive == null:
-		return
-	if owner_ctrl.agent.passive.has_method("on_wall_shot"):
-		owner_ctrl.agent.passive.on_wall_shot(wall_owner, attacker, Time.get_ticks_msec() / 1000.0)
 
 ## Affiche le chiffre de dégâts chez le TIREUR (feedback de hit). Ce nœud
 ## Weapon appartient TOUJOURS au tireur (shooter_id == _owner_id() : ce sont

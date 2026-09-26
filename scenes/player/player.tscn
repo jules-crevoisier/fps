@@ -18,8 +18,6 @@
 [ext_resource type="Script" path="res://scripts/player/StunStars.gd" id="14_stars"]
 [ext_resource type="Script" path="res://scripts/combat/Health.gd" id="15_health"]
 [ext_resource type="Script" path="res://scripts/combat/Weapon.gd" id="16_weapon"]
-[ext_resource type="Resource" path="res://resources/weapons/default_rifle.tres" id="17_wcfg"]
-[ext_resource type="Script" path="res://scripts/agents/AbilityController.gd" id="18_ability"]
 [ext_resource type="Script" path="res://scripts/player/ViewModel.gd" id="19_viewmodel"]
 [ext_resource type="Script" path="res://scripts/player/ThirdPersonWeapon.gd" id="20_tpweapon"]
 [ext_resource type="Script" path="res://scripts/player/PlayerLook.gd" id="21_look"]
@@ -150,10 +148,6 @@ script = ExtResource("15_health")
 
 [node name="Weapon" type="Node" parent="."]
 script = ExtResource("16_weapon")
-config = ExtResource("17_wcfg")
-
-[node name="Abilities" type="Node" parent="."]
-script = ExtResource("18_ability")
 
 [node name="ThirdPersonWeapon" type="Node3D" parent="."]
 unique_name_in_owner = true
