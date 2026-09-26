@@ -555,7 +555,7 @@ func _process(delta: float) -> void:
 	_ads_t = _anim.ads_blend(aiming, _ads_t, delta, ads_speed)
 	# `sm == "Sprint"` (avant ART-12 : `false` en dur — la pose sprint du
 	# viewmodel n'activait donc jamais, ni en jeu ni dans tools/fp_shots.gd).
-	_sprint_t = _anim.sprint_pose_blend(sm == "Sprint", _sprint_t, delta)
+	_sprint_t = _anim.sprint_pose_blend(sm == "Sprint", _sprint_t, delta, 10.0)
 	_slide_t = _anim.slide_tilt_blend(sm == "Slide", _slide_t, delta)
 
 	_anim.tick_sway(_last_mouse_delta, delta)
@@ -621,15 +621,27 @@ func _process_gloves(delta: float, bob: Vector3, reload_off: Vector3, equip_off:
 ## résoudre l'alignement (voir sa docstring), donc ce décalage se lit
 ## exactement comme avant à l'écran (+X caméra = droite écran, etc.), sans
 ## jamais bouger un os individuellement.
+## Bras FPS en sprint (repère caméra, mètres/degrés) : arme baissée, un peu reculée et
+## inclinée, balancement renforcé. Ramené à 0 dès que le sprint est suspendu (visée/tir).
+const SPRINT_ARMS_OFFSET := Vector3(0.015, -0.035, 0.02)
+const SPRINT_ARMS_PITCH_DEG := -7.0
+const SPRINT_ARMS_ROLL_DEG := -9.0
+const SPRINT_BOB_BOOST := 0.8
+
 func _process_arms(aiming: bool, reloading: bool, bob: Vector3, fov_scale: float) -> void:
 	_arms.set_ads_amount(FPArmsMath.ads_blend_amount(_ads_t))
-	# Pas de pose « sprint » (arme baissée) : dans ce jeu, avancer = état Sprint par défaut ;
-	# l'arme doit rester prête (et la visée ne doit jamais être écrasée en mouvement).
+	# Pas de pose « sprint » : le sprint est le déplacement principal (façon Apex), l'arme
+	# reste prête pour enchaîner tir et visée sans transition.
 	_arms.set_sprint_amount(0.0)
 
 	var proc_pos := Vector3(_anim.sway_offset.x, _anim.sway_offset.y, 0.0) * _ads_t \
 		+ bob * _ads_t + Vector3(0, _anim.recoil_offset.y * 0.02, _anim.recoil_offset.y * 0.03)
 	var proc_rot := Basis.from_euler(Vector3(_anim.recoil_offset.y * 0.35, 0.0, -_anim.sway_offset.x * 1.5))
+	# Sprint : arme un peu baissée et inclinée + balancement plus ample (par le code, pas un
+	# clip : rien ne peut faire tourner l'arme sur elle-même) ; revient dès qu'on vise/tire.
+	proc_pos += bob * _ads_t * SPRINT_BOB_BOOST * _sprint_t + SPRINT_ARMS_OFFSET * _sprint_t
+	proc_rot = proc_rot * Basis.from_euler(Vector3(deg_to_rad(SPRINT_ARMS_PITCH_DEG) * _sprint_t,
+		0.0, deg_to_rad(SPRINT_ARMS_ROLL_DEG) * _sprint_t))
 	_arms.align_to_camera(player.camera, Transform3D(proc_rot, proc_pos), fov_scale)
 
 	var firing := player.input.fire_held if player.input else false

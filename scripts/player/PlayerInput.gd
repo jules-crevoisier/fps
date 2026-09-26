@@ -71,6 +71,7 @@ var player: PlayerController
 var _crouch_toggle_active: bool = false
 var _aim_toggle_active: bool = false
 var _walk_toggle_active: bool = false
+var _sprint_active: bool = false
 
 const MOVE_ACTIONS := ["move_left", "move_right", "move_forward", "move_back"]
 
@@ -103,7 +104,8 @@ func clear() -> void:
 	jump_held = false
 	crouch_pressed = false
 	crouch_held = false
-	walk_held = false
+	walk_held = true
+	_sprint_active = false
 	dive_pressed = false
 	fire_pressed = false
 	fire_held = false
@@ -136,10 +138,6 @@ func gather_from_devices() -> void:
 	_crouch_toggle_active = resolve_hold_or_toggle(
 		crouch_pressed, Input.is_action_pressed("crouch"), Settings.hold_to_crouch, _crouch_toggle_active)
 	crouch_held = _crouch_toggle_active
-	var walk_pressed := Input.is_action_just_pressed("walk")
-	_walk_toggle_active = resolve_hold_or_toggle(
-		walk_pressed, Input.is_action_pressed("walk"), Settings.hold_to_walk, _walk_toggle_active)
-	walk_held = _walk_toggle_active
 	dive_pressed = Input.is_action_just_pressed("dive")
 	fire_pressed = Input.is_action_just_pressed("fire")
 	fire_held = Input.is_action_pressed("fire")
@@ -148,6 +146,11 @@ func gather_from_devices() -> void:
 		aim_pressed, Input.is_action_pressed("aim"), Settings.hold_to_aim, _aim_toggle_active)
 	aim_held = _aim_toggle_active
 	reload_pressed = Input.is_action_just_pressed("reload")
+	# Sprint à BASCULE (demande 2026-09-26) : on MARCHE par défaut ; un appui sur "sprint"
+	# lance la course, qui continue seule jusqu'à un arrêt (voir `resolve_sprint_toggle`).
+	# `walk_held` (lu par les états de mouvement ET écrit par les bots) = « pas en sprint ».
+	_sprint_active = resolve_sprint_toggle(_sprint_active, Input.is_action_just_pressed("sprint"), move)
+	walk_held = not _sprint_active or sprint_suppressed(move, aim_held, fire_held)
 	inspect_pressed = Input.is_action_just_pressed("inspect")
 	pickup_pressed = Input.is_action_just_pressed("pickup")
 	pickup_held = Input.is_action_pressed("pickup")
@@ -177,6 +180,26 @@ static func slot_from_presses(slot0_pressed: bool, slot1_pressed: bool) -> int:
 ## `_crouch_toggle_active`/`_aim_toggle_active`/`_walk_toggle_active`) : cette
 ## fonction est PURE (aucune dépendance au singleton Input ni à aucun champ
 ## d'instance), testée directement dans tests/core/test_settings.gd.
+## Sprint façon Apex (retour utilisateur 2026-09-26 : « le sprint, c'est le truc principal ») :
+## un appui le lance, et il RESTE actif tant qu'on se déplace — seuls l'arrêt complet ou un
+## 2e appui l'arrêtent. Glissade, dash, saut ou roulade ne le coupent pas : on enchaîne.
+## `move` : vecteur ZQSD de `Input.get_vector` (avant = y négatif).
+static func resolve_sprint_toggle(active: bool, sprint_pressed: bool, move: Vector2) -> bool:
+	if sprint_pressed:
+		active = not active
+	if move.length_squared() < 0.01:
+		return false
+	return active
+
+## Suspend le sprint SANS l'annuler (vitesse de marche, arme prête) le temps de viser, de
+## tirer ou de ne pas aller vers l'avant ; la course reprend seule dès que ça cesse.
+static func sprint_suppressed(move: Vector2, aiming: bool, firing: bool) -> bool:
+	return aiming or firing or move.y > -SPRINT_MIN_FORWARD
+
+## Composante avant minimale (0..1) pour courir : les diagonales avant passent, le pas de
+## côté pur et le recul repassent en marche (le sprint reprend en revenant vers l'avant).
+const SPRINT_MIN_FORWARD := 0.3
+
 static func resolve_hold_or_toggle(just_pressed: bool, held: bool, hold_enabled: bool, toggled: bool) -> bool:
 	if hold_enabled:
 		return held

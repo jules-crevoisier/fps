@@ -25,9 +25,9 @@ en LAN).
 | Déplacement | Z/Q/S/D (W/A/S/D) | Stick gauche |
 | Regarder | Souris | Stick droit |
 | Sauter | Espace | A |
-| Marcher (sinon sprint auto) | Maintenir Shift | L3 |
+| Sprint façon Apex (un appui ; reste actif jusqu'à l'arrêt, reprend seul après tir/visée) | Shift | L3 |
 | Accroupi / Glissade (slide) | Maintenir Ctrl | B |
-| Plongeon (dive) + roulade au sol | V | LB |
+| Dash dans la direction des touches (ZQSD) + roulade qui garde l'élan | V | LB |
 | Tirer / Viser (ADS) | Clic gauche / Clic droit | RT / LT |
 | Recharger | R | X |
 | Quitter | Échap | Start |

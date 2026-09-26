@@ -116,6 +116,11 @@ def _with(base, **kw):
 
 
 def build_fp(rig: Rig):
+    # Torsion de référence : celle de la pose de repos (tous les clips partent de cette branche).
+    rig.reset()
+    rig._twist_prev = {}
+    fp_hold(rig, fp_gun(**IDLE))
+    rig.set_twist_reference()
     add = _gun_clip
     breath = [(t, _with(IDLE, down=IDLE["down"] + 0.003 * math.sin(2 * math.pi * t),
                         pitch_up=IDLE["pitch_up"] + 0.6 * math.sin(2 * math.pi * t + 0.6)), None)

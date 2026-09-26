@@ -179,6 +179,10 @@ class Rig:
         nh.translation = self.posed(hand).translation
         self.set_matrix(hand, nh)
 
+    def set_twist_reference(self):
+        """Mémorise la torsion de la pose courante comme référence commune des clips."""
+        self._twist_ref = dict(self.__dict__.get("_twist_prev", {}))
+
     # -- doigts -------------------------------------------------------------
     def curl(self, side, amount_deg, thumb_deg=0.0, index_deg=None):
         """Referme les doigts (côté 'Left'/'Right'). Paume droite = +Z local, gauche = -Z."""
@@ -235,5 +239,7 @@ class Rig:
             self.arm.animation_data_create()
         self.arm.animation_data.action = act
         self._prev_q = {}
-        self._twist_prev = {}
+        # Chaque clip démarre sur la MÊME branche de torsion que la pose de référence : sinon
+        # deux clips mélangés (repos -> sprint, tir, rechargement) pouvaient faire tourner l'arme.
+        self._twist_prev = dict(self.__dict__.get("_twist_ref", {}))
         return act

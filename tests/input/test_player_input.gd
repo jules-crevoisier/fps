@@ -23,7 +23,7 @@ func after_test() -> void:
 
 
 func _release_all() -> void:
-	for a in ["move_left", "move_right", "move_forward", "move_back", "jump", "crouch", "walk",
+	for a in ["move_left", "move_right", "move_forward", "move_back", "jump", "crouch", "sprint",
 			"dive", "fire", "aim", "reload", "pickup", "drop", "weapon_1", "weapon_2",
 			"weapon_next", "weapon_prev"]:
 		Input.action_release(a)
@@ -74,12 +74,42 @@ func test_aim_held_tracks_action_pressed() -> void:
 	assert_bool(_input.aim_held).is_true()
 
 
-func test_crouch_and_walk_held_track_action_pressed() -> void:
+func test_crouch_held_tracks_action_pressed_and_walking_is_the_default() -> void:
+	# Contrat 2026-09-26 : on MARCHE par défaut, le sprint est une bascule (touche "sprint").
 	Input.action_press("crouch")
-	Input.action_press("walk")
 	_input.gather_from_devices()
 	assert_bool(_input.crouch_held).is_true()
 	assert_bool(_input.walk_held).is_true()
+
+
+# ---- Sprint façon Apex (fonctions pures) ----
+
+const FWD := Vector2(0.0, -1.0)
+
+func test_sprint_press_starts_sprinting() -> void:
+	assert_bool(PlayerInput.resolve_sprint_toggle(false, true, FWD)).is_true()
+
+
+func test_sprint_stays_on_without_holding_the_key() -> void:
+	assert_bool(PlayerInput.resolve_sprint_toggle(true, false, FWD)).is_true()
+	assert_bool(PlayerInput.resolve_sprint_toggle(true, false, Vector2(1.0, 0.0))).is_true()
+
+
+func test_second_press_or_full_stop_ends_sprinting() -> void:
+	assert_bool(PlayerInput.resolve_sprint_toggle(true, true, FWD)).is_false()
+	assert_bool(PlayerInput.resolve_sprint_toggle(true, false, Vector2.ZERO)).is_false()
+
+
+func test_aiming_firing_or_not_going_forward_only_suspends_sprint() -> void:
+	assert_bool(PlayerInput.sprint_suppressed(FWD, true, false)).is_true()
+	assert_bool(PlayerInput.sprint_suppressed(FWD, false, true)).is_true()
+	assert_bool(PlayerInput.sprint_suppressed(Vector2(1.0, 0.0), false, false)).is_true()
+	assert_bool(PlayerInput.sprint_suppressed(Vector2(0.0, 1.0), false, false)).is_true()
+
+
+func test_forward_and_diagonals_sprint_freely() -> void:
+	assert_bool(PlayerInput.sprint_suppressed(FWD, false, false)).is_false()
+	assert_bool(PlayerInput.sprint_suppressed(Vector2(0.7, -0.7), false, false)).is_false()
 
 
 # ---- clear() : remet tout à l'état neutre (souris relâchée, mort, bot...) ----

@@ -30,7 +30,7 @@ const ACTIONS := {
 	"move_left": "Gauche",
 	"move_right": "Droite",
 	"jump": "Sauter",
-	"walk": "Marcher (maintien)",
+	"sprint": "Sprint (appui = bascule)",
 	"crouch": "Accroupi / Slide",
 	"dive": "Plonger",
 	"fire": "Tirer",

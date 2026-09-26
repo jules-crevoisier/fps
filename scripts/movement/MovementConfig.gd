@@ -10,8 +10,9 @@ class_name MovementConfig
 extends Resource
 
 @export_group("Vitesses (m/s)")
-## Vitesse sans sprint.
-@export var walk_speed: float = 5.2
+## Vitesse sans sprint. Nettement sous le sprint (≈ ×1,8) : on SENT quand on court
+## (retour 2026-09-26), et la glissade (slide_min_speed) n'est possible qu'en sprint.
+@export var walk_speed: float = 4.6
 ## Vitesse de sprint.
 @export var sprint_speed: float = 8.2
 ## Vitesse max accroupi.
@@ -93,10 +94,13 @@ extends Resource
 @export var dive_jump: float = 8.0
 ## Frein horizontal pendant la plongée (0 = on garde toute la distance).
 @export var dive_air_drag: float = 0.0
-## Durée de la roulade à l'atterrissage (s) = durée du spin caméra.
-@export var roll_duration: float = 0.65
+## Durée de la roulade à l'atterrissage (s) = durée du spin caméra. Courte : on repart vite
+## (2026-09-26 : « atterrir, rouler et repartir direct, sans temps d'attente »).
+@export var roll_duration: float = 0.45
 ## Décélération pendant la roulade (taux exponentiel). Bas = on garde de l'élan.
-@export var roll_friction: float = 3.0
+@export var roll_friction: float = 0.9
+## Virage pendant la roulade (taux de réorientation de la vitesse vers ZQSD, 1/s).
+@export var roll_steer_rate: float = 6.0
 ## Nombre de tours complets de la caméra pendant la roulade (effet machine à laver).
 @export var roll_spins: float = 1.0
 ## Fenêtre de timing (s) pour la roulade d'atterrissage, sur une chute LENTE.

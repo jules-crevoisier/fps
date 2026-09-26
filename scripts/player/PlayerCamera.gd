@@ -64,6 +64,8 @@ const INK_POST := preload("res://scripts/core/InkPost.gd")
 ## dynamiques ≤ +5°, désactivables") : le plafond s'applique à la SOMME, pas à
 ## chaque source séparément, voir `dynamic_fov_bonus`.
 const MAX_DYNAMIC_FOV_BONUS := 5.0
+## Amplitude du balancement de tête en sprint (× celle de la marche).
+const SPRINT_BOB_MULT := 1.8
 
 @export var player_path: NodePath
 var player: PlayerController
@@ -87,6 +89,8 @@ var _roll_x: float = 0.0
 var _roll_t: float = -1.0
 var _roll_dur: float = 0.65
 var _roll_turns: float = 1.0
+var _roll_lateral: bool = false  ## tonneau (axe Z) plutôt que culbute (axe X)
+var _roll_sign: float = 1.0
 var _dizzy_t: float = 0.0
 ## Vrai si l'état Stun était déjà actif à la frame précédente — sert à
 ## détecter le FRONT D'ENTRÉE en Stun (voir `stun_dizzy_step`, BUG-20).
@@ -101,10 +105,15 @@ var _last_fov_punch: float = 0.0
 
 ## Lance l'animation de roulade : la caméra fait `turns` tour(s) complet(s)
 ## en `dur` secondes. Appelé par l'état Roll.
-func play_roll(dur: float, turns: float = 1.0) -> void:
+func play_roll(dur: float, turns: float = 1.0, dir: Vector2 = Vector2(0.0, 1.0)) -> void:
 	_roll_dur = max(dur, 0.05)
 	_roll_turns = turns
 	_roll_t = 0.0
+	# Sens du dash (x = droite, y = avant) : culbute avant/arrière ou tonneau latéral.
+	_roll_lateral = absf(dir.x) > absf(dir.y)
+	_roll_sign = signf(dir.x if _roll_lateral else dir.y)
+	if _roll_sign == 0.0:
+		_roll_sign = 1.0
 
 ## Trauma de tir (GF-08) : `amount` vient du champ dédié de `WeaponConfig` de
 ## l'arme tirée (0.08-0.25 selon l'arme — CameraShake.SHOT_TRAUMA_MIN/MAX),
@@ -222,11 +231,18 @@ func _update_roll(delta: float) -> void:
 	_roll_t += delta
 	var p := clampf(_roll_t / _roll_dur, 0.0, 1.0)
 	var eased := p * p * (3.0 - 2.0 * p)  # smoothstep : accélère puis ralentit
-	# Galipette AVANT : rotation autour de l'axe X (tangage), dans le plan vertical.
-	_roll_x = -TAU * _roll_turns * eased
+	# Culbute (axe X, tangage) vers l'avant/arrière, ou tonneau (axe Z) vers la gauche/droite.
+	var angle := TAU * _roll_turns * eased * _roll_sign
+	if _roll_lateral:
+		_roll_x = 0.0
+		_tilt_z = -angle
+	else:
+		_roll_x = -angle
 	if p >= 1.0:
 		_roll_t = -1.0
 		_roll_x = 0.0
+		if _roll_lateral:
+			_tilt_z = 0.0
 
 func _update_fov(delta: float) -> void:
 	# Visée (ADS) : zoom au FOV de l'arme courante. Prioritaire sur tout le reste.
@@ -300,8 +316,10 @@ func _update_bob(delta: float) -> void:
 	var speed := player.horizontal_speed()
 	if grounded and speed > 0.5 and player.state_machine.current_name != "Slide":
 		_bob_time += delta * config.bob_frequency * clamp(speed / config.sprint_speed, 0.4, 1.4)
-		var offset_y := sin(_bob_time) * config.bob_amplitude * Settings.head_bob_intensity
-		var offset_x := cos(_bob_time * 0.5) * config.bob_amplitude * 0.6 * Settings.head_bob_intensity
+		# Balancement plus ample en sprint : on sent la différence marche / course.
+		var amp := config.bob_amplitude * Settings.head_bob_intensity * (SPRINT_BOB_MULT if player.state_machine.current_name == "Sprint" else 1.0)
+		var offset_y := sin(_bob_time) * amp
+		var offset_x := cos(_bob_time * 0.5) * amp * 0.6
 		_bob_offset = Vector3(offset_x, offset_y, 0.0)
 	else:
 		_bob_time = 0.0

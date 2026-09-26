@@ -193,6 +193,11 @@ def build_reload(rig, duration=2.5):
 
 
 def build_rifle(rig, only=None):
+    # Torsion de référence : celle de la visée neutre (tous les clips fusil partent de là).
+    rig.reset()
+    rig._twist_prev = {}
+    hold(rig, gun_frame())
+    rig.set_twist_reference()
     jobs = {
         "Rifle_Aim_Down": None, "Rifle_Aim_Neutral": None, "Rifle_Aim_Up": None,
         "Rifle_Idle": lambda: build_idle_breath(rig),
