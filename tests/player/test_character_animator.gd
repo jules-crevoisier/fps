@@ -430,43 +430,6 @@ func test_reload_clip_speed_is_defensive_for_zero_or_negative_reload_time() -> v
 	assert_float(CharacterAnimator.reload_clip_speed(0.0)).is_equal_approx(1.0, 0.0001)
 	assert_float(CharacterAnimator.reload_clip_speed(-1.0)).is_equal_approx(1.0, 0.0001)
 
-
-# ---------------------------------------------------------------- PlayerController.is_really_interacting (vrai INTERACT)
-func test_is_really_interacting_true_for_the_bomb_carrier_while_carried() -> void:
-	assert_bool(PlayerController.is_really_interacting(true, SnDMode.BombState.CARRIED, 42, 42, 0, 1)) \
-		.is_true()
-
-
-func test_is_really_interacting_false_for_a_bystander_while_carried() -> void:
-	assert_bool(PlayerController.is_really_interacting(true, SnDMode.BombState.CARRIED, 42, 7, 0, 1)) \
-		.append_failure_message("tenir F loin de la bombe portée par un autre ne doit jamais poser") \
-		.is_false()
-
-
-func test_is_really_interacting_true_for_any_defender_while_planted() -> void:
-	# Équipe 1 défend quand attacking_team() == 0.
-	assert_bool(PlayerController.is_really_interacting(true, SnDMode.BombState.PLANTED, -1, 7, 1, 0)) \
-		.is_true()
-
-
-func test_is_really_interacting_false_for_an_attacker_while_planted() -> void:
-	# Un attaquant (même équipe que attacking_team()) ne désamorce jamais.
-	assert_bool(PlayerController.is_really_interacting(true, SnDMode.BombState.PLANTED, -1, 7, 0, 0)) \
-		.is_false()
-
-
-func test_is_really_interacting_false_without_pickup_held() -> void:
-	assert_bool(PlayerController.is_really_interacting(false, SnDMode.BombState.CARRIED, 7, 7, 0, 1)) \
-		.is_false()
-
-
-func test_is_really_interacting_false_outside_snd_mode() -> void:
-	assert_bool(PlayerController.is_really_interacting(true, PlayerController.NO_BOMB_MODE, -1, 7, 0, -1)) \
-		.append_failure_message("Mêlée/Borne/Duel/Duo/entraînement n'ont pas de bombe : jamais de vraie pose") \
-		.is_false()
-
-
-func test_is_really_interacting_false_while_bomb_dropped_or_exploded() -> void:
-	assert_bool(PlayerController.is_really_interacting(true, SnDMode.BombState.DROPPED, 7, 7, 0, 1)).is_false()
-	assert_bool(PlayerController.is_really_interacting(true, SnDMode.BombState.EXPLODED, -1, 7, 0, 0)).is_false()
-	assert_bool(PlayerController.is_really_interacting(true, SnDMode.BombState.DEFUSED, -1, 7, 0, 0)).is_false()
+# `PlayerController.is_really_interacting` (pose INTERACT planter/désamorcer,
+# SnD uniquement) a été supprimée avec le reste des modes à manches lors du
+# nettoyage du prototype 2026-09-26 — tests retirés avec elle.

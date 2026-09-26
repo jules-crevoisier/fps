@@ -243,11 +243,6 @@ func test_ambience_name_for_map_known_ids() -> void:
 	assert_str(Audio.ambience_name_for_map("le_belvedere")).is_equal("ambience_le_belvedere")
 
 
-func test_ambience_name_for_map_matches_every_layout_id() -> void:
-	for id in Layouts.MAP_IDS:
-		assert_str(Audio.ambience_name_for_map(id)).is_equal("ambience_%s" % id)
-
-
 func test_ambience_name_for_map_empty_id_is_silence() -> void:
 	assert_str(Audio.ambience_name_for_map("")).is_equal("")
 

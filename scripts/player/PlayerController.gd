@@ -412,44 +412,12 @@ func _update_anim_state(delta: float, hp: Health) -> void:
 	aim_pitch = head.rotation.x
 	_prev_state_name = sname
 
-## Sentinelle de `bomb_state` pour `is_really_interacting` quand le mode
-## courant n'a PAS de bombe (Mêlée, Borne, Duel, Duo, entraînement) : ces
-## modes n'ont jamais de VRAIE pose/désamorçage, contrairement à SnD (Litige).
-const NO_BOMB_MODE := -1
-
-## Vrai INTERACT (contrat GF-27, docs/research/10_ammo_kits_input.md §5.2
-## point 1) : `input.pickup_held` seul se déclenche N'IMPORTE OÙ (aucun autre
-## effet de jeu que planter/désamorcer, voir `SnDMode._client_report_holding` —
-## `WorldWeapon` utilise `pickup_PRESSED`, pas `pickup_held`), donc la pose
-## INTERACT s'affichait même hors de tout site en Litige, ou dans des modes
-## sans bombe. Fonction PURE, testée directement (tests/player/
-## test_character_animator.gd) à partir du seul état RÉPLIQUÉ de SnDMode
-## (`bomb_state`/`bomb_carrier_id`/`attacking_team()`) — jamais des champs
-## serveur privés (`_plant_progress`/`_holding`, qui exigeraient en plus
-## d'être précisément dans le site/à portée, hors du périmètre de ce fichier).
-static func is_really_interacting(pickup_held: bool, bomb_state: int, bomb_carrier_id: int,
-		my_id: int, my_team: int, attacking_team: int) -> bool:
-	if not pickup_held or bomb_state == NO_BOMB_MODE:
-		return false
-	if bomb_state == SnDMode.BombState.CARRIED:
-		return bomb_carrier_id == my_id
-	if bomb_state == SnDMode.BombState.PLANTED:
-		return my_team != attacking_team
+## Nettoyage du prototype 2026-09-26 : la pose INTERACT (planter/désamorcer)
+## n'existait que pour SnD (Litige) — supprimé avec le reste des modes à
+## manches (RoundMode/SnDMode/DuelMode). TDM (seul mode restant) n'a pas de
+## bombe : plus jamais d'animation d'interaction.
+func _compute_interacting(_dead: bool) -> bool:
 	return false
-
-## Câblage NON pur de `is_really_interacting` : retrouve le mode de jeu
-## courant (groupe "game_mode", voir GameMode._ready) et lit ses champs
-## RÉPLIQUÉS — `null`/un mode qui n'est pas SnD (Mêlée, Borne, Duel, Duo,
-## entraînement) retombe sur `NO_BOMB_MODE` (jamais de pose INTERACT hors
-## Litige). Mort : jamais interagissant (même si F reste tenu au moment du kill).
-func _compute_interacting(dead: bool) -> bool:
-	if dead or input == null:
-		return false
-	var mode := get_tree().get_first_node_in_group("game_mode") as SnDMode
-	if mode == null:
-		return false
-	return is_really_interacting(input.pickup_held, mode.bomb_state, mode.bomb_carrier_id,
-		str(name).to_int(), team, mode.attacking_team())
 
 ## AUTORITÉ uniquement (appelé en dernier dans les deux branches de
 ## `_physics_process` côté autorité, une fois `move_and_slide()`/le step-up

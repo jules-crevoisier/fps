@@ -285,17 +285,11 @@ func _reset_accumulators() -> void:
 	_sample_count = 0
 
 
-## Bounds (centre + envergure) de la map, à partir de Layouts.gd pour les six
-## cartes "dessinées à la main", ou des layouts v2 (Cargo Ship/Wasteland) —
-## même logique de repli que tools/map_shots.gd::_poses_for.
+## Bounds (centre + envergure) de la map. Nettoyage du prototype 2026-09-26 :
+## les six cartes "dessinées à la main" (`Layouts.gd`) et Cargo Ship ont été
+## supprimées avec leurs scènes — Wasteland est désormais la seule carte.
 func _bounds_for(map_id: String) -> Dictionary:
-	var data := Layouts.data_for(map_id)
-	if data.is_empty():
-		match map_id:
-			"cargo_ship":
-				data = CargoShipLayout.data()
-			"wasteland":
-				data = WastelandLayout.data()
+	var data: Dictionary = WastelandLayout.data() if map_id == "wasteland" else {}
 	if data.is_empty() or not data.has("bounds"):
 		return {"center": Vector2.ZERO, "span": 30.0}
 	var bounds: Dictionary = data["bounds"]

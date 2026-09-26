@@ -1,22 +1,19 @@
 ## test_bot_goals.gd
 ## Spec (BOT-01, docs/research/02_bots_ai.md §4.1/§5, tasks/backlog.yaml) :
 ## `bot_goal_for(team, bot_id, bot_pos)` — le but d'un bot est STABLE (ne
-## change que sur ÉVÈNEMENT : kill, bombe posée, zone qui tourne, but atteint
-## — ou, à défaut, au plus toutes les GOAL_REFRESH_INTERVAL=6 s secondes) ;
-## TDM ne renvoie plus JAMAIS la position VIVANTE d'un ennemi (points de
-## patrouille de la carte + dernière position connue PARTAGÉE par l'équipe,
-## alimentée UNIQUEMENT par la perception réelle d'un bot) ; SnD choisit son
-## site UNE FOIS par manche ; 60 s de simulation -> <= 12 changements de but
-## par bot, 0 appel qui lit une position ennemie hors perception.
+## change que sur ÉVÈNEMENT : kill, but atteint — ou, à défaut, au plus
+## toutes les GOAL_REFRESH_INTERVAL=6 s secondes) ; TDM (seul mode restant
+## après le nettoyage du prototype 2026-09-26) ne renvoie plus JAMAIS la
+## position VIVANTE d'un ennemi (points de patrouille de la carte + dernière
+## position connue PARTAGÉE par l'équipe, alimentée UNIQUEMENT par la
+## perception réelle d'un bot) ; 60 s de simulation -> <= 12 changements de
+## but par bot, 0 appel qui lit une position ennemie hors perception.
 ##
 ## Style : sous-classes de test légères (`class Foo extends Bar:`, voir
 ## tests/agents/test_round_props_cleanup.gd) qui surchargent `_goal_clock_now`
 ## pour simuler l'écoulement du temps SANS attendre en temps réel (60 s de
 ## simulation en quelques millisecondes de test, comme le recommande le
-## contrat de la tâche). Les modes à manches (SnD/Duel, RoundMode) sont
-## pilotés par appel DIRECT de leurs méthodes plutôt que par leur `_ready()`
-## livré à l'engin (tests/agents/test_round_props_cleanup.gd, même raison :
-## éviter tout aléa de `call_deferred`).
+## contrat de la tâche).
 extends GdUnitTestSuite
 
 
@@ -128,24 +125,6 @@ func _count_unique_vectors(vectors: Array) -> int:
 		if not found:
 			uniq.append(v)
 	return uniq.size()
-
-
-## SnDMode avec ses deux sites câblés DIRECTEMENT (pas de scène) — les champs
-## `_site_a`/`_site_b` sont réaffectés APRÈS `add_child` (donc après `_ready()`,
-## qui les aurait sinon écrasés à `null` faute de NodePath exporté ici).
-func _snd_mode_with_sites(pos_a: Vector3, pos_b: Vector3) -> SnDMode:
-	var mode := SnDMode.new()
-	add_child(mode)
-	auto_free(mode)
-	var site_a := Area3D.new()
-	site_a.position = pos_a
-	mode.add_child(site_a)
-	var site_b := Area3D.new()
-	site_b.position = pos_b
-	mode.add_child(site_b)
-	mode._site_a = site_a
-	mode._site_b = site_b
-	return mode
 
 
 # ======================================================================
@@ -276,98 +255,10 @@ func test_tdm_goal_follows_reported_sighting_then_reverts_after_it_expires() -> 
 		"la mémoire d'équipe doit expirer (ENEMY_MEMORY_TTL) et retomber sur un point de patrouille").is_false()
 
 
-# ======================================================================
-#  Hardpoint : la zone tourne -> évènement (invalidation immédiate).
-# ======================================================================
-func test_hardpoint_goal_is_the_zone_and_updates_immediately_when_it_rotates() -> void:
-	var mode := HardpointMode.new()
-	add_child(mode)
-	auto_free(mode)
-	var zone := Area3D.new()
-	zone.position = Vector3(5, 0, 5)
-	mode.add_child(zone)
-	mode._zone = zone
-
-	var goal: Vector3 = mode.bot_goal_for(0, 1, Vector3.ZERO)
-	assert_vector(goal).is_equal(Vector3(5, 0, 5))
-
-	zone.position = Vector3(-5, 0, -5)
-	mode._set_zone(0)  # simule la rotation : repositionne + invalide le cache.
-	var goal_after: Vector3 = mode.bot_goal_for(0, 1, Vector3.ZERO)
-	assert_vector(goal_after).append_failure_message(
-		"\"la zone qui tourne\" est un évènement BOT-01 : le but doit suivre immédiatement, pas attendre 6 s"
-	).is_equal(Vector3(-5, 0, -5))
-
-
-# ======================================================================
-#  Duel/Duo : zone de capture prioritaire, sinon repli non-omniscient.
-# ======================================================================
-func test_duel_goal_prefers_the_active_capture_zone() -> void:
-	var mode := DuelMode.new()
-	add_child(mode)
-	auto_free(mode)
-	var zone := Area3D.new()
-	zone.position = Vector3(1, 1, 1)
-	mode.add_child(zone)
-	mode._capture_zone = zone
-	mode._capture_active = true
-
-	var goal: Vector3 = mode._compute_bot_goal(0, 1, Vector3.ZERO)
-	assert_vector(goal).is_equal(Vector3(1, 1, 1))
-
-
-func test_duel_goal_falls_back_to_a_patrol_point_without_omniscience() -> void:
-	var points := [Vector3(6, 0, 0), Vector3(-6, 0, 0)]
-	_make_world(points)
-	var mode := DuelMode.new()
-	add_child(mode)
-	auto_free(mode)
-
-	var goal: Vector3 = mode._compute_bot_goal(0, 1, Vector3(1000, 0, 1000))
-	var matches_a_patrol_point := false
-	for p in points:
-		if (goal as Vector3).is_equal_approx(p):
-			matches_a_patrol_point = true
-	assert_bool(matches_a_patrol_point).append_failure_message(
-		"Duel/Duo : repli sur un point de patrouille, jamais une position ennemie devinée").is_true()
-
-
-# ======================================================================
-#  SnD : site choisi UNE FOIS par manche (par équipe), pas à chaque appel.
-# ======================================================================
-func test_snd_site_is_chosen_once_and_stays_stable_across_many_calls() -> void:
-	var mode := _snd_mode_with_sites(Vector3(20, 0, 0), Vector3(-20, 0, 0))
-	mode._pick_round_site()
-
-	var first: Vector3 = mode._compute_bot_goal(0, 1, Vector3.ZERO)
-	for i in 10:
-		var again: Vector3 = mode._compute_bot_goal(0, 1, Vector3.ZERO)
-		assert_vector(again).append_failure_message(
-			"BOT-01 : le site ne doit être tiré qu'UNE FOIS par manche, pas à chaque appel").is_equal(first)
-
-
-func test_snd_site_choice_can_still_land_on_either_site_across_rounds() -> void:
-	# Prouve que le tirage n'est pas figé sur un seul site pour toujours (il
-	# doit rester possible de défendre/attaquer A OU B) — seulement qu'il ne
-	# change plus À L'INTÉRIEUR d'une manche (test précédent).
-	var mode := _snd_mode_with_sites(Vector3(20, 0, 0), Vector3(-20, 0, 0))
-	var chosen_positions := {}
-	for i in 30:
-		mode._round_site = null  # simule une NOUVELLE manche à chaque tour.
-		mode._pick_round_site()
-		chosen_positions[(mode._round_site.global_position as Vector3)] = true
-	assert_int(chosen_positions.size()).append_failure_message(
-		"les deux sites doivent rester des issues possibles d'une manche à l'autre").is_equal(2)
-
-
-func test_snd_goal_follows_the_planted_bomb_over_the_round_site() -> void:
-	var mode := _snd_mode_with_sites(Vector3(20, 0, 0), Vector3(-20, 0, 0))
-	mode._pick_round_site()
-	mode.bomb_state = SnDMode.BombState.PLANTED
-	mode.bomb_position = Vector3(1, 2, 3)
-
-	var goal: Vector3 = mode._compute_bot_goal(0, 1, Vector3.ZERO)
-	assert_vector(goal).is_equal(Vector3(1, 2, 3))
+# Hardpoint (zone qui tourne), Duel/Duo (zone de capture) et SnD (site de
+# manche/bombe) ont été supprimés avec leurs modes lors du nettoyage du
+# prototype 2026-09-26 — tests retirés avec eux ; TDM est désormais le seul
+# mode couvert par ce fichier.
 
 
 # ======================================================================

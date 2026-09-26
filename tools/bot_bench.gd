@@ -1792,12 +1792,20 @@ func _sample_presence(node: Node, health: Health) -> void:
 		_presence_team0[row][col] = int(_presence_team0[row][col]) + 1
 
 
+## Nettoyage du prototype 2026-09-26 : SnD (`SnDMode`) a été supprimé — cette
+## fonction n'est plus jamais appelée (`_phase_kind == "snd"` ne se produit
+## plus, voir l'appelant) mais reste PARSABLE : `SnDMode.BombState.PLANTED`/
+## `DEFUSED` recopiés en dur (2/3, ex-`enum BombState { CARRIED, DROPPED,
+## PLANTED, DEFUSED, EXPLODED }`) plutôt que de garder une dépendance à une
+## classe qui n'existe plus.
 func _poll_bomb_state() -> void:
+	const BOMB_STATE_PLANTED := 2
+	const BOMB_STATE_DEFUSED := 3
 	var state := int(_mode.get("bomb_state"))
 	if state != _last_bomb_state:
-		if state == SnDMode.BombState.PLANTED:
+		if state == BOMB_STATE_PLANTED:
 			_snd_planted += 1
-		elif state == SnDMode.BombState.DEFUSED:
+		elif state == BOMB_STATE_DEFUSED:
 			_snd_defused += 1
 		_last_bomb_state = state
 
@@ -2079,17 +2087,11 @@ func _zero_grid(w: int, h: int) -> Array:
 	return grid
 
 
-## Bounds réels de la map — même repli que tools/heatmap.gd `_bounds_for_map`
-## (dupliqué ici : ce sont deux outils CLI indépendants, même convention que
-## heatmap.gd lui-même vis-à-vis de tools/map_shots.gd `_poses_for`).
+## Bounds réels de la map. Nettoyage du prototype 2026-09-26 : les six cartes
+## "dessinées à la main" (`Layouts.gd`) et Cargo Ship ont été supprimées avec
+## leurs scènes — Wasteland est désormais la seule carte.
 func _bounds_for_map(map_id: String) -> Dictionary:
-	var data: Dictionary = Layouts.data_for(map_id)
-	if data.is_empty():
-		match map_id:
-			"cargo_ship":
-				data = CargoShipLayout.data()
-			"wasteland":
-				data = WastelandLayout.data()
+	var data: Dictionary = WastelandLayout.data() if map_id == "wasteland" else {}
 	if not data.has("bounds"):
 		return {}
 	return data["bounds"]

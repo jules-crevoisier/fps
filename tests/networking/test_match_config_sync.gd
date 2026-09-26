@@ -36,37 +36,37 @@ func after_test() -> void:
 # =========================================================== MatchConfig.resolve_scene
 
 func test_resolve_scene_uses_the_catalog_entry_for_a_known_map_id() -> void:
-	var expected: String = str(MapCatalog.get_by_id("cargo_ship").get("scene", ""))
-	assert_str(MatchConfig.resolve_scene("tdm", "cargo_ship")).is_equal(expected)
+	var expected: String = str(MapCatalog.get_by_id("wasteland").get("scene", ""))
+	assert_str(MatchConfig.resolve_scene("tdm", "wasteland")).is_equal(expected)
 
 
 func test_resolve_scene_falls_back_to_the_mode_default_when_map_id_is_empty() -> void:
-	var expected: String = str(MapCatalog.default_for("snd").get("scene", ""))
-	assert_str(MatchConfig.resolve_scene("snd", "")).is_equal(expected)
+	var expected: String = str(MapCatalog.default_for("tdm").get("scene", ""))
+	assert_str(MatchConfig.resolve_scene("tdm", "")).is_equal(expected)
 
 
 func test_resolve_scene_falls_back_to_the_mode_default_when_map_id_is_unknown() -> void:
-	var expected: String = str(MapCatalog.default_for("duel").get("scene", ""))
-	assert_str(MatchConfig.resolve_scene("duel", "carte-inexistante")).is_equal(expected)
+	var expected: String = str(MapCatalog.default_for("tdm").get("scene", ""))
+	assert_str(MatchConfig.resolve_scene("tdm", "carte-inexistante")).is_equal(expected)
 
 
 # ================================================ NetworkManager.build_accept_payload (serveur)
 
 func test_build_accept_payload_is_accepted_and_carries_the_servers_mode_and_map() -> void:
-	var reply := NetworkManager.build_accept_payload("hardpoint", "col_du_vautour")
+	var reply := NetworkManager.build_accept_payload("tdm", "wasteland")
 	assert_bool(reply["ok"]).is_true()
-	assert_str(reply["mode_id"]).is_equal("hardpoint")
-	assert_str(reply["map_id"]).is_equal("col_du_vautour")
+	assert_str(reply["mode_id"]).is_equal("tdm")
+	assert_str(reply["map_id"]).is_equal("wasteland")
 
 
 func test_build_accept_payload_resolves_the_scene_for_the_given_map() -> void:
-	var reply := NetworkManager.build_accept_payload("tdm", "col_du_vautour")
-	assert_str(reply["scene"]).is_equal(str(MapCatalog.get_by_id("col_du_vautour").get("scene", "")))
+	var reply := NetworkManager.build_accept_payload("tdm", "wasteland")
+	assert_str(reply["scene"]).is_equal(str(MapCatalog.get_by_id("wasteland").get("scene", "")))
 
 
 func test_build_accept_payload_resolves_the_mode_default_scene_with_an_empty_map_id() -> void:
-	var reply := NetworkManager.build_accept_payload("duo", "")
-	assert_str(reply["scene"]).is_equal(str(MapCatalog.default_for("duo").get("scene", "")))
+	var reply := NetworkManager.build_accept_payload("tdm", "")
+	assert_str(reply["scene"]).is_equal(str(MapCatalog.default_for("tdm").get("scene", "")))
 
 
 # ================================================ NetworkManager.parse_accept_payload (client)
@@ -95,7 +95,7 @@ func test_parse_accept_payload_defaults_missing_fields_to_empty_strings() -> voi
 # ================================================ Sérialisation bout en bout (aller-retour JSON)
 
 func test_accept_payload_round_trips_through_json_unchanged() -> void:
-	var sent := NetworkManager.build_accept_payload("hardpoint", "wasteland")
+	var sent := NetworkManager.build_accept_payload("tdm", "wasteland")
 	var wire: Variant = JSON.parse_string(JSON.stringify(sent))
 	var received := NetworkManager.parse_accept_payload(wire as Dictionary)
 	assert_str(received["mode_id"]).is_equal(sent["mode_id"])
@@ -111,18 +111,23 @@ func test_accept_payload_round_trips_through_json_unchanged() -> void:
 ## côté client -> application à MatchConfig, exactement le chemin de
 ## `_client_apply_server_decision`), le client doit se retrouver avec la
 ## carte/la scène du SERVEUR, jamais sa sélection locale d'origine.
-## Prototype à un seul mode (2026-09-26, "MatchConfig lists only tdm") : le
-## mode ne peut plus diverger (set_mode retombe toujours sur "tdm"), donc ce
-## test ne fait plus varier que la CARTE — la mécanique BUG-02 qu'il vérifie
-## (le client adopte la décision du serveur, jamais la sienne) reste
-## exactement la même.
+## Prototype à une seule carte ET un seul mode (nettoyage 2026-09-26,
+## "strip to minimal prototype" : MapCatalog ne connaît plus que Wasteland,
+## MatchConfig.MODES == ["tdm"]) : Wasteland étant l'unique carte réelle,
+## cette carte JOUÉE ne peut plus différer de la sélection locale du client
+## par un AUTRE id de catalogue valide — la sélection locale STALE du client
+## reste un id ARBITRAIRE (jamais résolu contre le catalogue avant l'envoi,
+## exactement comme avant : `MatchConfig.map_id` est une String libre) pour
+## continuer à prouver la mécanique BUG-02 (le client adopte la décision du
+## SERVEUR, jamais sa propre sélection locale), même avec un seul vrai id.
 func test_client_ends_up_with_the_hosts_map_after_it_had_chosen_a_different_one() -> void:
-	# Sélection locale du client avant de rejoindre.
+	# Sélection locale STALE du client avant de rejoindre (jamais résolue
+	# contre le catalogue tant qu'il n'a pas reçu la décision du serveur).
 	MatchConfig.set_mode("tdm")
-	MatchConfig.map_id = "port_ferraille"
+	MatchConfig.map_id = "carte-locale-perimee"
 
-	# L'hôte joue en réalité sur Cargo Ship.
-	var host_reply := NetworkManager.build_accept_payload("tdm", "cargo_ship")
+	# L'hôte joue en réalité sur Wasteland (la seule vraie carte du catalogue).
+	var host_reply := NetworkManager.build_accept_payload("tdm", "wasteland")
 	var wire: Variant = JSON.parse_string(JSON.stringify(host_reply))
 	var config := NetworkManager.parse_accept_payload(wire as Dictionary)
 
@@ -132,6 +137,6 @@ func test_client_ends_up_with_the_hosts_map_after_it_had_chosen_a_different_one(
 
 	assert_str(MatchConfig.mode_id).is_equal("tdm")
 	assert_str(MatchConfig.map_id) \
-		.append_failure_message("le client devrait charger la carte de l'hôte (cargo_ship), pas sa propre sélection (port_ferraille)") \
-		.is_equal("cargo_ship")
-	assert_str(str(config["scene"])).is_equal(str(MapCatalog.get_by_id("cargo_ship").get("scene", "")))
+		.append_failure_message("le client devrait charger la carte de l'hôte (wasteland), pas sa propre sélection (carte-locale-perimee)") \
+		.is_equal("wasteland")
+	assert_str(str(config["scene"])).is_equal(str(MapCatalog.get_by_id("wasteland").get("scene", "")))

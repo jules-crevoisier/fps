@@ -20,12 +20,15 @@ func _ready() -> void:
 ## ex. wasteland) : MapSetup positionne `asymmetric_map` (data "asymmetric")
 ## juste après avoir instancié ce mode — `false` par défaut => comportement
 ## 100% inchangé sur toute map symétrique. Décidé UNE SEULE FOIS par
-## `HalfTime.should_swap` (50% du temps limite OU meneur à moitié du score
-## limite), puis répliqué comme les autres RPC d'état (`sync_state`). Les
-## joueurs vivants restent où ils sont — seul le PROCHAIN respawn utilise le
-## nouveau côté (`GameWorld._get_spawn_position` lit `sides_swapped`).
-## `side_swap_notice` : cartouche HUD ("CHANGEMENT DE CÔTÉ") — champ séparé de
-## `hud_state` (texte d'objectif) pour ne rien lui faire perdre.
+## `_should_swap_sides` (50% du temps limite OU meneur à moitié du score
+## limite — logique PURE, ex-`HalfTime.should_swap`, réintégrée ici lors du
+## nettoyage du prototype 2026-09-26 : TDM est désormais le SEUL mode, plus
+## besoin d'un fichier séparé partagé avec HardpointMode, supprimé), puis
+## répliqué comme les autres RPC d'état (`sync_state`). Les joueurs vivants
+## restent où ils sont — seul le PROCHAIN respawn utilise le nouveau côté
+## (`GameWorld._get_spawn_position` lit `sides_swapped`). `side_swap_notice` :
+## cartouche HUD ("CHANGEMENT DE CÔTÉ") — champ séparé de `hud_state` (texte
+## d'objectif) pour ne rien lui faire perdre.
 @export var asymmetric_map: bool = false
 var sides_swapped: bool = false
 var side_swap_notice: String = ""
@@ -82,8 +85,22 @@ func reset_match() -> void:
 func _physics_process(delta: float) -> void:
 	super._physics_process(delta)
 	if _is_authoritative() and winner == -1 and asymmetric_map and not sides_swapped:
-		if HalfTime.should_swap(match_elapsed, match_time_limit, team_scores[0], team_scores[1], score_to_win):
+		if _should_swap_sides(match_elapsed, match_time_limit, team_scores[0], team_scores[1], score_to_win):
 			_sync_sides_swapped(true, "CHANGEMENT DE CÔTÉ")
+
+## Pur (aucune scène) — "the mode sets sides_swapped once, at 50% of the time
+## limit or when the leader reaches half the score limit, whichever comes
+## first" (maps-spec-v2.md §7.5/§8.18). Ex-`HalfTime.should_swap` : ce mode
+## est désormais le SEUL appelant (HardpointMode, l'autre ancien appelant, a
+## été supprimé avec le reste des modes à manches/zone lors du nettoyage du
+## prototype 2026-09-26) — la fonction est réintégrée ici plutôt que de
+## garder un fichier séparé pour un unique appelant.
+static func _should_swap_sides(elapsed_s: float, limit_s: float, score_a: float, score_b: float, score_limit: int) -> bool:
+	if limit_s > 0.0 and elapsed_s >= limit_s * 0.5:
+		return true
+	if score_limit > 0 and (score_a >= score_limit * 0.5 or score_b >= score_limit * 0.5):
+		return true
+	return false
 
 ## BOT-23/T3 : un kill n'invalide plus TOUS les buts de bot (essaim, docs/
 ## research/08_bots_humanlike.md diagnostic #9) — seulement, sur une carte qui

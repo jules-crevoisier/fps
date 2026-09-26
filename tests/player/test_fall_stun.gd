@@ -187,40 +187,6 @@ func test_falling_well_beyond_14_meters_stays_clamped_to_0_6_seconds() -> void:
 # refait de toute façon dans son propre `_ready()`, mais l'appel explicite
 # évite toute dépendance à l'ordre d'exécution de `_ready()` dans ce test).
 
-func test_no_fall_stun_in_duel_mode_even_for_a_large_fall() -> void:
-	var mode := DuelMode.new()
-	mode.add_to_group("game_mode")
-	add_child(mode)
-	auto_free(mode)
-	var o := _offset()
-	_floor(o)
-	var player := await _landed_bot(o, 14.0)
-
-	player._check_fall_stun()
-
-	assert_str(player.state_machine.current_name).append_failure_message(
-		"le Duel (manches, GameMode.fall_stun_enabled == false) ne doit JAMAIS déclencher le stun de chute -- état obtenu : %s"
-			% player.state_machine.current_name
-	).is_not_equal("Stun")
-
-
-func test_no_fall_stun_in_snd_mode_even_for_a_large_fall() -> void:
-	var mode := SnDMode.new()
-	mode.add_to_group("game_mode")
-	add_child(mode)
-	auto_free(mode)
-	var o := _offset()
-	_floor(o)
-	var player := await _landed_bot(o, 14.0)
-
-	player._check_fall_stun()
-
-	assert_str(player.state_machine.current_name).append_failure_message(
-		"le Litige (SnD, manches, GameMode.fall_stun_enabled == false) ne doit JAMAIS déclencher le stun de chute -- état obtenu : %s"
-			% player.state_machine.current_name
-	).is_not_equal("Stun")
-
-
 func test_fall_stun_still_triggers_in_tdm_mode_for_a_14_meter_fall() -> void:
 	var mode := TDMMode.new()
 	mode.add_to_group("game_mode")

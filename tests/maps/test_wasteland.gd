@@ -9,8 +9,6 @@
 ##  - les apparitions (équipe + TDM) sont sur la navmesh réellement bakée ;
 ##  - chaque équipe atteint les 3 fronts de couloir (`lanes[].front`) par un
 ##    chemin de navmesh réel.
-## `wasteland_v3` (gelé, banc de comparaison bots) reste vérifié à part —
-## seul test v4 conservé tel quel.
 extends GdUnitTestSuite
 
 
@@ -236,23 +234,6 @@ func test_each_team_spawn_reaches_the_three_lane_fronts() -> void:
 			assert_int(path.size()).append_failure_message("team %d spawn %s -> front %s: no real navmesh path" % [team, spawn, front]).is_greater_equal(2)
 	await _teardown(setup)
 
-
-# ======================================================================
-#  §12.6 (v4) "la v3 reste disponible comme carte de test 'wasteland_v3'" —
-#  chargeable et bakable (banc de comparaison bots), jamais dans la liste
-#  jouable (MapCatalog.gd, hors de mon périmètre). Seul test v4 conservé :
-#  la v3 elle-même n'a pas changé.
-# ======================================================================
-func test_v3_map_is_still_loadable_and_bakes_a_real_navmesh() -> void:
-	assert_str(String(WastelandLayoutV3.data()["id"])).is_equal("wasteland_v3")
-	var setup := _setup("wasteland_v3")
-	await get_tree().physics_frame
-	var nav: NavigationRegion3D = setup.nav_region
-	assert_object(nav).is_not_null()
-	assert_object(nav.navigation_mesh).is_not_null()
-	var data := WastelandLayoutV3.data()
-	var blue: Vector3 = ((data["spawns"][0][0] as Dictionary)["pos"] as Vector3) + _OFFSET
-	var red: Vector3 = ((data["spawns"][1][0] as Dictionary)["pos"] as Vector3) + _OFFSET
-	var path := await _wait_for_path(nav.get_navigation_map(), blue, red)
-	assert_int(path.size()).append_failure_message("wasteland_v3 : no real navmesh path blue<->red").is_greater_equal(2)
-	await _teardown(setup)
+# `wasteland_v3` (banc de comparaison bots v3<->v4, gelé) a été supprimé lors
+# du nettoyage du prototype 2026-09-26 (« the old v3/v4 test maps ») — le
+# test de chargement/bake associé est retiré avec elle.

@@ -1,12 +1,10 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/networking/GameWorld.gd" id="1_world"]
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="2_player"]
 [ext_resource type="Script" path="res://scripts/levels/ArenaBuilder.gd" id="3_arena"]
 [ext_resource type="Script" path="res://scripts/ui/SpeedHUD.gd" id="4_hud"]
-[ext_resource type="Script" path="res://scripts/ui/PauseMenu.gd" id="5_pause"]
 [ext_resource type="Script" path="res://scripts/ui/GameHUD.gd" id="6_ghud"]
-[ext_resource type="Script" path="res://scripts/ui/BuyMenu.gd" id="7_buy"]
 [ext_resource type="Script" path="res://scripts/world/TrainingDummy.gd" id="8_dummy"]
 
 [sub_resource type="ProceduralSkyMaterial" id="Sky_1"]
@@ -61,12 +59,6 @@ spawn_path = NodePath("../Players")
 
 [node name="HUD" type="CanvasLayer" parent="."]
 script = ExtResource("6_ghud")
-
-[node name="PauseMenu" type="CanvasLayer" parent="."]
-script = ExtResource("5_pause")
-
-[node name="BuyMenu" type="CanvasLayer" parent="."]
-script = ExtResource("7_buy")
 
 [node name="Dummies" type="Node3D" parent="."]
 

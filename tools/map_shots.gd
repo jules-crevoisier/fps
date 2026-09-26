@@ -458,38 +458,12 @@ func _wasteland_poses(data: Dictionary) -> Array:
 
 
 func _poses_for(map_id: String) -> Array:
-	var data := Layouts.data_for(map_id)
-	if data.is_empty():
-		match map_id:
-			"cargo_ship":
-				return _poses_for_v2(CargoShipLayout.data())
-			"wasteland":
-				return _wasteland_poses(WastelandLayout.data())
-		return [{"name": "top", "pos": Vector3(0, 40, 0), "look": Vector3(0, 0, 0.001)}]
-	var is_arena := data.has("duel_zone")
-	var sp0: Dictionary = data["spawns"][0][0]
-	var sp1: Dictionary = data["spawns"][1][0]
-	var team0_spawn: Vector3 = sp0["pos"]
-	var team1_spawn: Vector3 = sp1["pos"]
-	# Les vues à hauteur de joueur avancent depuis le spawn vers la cible
-	# AVANT de regarder : debout PILE au spawn, la caméra fait face au
-	# bouclier de spawn (un mur/cheminée volontairement collé au spawn,
-	# maps-spec.md §3 "blocks every pair") à bout portant. Un joueur qui a
-	# fait quelques pas voit la vraie lane/le vrai duel.
-	var target: Vector3 = (data["duel_zone"] as Dictionary)["pos"] if is_arena else Vector3(0, team0_spawn.y, 0)
-	var advance: float = 6.0 if is_arena else 15.0
-	var dir0 := (target - team0_spawn)
-	dir0.y = 0
-	dir0 = dir0.normalized() if dir0.length() > 0.01 else Vector3.FORWARD
-	var dir1 := (target - team1_spawn)
-	dir1.y = 0
-	dir1 = dir1.normalized() if dir1.length() > 0.01 else Vector3.FORWARD
-	var top_pos := Vector3(0, 26, 0.01) if is_arena else Vector3(0, 58, 0.01)
-	return [
-		{"name": "top", "pos": top_pos, "look": Vector3(0, 0, 0)},
-		{"name": "eye1", "pos": team0_spawn + dir0 * advance + Vector3(0, 0.7, 0), "look": target + Vector3(0, 0.7, 0)},
-		{"name": "eye2", "pos": team1_spawn + dir1 * advance + Vector3(0, 0.7, 0), "look": target + Vector3(0, 0.7, 0)},
-	]
+	# Nettoyage du prototype 2026-09-26 : les six maps v1 (`Layouts.gd`) et
+	# Cargo Ship ont été supprimées avec leurs scènes — Wasteland est
+	# désormais la seule carte (voir MapCatalog.gd).
+	if map_id == "wasteland":
+		return _wasteland_poses(WastelandLayout.data())
+	return [{"name": "top", "pos": Vector3(0, 40, 0), "look": Vector3(0, 0, 0.001)}]
 
 
 ## `pose["ortho_size"]` (présent seulement pour `top_ortho`/`top_ortho_roofs`,

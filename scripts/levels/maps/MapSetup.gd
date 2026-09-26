@@ -1,31 +1,29 @@
 ## MapSetup.gd
 ## Construit une map à partir de `Layouts.data_for(map_id)` (contract-r3.md,
 ## interface croisée "Map scenes (R3-MAPS)") : géométrie + collision (Kit),
-## marqueurs (SpawnPoints, HardpointPoints, SiteA/SiteB, DuelZone, Hardpoint),
-## la NavigationRegion3D bakée (groupe "nav_region"), et le nœud de mode
-## "GameMode" instancié depuis `MatchConfig.mode_id` et câblé à ces marqueurs.
-## Tout se passe en `_enter_tree`, donc AVANT `GameWorld._ready` (qui spawn les
-## joueurs/bots) : le contrat l'exige explicitement pour ce nœud.
+## marqueurs (SpawnPoints), la NavigationRegion3D bakée (groupe "nav_region"),
+## et le nœud de mode "GameMode" (TDMMode). Tout se passe en `_enter_tree`,
+## donc AVANT `GameWorld._ready` (qui spawn les joueurs/bots) : le contrat
+## l'exige explicitement pour ce nœud.
 ##
-## LD-03 : en TDM/Hardpoint, si la map déclare `tdm_spawns` (16-24 points
-## neutres, seulement les 4 cartes 4v4), `SpawnPoints` EST ces points-là (pas
-## de nœud frère séparé) — c'est le seul moyen pour `GameWorld._get_spawn_
-## position` (R3-IN, INCHANGÉ, lit toujours `spawn_points_root` =
-## `"MapSetup/SpawnPoints"`) de les voir sans que GameWorld.gd ni les scènes
-## de carte (hors de ce périmètre) n'aient besoin de connaître le nom
-## "TdmSpawnPoints". R&D ("snd") et Duel/Duo, ainsi que toute map sans
-## `tdm_spawns` (arènes, cargo_ship, wasteland), gardent le comportement
-## historique : 4 points par équipe sous `SpawnPoints`, méta "team". Voir
-## `_build_markers` pour le détail du routage.
+## Nettoyage du prototype (2026-09-26, « strip to minimal prototype ») : TDM
+## est désormais le SEUL mode (MatchConfig.MODES == ["tdm"]) — Hardpoint/SnD/
+## Duel/Duo (HardpointMode/SnDMode/DuelMode/RoundMode/RoundState/HalfTime/
+## Economy, et les marqueurs de zone qu'ils lisaient : HardpointPoints,
+## Hardpoint, SiteA, SiteB, DuelZone) ont été supprimés — ces branches
+## n'étaient déjà plus jamais atteintes en jeu (MatchConfig.set_mode()
+## retombe toujours sur "tdm").
 ##
-## LD-22 : les marqueurs de zone (HardpointPoints+Hardpoint, SiteA, SiteB,
-## DuelZone) ne sont construits QUE pour le mode qui les câble réellement
-## dans `_build_game_mode` (Hardpoint -> "hardpoint", SiteA/SiteB -> "snd",
-## DuelZone -> "duel"/"duo") — corrige V9 (docs/research/
-## 09_wasteland_vertical_slice.md §b.2) où ces boîtes translucides restaient
-## visibles dans n'importe quel autre mode. La zone Hardpoint prend son
-## emprise (taille de boîte) dans `data["hardpoint_sizes"][0]` si la map la
-## déclare, sinon l'ancienne taille fixe 10x4x10 (voir `_build_markers`).
+## LD-03 : en TDM, si la map déclare `tdm_spawns` (points neutres, seulement
+## les cartes 4v4), `SpawnPoints` EST ces points-là (pas de nœud frère
+## séparé) — c'est le seul moyen pour `GameWorld._get_spawn_position` (R3-IN,
+## INCHANGÉ, lit toujours `spawn_points_root` = `"MapSetup/SpawnPoints"`) de
+## les voir sans que GameWorld.gd ni les scènes de carte n'aient besoin de
+## connaître le nom "TdmSpawnPoints". Toute map sans `tdm_spawns` (arènes,
+## wasteland) garde le comportement historique : 4 points par équipe sous
+## `SpawnPoints`, méta "team". Voir `_build_markers` pour le détail du
+## routage.
+##
 ## `data["nav_links"]` (chutes/sauts hors de portée du bake automatique) est
 ## posé en `NavigationLink3D`, un par entrée, bidirectionnel ou non selon la
 ## donnée (voir `_build_nav_links`) ; absent sur toute map qui ne le déclare
@@ -85,27 +83,17 @@ var _callouts: Array = []
 ## Kit.build_piece (voir Kit.gd §GeoBatcher).
 const _DRESSING_PATH := "res://scripts/levels/maps/dressing/MapDressing.gd"
 
-## Cargo Ship / Wasteland (maps-spec-v2.md) vivent HORS `Layouts.gd`/
-## `Layouts.MAP_IDS` (fichiers séparés, "layouts/cargo_ship.gd"/"wasteland.gd" —
-## Layouts.gd reste au six maps v1, hors de mon périmètre cette manche).
+## Nettoyage du prototype 2026-09-26 (« strip to minimal prototype ») :
+## Wasteland est désormais la SEULE carte — Cargo Ship, les six maps v1
+## (`Layouts.gd`) et le snapshot gelé `wasteland_v3` (banc de comparaison
+## bots v3<->v4) ont tous été supprimés avec leurs scènes/tests. Tout `id`
+## autre que "wasteland" renvoie un dictionnaire vide, comme avant pour tout
+## id inconnu de `Layouts.gd` (`_enter_tree` signale l'erreur "layout
+## introuvable").
 static func _data_for(id: String) -> Dictionary:
-	match id:
-		"cargo_ship":
-			return CargoShipLayout.data()
-		"wasteland":
-			return _assemble_wasteland()
-		"wasteland_v3":
-			# LD-40 (§12.6) : snapshot gelé de l'ancienne Wasteland (banc de
-			# comparaison bots v3<->v4, `wasteland_v3.gd`) — enregistré ICI
-			# seulement (constructible par `MapSetup.new(); map_id =
-			# "wasteland_v3"`, comme n'importe quelle autre carte), jamais
-			# ajouté à `MapCatalog.gd` (hors de mon périmètre) : absent de la
-			# liste jouable/du menu. Pas de fusion avec WastelandMarkers/
-			# WastelandBots/WastelandDressing (`_assemble_wasteland` ci-dessus,
-			# LD-20+) : ces 3 fichiers annexes sont le contrat v4 uniquement,
-			# la v3 reste autonome comme elle l'a toujours été.
-			return WastelandLayoutV3.data()
-	return Layouts.data_for(id)
+	if id == "wasteland":
+		return _assemble_wasteland()
+	return {}
 
 ## LD-20 "découpe en 5 fichiers" : `WastelandLayout.data()` (géométrie,
 ## spawns, hardpoints/sites, bounds/périmètre) reste la source — ce nœud
@@ -169,11 +157,6 @@ func _enter_tree() -> void:
 		_merge_surface_kinds(data, dressing)
 
 	_build_geometry(data)
-	# ART-91 (hook, docs/art/WASTELAND_V4_ART_PLAN.md §1 R9) : couche d'art v4
-	# de Wasteland, purement visuelle (jamais de collision, sautée en
-	# headless — voir `WastelandArt.gd`) ; sans effet sur les 7 autres cartes.
-	if map_id == "wasteland":
-		WastelandArt.apply_all(nav_region, data)
 	_build_nav_links(data)
 	_build_kill_volumes(data)
 	_build_perimeter(data)
@@ -392,11 +375,6 @@ func _build_nav_links(data: Dictionary) -> void:
 #  Marqueurs (spawns, hardpoints, sites, zone de duel)
 # ----------------------------------------------------------------------
 func _build_markers(data: Dictionary) -> void:
-	var palette: Dictionary = data["palette"]
-	# Teinte de marque de la map (maps-spec.md §2 "Accent colours", C<=0.05)
-	# sur les surbrillances de zone — un repli neutre si absente (arènes/tests
-	# minimaux n'ont pas forcément 5 clés de palette).
-	var accent: Color = palette.get("accent", Color(0.35, 0.35, 0.35))
 	var spawns: Dictionary = data["spawns"]
 
 	# LD-03 (docs/research/03_level_design.md §5, tests/maps/test_layouts.gd
@@ -414,18 +392,15 @@ func _build_markers(data: Dictionary) -> void:
 	# MÊME `_enter_tree`, donc TOUJOURS synchronisé avec le mode réellement
 	# instancié) et les deux jeux de points, construits ici.
 	#
-	# TDM/Hardpoint (modes à spawn neutre, cf. notes de tâche "bot_smoke ...
-	# en 4v4 (TDM et Hardpoint)") ET la map en déclare (`tdm_spawns`,
-	# uniquement les 4 cartes 4v4 - absent des arènes/cargo_ship/wasteland,
-	# qui gardent alors le comportement historique ci-dessous) : `SpawnPoints`
-	# lui-même devient les 16-24 points NEUTRES (aucune méta "team" ->
+	# TDM (mode à spawn neutre — seul mode restant après le nettoyage du
+	# prototype 2026-09-26, Hardpoint supprimé) ET la map en déclare
+	# (`tdm_spawns`, uniquement les cartes 4v4 - absent des arènes/wasteland
+	# v7 greybox, qui gardent alors le comportement historique ci-dessous) :
+	# `SpawnPoints` lui-même devient les points NEUTRES (aucune méta "team" ->
 	# `GameWorld._get_spawn_position` retombe sur "team_points = points" ->
-	# `SpawnPick.pick_best`, LD-02, choisit dynamiquement parmi les 16-24,
-	# quel que soit le camp). R&D ("snd") et Duel/Duo gardent EXACTEMENT le
-	# comportement d'avant (4 points par équipe, méta "team") : "R&D garde
-	# ses spawns d'équipe" (critère d'acceptation LD-03).
-	var neutral_spawn_modes := ["tdm", "hardpoint"]
-	var use_neutral_spawns := data.has("tdm_spawns") and MatchConfig.mode_id in neutral_spawn_modes
+	# `SpawnPick.pick_best`, LD-02, choisit dynamiquement parmi eux, quel que
+	# soit le camp).
+	var use_neutral_spawns := data.has("tdm_spawns") and MatchConfig.mode_id == "tdm"
 
 	var spawn_root := Node3D.new()
 	spawn_root.name = "SpawnPoints"
@@ -462,157 +437,9 @@ func _build_markers(data: Dictionary) -> void:
 				spawn_root.add_child(m)
 				idx += 1
 
-	## LD-22 (V9, docs/research/09_wasteland_vertical_slice.md §b.2 : « Les
-	## boîtes de zone translucides (Hardpoint, sites A et B) sont visibles en
-	## TDM ») : ces marqueurs et leur boîte de zone (translucide, émissive)
-	## n'ont de sens QUE pour le mode qui les joue réellement — les bâtir
-	## dans n'importe quel mode les laissait visibles et sans rapport avec la
-	## partie en cours. On les construit donc seulement quand
-	## `MatchConfig.mode_id` (déjà lu par `use_neutral_spawns` plus haut et
-	## par `_build_game_mode` juste après, MÊME `_enter_tree` : TOUJOURS
-	## synchronisé avec le mode réellement instancié) correspond au mode qui
-	## câble effectivement cette zone dans `_build_game_mode`
-	## (Hardpoint -> "hardpoint", SiteA/SiteB -> "snd", DuelZone -> "duel"/
-	## "duo"). Sur une carte qui ne déclare pas la donnée (`data.has(...)`
-	## faux), ou jouée dans un autre mode, rien n'est construit — repli
-	## identique à "pas de zone du tout", déjà le cas aujourd'hui pour une
-	## map sans la clé. Aucune des 8 cartes actuelles ne perd de
-	## fonctionnalité dans le mode où sa donnée EST utilisée.
-	if data.has("hardpoints") and MatchConfig.mode_id == "hardpoint":
-		var hp_root := Node3D.new()
-		hp_root.name = "HardpointPoints"
-		add_child(hp_root)
-		var i := 0
-		for p in (data["hardpoints"] as Array):
-			var m := Marker3D.new()
-			m.name = "P%d" % (i + 1)
-			m.position = p
-			hp_root.add_child(m)
-			i += 1
-		# ART-27 : décalque au sol de 2 m, jaune objectif + encre (voir
-		# SiteDecals.gd). Une SEULE lettre "H" par carte, enfant de la zone
-		# `Area3D` elle-même (pas de `HardpointPoints`) pour suivre sa
-		# téléportation entre points de rotation (`HardpointMode._set_zone` :
-		# `_zone.global_position = points[index]...`) — `hp_size` nommé une
-		# fois, réutilisé pour le calcul du sol local à la zone. Orientation
-		# (`hp_dir`) calculée depuis le CENTROÏDE des points de rotation (pas
-		# juste `[0]`, utilisé seulement pour la position initiale de la
-		# zone) : la lettre reste fixe pendant que la zone téléporte d'un
-		# point à l'autre, donc son axe imprimé vise une position moyenne
-		# représentative de l'ensemble des points plutôt qu'un seul d'entre
-		# eux (voir `_entrance_dir`, revue ART-27).
-		#
-		# LD-22 : emprise PAR ZONE (docs/research/09_wasteland_vertical_slice.md
-		# §c.5 : Chapelle 9x4x9, Grue 9x7x9, Hangar 10x4x8 — plus une taille
-		# unique pour toute la carte). `data["hardpoint_sizes"]`, un Array
-		# PARALLÈLE à `data["hardpoints"]` (même index), optionnel : absent,
-		# ou plus court que `hardpoints`, replie sur l'ancienne taille fixe
-		# 10x4x10 (aucune des 8 cartes actuelles ne déclare cette clé —
-		# comportement inchangé pour elles). Seul l'INDEX 0 est construit ici
-		# (une SEULE `Area3D`, comme avant) : `HardpointMode._set_zone`
-		# (hors de mon périmètre cette tâche) téléporte cette même zone d'un
-		# point de rotation à l'autre sans la redimensionner — redimensionner
-		# à la rotation est un chantier de `HardpointMode.gd`, pas de ce nœud.
-		var hp_sizes: Array = data.get("hardpoint_sizes", [])
-		var hp_size: Vector3 = hp_sizes[0] if hp_sizes.size() > 0 else Vector3(10, 4, 10)
-		var hp_zone := _make_zone("Hardpoint", data["hardpoints"][0], hp_size, Color(0.88, 0.7, 0.25, 0.22), accent)
-		var hp_points: Array = data["hardpoints"]
-		var hp_centroid := Vector3.ZERO
-		for p in hp_points:
-			hp_centroid += (p as Vector3)
-		hp_centroid /= hp_points.size()
-		var hp_dir := _entrance_dir(spawns, hp_centroid)
-		SiteDecals.place_hardpoint_letter(hp_zone, Vector3(0.0, -hp_size.y * 0.5, 0.0), hp_dir)
-
-	if data.has("site_a") and MatchConfig.mode_id == "snd":
-		var a: Dictionary = data["site_a"]
-		_make_zone("SiteA", a["pos"], a["size"], Color(0.7, 0.35, 0.15, 0.22), accent)
-		var a_pos: Vector3 = a["pos"]
-		var a_size: Vector3 = a["size"]
-		var a_dir := _entrance_dir(spawns, a_pos)
-		SiteDecals.place_site_letter(self, "A", Vector3(a_pos.x, a_pos.y - a_size.y * 0.5, a_pos.z), a_dir)
-	if data.has("site_b") and MatchConfig.mode_id == "snd":
-		var b: Dictionary = data["site_b"]
-		_make_zone("SiteB", b["pos"], b["size"], Color(0.7, 0.35, 0.15, 0.22), accent)
-		var b_pos: Vector3 = b["pos"]
-		var b_size: Vector3 = b["size"]
-		var b_dir := _entrance_dir(spawns, b_pos)
-		SiteDecals.place_site_letter(self, "B", Vector3(b_pos.x, b_pos.y - b_size.y * 0.5, b_pos.z), b_dir)
-	if data.has("duel_zone") and MatchConfig.mode_id in ["duel", "duo"]:
-		var dz: Dictionary = data["duel_zone"]
-		_make_zone("DuelZone", dz["pos"], dz["size"], Color(0.95, 0.75, 0.15, 0.16), accent)
-
-func _make_zone(nm: String, pos: Vector3, size: Vector3, color: Color, accent: Color) -> Area3D:
-	var area := Area3D.new()
-	area.name = nm
-	area.position = pos
-	var col := CollisionShape3D.new()
-	var shape := BoxShape3D.new()
-	shape.size = size
-	col.shape = shape
-	area.add_child(col)
-	var mesh := MeshInstance3D.new()
-	var bm := BoxMesh.new()
-	bm.size = size
-	mesh.mesh = bm
-	var sm := StandardMaterial3D.new()
-	sm.albedo_color = color
-	sm.roughness = 0.95
-	sm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	sm.emission_enabled = true
-	sm.emission = Color(color.r, color.g, color.b).lerp(accent, 0.35)
-	mesh.material_override = sm
-	area.add_child(mesh)
-	add_child(area)
-	return area
-
-## Direction d'approche "entrée -> site" utilisée pour orienter les
-## décalques de `SiteDecals.gd` (ART-27, revue : l'ancienne orientation ne
-## dépendait que de la normale du sol, jamais de la carte — voir
-## `SiteDecals._flat_basis`). Aucune donnée de chemin/navmesh n'entre dans le
-## périmètre de cette tâche (`scripts/ai/BotNavMesh.gd` est hors de ma
-## liste) : le meilleur repère disponible ICI est la ligne DROITE entre
-## chaque équipe (son barycentre de spawns, `spawns[team][*]["pos"]`, déjà
-## lu par `_build_markers` ci-dessus) et `target_pos`.
-##
-## Les DEUX équipes attaquent CHAQUE site à un moment du match (les rôles
-## attaque/défense alternent par manche, SND — aucune des deux directions
-## n'est donc à négliger a priori). Avec deux directions, on ne peut pas
-## forcément satisfaire les deux exactement (un décalque plat n'a qu'UNE
-## orientation) : on prend la BISSECTRICE — au sens d'un AXE, pas d'un
-## rayon, un axe et son opposé valant exactement pareil pour l'alignement
-## recherché par `_flat_basis` (foreshortening symétrique par 180°) — ce
-## qui minimise l'écart angulaire MAXIMAL envers l'une ou l'autre équipe,
-## plutôt que d'en satisfaire une parfaitement et l'autre au hasard. Replie
-## sur l'unique direction disponible s'il n'y a qu'une équipe (tests/scènes
-## à une seule équipe), ou sur `Vector3.ZERO` si aucun spawn/aucune
-## direction exploitable (repli vers l'ancienne base fixe, voir
-## `SiteDecals._flat_basis`).
-func _entrance_dir(spawns: Dictionary, target_pos: Vector3) -> Vector3:
-	var dirs: Array = []
-	for team in spawns.keys():
-		var entries: Array = spawns[team]
-		if entries.is_empty():
-			continue
-		var centroid := Vector3.ZERO
-		for entry in entries:
-			centroid += (entry as Dictionary)["pos"] as Vector3
-		centroid /= entries.size()
-		var d := Vector3(target_pos.x - centroid.x, 0.0, target_pos.z - centroid.z)
-		if d.length_squared() > 0.0001:
-			dirs.append(d.normalized())
-	if dirs.is_empty():
-		return Vector3.ZERO
-	if dirs.size() == 1:
-		return dirs[0]
-	var d0: Vector3 = dirs[0]
-	var d1: Vector3 = dirs[1]
-	if d0.dot(d1) < 0.0:
-		d1 = -d1  # même AXE, replié sur le même "côté" que d0 (voir ci-dessus)
-	var bisector := d0 + d1
-	if bisector.length_squared() < 0.0001:
-		return d0  # d0/d1 quasi perpendiculaires des deux côtés : repli équipe 0
-	return bisector.normalized()
+	# Boîtes de zone (Hardpoint, SiteA/SiteB, DuelZone) : supprimées avec les
+	# modes qui les câblaient (nettoyage du prototype 2026-09-26, TDM seul —
+	# voir MatchConfig.MODES). `accent` (palette) ne sert donc plus ici.
 
 # ----------------------------------------------------------------------
 #  Callouts (LD-04) : repère "où suis-je ?" (docs/research/03_level_design.md
@@ -639,31 +466,16 @@ func callout_at(pos: Vector3) -> String:
 #  (frères de GameMode sous MapSetup : les NodePath "../X" restent valides).
 # ----------------------------------------------------------------------
 func _build_game_mode(data: Dictionary) -> void:
-	# Échange de côté (§5.6.2/§7.5) : TDM/Hardpoint seulement, et seulement
-	# sur une map déclarée "asymmetric" (wasteland) — absent/faux sur toutes
-	# les autres, comportement inchangé (v. TDMMode.gd/HardpointMode.gd).
-	var asymmetric := bool(data.get("asymmetric", false))
-	var mode: Node
-	match MatchConfig.mode_id:
-		"hardpoint":
-			var hp := HardpointMode.new()
-			hp.zone_path = NodePath("../Hardpoint")
-			hp.points_path = NodePath("../HardpointPoints")
-			hp.rotate_interval = 60.0
-			hp.asymmetric_map = asymmetric
-			mode = hp
-		"snd":
-			var snd := SnDMode.new()
-			snd.site_a_path = NodePath("../SiteA")
-			snd.site_b_path = NodePath("../SiteB")
-			mode = snd
-		"duel", "duo":
-			var duel := DuelMode.new()
-			duel.capture_zone_path = NodePath("../DuelZone")
-			mode = duel
-		_:
-			var tdm := TDMMode.new()
-			tdm.asymmetric_map = asymmetric
-			mode = tdm
-	mode.name = "GameMode"
-	add_child(mode)
+	# TDM SEUL (nettoyage du prototype 2026-09-26, « strip to minimal
+	# prototype » — voir MatchConfig.MODES) : Hardpoint/SnD/Duel/Duo
+	# (HardpointMode/SnDMode/DuelMode/RoundMode/RoundState/HalfTime/Economy)
+	# sont supprimés, cette branche ne construisait plus jamais qu'un TDMMode
+	# en pratique (MatchConfig.set_mode() retombe toujours sur "tdm" pour tout
+	# id absent de MatchConfig.MODES == ["tdm"]).
+	# Échange de côté (§5.6.2/§7.5) : seulement sur une map déclarée
+	# "asymmetric" (wasteland) — absent/faux sur toutes les autres,
+	# comportement inchangé.
+	var tdm := TDMMode.new()
+	tdm.asymmetric_map = bool(data.get("asymmetric", false))
+	tdm.name = "GameMode"
+	add_child(tdm)

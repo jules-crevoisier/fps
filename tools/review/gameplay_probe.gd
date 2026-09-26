@@ -126,14 +126,16 @@ func _run() -> void:
 	await _run_fire_state_checks()
 
 	# ---- Reste des mécaniques (même arène, même joueur) ----
+	# Nettoyage du prototype 2026-09-26 : plus de capacités (AbilityController/
+	# AgentDatabase ne connaît plus que Verrou, sans capacité) — `_check_
+	# abilities` est retiré avec le nœud "Abilities", qui n'existe plus sur
+	# le joueur.
 	if _budget_left():
 		await _check_reload()
 	if _budget_left():
 		await _check_weapon_switch()
 	if _budget_left():
 		await _check_ads()
-	if _budget_left():
-		await _check_abilities()
 	if _budget_left():
 		await _check_damage_and_death()
 	if _budget_left():
@@ -142,13 +144,10 @@ func _run() -> void:
 	# `_world` (test_arena, group "match" depuis GameWorld._ready) n'est plus
 	# utile après les checks ci-dessus : le libérer AVANT les étapes suivantes
 	# est nécessaire, pas juste propre — `_check_round_flows` instancie sa
-	# PROPRE `GameWorld` par mode (aussi tagué "match"), et
-	# `get_first_node_in_group("match")` (SnDMode/DuelMode._team_all_dead,
-	# via RoundMode._players()) renvoie le PREMIER nœud du groupe : sans ce
-	# nettoyage, un `_world` encore présent reste retourné à la place de
-	# l'instance courante (0 joueur de la bonne équipe trouvé,
-	# `_team_all_dead` toujours faux) et `end_round` ne se déclenche jamais —
-	# la manche reste bloquée en LIVE quel que soit le kill.
+	# PROPRE `GameWorld` (aussi taguée "match"), et `get_first_node_in_group
+	# ("match")` renvoie le PREMIER nœud du groupe : sans ce nettoyage, un
+	# `_world` encore présent reste retourné à la place de l'instance
+	# courante.
 	if _world and is_instance_valid(_world):
 		_world.free()
 		_world = null
@@ -476,22 +475,32 @@ func _check_reload() -> void:
 	_add_check("reload", ok, "started=%s bloqué_pendant=%s munitions_finales=%d/%d" % [started, blocked_mid_reload, ammo_final, mag_size])
 
 # ==========================================================================
-#  WEAPON_SWITCH — chaque slot
+#  WEAPON_SWITCH — prototype à une seule arme (Ravage, slot 0) : le slot 1
+#  (WeaponDatabase n'a plus qu'une entrée, nettoyage du prototype 2026-09-26)
+#  reste un emplacement VIDE — appuyer dessus ne doit ni planter ni changer
+#  l'arme équipée (Weapon._handle_switch_input -> _try_equip(1) ->
+#  Inventory.equip(1) refuse un slot sans arme, comportement inchangé).
 # ==========================================================================
 func _check_weapon_switch() -> void:
 	await _reset_player()
 	var w := _weapon()
-	var ok := true
-	var parts: Array = []
-	for slot in range(Weapon.SLOTS):
-		_player.input.weapon_slot_pressed = slot
-		await _wait_physics(4)
-		_player.input.weapon_slot_pressed = -1
-		await _wait_physics(3)
-		var switched := w._inv.current == slot
-		parts.append("slot%d:%s" % [slot, "ok" if switched else "FAIL(current=%d)" % w._inv.current])
-		ok = ok and switched
-	_add_check("weapon_switch", ok, ", ".join(parts))
+	var errors_before := _logger.count
+	_player.input.weapon_slot_pressed = 0
+	await _wait_physics(4)
+	_player.input.weapon_slot_pressed = -1
+	await _wait_physics(3)
+	var slot0_ok := w._inv.current == 0
+	_player.input.weapon_slot_pressed = 1
+	await _wait_physics(4)
+	_player.input.weapon_slot_pressed = -1
+	await _wait_physics(3)
+	var empty_slot_rejected := w._inv.current == 0
+	var no_new_errors := _logger.count == errors_before
+	var ok := slot0_ok and empty_slot_rejected and no_new_errors
+	_add_check("weapon_switch", ok, "slot0:%s slot1(vide):%s current_final=%d erreurs+%d" % [
+		"ok" if slot0_ok else "FAIL", "rejeté comme attendu" if empty_slot_rejected else "A CHANGÉ D'ARME ALORS QUE LE SLOT EST VIDE",
+		w._inv.current, _logger.count - errors_before,
+	])
 
 # ==========================================================================
 #  ADS (si l'arme le supporte)
@@ -517,67 +526,11 @@ func _check_ads() -> void:
 	_add_check("ads", ok, "aim_fov=%.1f (base=%.1f) tir_en_visée=%s (%d->%d)" % [aim_fov, _player.config.base_fov, fired, ammo_before, ammo_after])
 
 # ==========================================================================
-#  ABILITY_CAST — chaque capacité de chaque agent (6 agents x 4 slots)
-# ==========================================================================
-func _check_abilities() -> void:
-	await _reset_player()
-	var ab := _player.get_node_or_null("Abilities") as AbilityController
-	if ab == null:
-		_add_check("ability_cast:*", false, "nœud Abilities introuvable sur le joueur")
-		return
-	var self_hp := _player.get_node_or_null("Health") as Health
-	var agents := AgentDatabase.all()
-	for agent_i in agents.size():
-		var agent: AgentConfig = agents[agent_i]
-		# Rejoue l'agent SANS respawn (pas besoin du réseau pour ce check) :
-		# état de capacités fraîches (charges pleines), copie prédictive == copie
-		# serveur puisque l'hôte est les deux à la fois.
-		ab.agent = agent
-		ab._owner_state = AbilityState.new(agent.abilities)
-		ab._server_state = AbilityState.new(agent.abilities)
-		for i in agent.abilities.size():
-			var a: Ability = agent.abilities[i]
-			var check_name := "ability_cast:%s.%s" % [agent.agent_name, a.slot]
-			if a.is_ultimate:
-				ab._server_state.add_ult(999999.0)
-				ab._owner_state.add_ult(999999.0)
-			# Précondition légitime de certaines capacités de soin (ex. Baume/
-			# "Apaisement", HealAbility.can_activate_server : refuse si la vie
-			# est déjà au max, voir scripts/agents/abilities/HealAbility.gd) —
-			# une capacité comme Résurgence/Sursaut (soin complet) testée sur un
-			# agent PRÉCÉDENT ramène l'hôte à pleine vie entre-temps, donc on
-			# revérifie à CHAQUE capacité, pas une fois pour tout le run. On la
-			# blesse légèrement puis force le suivi "hors-combat" à "il y a
-			# longtemps" (accès direct au champ, comme le reste de ce fichier)
-			# pour ne pas attendre réellement les 3 s de fenêtre hors-combat.
-			if self_hp and self_hp.current_health >= self_hp.max_health:
-				self_hp.apply_damage(20.0, 0)
-				ab._out_of_combat.mark_damaged(-99999.0)
-			var errors_before := _logger.count
-			var charges_before := ab._server_state.charges(i)
-			var ult_before := ab._server_state.ult_points()
-			# Écriture directe de `player.input.ability_pressed` : sûr ici car
-			# `_player.is_bot == true` (voir note d'en-tête) — PlayerInput ne
-			# touche plus du tout à `input.*` pour ce joueur.
-			_player.input.ability_pressed = a.slot
-			await _wait_physics(3)
-			_player.input.ability_pressed = ""
-			await _wait_physics(3)
-			var errors_after := _logger.count
-			var no_new_errors := errors_after == errors_before
-			var consumed: bool
-			if a.is_ultimate:
-				consumed = ab._server_state.ult_points() < ult_before
-			else:
-				consumed = ab._server_state.charges(i) < charges_before
-			var ok := consumed and no_new_errors
-			_add_check(check_name, ok, "%s consommé=%s erreurs+%d" % ["ultime" if a.is_ultimate else "charge/cooldown", consumed, errors_after - errors_before])
-	# Remet l'agent par défaut du joueur pour ne pas fausser un check suivant.
-	ab.agent = AgentDatabase.get_by_index(_player.agent_index if _player.agent_index >= 0 else 0)
-	ab._owner_state = AbilityState.new(ab.agent.abilities)
-	ab._server_state = AbilityState.new(ab.agent.abilities)
-	if self_hp:
-		self_hp.reset()  # remet la vie hôte au propre pour les checks suivants.
+# Nettoyage du prototype 2026-09-26 (« strip to minimal prototype ») :
+# capacités/passifs supprimés (AbilityController/AbilityState/Ability n'
+# existent plus, AgentDatabase.all() ne renvoie plus que Verrou, sans
+# capacité) — `_check_abilities` (qui pilotait le nœud "Abilities", absent
+# du joueur désormais) est retiré avec eux.
 
 # ==========================================================================
 #  DAMAGE_AND_DEATH — mannequin d'entraînement (test_arena.tscn/Dummies/Dummy1)
@@ -752,23 +705,13 @@ func _check_spawn_on_map(entry: Dictionary) -> void:
 #  ROUND_FLOW — cycle manche/match de chaque mode (MatchConfig.MODES)
 # ==========================================================================
 func _check_round_flows() -> void:
-	# scene_path, team_size — "plant" (bombe) = mode "snd". Ces 4 modes ont un
-	# gain PAR ÉLIMINATION (TDMMode.on_kill / SnDMode.on_kill / DuelMode.on_kill
-	# wipent l'équipe adverse) : un helper générique convient. Hardpoint gagne
-	# par CAPTURE DE ZONE (pas de kill, voir HardpointMode : on_kill n'est pas
-	# surchargé) — traité à part par `_round_flow_hardpoint()`.
-	var plan := [
-		{"mode": "tdm", "scene": "res://scenes/levels/tdm_map.tscn", "team_size": 1},
-		{"mode": "snd", "scene": "res://scenes/levels/snd_map.tscn", "team_size": 1},
-		{"mode": "duel", "scene": "res://scenes/levels/duel_arena.tscn", "team_size": 1},
-		{"mode": "duo", "scene": "res://scenes/levels/duel_arena.tscn", "team_size": 2},
-	]
-	for p in plan:
-		if not _budget_left():
-			return
-		await _round_flow(String(p["mode"]), String(p["scene"]), int(p["team_size"]))
+	# Nettoyage du prototype 2026-09-26 : SnD/Duel/Duo/Hardpoint (et leurs
+	# scènes snd_map.tscn/duel_arena.tscn, qui n'ont jamais existé sous
+	# scenes/levels/ — déjà des références mortes avant ce nettoyage) ont été
+	# supprimés avec leurs modes — TDM (MatchConfig.MODES == ["tdm"]) est
+	# désormais le seul flux de manche/match vérifié ici.
 	if _budget_left():
-		await _round_flow_hardpoint()
+		await _round_flow("tdm", "res://scenes/levels/tdm_map.tscn", 1)
 
 func _round_flow(mode_id: String, scene_path: String, team_size: int) -> void:
 	Engine.time_scale = 1.0  # filet de sécurité si un check précédent a quitté tôt sans le restaurer.
@@ -788,11 +731,12 @@ func _round_flow(mode_id: String, scene_path: String, team_size: int) -> void:
 	if inst.get("allow_bot_fill") != null:
 		inst.set("allow_bot_fill", true)
 
-	# Scène STATIQUE (GameMode déjà présent) : accélère AVANT le premier
-	# _ready() (config prise en compte dès la construction du RoundState).
-	# Map MapSetup (Hardpoint) : le nœud GameMode n'existe pas encore à ce
-	# stade (construit dynamiquement dans MapSetup._enter_tree) — ajusté
-	# juste après, avant qu'aucun score réel n'ait pu se produire.
+	# Scène STATIQUE (GameMode déjà présent, ex. tdm_map.tscn) : accélère
+	# AVANT le premier _ready() (score_to_win pris en compte dès la
+	# construction). Map MapSetup (ex. wasteland) : le nœud GameMode
+	# n'existe pas encore à ce stade (construit dynamiquement dans
+	# MapSetup._enter_tree) — ajusté juste après, avant qu'aucun score réel
+	# n'ait pu se produire.
 	var static_mode := inst.get_node_or_null("GameMode")
 	if static_mode:
 		_speed_up_mode(static_mode)
@@ -817,29 +761,6 @@ func _round_flow(mode_id: String, scene_path: String, team_size: int) -> void:
 		inst.free()
 		return
 
-	# Modes "à manches" (SnD/Duel/Duo) : on_kill est ignoré hors phase LIVE
-	# (voir SnDMode.on_kill/DuelMode.on_kill) — attendre la fin du BUY, accéléré.
-	if mode is RoundMode:
-		Engine.time_scale = 8.0
-		var t2 := 0.0
-		while (mode as RoundMode).round_phase != RoundState.Phase.LIVE and t2 < 8.0:
-			await physics_frame
-			t2 += 1.0 / 60.0
-		if (mode as RoundMode).round_phase != RoundState.Phase.LIVE:
-			Engine.time_scale = 1.0
-			_add_check(check_name, false, "jamais passé en phase LIVE (bloqué en phase %d) — stuck state" % (mode as RoundMode).round_phase)
-			inst.free()
-			return
-		# `GameWorld.respawn_all_for_round` (appelée par `_enter_buy_phase`, à
-		# l'entrée de CETTE toute première manche aussi) protège chaque joueur
-		# 1 s (Health.spawn_protection) — largement plus long que
-		# `buy_duration` (0.3 s) une fois accéléré par CE MÊME time_scale=8 :
-		# sans cette attente, le kill ci-dessous tombe pendant la fenêtre de
-		# protection encore active et `apply_damage` est un no-op silencieux
-		# (temps SIMULÉ, respecte le time_scale encore actif ici).
-		await _wait_sim(1.3)
-		Engine.time_scale = 1.0
-
 	var host_id := _host_id()
 	var players := inst.get_node(inst.players_root)
 	var host_node := players.get_node_or_null(str(host_id))
@@ -849,10 +770,7 @@ func _round_flow(mode_id: String, scene_path: String, team_size: int) -> void:
 		return
 	var host_team := int(host_node.get("team"))
 
-	if mode is RoundMode:
-		await _round_flow_rounds(check_name, mode as RoundMode, players, host_team, host_id)
-	else:
-		await _round_flow_single_kill(check_name, mode, players, host_team, host_id)
+	await _round_flow_single_kill(check_name, mode, players, host_team, host_id)
 
 	inst.free()
 	await _wait_physics(15)
@@ -896,170 +814,16 @@ func _round_flow_single_kill(check_name: String, mode: GameMode, players: Node, 
 		detail += " — %d nouvelle(s) erreur(s) moteur pendant le cycle" % (_logger.count - errors_before)
 	_add_check(check_name, ok, detail)
 
-## Modes À MANCHES (SnD/Duel/Duo) : un kill doit terminer la MANCHE
-## (round_state.wins incrémenté, round_phase -> POST) SANS terminer le MATCH
-## (`rounds_to_win = 2`, posé par _speed_up_mode) — sépare explicitement "fin
-## de manche" de "fin de match", que l'ANCIEN check confondait totalement
-## (rounds_to_win = 1 : une seule manche = tout le match, donc un bug de
-## TRANSITION de manche pure — score de manche jamais incrémenté, phase
-## bloquée en LIVE/POST, BUY de la manche suivante jamais atteint — restait
-## invisible tant que le seul signal observé était le vainqueur du MATCH, qui
-## coïncidait toujours avec la fin de la manche unique). Vérifie ensuite
-## qu'une manche SUPPLÉMENTAIRE (BUY -> LIVE -> kill -> POST) amène bien un
-## vrai vainqueur de MATCH, timers accélérés (Engine.time_scale) pour tenir le
-## budget de temps de la sonde.
-func _round_flow_rounds(check_name: String, mode: RoundMode, players: Node, host_team: int, host_id: int) -> void:
-	var errors_before := _logger.count
-	var killed_any := _kill_enemy_team(players, host_team, host_id)
+# Nettoyage du prototype 2026-09-26 : les modes à manches/zone (SnD/Duel/
+# Duo/Hardpoint — `_round_flow_rounds`/`_round_flow_hardpoint`) ont été
+# supprimés avec RoundMode/RoundState/HardpointMode — TDM (`_round_flow_
+# single_kill` ci-dessus) est désormais le seul flux vérifié.
 
-	var t3 := 0.0
-	while mode.round_phase != RoundState.Phase.POST and t3 < 8.0:
-		await physics_frame
-		t3 += 1.0 / 60.0
-
-	var round_wins: int = mode.round_state.wins[host_team]
-	var round_ended := mode.round_phase == RoundState.Phase.POST and round_wins >= 1
-	var match_not_over_yet := mode.winner == -1
-	var round_ok := killed_any and round_ended and match_not_over_yet and _logger.count == errors_before
-	var round_detail: String
-	if not killed_any:
-		round_detail = "aucun ennemi trouvé à éliminer (team_size/bot fill cassé ?)"
-	elif not round_ended:
-		round_detail = "manche jamais passée en POST après le kill (wins=%d, phase=%d) — STUCK STATE" % [round_wins, mode.round_phase]
-	elif not match_not_over_yet:
-		round_detail = "le MATCH est déjà terminé après une seule manche (rounds_to_win=%d mal appliqué ?)" % mode.round_state.rounds_to_win
-	else:
-		round_detail = "manche terminée (wins=%d), match toujours en cours (winner=-1), comme attendu" % round_wins
-	if _logger.count != errors_before:
-		round_detail += " — %d nouvelle(s) erreur(s) moteur" % (_logger.count - errors_before)
-	_add_check(check_name, round_ok, round_detail)
-
-	# ---- Manche suivante -> match complet ----
-	var full_check_name := "%s:full_match" % check_name
-	if not round_ok:
-		_add_check(full_check_name, false, "sauté — la manche précédente n'a pas terminé proprement")
-		return
-
-	Engine.time_scale = 8.0
-	var t4 := 0.0
-	while mode.round_phase != RoundState.Phase.LIVE and t4 < 8.0:
-		await physics_frame
-		t4 += 1.0 / 60.0
-	if mode.round_phase != RoundState.Phase.LIVE:
-		Engine.time_scale = 1.0
-		_add_check(full_check_name, false, "jamais repassé en LIVE pour la manche suivante (bloqué en phase %d) — stuck state" % mode.round_phase)
-		return
-	# `GameWorld.respawn_all_for_round` protège chaque joueur 1 s
-	# (Health.spawn_protection) à l'entrée de la manche : laisser ce délai
-	# s'écouler (temps SIMULÉ, respecte le time_scale déjà actif) avant de
-	# retenter un kill, sinon `apply_damage` est un no-op silencieux et le
-	# test échouerait pour la mauvaise raison.
-	var errors_before_2 := _logger.count
-	await _wait_sim(1.3)
-	var killed_again := _kill_enemy_team(players, host_team, host_id)
-	var t5 := 0.0
-	while mode.winner == -1 and t5 < 8.0:
-		await physics_frame
-		t5 += 1.0 / 60.0
-	Engine.time_scale = 1.0
-	var ok := killed_again and mode.winner != -1 and _logger.count == errors_before_2
-	var detail := "manche 2 : kill->winner=%d (aucun vainqueur = STUCK STATE match)" % mode.winner
-	if not killed_again:
-		detail = "manche 2 : aucun ennemi vivant à éliminer (respawn de manche cassé ?)"
-	elif _logger.count != errors_before_2:
-		detail += " — %d nouvelle(s) erreur(s) moteur pendant la manche 2" % (_logger.count - errors_before_2)
-	_add_check(full_check_name, ok, detail)
-
-## Hardpoint gagne par CAPTURE DE ZONE (points/s tant qu'une seule équipe est
-## dans la zone), pas par élimination — `_round_flow` générique ne convient
-## donc pas. Pas de bot ici (allow_bot_fill=false) : `bot_goal_for` de
-## HardpointMode renvoie la MÊME zone pour les deux équipes, un bot foncerait
-## dessus et la contesterait (`present.size() >= 2` => plus aucun score
-## possible, faux "stuck state"). Utilise une map réelle (MapSetup construit
-## le GameMode "hardpoint" depuis MatchConfig.mode_id) — pas de scène statique
-## dédiée à ce mode.
-func _round_flow_hardpoint() -> void:
-	var check_name := "round_flow:hardpoint"
-	MatchConfig.set_mode("hardpoint")
-	MatchConfig.map_id = ""
-	MatchConfig.bots_enabled = false
-
-	var scene_path := "res://scenes/levels/maps/port_ferraille.tscn"
-	var packed := load(scene_path) as PackedScene
-	if packed == null:
-		_add_check(check_name, false, "scène introuvable : %s" % scene_path)
-		return
-	var inst := packed.instantiate()
-	if inst.get("agent_select") != null:
-		inst.set("agent_select", false)
-	if inst.get("allow_bot_fill") != null:
-		inst.set("allow_bot_fill", false)
-	root.add_child(inst)
-	current_scene = inst
-
-	var mode := await _wait_for_game_mode(8.0) as HardpointMode
-	if mode == null:
-		_add_check(check_name, false, "aucun HardpointMode (groupe \"game_mode\") après 8s")
-		inst.free()
-		return
-	_speed_up_mode(mode)  # score_to_win = 1, personne n'a encore pu scorer.
-
-	var player := await _wait_for_local_player(8.0)
-	if player == null:
-		_add_check(check_name, false, "joueur non spawné après 8s")
-		inst.free()
-		return
-
-	var zone := mode.get_node_or_null(mode.zone_path) as Area3D
-	if zone == null:
-		_add_check(check_name, false, "zone Hardpoint introuvable (zone_path)")
-		inst.free()
-		return
-
-	var errors_before := _logger.count
-	player.velocity = Vector3.ZERO
-	player.global_position = zone.global_position
-	Engine.time_scale = 4.0
-	var t := 0.0
-	while mode.winner == -1 and t < 6.0:
-		await physics_frame
-		t += 1.0 / 60.0
-	Engine.time_scale = 1.0
-
-	var ok := mode.winner != -1 and _logger.count == errors_before
-	var detail := "capture de zone -> winner=%d (aucun vainqueur = STUCK STATE)" % mode.winner
-	if _logger.count != errors_before:
-		detail += " — %d nouvelle(s) erreur(s) moteur" % (_logger.count - errors_before)
-	_add_check(check_name, ok, detail)
-	inst.free()
-	await _wait_physics(3)
-
-## Accélère un GameMode/RoundMode pour que le cycle complet tienne dans le
-## budget de temps (configuration RUNTIME de l'instance, pas du code/des
-## ressources — comportement 100% inchangé en dehors de ce script de revue).
+## Accélère le GameMode pour que le cycle tienne dans le budget de temps
+## (configuration RUNTIME de l'instance, pas du code/des ressources —
+## comportement 100% inchangé en dehors de ce script de revue).
 func _speed_up_mode(mode: Node) -> void:
-	# `.set()` dynamique (comme `Weapon._buy_enabled()`/`GameMode._local_player_team()`
-	# ailleurs dans ce projet) : évite de dépendre du type statique exact de
-	# `mode` (Node générique ici, potentiellement récupéré avant que le script
-	# concret ne soit garanti résolu par l'analyseur).
-	if mode is RoundMode:
-		# 2 (pas 1) : sépare la fin de MANCHE (1 win, testée après le premier
-		# kill) de la fin de MATCH (2 wins, testée après la seconde) — voir
-		# _round_flow_rounds. Avec 1, les deux coïncidaient toujours et un bug
-		# de pure TRANSITION de manche (score non incrémenté, phase bloquée,
-		# BUY suivant jamais atteint) restait invisible.
-		mode.set("rounds_to_win", 2)
-		mode.set("buy_duration", 0.3)
-		# LARGEMENT au-delà de l'attente post-kill de `_round_flow_rounds` (8 s
-		# par manche) : sinon le timeout naturel de la manche (défenseurs
-		# gagnent au chrono, RoundMode._on_round_timeout) course notre
-		# élimination volontaire et le résultat devient non déterministe
-		# (parfois -1 si ni l'un ni l'autre n'a fini de se propager avant que
-		# le wait n'expire).
-		mode.set("round_duration", 40.0)
-		mode.set("post_duration", 0.2)
-	else:
-		mode.set("score_to_win", 1)
+	mode.set("score_to_win", 1)
 
 func _wait_for_game_mode(timeout: float) -> GameMode:
 	var t := 0.0

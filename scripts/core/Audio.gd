@@ -520,10 +520,20 @@ const _AMBIENCE_ALIASES := {
 	"wasteland": "ambience_val_poussiere",
 }
 
+## Six maps v1 "dessinées à la main" (ex-`Layouts.MAP_IDS` — le fichier
+## `Layouts.gd` lui-même a été supprimé avec leurs scènes/layouts lors du
+## nettoyage du prototype 2026-09-26, mais leur ambiance sonore reste un id
+## valide : comportement inchangé pour ces six noms, recopiés ICI en dur
+## plutôt que de garder une dépendance à un fichier qui n'existe plus).
+const _V1_MAP_IDS := [
+	"port_ferraille", "val_poussiere", "saint_ombre",
+	"col_du_vautour", "la_fosse", "le_belvedere",
+]
+
 static func ambience_name_for_map(map_id: String) -> String:
 	if _AMBIENCE_ALIASES.has(map_id):
 		return _AMBIENCE_ALIASES[map_id]
-	if map_id == "" or not Layouts.MAP_IDS.has(map_id):
+	if map_id == "" or not _V1_MAP_IDS.has(map_id):
 		return ""
 	return "ambience_%s" % map_id
 

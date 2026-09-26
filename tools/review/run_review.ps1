@@ -352,20 +352,13 @@ function Step-MapShots {
 	New-StepResult -Name 'map_shots' -Status $status -ExitCode $r.ExitCode -TimedOut $r.TimedOut -DurationSec $r.DurationSec -Logs @('logs/map_shots.log') -Artifact 'map_shots'
 }
 
-## Étape du contrat parallèle : tools/review/ui_shots.gd (fenêtré).
+## tools/review/ui_shots.gd a été supprimé lors du nettoyage du prototype
+## 2026-09-26 (« strip to minimal prototype » : plus de menu/arsenal/options/
+## pause/achat/killfeed/tableau des scores à capturer — voir CLAUDE.md). Le
+## statut "missing" (déjà interprété comme non bloquant par report.py) est
+## conservé pour ne pas casser les runs `-Only ui_shots` existants.
 function Step-UiShots {
-	$scriptRel = 'tools/review/ui_shots.gd'
-	if (-not (Test-Path (Join-Path $RepoRoot $scriptRel))) {
-		return New-StepResult -Name 'ui_shots' -Status 'missing' -Note "$scriptRel absent (livré par l'agent parallèle) — étape sautée"
-	}
-	$log = Join-Path $Out "logs\ui_shots.log"
-	$outDir = "$OutGodot/ui_shots"
-	$args = Join-Args @('--path', '.', '-s', $scriptRel, '--', "--out=$outDir")
-	$r = Invoke-Simple -FilePath $GodotBin -Arguments $args -LogPath $log -TimeoutSec 120
-	$jsonPath = Join-Path $Out 'ui_shots\ui_shots.json'
-	$note = if ($r.ExitCode -eq 0 -and -not (Test-Path $jsonPath)) { 'exit 0 mais ui_shots.json absent' } else { '' }
-	$status = if ($r.StartError) { 'error' } elseif ($r.TimedOut) { 'fail' } elseif ($r.ExitCode -eq 0 -and (Test-Path $jsonPath)) { 'ok' } else { 'fail' }
-	New-StepResult -Name 'ui_shots' -Status $status -ExitCode $r.ExitCode -TimedOut $r.TimedOut -DurationSec $r.DurationSec -Logs @('logs/ui_shots.log') -Artifact 'ui_shots' -Note $note
+	New-StepResult -Name 'ui_shots' -Status 'missing' -Note 'tools/review/ui_shots.gd supprimé (interface minimale, plus de menus à capturer) — étape retirée'
 }
 
 ## Captures ViewModel (bras+arme) fenêtrées — tools/blender/viewmodel_shots.gd

@@ -4,7 +4,7 @@
 ## rejoint et spawn comme joueur, un client à la mauvaise version de
 ## protocole est refusé avec un motif (NetworkManager.last_disconnect_reason).
 ## À lancer contre un serveur dédié déjà démarré (voir docs/SERVER.md) :
-##   $GODOT_BIN --headless --path . -- --server   (avec MODE=tdm MAP=port_ferraille)
+##   $GODOT_BIN --headless --path . -- --server   (avec MODE=tdm MAP=wasteland)
 ## Puis, dans un second process :
 ##   Rejoindre normalement :
 ##     godot --headless --path . -s res://tests/networking/server_join_smoke.gd -- --role=join
@@ -19,7 +19,7 @@ const TIMEOUT_SEC := 10.0
 ## Carte de vérification fixe (assortie à l'appel serveur de la procédure de
 ## vérification, voir docs/SERVER.md) — même principe que le
 ## `LEVEL` codé en dur de tools/net_smoke.gd.
-const VERIFY_MAP_ID := "port_ferraille"
+const VERIFY_MAP_ID := "wasteland"
 
 var _role: String = "join"
 var _t: float = 0.0

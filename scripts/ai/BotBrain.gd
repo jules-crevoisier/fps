@@ -277,15 +277,15 @@ func _attacker_position(attacker_id: int) -> Vector3:
 func _is_targeted() -> bool:
 	return _now() - _last_damaged_time < STYLE.TARGETED_MEMORY_SECONDS
 
-## `true` en phase POST d'un mode à manches (SnD/Duel/Duo, `RoundMode.round_phase`)
-## — absent des modes d'arène (TDM/Hardpoint, pas de propriété `round_phase`) :
-## `mode.get("round_phase")` y renvoie `null`, traité comme "pas de fin de round".
+## Nettoyage du prototype 2026-09-26 : les modes à manches (SnD/Duel/Duo,
+## RoundMode/RoundState) qui exposaient une propriété `round_phase` ont été
+## supprimés — TDM (seul mode restant) n'a jamais de fin de manche, toujours
+## faux désormais. Conservée (plutôt que d'inliner `false` à l'appelant) :
+## fonction encore appelée depuis `_compute_bot_goal`/le patron
+## "marche pendant la fin de manche", au cas où un futur mode à manches
+## revienne.
 func _round_ending() -> bool:
-	var mode := get_tree().get_first_node_in_group("game_mode")
-	if mode == null:
-		return false
-	var phase = mode.get("round_phase")
-	return phase != null and int(phase) == RoundState.Phase.POST
+	return false
 
 # ======================================================================
 #  PERCEPTION — uniquement ce que le bot peut VOIR (raycast multi-points) ou
