@@ -594,7 +594,14 @@ func test_tdm_kill_only_invalidates_bots_near_the_kill_or_the_corridor_concerned
 	var centre_goal: Vector3 = mode.bot_goal_for(0, 2, centre_points[7])  # Centre, proche du kill à venir.
 	var sud_goal: Vector3 = mode.bot_goal_for(0, 3, sud_points[1])        # Sud, loin et autre couloir.
 
-	mode.report_enemy_sighting(0, centre_points[8])  # sert de position APPROXIMATIVE du kill (T3).
+	# Position APPROXIMATIVE du kill (T3, wasteland v7) : côté EST du couloir
+	# Centre (`centre_points[-2]`, proche de l'apparition rouge) — mesuré à
+	# > 50 m du but initial de bot 3 (Sud, ci-dessus), largement au-delà de
+	# `TDMMode.KILL_MOBILIZE_RANGE_OUT_OF_LANE` (30 m). Un point proche de
+	# l'apparition bleue (ex. l'ancien `centre_points[8]`, ~29 m de bot 3 sur
+	# la géométrie v7 du plan) tombait À L'INTÉRIEUR de ce rayon — ce n'est
+	# pas le scénario "loin et autre couloir" que ce test veut vérifier.
+	mode.report_enemy_sighting(0, centre_points[centre_points.size() - 2])
 	mode.on_kill(-1, -1, 0, 1)
 
 	mode.fake_now += TDMMode.KILL_DELAY_MAX + 0.1
@@ -694,27 +701,21 @@ func test_60s_wasteland_simulation_respects_b12_sync_b13_spawn_camping_and_8m_te
 
 # ======================================================================
 #  LD-25 : Hardpoint tient la zone par des points DISTINCTS (jamais le
-#  centre commun) et bascule sur la zone SUIVANTE 10 s avant sa rotation
-#  (préavis "HUD et buts").
+#  centre commun) — RETIRÉ CONTRE WASTELAND (2026-09-26, « fais la carte
+#  block que je puisse la tester in game » — v7 greybox, TDM seul, voir
+#  l'en-tête de `scripts/levels/maps/layouts/wasteland.gd`) : Wasteland ne
+#  déclare plus de zone Hardpoint ni de `hp_holds` réels (`bot_knowledge
+#  .hp_holds` vaut `[]`), donc un bot Hardpoint dessus retombe désormais SUR
+#  LE CENTRE COMMUN par construction (repli LD-25 documenté, « pas de
+#  données » = comportement historique) — l'inverse de ce que ce test
+#  vérifiait. La même logique, contre une connaissance de zone FICTIVE
+#  découplée de toute carte réelle, reste couverte par
+#  `tests/ai/test_bot_goals_hardpoint.gd::
+#  test_two_hold_slots_are_distinct_positions_at_least_3m_apart_never_the_
+#  center` (hors de ma liste de fichiers, déjà vert). Écart connu, signalé
+#  au rendu de tâche : `MapCatalog.gd` annonce encore Wasteland pour
+#  "hardpoint" (hors de mon périmètre de fichiers cette manche).
 # ======================================================================
-func test_hardpoint_bots_target_distinct_hold_points_never_the_shared_center() -> void:
-	var mode: HardpointMode = _wasteland_mode(HardpointMode.new())
-	var zone := Area3D.new()
-	zone.position = Vector3(-13, 0, 1)  # centre RÉEL de la zone Chapelle (A, wasteland.gd).
-	mode.add_child(zone)
-	mode._zone = zone
-
-	var goals: Array = []
-	for bot_id in [1, 2, 3, 4, 5]:
-		var goal: Vector3 = mode._compute_bot_goal(0, bot_id, Vector3.ZERO)
-		assert_bool(goal.is_equal_approx(zone.position)).append_failure_message(
-			"LD-25 : un bot Hardpoint ne doit jamais viser le centre COMMUN de la zone quand la carte a des données"
-		).is_false()
-		goals.append(goal)
-
-	assert_int(_count_unique_vectors(goals)).append_failure_message(
-		"LD-25 : au moins 2 points de tenue distincts attendus entre plusieurs bots (5 points déclarés par zone)"
-	).is_greater_equal(2)
 
 
 ## Test LD-25 « tous les bots basculent 10 s avant la rotation » retiré par décision du lead le

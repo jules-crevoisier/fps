@@ -271,101 +271,21 @@ func test_a_full_team_of_4_consecutive_bots_never_share_a_position() -> void:
 
 
 # ======================================================================
-#  Intégration : mêmes règles contre les données RÉELLES de Wasteland
-#  (WastelandBots.data()["bot_knowledge"]["hp_holds"], BOT-22B).
+#  Intégration contre les données RÉELLES de Wasteland — RETIRÉE (2026-09-26,
+#  « fais la carte block que je puisse la tester in game » — v7 greybox, TDM
+#  seul, voir l'en-tête de `scripts/levels/maps/layouts/wasteland.gd`) :
+#  Wasteland ne déclare plus de zones Hardpoint du tout (`WastelandLayout
+#  .data()` n'a plus de clé "hardpoints", `WastelandBots.gd` n'a plus de
+#  `_bk_hp_holds()`/`hp_hold_points` réels — `bot_knowledge.hp_holds` vaut
+#  `[]`). Les deux tests qui vivaient ici (« 2 créneaux à 3 m contre les
+#  hold réels », « les hold réels restent dans la boîte Hardpoint réelle »)
+#  n'ont donc plus de sujet : la logique GÉNÉRIQUE qu'ils exerçaient
+#  (espacement des créneaux, boîte de zone) reste couverte par les fixtures
+#  ci-dessus (`test_two_hold_slots_are_distinct_positions_at_least_3m_apart_
+#  never_the_center`, etc.), découplées de toute carte réelle. Écart connu,
+#  signalé au rendu de tâche : `MapCatalog.gd` annonce encore Wasteland pour
+#  "hardpoint" (hors de mon périmètre de fichiers cette manche).
 # ======================================================================
-class _FakeMapSetup extends Node3D:
-	var map_id: String = "wasteland"
-
-
-func test_real_wasteland_hp_holds_give_two_hold_slots_3m_apart() -> void:
-	var real_holds: Array = WastelandBots._bk_hp_holds()
-	var zone_a: Dictionary = real_holds[0]
-	var hold_pts: Array = zone_a["hold"]
-	assert_int(hold_pts.size()).append_failure_message(
-		"cette vérification suppose au moins 2 positions de tenue réelles"
-	).is_greater_equal(2)
-
-	var setup := _FakeMapSetup.new()
-	add_child(setup)
-	auto_free(setup)
-	var mode := HardpointMode.new()
-	setup.add_child(mode)
-
-	var zone := Area3D.new()
-	zone.position = _centroid(hold_pts)
-	mode.add_child(zone)
-	mode._zone = zone
-
-	var goal_hold0: Vector3 = mode._compute_bot_goal(0, _BOT_HOLD0, Vector3.ZERO)
-	var goal_hold1: Vector3 = mode._compute_bot_goal(0, _BOT_HOLD1, Vector3.ZERO)
-
-	assert_bool(goal_hold0.is_equal_approx(hold_pts[0] as Vector3)).append_failure_message(
-		"contre les données RÉELLES de Wasteland, le 1er créneau doit viser hp_holds[0].hold[0]"
-	).is_true()
-	assert_bool(goal_hold1.is_equal_approx(hold_pts[1] as Vector3)).append_failure_message(
-		"contre les données RÉELLES de Wasteland, le 2e créneau doit viser hp_holds[0].hold[1]"
-	).is_true()
-	assert_float(goal_hold0.distance_to(goal_hold1)).append_failure_message(
-		"T5 sur données réelles : les 2 positions de tenue doivent être espacées d'au moins 3 m"
-	).is_greater_equal(3.0)
-
-
-# ======================================================================
-#  BOT-30 (docs/research/09_wasteland_vertical_slice.md §e, banc bots :
-#  occupation de zone Hardpoint 0,2 % mesurée, seuil >= 70 %) : diagnostic
-#  du lead — "vérifier si les points de tenue... sont hors de l'emprise
-#  comptée de la zone". `test_wasteland_bot_data.gd::
-#  test_hp_hold_points_are_within_their_zone` (hors de ma liste de fichiers)
-#  ne vérifie qu'un rayon GÉNÉREUX (8 m) autour du centre — jamais la boîte
-#  `Area3D` RÉELLE (`WastelandLayout.data()["hardpoints"]` + taille par
-#  défaut (10;4;10)) que `HardpointMode._physics_process`/
-#  `tools/bot_bench.gd::_sample_hardpoint` comptent via
-#  `get_overlapping_bodies()`. Un point de TENUE hors de cette boîte ne
-#  compte JAMAIS comme "dans la zone", quelle que soit la présence réelle
-#  des équipes : ce test le vérifie pour les 3 zones réelles de Wasteland.
-# ======================================================================
-const _REAL_HP_HALF_SIZE := Vector3(5.0, 2.0, 5.0)  # WastelandLayout hardpoint_sizes absent -> repli MapSetup (10;4;10).
-
-
-## Zone RÉELLE (centre `WastelandLayout.data()["hardpoints"]`) la plus proche
-## du centroïde de `hold_pts` — même principe de correspondance par
-## PROXIMITÉ que `HardpointMode._hp_holds_index_near` (jamais par nom/ordre).
-func _nearest_real_hp_center(hold_pts: Array, real_centers: Array) -> Vector3:
-	var centroid := _centroid(hold_pts)
-	var best: Vector3 = real_centers[0]
-	var best_dist := INF
-	for c in real_centers:
-		var d: float = centroid.distance_to(c as Vector3)
-		if d < best_dist:
-			best_dist = d
-			best = c
-	return best
-
-
-func test_real_wasteland_hp_holds_are_within_the_actual_hardpoint_zone_box_for_all_3_zones() -> void:
-	var real_centers: Array = WastelandLayout.data()["hardpoints"]
-	assert_int(real_centers.size()).append_failure_message(
-		"cette vérification suppose 3 zones Hardpoint réelles déclarées par la carte"
-	).is_equal(3)
-
-	for entry in WastelandBots._bk_hp_holds():
-		var z: Dictionary = entry
-		var zone := String(z["zone"])
-		var hold_pts: Array = z["hold"]
-		var center := _nearest_real_hp_center(hold_pts, real_centers)
-		for i in hold_pts.size():
-			var pos: Vector3 = hold_pts[i]
-			var delta := pos - center
-			assert_float(absf(delta.x)).append_failure_message(
-				"hp_holds %s hold #%d (%s) : hors de la boîte Hardpoint RÉELLE (centre %s) sur l'axe X" % [zone, i, pos, center]
-			).is_less_equal(_REAL_HP_HALF_SIZE.x)
-			assert_float(absf(delta.y)).append_failure_message(
-				"hp_holds %s hold #%d (%s) : hors de la boîte Hardpoint RÉELLE (centre %s) sur l'axe Y" % [zone, i, pos, center]
-			).is_less_equal(_REAL_HP_HALF_SIZE.y)
-			assert_float(absf(delta.z)).append_failure_message(
-				"hp_holds %s hold #%d (%s) : hors de la boîte Hardpoint RÉELLE (centre %s) sur l'axe Z" % [zone, i, pos, center]
-			).is_less_equal(_REAL_HP_HALF_SIZE.z)
 
 
 # ======================================================================

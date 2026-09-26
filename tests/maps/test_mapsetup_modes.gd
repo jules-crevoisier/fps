@@ -26,9 +26,17 @@ extends GdUnitTestSuite
 const MapSetupScript := preload("res://scripts/levels/maps/MapSetup.gd")
 
 ## Cartes qui déclarent hardpoints + site_a + site_b : les 4 villes 4v4
-## (Layouts.gd) + cargo_ship + wasteland (hors de Layouts.MAP_IDS, routées
-## par MapSetup._data_for).
-const ZONE_MAP_IDS := ["port_ferraille", "val_poussiere", "saint_ombre", "col_du_vautour", "cargo_ship", "wasteland"]
+## (Layouts.gd) + cargo_ship (hors de Layouts.MAP_IDS, routée par
+## MapSetup._data_for). Wasteland RETIRÉE de cette liste (2026-09-26, « fais
+## la carte block que je puisse la tester in game » — v7 greybox, TDM seul,
+## voir l'en-tête de `scripts/levels/maps/layouts/wasteland.gd`) :
+## `WastelandLayout.data()` ne déclare plus `hardpoints`/`site_a`/`site_b`/
+## `duel_zone` du tout, donc `MapSetup._build_markers` ne construit plus ces
+## zones pour elle QUEL QUE SOIT le mode — ce n'est plus « une carte de
+## zones » au sens de ce test. Écart connu, signalé au rendu de tâche :
+## `MapCatalog.gd` annonce encore Wasteland pour "hardpoint"/"snd" (hors de
+## mon périmètre de fichiers cette manche).
+const ZONE_MAP_IDS := ["port_ferraille", "val_poussiere", "saint_ombre", "col_du_vautour", "cargo_ship"]
 
 ## Arènes Duel/Duo : seule donnée de zone = duel_zone (Layouts.gd).
 const DUEL_ARENA_IDS := ["la_fosse", "le_belvedere"]

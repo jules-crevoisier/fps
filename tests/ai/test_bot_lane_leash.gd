@@ -320,9 +320,16 @@ func test_lone_bot_on_an_opponent_doubled_lane_starts_advanced_toward_the_contes
 	assert_vector(first).append_failure_message(
 		"le bot SEUL d'une lane doublée par l'équipe adverse ne doit plus démarrer à l'extrémité la plus proche de son spawn (point %s)" % [canyon_points[1]]
 	).is_not_equal(canyon_points[1])
+	# Indice avancé = MÊME formule que `TDMMode._corridor_goal`/
+	# `LONE_BOT_START_BIAS` (1/3 du tronçon [1, upper]) — calculé ICI depuis
+	# la longueur RÉELLE du couloir plutôt qu'un indice fixe, pour ne jamais
+	# dépendre du nombre de points d'une géométrie de carte précise (v7 : 25
+	# points sur "S"/Canyon, contre une géométrie plus courte auparavant).
+	var upper := canyon_points.size() - 2
+	var advanced_idx := 1 + int(round(float(upper - 1) * (1.0 / 3.0)))
 	assert_vector(first).append_failure_message(
-		"démarrage attendu au point avancé d'1/3 du tronçon vers le centre (indice 4, %s), obtenu %s" % [canyon_points[4], first]
-	).is_equal(canyon_points[4])
+		"démarrage attendu au point avancé d'1/3 du tronçon vers le centre (indice %d, %s), obtenu %s" % [advanced_idx, canyon_points[advanced_idx], first]
+	).is_equal(canyon_points[advanced_idx])
 
 
 func test_lone_bot_on_a_lane_nobody_doubles_still_starts_at_the_lane_edge() -> void:

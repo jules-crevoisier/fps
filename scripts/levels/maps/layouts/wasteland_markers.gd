@@ -33,20 +33,9 @@ extends RefCounted
 
 ## Un spawn {pos, look} — même schéma que `Layouts._spawn`/`MapSetup
 ## ._build_markers` (`s.get("look", pos)` : "look" est optionnel, un spawn
-## sans regard explicite ne tourne simplement pas). Conservé pour tout appel
-## direct à `_tdm_spawns()` hors de la carte assemblée.
+## sans regard explicite ne tourne simplement pas).
 static func _spawn(pos: Vector3, look: Vector3) -> Dictionary:
 	return {"pos": pos, "look": look}
-
-
-## Compat (voir en-tête) : DÉLÈGUE à `WastelandLayout._tdm_spawns()`, la
-## SEULE source des 24 points v4 (§7 "24 (12 par moitié, en miroir)") —
-## `MapSetup._assemble_wasteland` ignore de toute façon cette clé ici
-## puisque `wasteland.gd` la déclare déjà (fusion additive), donc `data()`
-## ci-dessous ne la republie pas : la republier serait un second exemplaire
-## mort, jamais lu.
-static func _tdm_spawns() -> Array:
-	return WastelandLayout._tdm_spawns()
 
 
 # ======================================================================

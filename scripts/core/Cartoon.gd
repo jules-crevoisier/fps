@@ -63,6 +63,9 @@ const CONTAINER_WHITE := Color("e6e1d6")
 
 const _INK_TOON_SHADER := preload("res://assets/shaders/ink_toon.gdshader")
 const _INK_OUTLINE_SHADER := preload("res://assets/shaders/ink_outline.gdshader")
+## Wasteland v7 greybox (2026-09-26, "carte block jouable") : grille
+## triplanaire monde, jamais de texture peinte — voir `dev_grid()` plus bas.
+const _DEV_GRID_SHADER := preload("res://assets/shaders/dev_grid.gdshader")
 
 ## Mètres par répétition de texture (triplanaire, terrain SEULEMENT — §7.2/
 ## §7.7 : « triplanar_scale : 1/3 → 1/4 (1 répétition / 4 m), pour le terrain
@@ -197,7 +200,27 @@ const _KIND_ALIASES: Dictionary = {
 	&"rubber_tire": &"rubber_tire",
 	&"glass": &"dirty_glass",
 	&"dirty_glass": &"dirty_glass",
+	# Wasteland v7 greybox : "kind" canonique dédié, jamais un socle de
+	# `tools/textures/gen_textures.py` — voir `dev_grid()`/`painted()`.
+	&"dev_grid": &"dev_grid",
 }
+
+## Wasteland v7 greybox (2026-09-26, "carte block jouable" — reste
+## `scripts/levels/maps/layouts/wasteland.gd`/`wasteland_look.gd`) : grille
+## triplanaire monde (1 m mineure / 5 m majeure, `assets/shaders/
+## dev_grid.gdshader`), teintée EXACTEMENT par `color` (aucune dilution —
+## contrairement à `painted()`, jamais de texture peinte à recoloriser).
+## Ajoutée ici plutôt que dans `Kit.gd`/`MapSetup.gd` (hors du périmètre de
+## cette tâche) : `Kit.build_piece`/`GeoBatcher.flush` choisissent déjà le
+## matériau via le même pipeline "kind" (`palette["<rôle>_kind"]` ->
+## `Cartoon.painted(kind, col)`) — un kind canonique "dev_grid" suffit à
+## rediriger CE chemin existant vers ce nouveau matériau, sans toucher au
+## dispatcher partagé par les 7 autres cartes.
+static func dev_grid(color: Color) -> ShaderMaterial:
+	var m := ShaderMaterial.new()
+	m.shader = _DEV_GRID_SHADER
+	m.set_shader_parameter("albedo_color", color)
+	return m
 
 ## Matériau "peint" : surface texturée (tools/textures/gen_textures.py),
 ## échantillonnée en triplanaire monde (aucun UV à poser à la main — les
@@ -210,6 +233,8 @@ const _KIND_ALIASES: Dictionary = {
 ## de niveau).
 static func painted(kind: StringName, tint: Color = Color.WHITE) -> ShaderMaterial:
 	var canonical: StringName = _KIND_ALIASES.get(kind, &"")
+	if canonical == &"dev_grid":
+		return dev_grid(tint)
 	var m := world(effective_tint(canonical, tint))
 	var entry: Dictionary = _PAINTED.get(canonical, {})
 	if entry.is_empty():
