@@ -1132,15 +1132,40 @@ func _fire_visuals(muzzle: Vector3, origin: Vector3, dir: Vector3, max_range: fl
 	var end_pos: Vector3 = hit.position if not hit.is_empty() else origin + dir.normalized() * max_range
 	_spawn_tracer(muzzle, end_pos)
 	if not hit.is_empty():
-		_spawn_impact(hit.position, hit.normal)
+		_spawn_impact(hit.position, hit.normal, hit.collider)
 		_play_impact_sound(hit, is_observer)
 	if is_observer:
 		_maybe_play_whizz(origin, end_pos)
 
-func _spawn_impact(pos: Vector3, normal: Vector3) -> void:
+## Tâche "impacts sur les murs" (2026-09-27) : `hit.collider` transmis en plus
+## de `pos`/`normal` (contrairement à `ImpactFx.spawn`, posé avant cette
+## tâche) -- `ImpactVfx` en a besoin pour choisir la texture par matière
+## (`SurfaceSound.surface_of`, même appel que `_play_impact_sound` juste en
+## dessous) et rejeter tout collider qui n'est pas un mur/décor MONDE
+## légitime (jamais un personnage touché, voir `ImpactVfx.is_world_collider`).
+##
+## `ImpactFx.spawn()` n'est plus appelé pour un hit MONDE légitime : revue
+## visuelle (captures rafale, 2026-09-27) -- son éclat instantané (quad PLAT,
+## NON TEXTURÉ, teinte fixe `Color(1.0, 0.85, 0.45)`, voir `ImpactFx.
+## _build_spark`) se posait EN PLUS du décalque/de la FX par matière
+## d'`ImpactVfx` au MÊME point, empilant un carré translucide sans forme
+## par-dessus l'étincelle/le trou de balle déjà correctement peints -- lisible
+## comme un rectangle "cassé" dès qu'on zoome (voir aussi son propre décalque
+## générique `DecalPool`/poussière+éclats via `_spawn_world_hit_fx`, tout
+## autant redondant avec le trou de balle+la bouffée d'`ImpactVfx`). On garde
+## `ImpactFx.spawn()` UNIQUEMENT pour son routage PERSONNAGE (rembourrage +
+## confettis, jamais dupliqué par `ImpactVfx`, qui rejette justement ces
+## colliders -- voir `is_world_collider`) : `not is_world_collider(collider)`
+## couvre aussi bien un personnage touché qu'un collider inattendu (null,
+## corps de vision...), exactement le même repli que le routage interne
+## d'ImpactFx (`_character_hit_at`, requête physique séparée).
+func _spawn_impact(pos: Vector3, normal: Vector3, collider: Object) -> void:
 	if player == null or not player.is_inside_tree():
 		return
-	ImpactFx.spawn(player.get_tree().current_scene, pos, normal)
+	var scene := player.get_tree().current_scene
+	if not ImpactVfx.is_world_collider(collider):
+		ImpactFx.spawn(scene, pos, normal)
+	ImpactVfx.spawn(scene, pos, normal, collider)
 
 ## Tâche "son" 2026-09-27 (point 6 "impacts/whizz") : impact_metal/impact_concrete
 ## selon la surface touchée (SurfaceSound.surface_of -- méta "surface" posée
