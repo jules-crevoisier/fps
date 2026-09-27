@@ -14,6 +14,9 @@ extends RefCounted
 ## depuis le relâchement de la touche (fuse démarrée à la volée, PAS au
 ## premier appui — voir UtilityConfig.fuse_starts_on_press = false pour ce type).
 static func should_detonate(time_since_release: float, is_grounded: bool, cfg: UtilityConfig) -> bool:
+	# `fuse_time` n'est plus qu'un filet de sécurité (6 s, smoke.tres) : jamais de nuage en plein
+	# vol sur un lancer normal (demande utilisateur 2026-09-27), seulement si le fumigène ne
+	# retrouve jamais le sol (chute hors carte…).
 	if time_since_release >= cfg.fuse_time:
 		return true
 	return is_grounded and time_since_release >= cfg.smoke_ground_arm_seconds

@@ -31,6 +31,8 @@ var _vel: Vector3 = Vector3.ZERO
 var _fuse_left: float = 0.0
 var _elapsed: float = 0.0
 var _touched_ground: bool = false
+## Normale minimale (composante Y) d'une surface comptée comme SOL pour le fumigène.
+const _FLOOR_NORMAL_MIN_Y := 0.6
 var _detonated: bool = false
 var _mesh_root: Node3D
 
@@ -65,7 +67,9 @@ func _physics_process(delta: float) -> void:
 	var res := UtilityIntegrator.step(global_position, _vel, delta, cfg, space, [])
 	global_position = res["position"]
 	_vel = res["velocity"]
-	if res["bounced"]:
+	# SOL seulement (demande utilisateur 2026-09-27 : le fumigène « descend par gravité jusqu'en
+	# bas » et se déploie au premier contact) : un rebond sur un mur ne compte pas.
+	if res["bounced"] and (res.get("normal", Vector3.UP) as Vector3).y > _FLOOR_NORMAL_MIN_Y:
 		_touched_ground = true
 	_elapsed += delta
 
@@ -78,8 +82,18 @@ func _physics_process(delta: float) -> void:
 		should_detonate = _elapsed >= _fuse_left
 	if should_detonate:
 		_detonated = true
+		var pos := _ground_snap(global_position) if kind == UtilityDatabase.SMOKE else global_position
 		if _owner_thrower and is_instance_valid(_owner_thrower):
-			_owner_thrower.server_on_thrown_detonate(kind, uid, global_position, cfg, thrower_id, thrower_team)
+			_owner_thrower.server_on_thrown_detonate(kind, uid, pos, cfg, thrower_id, thrower_team)
+
+## Le nuage de fumée se pose SUR le sol : après le rebond de contact, le fumigène est quelques
+## centimètres au-dessus -- on redescend le point de détonation au sol (<= 3 m, décor seul).
+func _ground_snap(pos: Vector3) -> Vector3:
+	if not is_inside_tree():
+		return pos
+	var q := PhysicsRayQueryParameters3D.create(pos + Vector3.UP * 0.2, pos + Vector3.DOWN * 3.0, PhysicsLayers.WORLD)
+	var hit := get_world_3d().direct_space_state.intersect_ray(q)
+	return hit.position if not hit.is_empty() else pos
 
 ## Reçu sur TOUS les pairs (UtilityThrower._broadcast_detonate, authority/
 ## call_local) : fait disparaître la copie locale de l'objet volant (si elle

@@ -63,6 +63,7 @@ static func step(pos: Vector3, vel: Vector3, delta: float, cfg: UtilityConfig,
 		"velocity": Vector3.ZERO if settled else bounced_vel,
 		"at_rest": settled,
 		"bounced": true,
+		"normal": normal,
 	}
 
 ## Vitesse après rebond sur une surface de normale `normal` : la composante

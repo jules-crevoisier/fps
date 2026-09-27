@@ -1,28 +1,37 @@
 ## test_smoke_math.gd
-## Spec (contrat lead) : détonation à 1.4s après relâchement OU au contact du
-## sol après 0.8s (le premier des deux) ; nuage 0->4.5m sur 1s, tenue 12s,
-## fondu 1.5s.
+## Spec (demande utilisateur 2026-09-27, remplace l'amorce en vol de 1.4 s) : le fumigène tombe
+## par gravité et se déploie au PREMIER CONTACT AVEC LE SOL (armé après 0.25 s), jamais en plein
+## vol ; `fuse_time` (6 s) n'est qu'un filet de sécurité s'il ne retrouve jamais le sol.
+## Nuage 0->4.5m sur 1s, tenue 12s, fondu 1.5s.
 extends GdUnitTestSuite
+
+const SmokeCloud := preload("res://scripts/combat/utility/SmokeCloud.gd")
 
 
 func _cfg() -> UtilityConfig:
 	return UtilityDatabase.get_by_id(UtilityDatabase.SMOKE)
 
 
-func test_detonates_at_full_fuse_time_in_the_air() -> void:
-	assert_bool(SmokeMath.should_detonate(1.4, false, _cfg())).is_true()
-	assert_bool(SmokeMath.should_detonate(1.39, false, _cfg())).is_false()
+func test_never_detonates_in_the_air_on_a_long_throw() -> void:
+	assert_bool(SmokeMath.should_detonate(1.4, false, _cfg())).is_false()
+	assert_bool(SmokeMath.should_detonate(3.0, false, _cfg())).is_false()
 
 
-func test_detonates_early_on_ground_contact_after_arm_delay() -> void:
-	assert_bool(SmokeMath.should_detonate(0.8, true, _cfg())).is_true()
-	assert_bool(SmokeMath.should_detonate(0.5, true, _cfg())).append_failure_message(
-		"le fumigène ne doit pas détoner au sol avant le délai d'armement (0.8 s)"
+func test_detonates_on_first_floor_contact_once_armed() -> void:
+	assert_bool(SmokeMath.should_detonate(0.25, true, _cfg())).is_true()
+	assert_bool(SmokeMath.should_detonate(0.1, true, _cfg())).append_failure_message(
+		"le fumigène ne doit pas détoner avant le délai d'armement (0.25 s, lâché dans les pieds)"
 	).is_false()
 
 
-func test_does_not_detonate_early_while_still_airborne() -> void:
-	assert_bool(SmokeMath.should_detonate(0.9, false, _cfg())).is_false()
+func test_safety_fuse_if_it_never_finds_the_floor() -> void:
+	assert_bool(SmokeMath.should_detonate(6.0, false, _cfg())).is_true()
+
+
+func test_cloud_settles_down_from_above_then_rests() -> void:
+	assert_float(SmokeCloud.settle_offset(0.0, 1.6)).is_equal_approx(1.0, 0.001)
+	assert_float(SmokeCloud.settle_offset(0.8, 1.6)).is_between(0.0, 1.0)
+	assert_float(SmokeCloud.settle_offset(1.6, 1.6)).is_equal_approx(0.0, 0.001)
 
 
 func test_cloud_radius_zero_before_detonation() -> void:

@@ -44,6 +44,10 @@ const _PUFF_SHADER := preload("res://assets/shaders/smoke_puff.gdshader")
 const STAGGER_GROW_MAX_S := 0.3
 const STAGGER_FADE_MAX_S := 0.3
 const BOIL_AMOUNT := 0.05
+## « Pose » du nuage : les bouffées naissent SETTLE_DROP_M plus haut et redescendent sur
+## smoke_grow_seconds × SETTLE_TIME_FACTOR.
+const SETTLE_DROP_M := 1.1
+const SETTLE_TIME_FACTOR := 1.6
 const BOIL_PERIOD_MIN_S := 2.0
 const BOIL_PERIOD_MAX_S := 3.0
 
@@ -165,6 +169,14 @@ func _build_collider() -> void:
 	body.add_child(col)
 	add_child(body)
 
+## Hauteur restante de la « pose » à `t` s (1 = tout en haut, 0 = posé) : sortie en douceur
+## (quadratique) sur `duration`. Fonction PURE.
+static func settle_offset(t: float, duration: float) -> float:
+	if duration <= 0.0 or t >= duration:
+		return 0.0
+	var u := clampf(t / duration, 0.0, 1.0)
+	return (1.0 - u) * (1.0 - u)
+
 ## Ease-out "back" standard (easings.net) : dépasse légèrement 1 avant de s'y
 ## poser -- le "pop" comique de croissance (contrat : "ease-out (TRANS_BACK
 ## or QUAD)"). Fonction PURE.
@@ -219,6 +231,9 @@ func _process(delta: float) -> void:
 		var scale_factor := maxf(eased * fade_u * boil, 0.0)
 		var slot: Vector3 = entry["slot"]
 		var pos := slot * clampf(eased, 0.0, 1.0)
+		# Le nuage se POSE (demande utilisateur 2026-09-27 : « au premier point de contact, elles
+		# s'abaissent ») : chaque bouffée naît plus haut et redescend en douceur vers sa place.
+		pos.y += SETTLE_DROP_M * settle_offset(_t - float(entry["grow_delay"]), cfg.smoke_grow_seconds * SETTLE_TIME_FACTOR)
 		mi.position = pos
 		mi.scale = Vector3.ONE * maxf(float(entry["radius"]) * scale_factor, 0.0)
 
