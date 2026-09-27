@@ -115,7 +115,7 @@ func _build_page_frame() -> void:
 	_page_title = UiTokens.make_label("", UiTokens.display(UiTokens.T_XL, UiTokens.INK, 0))
 	col.add_child(_page_title)
 	_page_body = VBoxContainer.new()
-	_page_body.add_theme_constant_override("separation", 4)
+	_page_body.add_theme_constant_override("separation", UiTokens.S1)
 	col.add_child(_page_body)
 	scroll.add_child(col)
 	panel.add_child(scroll)
@@ -152,14 +152,21 @@ func _row_frame(name: String, desc: String = "") -> Dictionary:
 		d.autowrap_mode = TextServer.AUTOWRAP_WORD
 		left.add_child(d)
 	grid.add_child(left)
-	var mid := Control.new()
+	# vrai conteneur (retour utilisateur 2026-09-27 : les choix multiples débordaient du panneau,
+	# un Control nu ne contraint pas la largeur de ses enfants)
+	var mid := MarginContainer.new()
 	mid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	mid.custom_minimum_size = Vector2(0, 40)
 	grid.add_child(mid)
 	var val := UiTokens.make_label("", UiTokens.display(30, UiTokens.INK, 0))
-	val.custom_minimum_size = Vector2(110, 0)
+	val.custom_minimum_size = Vector2(120, 0)
 	val.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	val.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	grid.add_child(val)
+	# marge droite : Bangers penche au-delà de sa boîte, la valeur touchait le bord du panneau
+	var pad := Control.new()
+	pad.custom_minimum_size = Vector2(UiTokens.S3, 0)
+	grid.add_child(pad)
 	var wrap := VBoxContainer.new()
 	wrap.add_theme_constant_override("separation", UiTokens.S1)
 	wrap.add_child(grid)
@@ -173,7 +180,7 @@ func _row_frame(name: String, desc: String = "") -> Dictionary:
 func _add_slider_row(name: String, desc: String, min_v: float, max_v: float, step: float, value: float, fmt: Callable, apply: Callable) -> void:
 	var f := _row_frame(name, desc)
 	var slider := MenuWidgets.styled_slider(min_v, max_v, step, value)
-	slider.custom_minimum_size.x = 300
+	slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	f["mid"].add_child(slider)
 	var val_label: Label = f["val"]
 	val_label.text = fmt.call(value)
@@ -185,7 +192,10 @@ func _add_slider_row(name: String, desc: String, min_v: float, max_v: float, ste
 
 func _add_switch_row(name: String, desc: String, value: bool, apply: Callable) -> void:
 	var f := _row_frame(name, desc)
+	f["val"].visible = false   # pas de valeur affichée : la colonne revient au contrôle
 	var sw := MenuWidgets.switch_control(value)
+	sw.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	sw.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	f["mid"].add_child(sw)
 	sw.toggled.connect(func(p: bool) -> void:
 		apply.call(p)
@@ -195,6 +205,7 @@ func _add_switch_row(name: String, desc: String, value: bool, apply: Callable) -
 
 func _add_segmented_row(name: String, desc: String, options: Array, labels: Array, selected, apply: Callable) -> void:
 	var f := _row_frame(name, desc)
+	f["val"].visible = false   # pas de valeur affichée : la colonne revient aux choix
 	f["mid"].add_child(MenuWidgets.segmented(options, labels, selected, func(id) -> void:
 		apply.call(id)
 		_show_tab(_current_tab)))
@@ -337,15 +348,18 @@ func _build_audio_page() -> void:
 # ------------------------------------------------------------ RÉTICULE
 
 func _build_crosshair_page() -> void:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", UiTokens.S2)
+	# une ligne étiquetée comme les autres (les boutons flottants chevauchaient la ligne suivante),
+	# style actif en jaune
+	var labels: Array = []
+	var current := ""
 	for id in Crosshair.PRESET_IDS:
-		var b := MenuWidgets.comic_button(_PRESET_LABELS.get(id, id), UiTokens.PAPER, UiTokens.T_S)
-		b.pressed.connect(func() -> void:
+		labels.append(_PRESET_LABELS.get(id, id))
+		if Crosshair.PRESETS[id] == Settings.crosshair_settings:
+			current = id
+	_add_segmented_row("Style", "Aperçu à droite", Crosshair.PRESET_IDS, labels, current,
+		func(id) -> void:
 			Settings.crosshair_settings = Crosshair.PRESETS[id].duplicate(true)
 			_refresh_crosshair_preview())
-		row.add_child(b)
-	_page_body.add_child(row)
 	_add_switch_row("Réticule statique", "Ignore la dispersion réelle de l'arme", Settings.static_crosshair,
 		func(p: bool) -> void:
 			Settings.static_crosshair = p

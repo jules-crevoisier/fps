@@ -134,12 +134,20 @@ static func _grabber_texture() -> ImageTexture:
 
 ## Groupe segmenté (settings.html ".seg") — boutons accolés, celui sélectionné
 ## en jaune. `on_select` reçoit l'id choisi.
-static func segmented(options: Array, labels: Array, selected: String, on_select: Callable) -> HBoxContainer:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", -3)
+## Passe à la ligne quand la place manque (HFlowContainer) : « Plein écran (fenêtré) »,
+## « Steam Deck »… débordaient du panneau à 1920 px (retour utilisateur 2026-09-27).
+static func segmented(options: Array, labels: Array, selected, on_select: Callable) -> HFlowContainer:
+	var row := HFlowContainer.new()
+	row.add_theme_constant_override("h_separation", -3)
+	row.add_theme_constant_override("v_separation", UiTokens.S2)
+	row.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	for i in options.size():
 		var id = options[i]
-		var b := comic_button(str(labels[i]), UiTokens.YELLOW if id == selected else UiTokens.PAPER, UiTokens.T_S, UiTokens.INK, 0.0)
+		var b := comic_button(str(labels[i]), UiTokens.YELLOW if str(id) == str(selected) else UiTokens.PAPER, 20, UiTokens.INK, 0.0)
+		for st in ["normal", "hover", "pressed", "focus", "disabled"]:   # boutons de choix plus serrés
+			var sb := b.get_theme_stylebox(st) as StyleBoxComic
+			if sb:
+				sb.pad = Vector2(12, 5)
 		b.pressed.connect(on_select.bind(id))
 		row.add_child(b)
 	return row

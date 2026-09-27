@@ -24,6 +24,8 @@ var _confirm_dialog: PanelContainer
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_PASS
+	# retour de partie : la souris y était capturée (visée) -- le salon doit toujours la rendre
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	MatchConfig.load_last()
 	_build()
 

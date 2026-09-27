@@ -85,6 +85,12 @@ func _run() -> void:
 	settings_panel._show_tab("keys")
 	await _wait(8)
 	await _save("menu_settings_keys.png")
+	settings_panel._show_tab("video")
+	await _wait(8)
+	await _save("menu_settings_video.png")
+	settings_panel._show_tab("crosshair")
+	await _wait(8)
+	await _save("menu_settings_crosshair.png")
 
 	menu.queue_free()
 	await _wait(4)

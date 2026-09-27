@@ -125,6 +125,8 @@ func _on_quit_to_lobby() -> void:
 	var net := NetworkManager.get_net(get_tree())
 	net.disconnect_from_game()
 	close()
+	# close() rétablit le mode d'avant l'ouverture (capturé en partie) : pas pour aller au salon
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	get_tree().change_scene_to_file("res://scenes/ui/main_menu.tscn")
 
 
