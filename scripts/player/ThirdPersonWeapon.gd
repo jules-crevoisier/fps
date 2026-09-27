@@ -1,12 +1,18 @@
 ## ThirdPersonWeapon.gd
-## Affiche l'arme en main sur un joueur DISTANT — attachée à la main droite du
-## CORPS 3D (BoneAttachment3D sur l'os "DEF-hand.R" du squelette de
+## Affiche l'arme en main sur un joueur DISTANT ou un BOT — attachée à la main
+## droite du CORPS 3D (BoneAttachment3D sur l'os "DEF-hand.R" du squelette de
 ## CharacterBody.gd, voir scenes/player/player.tscn) avec un décalage de prise
 ## par CATÉGORIE d'arme (WeaponConfig.category — SIDEARM/SMG/RIFLE/SHOTGUN/
 ## SNIPER/HEAVY/MELEE n'ont pas la même taille, voir `_GRIP_OFFSETS`, réglé
 ## par capture in-game — tools/char_ingame_shots.gd). Inerte pour le joueur
-## LOCAL (qui voit son ViewModel à la place, comme le corps caché par
-## PlayerLook — voir contract-r2.md).
+## HUMAIN LOCAL uniquement (qui voit son ViewModel à la place, comme le corps
+## caché par PlayerLook — voir contract-r2.md) : `is_local_human()`, PAS
+## `is_multiplayer_authority()` (tâche "bots humains", 2026-09-27) — un bot est
+## simulé par appel direct sur le SERVEUR, donc `is_multiplayer_authority()`
+## est vrai pour lui aussi (même autorité que l'hôte), ce qui cachait à tort
+## son arme 3P sur l'hôte (« on ne voit pas les armes des bots »). Même garde
+## que PlayerCamera.gd ~163/198 (post-traitement encre/FOV, réservés à
+## `is_local_human()` pour la même raison).
 ## Source de vérité réseau : `Weapon.current_id_changed` (diffusé à TOUS les
 ## pairs, contrairement à la synchro d'inventaire complète qui ne part que
 ## vers le propriétaire) pour savoir quel modèle afficher, et
@@ -72,7 +78,10 @@ func _ready() -> void:
 	# Rien à afficher chez SOI (on voit le ViewModel à la place) : la vérité
 	# d'autorité n'est connue qu'après le spawn réseau, donc on ré-essaie
 	# jusqu'à ce que l'autorité soit tranchée (même stratégie que PlayerLook).
-	if player.is_multiplayer_authority():
+	# `is_local_human()` (pas `is_multiplayer_authority()` seul) : un bot a la
+	# MÊME autorité réseau que l'hôte qui le simule, mais N'EST PAS l'humain
+	# local — son arme 3P doit rester visible (voir la docstring de tête).
+	if player.is_local_human():
 		visible = false
 		set_process(false)
 		return

@@ -272,6 +272,66 @@ func test_map_angle_in_cone_is_chosen_when_no_safety_signal_applies() -> void:
 	assert_vector(r.target_pos).is_equal(Vector3(0, 0, -10))
 
 
+# ======================================================================
+#  L8 — coup d'œil bref vers un angle K de ROULEMENT (tâche "bots humains"
+#  passe 2, diagnostic lead : gaze_gap 55-70° hors combat malgré L6, à cause
+#  de la connaissance de carte SYNTHÉTIQUE (BotBrain L7) qui rendait un angle
+#  K de roulement aussi "collant" qu'un point du chemin). Aucun de ces tests
+#  ne couvre la tenue d'angle (perchoir, `holding_angle=true`, INCHANGÉE :
+#  voir `test_holding_angle_adds_a_slow_sweep_around_the_held_target`) ni les
+#  signaux de sécurité L1 #1-3 (enemy/heard/corner, jamais soumis à L8).
+# ======================================================================
+
+func test_roam_angle_glance_is_short_and_then_cools_down_to_path() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 41
+	var mk := BotMapKnowledge.new({"angles": [{"pos": Vector3(0, 0, -10), "dir": Vector3.ZERO}]})
+	var ctx := _base_ctx(rng)
+	ctx.map_knowledge = mk
+	var look := BotLook.new()
+
+	var r := look.tick(DT, ctx)
+	assert_str(r.target_kind).is_equal("angle")
+	assert_float(look.dwell_left_s()).append_failure_message(
+		"un coup d'œil de roulement doit durer 0.3-0.8 s (L8), pas la fenêtre normale 1-2 s")\
+		.is_between(BotLook.GLANCE_MIN_S, BotLook.GLANCE_MAX_S)
+
+	# Delta large : dépasse à la fois la fenêtre de coup d'œil ET force une
+	# réévaluation -- le repos (L8) doit alors retomber sur le chemin, jamais
+	# un nouvel angle tout de suite après.
+	var after := look.tick(1.0, ctx)
+	assert_str(after.target_kind).append_failure_message(
+		"après un coup d'œil, le bot doit revenir au chemin pendant le repos (L8)").is_equal("path_point")
+
+
+func test_sprinting_never_glances_at_a_roam_angle() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 43
+	var mk := BotMapKnowledge.new({"angles": [{"pos": Vector3(0, 0, -10), "dir": Vector3.ZERO}]})
+	var ctx := _base_ctx(rng)
+	ctx.map_knowledge = mk
+	ctx.is_sprinting = true
+	var look := BotLook.new()
+	for i in range(30):
+		var r := look.tick(DT, ctx)
+		assert_str(r.target_kind).append_failure_message(
+			"en sprint, aucun coup d'œil de roulement (contrat : seulement en marche)").is_not_equal("angle")
+
+
+func test_holding_angle_glance_ignores_sprint_flag_and_cooldown() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 47
+	var mk := BotMapKnowledge.new({"angles": [{"pos": Vector3(0, 0, -10), "dir": Vector3.ZERO}]})
+	var ctx := _base_ctx(rng)
+	ctx.map_knowledge = mk
+	ctx.holding_angle = true
+	ctx.is_sprinting = true  # ne s'applique jamais en tenue d'angle (perchoir/surveillance).
+	var look := BotLook.new()
+	var r := look.tick(DT, ctx)
+	assert_str(r.target_kind).is_equal("angle")
+	assert_float(look.dwell_left_s()).is_between(5.0, 10.0)
+
+
 func test_retarget_dwell_is_1_to_2s_normally_and_5_to_10s_holding_angle() -> void:
 	var seen_normal: Array = []
 	var seen_holding: Array = []
@@ -407,3 +467,87 @@ func test_angle_target_pitch_is_not_flattened_looks_up_at_tall_point() -> void:
 	var r := look.tick(DT, ctx)
 	assert_str(r.target_kind).is_equal("angle")
 	assert_float(float(r.look_target_pitch_deg)).is_greater(5.0)
+
+
+# ======================================================================
+#  §5 — distance du coin (tâche "bots humains", 2026-09-27, consommée par
+#  BotCombatStyle.movement_pace) : distance bot -> SOMMET du coin (p0), pas
+#  `pos` (qui est déjà décalé après le virage par CORNER_LOOK_AHEAD_M).
+# ======================================================================
+
+func test_sharp_corner_distance_is_bot_to_corner_vertex_not_look_pos() -> void:
+	var path := [Vector3(2, 0, 0), Vector3(2, 0, -2)]  # sommet à 2 m du bot.
+	var corner := BotLook.find_sharp_corner(path, Vector3.ZERO)
+	assert_bool(corner.found).is_true()
+	assert_float(float(corner.distance)).is_equal_approx(2.0, 0.01)
+
+
+func test_sharp_corner_distance_tracks_bot_position() -> void:
+	var path := [Vector3(5, 0, 0), Vector3(5, 0, -2)]
+	var corner := BotLook.find_sharp_corner(path, Vector3(3, 0, 0))
+	assert_bool(corner.found).is_true()
+	assert_float(float(corner.distance)).is_equal_approx(2.0, 0.01)
+
+
+# ======================================================================
+#  §6 — L7 : classement synthétique d'un éventail de rayons (BotLook.
+#  rank_scan_angles/angle_pos_from_sample) — remplace le manque de
+#  `bot_knowledge` authored sur une carte comme Shipment (tâche "bots
+#  humains", 2026-09-27) : sans lui, `BotMapKnowledge` reste `null` et le
+#  regard hors combat ne s'écarte jamais du cap de déplacement.
+# ======================================================================
+
+func _fan_sample(dir: Vector3, open_dist: float) -> Dictionary:
+	return {"dir": dir, "open_dist": open_dist}
+
+
+func test_rank_scan_angles_prefers_longer_open_sightlines() -> void:
+	# 4 directions cardinales, une seule dégagée loin (couloir) : elle doit
+	# arriver EN TÊTE du classement.
+	var samples := [
+		_fan_sample(Vector3(0, 0, -1), 3.0),
+		_fan_sample(Vector3(1, 0, 0), 3.0),
+		_fan_sample(Vector3(0, 0, 1), 20.0),   # couloir dégagé.
+		_fan_sample(Vector3(-1, 0, 0), 3.0),
+	]
+	var ranked := BotLook.rank_scan_angles(samples, 1)
+	assert_int(ranked.size()).is_equal(1)
+	assert_vector(ranked[0].dir).is_equal(Vector3(0, 0, 1))
+
+
+func test_rank_scan_angles_rewards_contrast_next_to_a_doorway() -> void:
+	# Un mur uniforme à 10 m sur 3 voisins, une PORTE (rupture nette, 25 m)
+	# entre deux murs proches : la porte doit dominer le classement même si sa
+	# portée seule n'est pas la plus longue de tout l'éventail.
+	var samples := [
+		_fan_sample(Vector3(1, 0, 0), 10.0),
+		_fan_sample(Vector3(0, 0, 1), 10.0),
+		_fan_sample(Vector3(-1, 0, 0), 25.0),  # porte, encadrée de deux murs à 4 m.
+		_fan_sample(Vector3(0, 0, -1), 4.0),
+		_fan_sample(Vector3(1, 0, -1), 4.0),
+	]
+	var ranked := BotLook.rank_scan_angles(samples, 1)
+	assert_vector(ranked[0].dir).is_equal(Vector3(-1, 0, 0))
+
+
+func test_rank_scan_angles_caps_count_to_sample_size() -> void:
+	var samples := [_fan_sample(Vector3(1, 0, 0), 5.0), _fan_sample(Vector3(-1, 0, 0), 5.0)]
+	assert_int(BotLook.rank_scan_angles(samples, 4).size()).is_equal(2)
+
+
+func test_rank_scan_angles_empty_samples_returns_empty() -> void:
+	assert_int(BotLook.rank_scan_angles([], 4).size()).is_equal(0)
+
+
+func test_angle_pos_from_sample_uses_open_distance_along_direction() -> void:
+	var pos := BotLook.angle_pos_from_sample(Vector3(1, 0, 1), Vector3(0, 0, -1), 5.0)
+	assert_vector(pos).is_equal_approx(Vector3(1, 0, -4), Vector3(0.01, 0.01, 0.01))
+
+
+func test_angle_pos_from_sample_clamps_too_close_and_too_far() -> void:
+	var too_close := BotLook.angle_pos_from_sample(Vector3.ZERO, Vector3(0, 0, -1), 0.1)
+	assert_vector(too_close).is_equal_approx(
+		Vector3(0, 0, -BotLook.SYNTHETIC_ANGLE_MIN_DIST), Vector3(0.01, 0.01, 0.01))
+	var too_far := BotLook.angle_pos_from_sample(Vector3.ZERO, Vector3(0, 0, -1), 999.0)
+	assert_vector(too_far).is_equal_approx(
+		Vector3(0, 0, -BotLook.SYNTHETIC_ANGLE_MAX_DIST), Vector3(0.01, 0.01, 0.01))

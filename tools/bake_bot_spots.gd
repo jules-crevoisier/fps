@@ -7,19 +7,30 @@
 ## SYNTHÉTIQUE (murs en croix formant 4 quadrants + périmètre) — PAS
 ## `scenes/levels/test_arena.tscn` (le parcours de test de mouvement
 ## d'ArenaBuilder.gd, qui a de larges zones sans couverture proche : voir
-## l'en-tête de scripts/ai/BotSpots.gd pour le détail de cette décision). Tout
-## autre `map_id` du catalogue (MapCatalog) utilise `MapSetup`, qui bake déjà
-## sa propre NavigationRegion3D.
+## l'en-tête de scripts/ai/BotSpots.gd pour le détail de cette décision).
+##
+## Tout autre `map_id` (catalogue `MapCatalog`, ex. "shipment") CHARGE la
+## vraie scène de carte (`scenes/levels/maps/<id>.tscn`) et n'EN EXTRAIT que sa
+## `NavigationRegion3D` + son `MapSetup` (frères sous la racine de la carte —
+## voir MapSetup.gd, "TOUS déjà présents comme enfants du nœud racine")
+## reparentés sous un conteneur neuf (`_load_authored_map`) : la racine RÉELLE
+## de la carte (script GameWorld.gd, HUD, MultiplayerSpawner...) n'est JAMAIS
+## ajoutée à l'arbre, ce qui démarrerait un match complet (spawn joueur,
+## réseau...) hors de portée d'un simple bake. Historique (avant tâche "bots
+## humains" passe 2) : ce chemin instanciait un `MapSetup` NU, jamais posé à
+## côté d'une VRAIE `NavigationRegion3D` -> `BAKE_BOT_SPOTS_FAIL
+## no_nav_region` systématique sur toute carte authored (Shipment comprise).
 ##
 ##   godot --headless --path . -s res://tools/bake_bot_spots.gd -- --map=test_arena [--out=res://resources/bot_spots]
+##   godot --headless --path . -s res://tools/bake_bot_spots.gd -- --map=shipment
 ##
 ## Affiche `BAKE_BOT_SPOTS_OK <map_id> spots=<n> ms=<t> path=<chemin>` puis
 ## quitte (0), ou `BAKE_BOT_SPOTS_SLOW ...` (budget de 30 s dépassé) /
 ## `BAKE_BOT_SPOTS_FAIL <raison>` (1).
 extends SceneTree
 
-const MapSetupScript := preload("res://scripts/levels/maps/MapSetup.gd")
 const BOT_NAV := preload("res://scripts/ai/BotNavMesh.gd")
+const MapCatalogScript := preload("res://scripts/levels/maps/MapCatalog.gd")
 
 const DEFAULT_OUT_DIR := "res://resources/bot_spots"
 ## Frames physiques attendues après le bake (synchrone) avant d'interroger
@@ -71,16 +82,84 @@ func _setup_geometry() -> bool:
 		root.add_child(_root_node)
 		_nav_region = BOT_NAV.ensure_baked(_root_node)
 	else:
-		var setup := MapSetupScript.new()
-		setup.map_id = _map_id
-		root.add_child(setup)
-		_root_node = setup
-		_nav_region = setup.nav_region
+		var loaded := _load_authored_map(_map_id)
+		_root_node = loaded.get("container")
+		_nav_region = loaded.get("nav_region")
 	if _nav_region == null:
 		printerr("BAKE_BOT_SPOTS_FAIL no_nav_region map=%s" % _map_id)
 		quit(1)
 		return false
 	return true
+
+
+## Charge la scène de carte du catalogue (MapCatalog) pour `map_id_` et n'EN
+## EXTRAIT que sa NavigationRegion3D + son MapSetup (frères sous la racine de
+## la carte, voir MapSetup.gd et `find_map_children` ci-dessous) sous un
+## conteneur NEUF -- jamais la racine réelle de la carte (script GameWorld.gd),
+## voir la docstring d'en-tête. Ajoute ce conteneur à `root` lui-même (au lieu
+## de laisser l'appelant le faire) : c'est cet ajout qui déclenche
+## `MapSetup._enter_tree()` -> le bake SYNCHRONE de la navmesh -> `nav_region`
+## déjà rempli et bake dès le retour de cette fonction. `{}` si la carte est
+## inconnue, sa scène introuvable, ou qu'elle n'a pas la paire NavigationRegion3D
+## + MapSetup attendue (aucune carte du catalogue aujourd'hui ne devrait
+## manquer l'un des deux -- voir la docstring de MapSetup.gd, "toute carte
+## future qui suit la même recette").
+func _load_authored_map(map_id_: String) -> Dictionary:
+	var entry := MapCatalogScript.get_by_id(map_id_)
+	if entry.is_empty():
+		return {}
+	var scene_path := String(entry.get("scene", ""))
+	if not ResourceLoader.exists(scene_path):
+		return {}
+	var packed := load(scene_path) as PackedScene
+	if packed == null:
+		return {}
+	var scene_root := packed.instantiate()
+	var found := find_map_children(scene_root)
+	var nav_region: Node = found.get("nav_region")
+	var map_setup: Node = found.get("map_setup")
+	if nav_region == null or map_setup == null:
+		scene_root.free()
+		return {}
+	var container := Node3D.new()
+	container.name = "BakeBotSpotsMapRoot"
+	# `owner` de chaque nœud de la scène instanciée pointe vers `scene_root`
+	# (convention PackedScene.instantiate()) -- à effacer AVANT de reparenter
+	# sous `container`, sinon Godot journalise "will make owner inconsistent"
+	# (et fuit l'ancien propriétaire à la sortie du process, `scene_root` étant
+	# libéré juste après).
+	_clear_owner_recursive(nav_region)
+	_clear_owner_recursive(map_setup)
+	scene_root.remove_child(nav_region)
+	container.add_child(nav_region)
+	scene_root.remove_child(map_setup)
+	container.add_child(map_setup)
+	scene_root.free()  # le reste de la carte (GameWorld/HUD/spawner...) n'a jamais rejoint l'arbre -- libre sans effet de bord.
+	root.add_child(container)  # déclenche MapSetup._enter_tree() -> bake synchrone.
+	return {"container": container, "nav_region": (map_setup as MapSetup).nav_region}
+
+
+## Efface `owner` sur `node` et toute sa descendance -- voir l'appel ci-dessus.
+static func _clear_owner_recursive(node: Node) -> void:
+	node.owner = null
+	for child in node.get_children():
+		_clear_owner_recursive(child)
+
+
+## Recherche PURE (aucun effet de bord, ne modifie pas l'arbre) des enfants
+## DIRECTS "NavigationRegion3D" et "MapSetup" de `scene_root` -- même
+## convention de frères que `MapSetup._find_nav_region`. Factorisée pour être
+## testée isolément (tests/tools/test_bake_bot_spots_map.gd) sans charger de
+## vraie scène de carte ni toucher l'arbre de scène.
+static func find_map_children(scene_root: Node) -> Dictionary:
+	var nav_region: Node = null
+	var map_setup: Node = null
+	for child in scene_root.get_children():
+		if nav_region == null and child is NavigationRegion3D:
+			nav_region = child
+		if map_setup == null and child is MapSetup:
+			map_setup = child
+	return {"nav_region": nav_region, "map_setup": map_setup}
 
 
 func _wait_nav_sync() -> bool:

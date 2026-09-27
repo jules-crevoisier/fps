@@ -634,6 +634,10 @@ var _personality_time: float = 0.0   ## Horloge du rebond/balancement, mise à l
 var _body_squash_elapsed: float = -1.0   ## < 0 : pas de squash en cours (voir `_drive_body_squash`).
 var _flinch_elapsed: float = -1.0   ## < 0 : pas de recul en cours (voir `_drive_flinch`, GF-10).
 var _kill_freeze_left: float = -1.0   ## < 0 : pas de gel en cours (voir `_process`/`_on_died`, GF-10).
+## Modifier de squelette (tâche "bots humains" passe 2, voir LocomotionWarp.gd)
+## -- attaché sous le Skeleton3D une fois le modèle prêt (`_attach_locomotion_
+## warp`), `null` tant que ce n'est pas fait (ou si le squelette est absent).
+var _locomotion_warp: LocomotionWarp = null
 ## Rechargement de l'arme COURANTE (s, contrat GF-27) — mis à jour par
 ## `_on_current_weapon_changed`, branché sur `Weapon.current_id_changed`
 ## (diffusé à TOUS les pairs, contrairement à `_inv` qui ne reflète l'arme
@@ -698,11 +702,26 @@ func _on_model_ready() -> void:
 	_profile = _resolve_profile()
 	_build_tree()
 	_built = true
+	_attach_locomotion_warp()
 	# Tâche "revolver" (2026-09-27) : un `current_id_changed` (voir
 	# `_on_current_weapon_changed`) a pu arriver AVANT que l'arbre n'existe
 	# (connecté dans `_ready`, bien avant ce `_on_model_ready` asynchrone) --
 	# rejoue la synchro maintenant que le graphe peut être re-pointé.
 	_sync_clip_prefix_to_weapon()
+
+## Attache `LocomotionWarp` (SkeletonModifier3D, voir sa docstring) comme
+## enfant DIRECT du Skeleton3D -- une seule fois par modèle chargé (comme
+## `_build_tree`), pour bots/humains distants/le modèle 3P local à la fois
+## (aucune branche "suis-je l'autorité ?" : le modifier recalcule sa propre
+## estimation de vitesse par différence de position, voir sa docstring).
+## No-op défensif si le squelette est absent (T-pose tolérée, même garde que
+## `_on_model_ready` juste au-dessus).
+func _attach_locomotion_warp() -> void:
+	var skeleton := _character_body.get_skeleton() if _character_body else null
+	if skeleton == null:
+		return
+	_locomotion_warp = LocomotionWarp.new()
+	skeleton.add_child(_locomotion_warp)
 
 ## Résout le profil d'animation (§4.6) de l'agent JOUÉ par ce corps — même
 ## repli que CharacterBody._ready()/AbilityController._resolve_agent :
@@ -735,6 +754,7 @@ func _process(delta: float) -> void:
 	_drive_lean(locomotion, delta)
 	_drive_body_squash(delta)
 	_drive_flinch(delta)
+	_drive_locomotion_speed()
 
 func _drive_locomotion(locomotion: int) -> void:
 	if locomotion == _current_locomotion:
@@ -759,6 +779,15 @@ func _drive_upper_body(locomotion: int, pitch: float, reloading: bool) -> void:
 	if reloading and not _was_reloading:
 		set("parameters/ReloadShot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_FIRE)
 	_was_reloading = reloading
+
+## Inverse la lecture de "Locomotion" (`parameters/LocomotionSpeed/scale`,
+## voir `_build_tree`) pendant un recul franc -- lu sur `_locomotion_warp`
+## (LocomotionWarp.is_backward_locomotion, voir sa docstring), `null`/inactif
+## avant que le squelette ne soit prêt -> repli sur une lecture normale (1.0),
+## jamais un plantage.
+func _drive_locomotion_speed() -> void:
+	var backward := _locomotion_warp != null and _locomotion_warp.is_backward_locomotion()
+	set("parameters/LocomotionSpeed/scale", -1.0 if backward else 1.0)
 
 ## `_is_fan` (tâche "revolver", 2026-09-27) : le 3P n'a qu'UN SEUL clip de tir
 ## (`Pistol_Shoot`/`Rifle_Shoot` — pas de "Pistol_Fan" dédié, contrat lead) —
@@ -1094,13 +1123,24 @@ func _build_tree() -> void:
 	bt.add_node("ThrowClip", throw_clip)
 	bt.connect_node("ThrowShot", 1, "ThrowClip")
 
+	# -- Lecture inversée en recul (tâche "bots humains" passe 2, voir
+	# LocomotionWarp.is_backward_locomotion) : Walk/Jog_Fwd/Sprint n'ont pas de
+	# clip de recul dédié (`_CLIPS`) -- LocomotionWarp pivote les hanches vers
+	# le déplacement RÉEL et, pour un recul franc, s'attend à ce que ce nœud
+	# lise le clip à l'envers (`parameters/LocomotionSpeed/scale` négatif, posé
+	# chaque frame par `_drive_locomotion_speed`) pour que les jambes reculent
+	# au lieu de "marcher en crabe" vers l'arrière.
+	var locomotion_speed := AnimationNodeTimeScale.new()
+	bt.add_node("LocomotionSpeed", locomotion_speed)
+	bt.connect_node("LocomotionSpeed", 0, "Locomotion")
+
 	# -- Cadence : vitesse de lecture propre à l'agent (§4.6, ×0,9 à ×1,15) -
 	# Ne modifie QUE la vitesse de LECTURE du clip dans l'AnimationTree —
 	# jamais MovementConfig ni la vitesse réelle du joueur (couche 100 %
 	# cosmétique, voir docstring de AgentAnimProfile.cadence_scale).
 	var cadence := AnimationNodeTimeScale.new()
 	bt.add_node("Cadence", cadence)
-	bt.connect_node("Cadence", 0, "Locomotion")
+	bt.connect_node("Cadence", 0, "LocomotionSpeed")
 
 	# -- Fusion : plein corps (base) + haut du corps (filtré spine/bras) ----
 	var upper_body := AnimationNodeBlend2.new()
@@ -1116,6 +1156,7 @@ func _build_tree() -> void:
 	tree_root = bt
 	active = true
 	set("parameters/Cadence/scale", effective_cadence_scale(_profile.cadence_scale if _profile else 1.0))
+	set("parameters/LocomotionSpeed/scale", 1.0)
 	set("parameters/Breathing/add_amount", UPPER_BODY_BREATH_ADD_AMOUNT)
 	set("parameters/ReloadSpeed/scale", reload_clip_speed(_reload_time, _reload_clip_len))
 

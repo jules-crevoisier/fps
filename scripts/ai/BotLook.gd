@@ -84,6 +84,59 @@ const MAX_ACCEL_DEG := 3000.0       ## Accélération angulaire MAX absolue (L4)
 
 const WALK_GAZE_GAP_DEG := 70.0
 
+# ======================================================================
+#  L7 — connaissance de carte SYNTHÉTIQUE (tâche "bots humains", 2026-09-27) :
+#  Shipment (comme toute carte sans `bot_knowledge` bakée, voir
+#  `GameMode._bot_knowledge`) ne fournit aucun angle K -> `BotMapKnowledge`
+#  reste `null` -> `_pick_roam_target`/`_refill_sweep_queue` retombent
+#  TOUJOURS sur « point du chemin 4 m devant » (repli L1 #5), le regard du bot
+#  ne s'écarte donc jamais de son cap de déplacement (symptôme signalé :
+#  « les bots ne tournent pas la caméra »). `rank_scan_angles` construit les
+#  mêmes entrées `{"pos": Vector3, "dir": Vector3}` qu'un `bot_knowledge.angles`
+#  authored, mais à partir d'un ÉVENTAIL de rayons géométriques tirés par
+#  `BotBrain` (impur, seul habilité à toucher `PhysicsDirectSpaceState3D`) —
+#  cette fonction-ci reste PURE : seulement le classement.
+# ======================================================================
+
+## Poids de la « rupture » de distance ouverte entre deux rayons voisins de
+## l'éventail (corrigé par CORNER_CONTRAST_WEIGHT) — un couloir/une porte
+## (rayon voisin BEAUCOUP plus court ou plus long) est jugé plus digne d'être
+## surveillé qu'une simple ligne de mire longue mais sans rupture (mur lointain
+## uniforme) : approxime « angles/portes où un ennemi peut apparaître » sans
+## connaissance de carte authored.
+const CORNER_CONTRAST_WEIGHT := 1.5
+## Angles K synthétiques retenus par défaut (« 3-4 meilleures directions »).
+const SYNTHETIC_ANGLE_COUNT := 4
+## Distance (m) mini/maxi du point d'angle synthétique généré depuis la portée
+## ouverte mesurée par le rayon — jamais collé au bot (mini) ni hors de portée
+## utile d'un angle K classique (`ANGLE_RANGE_M`, maxi).
+const SYNTHETIC_ANGLE_MIN_DIST := 2.0
+const SYNTHETIC_ANGLE_MAX_DIST := ANGLE_RANGE_M
+
+# ======================================================================
+#  L8 — coup d'œil bref vers un angle K de ROULEMENT (tâche "bots humains"
+#  passe 2, diagnostic lead : Shipment (sans `bot_knowledge` authored) tourne
+#  désormais avec la connaissance de carte SYNTHÉTIQUE de BotBrain (L7,
+#  éventail de rayons) — sans ce garde-fou, `_pick_roam_target` retombait sur
+#  un angle K synthétique aussi souvent qu'un point du chemin, avec la MÊME
+#  durée de tenue (U(1;2) s hors tenue d'angle) : le regard divergeait alors
+#  du cap de déplacement 55-70° en moyenne MÊME hors combat (mesuré par
+#  tools/ai/bot_behaviour_probe.gd, table "after" de la passe 1) — exactement
+#  le symptôme rapporté (« ils ne tournent pas la caméra »). Un angle K de
+#  ROULEMENT (PAS un perchoir/tenue, PAS un signal de sécurité L1 #1-3,
+#  inchangés) n'est donc plus qu'un COUP D'ŒIL COURT (U(0,3; 0,8) s) suivi
+#  d'un vrai repos (U(2,5; 5) s, `_glance_cooldown_left_s`) pendant lequel
+#  `_pick_roam_target` retombe sur le point du chemin (L1 #5) — le bot passe
+#  donc la MAJEURE partie de son temps de déplacement hors combat à regarder
+#  où il va. Jamais en sprint (contrat « seulement en marche, des
+#  vérifications plus longues ») : voir `_pick_roam_target`.
+# ======================================================================
+
+const GLANCE_MIN_S := 0.3
+const GLANCE_MAX_S := 0.8
+const GLANCE_COOLDOWN_MIN_S := 2.5
+const GLANCE_COOLDOWN_MAX_S := 5.0
+
 # --- État d'instance (une par bot) --------------------------------------
 var _target_kind: String = ""
 var _target_pos: Vector3 = Vector3.ZERO
@@ -96,6 +149,7 @@ var _sweep_index: int = 0
 var _prev_goal_reached: bool = false
 var _yaw_speed_deg: float = 0.0
 var _pitch_speed_deg: float = 0.0
+var _glance_cooldown_left_s: float = 0.0  ## L8 : repos avant le prochain coup d'œil de roulement autorisé.
 
 
 # ======================================================================
@@ -114,12 +168,15 @@ var _pitch_speed_deg: float = 0.0
 ##  - "holding_angle": bool (L1 : tenue d'angle, perchoir/surveillance)
 ##  - "goal_reached": bool (état COURANT de "navigation terminée" — le FRONT
 ##    montant est détecté ici, l'appelant n'a rien à dériver)
+##  - "is_sprinting": bool (L8 : aucun coup d'œil de roulement en sprint —
+##    "seulement en marche, des vérifications plus longues", défaut faux)
 ##  - "rng": RandomNumberGenerator
 ## Renvoie {"look_delta": Vector2 (même convention que PlayerController._look,
 ## à appliquer TEL QUEL sur `player.input.look_delta`), "force_walk": bool
 ## (L6), "target_kind": String, "target_pos": Vector3, "gaze_point": Vector3}
 ## — les 3 derniers champs sont exposés pour les tests, pas pour BotBrain.
 func tick(delta: float, ctx: Dictionary) -> Dictionary:
+	_glance_cooldown_left_s = maxf(_glance_cooldown_left_s - delta, 0.0)
 	var goal_reached := bool(ctx.get("goal_reached", false))
 	if goal_reached and not _prev_goal_reached:
 		_refill_sweep_queue(ctx)
@@ -228,8 +285,11 @@ func _urgent_override(ctx: Dictionary) -> Dictionary:
 	return {}
 
 
-## Cible de ROULEMENT (L1 #4-5, L5) — balayage K en cours en priorité, sinon
-## angle K dans le cap, sinon point du chemin 4 m devant (toujours disponible).
+## Cible de ROULEMENT (L1 #4-5, L5, L8) — balayage K en cours en priorité,
+## sinon un COUP D'ŒIL vers un angle K dans le cap si un est autorisé (voir
+## L8 : jamais en sprint, jamais avant la fin du repos), sinon point du
+## chemin 4 m devant (toujours disponible — c'est lui qui domine désormais le
+## temps de déplacement hors combat).
 func _pick_roam_target(ctx: Dictionary) -> Dictionary:
 	if not _sweep_queue.is_empty():
 		var idx: int = _sweep_index % _sweep_queue.size()
@@ -239,13 +299,16 @@ func _pick_roam_target(ctx: Dictionary) -> Dictionary:
 			_sweep_queue = []  # une passe complète : retour au choix normal, jamais un balayage sans fin.
 		return {"kind": "sweep", "pos": entry.get("pos", ctx.get("bot_pos", Vector3.ZERO))}
 
-	var mk = ctx.get("map_knowledge")
-	if mk != null:
-		var fwd := _facing_dir(ctx)
-		var candidates: Array = mk.angles_near(ctx.get("bot_pos", Vector3.ZERO), fwd, ANGLE_RANGE_M, ANGLE_HALF_FOV_DEG)
-		if not candidates.is_empty():
-			var nearest := _nearest_by_pos(candidates, ctx.get("bot_pos", Vector3.ZERO))
-			return {"kind": "angle", "pos": nearest.get("pos", Vector3.ZERO)}
+	var holding := bool(ctx.get("holding_angle", false))
+	var is_sprinting := bool(ctx.get("is_sprinting", false))
+	if holding or (not is_sprinting and _glance_cooldown_left_s <= 0.0):
+		var mk = ctx.get("map_knowledge")
+		if mk != null:
+			var fwd := _facing_dir(ctx)
+			var candidates: Array = mk.angles_near(ctx.get("bot_pos", Vector3.ZERO), fwd, ANGLE_RANGE_M, ANGLE_HALF_FOV_DEG)
+			if not candidates.is_empty():
+				var nearest := _nearest_by_pos(candidates, ctx.get("bot_pos", Vector3.ZERO))
+				return {"kind": "angle", "pos": nearest.get("pos", Vector3.ZERO)}
 
 	var path_points: Array = ctx.get("path_points", [])
 	var bot_pos: Vector3 = ctx.get("bot_pos", Vector3.ZERO)
@@ -259,6 +322,17 @@ func _commit_target(kind: String, pos: Vector3, ctx: Dictionary) -> void:
 	_has_target = true
 	var holding := bool(ctx.get("holding_angle", false))
 	var rng: RandomNumberGenerator = ctx.get("rng")
+	# L8 : un angle K de ROULEMENT (jamais en tenue d'angle, déjà couverte par
+	# la branche HOLD_ANGLE plus bas) n'est qu'un coup d'œil COURT, suivi d'un
+	# vrai repos avant le prochain — voir `_pick_roam_target`.
+	if kind == "angle" and not holding:
+		if rng != null:
+			_retarget_left_s = rng.randf_range(GLANCE_MIN_S, GLANCE_MAX_S)
+			_glance_cooldown_left_s = rng.randf_range(GLANCE_COOLDOWN_MIN_S, GLANCE_COOLDOWN_MAX_S)
+		else:
+			_retarget_left_s = GLANCE_MIN_S
+			_glance_cooldown_left_s = GLANCE_COOLDOWN_MIN_S
+		return
 	if rng != null:
 		_retarget_left_s = rng.randf_range(HOLD_ANGLE_MIN_S, HOLD_ANGLE_MAX_S) if holding else rng.randf_range(RETARGET_MIN_S, RETARGET_MAX_S)
 	else:
@@ -312,17 +386,22 @@ func _gaze_point_for(kind: String, raw_pos: Vector3) -> Vector3:
 # ======================================================================
 
 ## `path_points` : points de chemin à venir dans l'ordre (SANS `bot_pos`,
-## voir `tick()`). Renvoie `{"found": bool, "pos": Vector3, "turn_deg": float}`
-## — `pos` est le point regardé (« côté opposé du coin », au sol, +1.5 m
-## ajouté par `_gaze_point_for`), PAS le sommet du coin lui-même : un point
-## CORNER_LOOK_AHEAD_M après le virage, dans la direction de sortie — ce qui
-## est réellement caché tant qu'on n'a pas tourné.
+## voir `tick()`). Renvoie `{"found": bool, "pos": Vector3, "turn_deg": float,
+## "distance": float}` — `pos` est le point regardé (« côté opposé du coin »,
+## au sol, +1.5 m ajouté par `_gaze_point_for`), PAS le sommet du coin
+## lui-même : un point CORNER_LOOK_AHEAD_M après le virage, dans la direction
+## de sortie — ce qui est réellement caché tant qu'on n'a pas tourné.
+## `distance` (tâche "bots humains", 2026-09-27, consommée par
+## `BotCombatStyle.movement_pace`) est la distance bot -> SOMMET du coin (p0),
+## PAS `pos` : c'est celle-ci qui doit tomber à 0 pile au coin lui-même, pour
+## que le ralentissement/arrêt de pré-visée culmine au bon endroit.
 static func find_sharp_corner(path_points: Array, bot_pos: Vector3) -> Dictionary:
 	if path_points.size() < 2:
 		return {"found": false}
 	var p0: Vector3 = path_points[0]
 	var p1: Vector3 = path_points[1]
-	if bot_pos.distance_to(p0) > CORNER_RANGE_M:
+	var corner_dist := bot_pos.distance_to(p0)
+	if corner_dist > CORNER_RANGE_M:
 		return {"found": false}
 	var in_dir := Vector3(p0.x - bot_pos.x, 0.0, p0.z - bot_pos.z)
 	var out_dir := Vector3(p1.x - p0.x, 0.0, p1.z - p0.z)
@@ -332,7 +411,7 @@ static func find_sharp_corner(path_points: Array, bot_pos: Vector3) -> Dictionar
 	if turn_deg <= CORNER_TURN_DEG:
 		return {"found": false}
 	var look_pos := p0 + out_dir.normalized() * CORNER_LOOK_AHEAD_M
-	return {"found": true, "pos": look_pos, "turn_deg": turn_deg}
+	return {"found": true, "pos": look_pos, "turn_deg": turn_deg, "distance": corner_dist}
 
 
 ## Point du chemin `ahead_m` mètres devant `bot_pos`, en suivant la polyligne
@@ -418,3 +497,52 @@ static func gaze_move_gap_deg(gaze_yaw_deg: float, move_dir: Vector3) -> float:
 
 static func should_walk(gaze_yaw_deg: float, move_dir: Vector3) -> bool:
 	return gaze_move_gap_deg(gaze_yaw_deg, move_dir) > WALK_GAZE_GAP_DEG
+
+
+# ======================================================================
+#  L7 — classement d'un éventail de rayons en angles K synthétiques.
+# ======================================================================
+
+## `samples` : Array, DANS L'ORDRE angulaire de l'éventail (voisins = index
+## adjacents, le tableau BOUCLE — le dernier est voisin du premier), de
+## `{"dir": Vector3 (MONDE, normalisée, plan XZ), "open_dist": float (m,
+## distance au premier obstacle, ou la portée max du rayon si rien touché)}`.
+## Classe par score décroissant (portée ouverte + rupture de distance avec les
+## DEUX voisins immédiats, pondérée `CORNER_CONTRAST_WEIGHT` — une porte/un
+## couloir entre deux murs proches se voit ainsi préféré à un simple mur
+## lointain uniforme) et renvoie les `count` meilleurs, sous la forme
+## `{"pos": Vector3, "dir": Vector3, "open_dist": float, "score": float}`
+## (`pos` calculé par l'appelant via `angle_pos_from_sample`, PAS ici : cette
+## fonction ne reçoit jamais `bot_pos`, elle ne connaît que des directions —
+## seulement le classement est sous test). Tableau vide si `samples` est vide ;
+## `count` est plafonné à `samples.size()`.
+static func rank_scan_angles(samples: Array, count: int = SYNTHETIC_ANGLE_COUNT) -> Array:
+	var n := samples.size()
+	if n == 0:
+		return []
+	var scored: Array = []
+	for i in n:
+		var s: Dictionary = samples[i]
+		var open_dist: float = float(s.get("open_dist", 0.0))
+		var prev: Dictionary = samples[(i - 1 + n) % n]
+		var next: Dictionary = samples[(i + 1) % n]
+		var contrast := maxf(
+			absf(open_dist - float(prev.get("open_dist", open_dist))),
+			absf(open_dist - float(next.get("open_dist", open_dist))))
+		scored.append({
+			"dir": s.get("dir", Vector3.ZERO),
+			"open_dist": open_dist,
+			"score": open_dist + contrast * CORNER_CONTRAST_WEIGHT,
+		})
+	scored.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return float(a.score) > float(b.score))
+	return scored.slice(0, mini(count, n))
+
+
+## Position MONDE d'un angle K synthétique (une entrée de `rank_scan_angles`)
+## depuis `bot_pos` — la distance ouverte mesurée est bornée à
+## [SYNTHETIC_ANGLE_MIN_DIST, SYNTHETIC_ANGLE_MAX_DIST] : jamais collée au bot
+## (rayon qui touche un mur à 0.1 m) ni hors de portée utile d'un angle K
+## (rayon qui ne touche rien avant la portée max de l'éventail).
+static func angle_pos_from_sample(bot_pos: Vector3, dir: Vector3, open_dist: float) -> Vector3:
+	var dist := clampf(open_dist, SYNTHETIC_ANGLE_MIN_DIST, SYNTHETIC_ANGLE_MAX_DIST)
+	return bot_pos + dir * dist

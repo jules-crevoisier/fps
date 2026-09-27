@@ -267,6 +267,45 @@ static func _second_nearest_on_same_floor(spots: Array[Dictionary], pos: Vector3
 
 
 # ======================================================================
+#  Connexité — garde le PLUS GRAND îlot navigable, jamais un repli fragile
+#  sur "le point le plus bas" (tâche "bots humains" passe 2 : diagnostic sur
+#  Shipment réelle — un recoin isolé au ras du sol dans un coin de la carte
+#  se trouvait être le point le plus bas de TOUTE la navmesh, et devenait
+#  l'ANCRE de connexité -- 484 points échantillonnés sur le sol principal
+#  (un seul îlot de 350 points, cf. diagnostic), presque tous rejetés parce
+#  qu'AUCUN chemin ne les relie à ce recoin. `bake()` doit retenir le plus
+#  gros îlot RÉELLEMENT connecté, peu importe sa hauteur relative aux autres.
+# ======================================================================
+func test_bake_keeps_the_largest_connected_island_not_the_lowest_point() -> void:
+	var offset := _offset()
+	var root_node := _room(offset)
+	# Grand îlot (10x10 m, ~25 échantillons au pas 2 m) à Y=0 -- le sol
+	# "principal" attendu.
+	_floor(root_node, Vector3(0, 0, 0), 10.0, 10.0)
+	# Petit îlot ISOLÉ (2x2 m, une poignée d'échantillons), à 30 m -- aucun
+	# sol ne les relie -- et plus BAS que le grand îlot : sans le correctif,
+	# c'est LUI qui serait choisi comme ancre de connexité, éliminant presque
+	# tous les points du grand îlot.
+	_floor(root_node, Vector3(30, -1.0, 0), 2.0, 2.0)
+	var setup := await _bake_room(root_node)
+
+	var spots := BotSpots.bake("islands_test", setup["nav"], setup["space"])
+	assert_int(spots.spots.size()).append_failure_message(
+		"échantillonnage vide : géométrie invalide").is_greater(4)
+
+	var kept_from_small_island := 0
+	for s in spots.spots:
+		var local: Vector3 = root_node.global_transform.affine_inverse() * (s["position"] as Vector3)
+		if local.x > 20.0:
+			kept_from_small_island += 1
+	assert_int(kept_from_small_island).append_failure_message(
+		"le petit îlot isolé (30 m, non relié) a survécu au filtre de connexité").is_equal(0)
+	assert_int(spots.spots.size()).append_failure_message(
+		"le grand îlot (10x10 m) devrait fournir la majorité des points retenus").is_greater(10)
+	await _teardown(root_node)
+
+
+# ======================================================================
 #  Acceptance BOT-05 : salle tactique "test_arena" — couverture <= 10 m
 #  (CHEMIN, pas à vol d'oiseau) de chaque point navigable, bake < 30 s.
 # ======================================================================

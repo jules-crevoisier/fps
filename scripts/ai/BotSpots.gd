@@ -133,7 +133,7 @@ static func bake(map_id_: String, nav_region: NavigationRegion3D, space: Physics
 ## proche EN HAUTEUR d'un niveau donné le retrouve — une pile couvre tous les
 ## niveaux réellement superposés à cette colonne. Dédoublonné (plusieurs
 ## sondes, à des niveaux différents ou non, peuvent se projeter sur le même
-## point de surface), puis filtré par CONNEXITÉ (`_reachable_from_lowest`) :
+## point de surface), puis filtré par CONNEXITÉ (`_largest_connected_island`) :
 ## Recast marque le DESSUS PLAT d'un mur comme un îlot marchable À PART
 ## ENTIÈRE dès qu'il est assez large, même sans rampe pour y monter — un
 ## point de grille juste à côté d'un mur peut donc se projeter sur ce dessus
@@ -162,7 +162,7 @@ static func _sample_navmesh(nav_region: NavigationRegion3D) -> Array[Vector3]:
 			_sample_column(map_rid, aabb, x, z, seen, raw)
 			x += SAMPLE_STEP
 		z += SAMPLE_STEP
-	return _reachable_from_lowest(map_rid, raw)
+	return _largest_connected_island(map_rid, raw)
 
 
 ## Pile de sondes verticales à une colonne XZ donnée : du bas (`aabb.position.y`)
@@ -184,26 +184,53 @@ static func _sample_column(map_rid: RID, aabb: AABB, x: float, z: float, seen: D
 		y += LEVEL_STEP
 
 
-## Ne garde que les points reliés PAR UN CHEMIN au point le plus BAS de
-## `raw` (le sol principal est, dans nos géométries, toujours plus bas que
-## tout dessus de mur ou de plateforme isolée — limite connue : une carte
-## avec une fosse sous le sol principal demanderait une ancre différente).
-static func _reachable_from_lowest(map_rid: RID, raw: Array[Vector3]) -> Array[Vector3]:
+## Ne garde que les points du PLUS GRAND îlot connecté PAR CHEMIN parmi
+## `raw` — plus l'ancienne ancre "point le plus bas" (tâche "bots humains"
+## passe 2, diagnostic sur Shipment réelle : un recoin isolé, jamais relié au
+## sol principal par aucun chemin, se trouvait être le point le plus bas de
+## TOUTE la carte — 484 échantillons sur le sol principal, dont un seul îlot
+## RÉELLEMENT connecté de 350 points, presque tous rejetés parce que
+## l'ancienne ancre tombait sur un recoin isolé de 3 points à peine). Aucune
+## hypothèse sur la HAUTEUR relative des îlots (l'ancien "toujours plus bas
+## que tout le reste" ne tenait déjà pas sur cette carte) : seule la TAILLE du
+## composant compte. Regroupe `raw` en composantes par un parcours glouton
+## (`_connected_component_from`, un chemin O(n) par composante découverte —
+## comparable en coût à `_approach_points`, déjà O(n²) sur les points
+## RETENUS juste après), garde la plus grande, `raw[0]` seul en cas d'égalité
+## à une taille (repli déterministe).
+static func _largest_connected_island(map_rid: RID, raw: Array[Vector3]) -> Array[Vector3]:
 	if raw.is_empty():
 		return raw
-	var anchor := raw[0]
-	for p in raw:
-		if p.y < anchor.y:
-			anchor = p
-	var connected: Array[Vector3] = []
-	for p in raw:
-		if p.distance_to(anchor) <= 0.01:
-			connected.append(p)
+	var unassigned := raw.duplicate()
+	var best: Array[Vector3] = []
+	while not unassigned.is_empty():
+		var seed: Vector3 = unassigned[0]
+		var split := _connected_component_from(map_rid, seed, unassigned)
+		var component: Array[Vector3] = split.component
+		if component.size() > best.size():
+			best = component
+		unassigned = split.remaining
+	return best
+
+
+## Un pas du regroupement glouton (voir `_largest_connected_island`) : tous les
+## points de `pool` reliés PAR CHEMIN à `seed` (lui-même inclus) forment
+## `component` ; les autres retombent dans `remaining`, prêts pour la
+## prochaine composante. Factorisée pour rester lisible/testable
+## séparément de la boucle englobante.
+static func _connected_component_from(map_rid: RID, seed: Vector3, pool: Array[Vector3]) -> Dictionary:
+	var component: Array[Vector3] = []
+	var remaining: Array[Vector3] = []
+	for p in pool:
+		if p.distance_to(seed) <= 0.01:
+			component.append(p)
 			continue
-		var path := NavigationServer3D.map_get_path(map_rid, anchor, p, true)
+		var path := NavigationServer3D.map_get_path(map_rid, seed, p, true)
 		if path.size() >= 2 and path[path.size() - 1].distance_to(p) <= SAMPLE_STEP:
-			connected.append(p)
-	return connected
+			component.append(p)
+		else:
+			remaining.append(p)
+	return {"component": component, "remaining": remaining}
 
 
 static func _bake_spot(pos: Vector3, space: PhysicsDirectSpaceState3D) -> Dictionary:

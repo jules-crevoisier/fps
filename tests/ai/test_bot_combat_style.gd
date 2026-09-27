@@ -512,3 +512,89 @@ func test_ads_hold_is_deterministic_for_same_seed() -> void:
 	assert_int(a.size()).is_equal(b.size())
 	for i in a.size():
 		assert_bool(a[i]).append_failure_message("tick %d : divergence entre deux runs de même graine" % i).is_equal(b[i])
+
+
+# ======================================================================
+#  RYTHME DE DÉPLACEMENT hors combat (tâche "bots humains", 2026-09-27) :
+#  movement_pace(distance_to_goal, time_since_contact, corner_distance).
+# ======================================================================
+
+func test_pace_stops_briefly_right_before_a_sharp_corner() -> void:
+	var pace := BotCombatStyle.movement_pace(100.0, INF, 0.5)
+	assert_int(pace).is_equal(BotCombatStyle.Pace.STOP)
+
+
+func test_pace_walks_while_approaching_a_corner_further_out() -> void:
+	var pace := BotCombatStyle.movement_pace(100.0, INF, 3.0)
+	assert_int(pace).is_equal(BotCombatStyle.Pace.WALK)
+
+
+func test_pace_walks_with_recent_contact_even_far_from_any_corner() -> void:
+	var pace := BotCombatStyle.movement_pace(100.0, 2.0, -1.0)
+	assert_int(pace).is_equal(BotCombatStyle.Pace.WALK)
+
+
+func test_pace_sprints_for_a_long_relocation_with_no_recent_contact() -> void:
+	var pace := BotCombatStyle.movement_pace(20.0, INF, -1.0)
+	assert_int(pace).is_equal(BotCombatStyle.Pace.SPRINT)
+
+
+func test_pace_walks_for_a_short_relocation_even_with_no_contact() -> void:
+	# Sous RELOCATE_SPRINT_MIN_M (15 m) : jamais de sprint par défaut, même
+	# sans contact récent ni coin proche (contrat : sprint réservé aux
+	# LONGUES relocalisations, jamais le défaut implicite d'avant).
+	var pace := BotCombatStyle.movement_pace(5.0, INF, -1.0)
+	assert_int(pace).is_equal(BotCombatStyle.Pace.WALK)
+
+
+func test_pace_corner_takes_priority_over_a_long_relocation() -> void:
+	var pace := BotCombatStyle.movement_pace(100.0, INF, 1.0)
+	assert_int(pace).is_equal(BotCombatStyle.Pace.STOP)
+
+
+func test_pace_no_corner_sentinel_is_negative() -> void:
+	# `corner_distance = -1.0` (aucun coin imminent) ne doit jamais être pris
+	# pour un coin à 0 m — repli sur les autres règles.
+	var pace := BotCombatStyle.movement_pace(20.0, INF, -1.0)
+	assert_int(pace).is_not_equal(BotCombatStyle.Pace.STOP)
+
+
+# ======================================================================
+#  REPLI À BASSE VIE (tâche "bots humains", 2026-09-27) :
+#  should_retreat_low_hp / retreat_point.
+# ======================================================================
+
+func test_should_retreat_below_30_percent_hp() -> void:
+	assert_bool(BotCombatStyle.should_retreat_low_hp(0.29)).is_true()
+	assert_bool(BotCombatStyle.should_retreat_low_hp(0.05)).is_true()
+
+
+func test_should_not_retreat_at_or_above_30_percent_hp() -> void:
+	assert_bool(BotCombatStyle.should_retreat_low_hp(0.30)).is_false()
+	assert_bool(BotCombatStyle.should_retreat_low_hp(1.0)).is_false()
+
+
+func test_should_not_retreat_when_hp_ratio_is_zero_or_negative() -> void:
+	# 0 / donnée absente : le bot est mort ou n'a pas de PV connus, pas "bas".
+	assert_bool(BotCombatStyle.should_retreat_low_hp(0.0)).is_false()
+	assert_bool(BotCombatStyle.should_retreat_low_hp(-1.0)).is_false()
+
+
+func test_retreat_point_moves_away_from_the_threat() -> void:
+	var bot_pos := Vector3(0, 0, 0)
+	var threat_pos := Vector3(10, 0, 0)
+	var retreat := BotCombatStyle.retreat_point(bot_pos, threat_pos, 8.0)
+	assert_vector(retreat).is_equal_approx(Vector3(-8, 0, 0), Vector3(0.01, 0.01, 0.01))
+
+
+func test_retreat_point_ignores_vertical_offset_of_the_threat() -> void:
+	var bot_pos := Vector3(0, 0, 0)
+	var threat_pos := Vector3(10, 5, 0)  # ennemi en hauteur (toit) : ne doit pas faire fuir le bot verticalement.
+	var retreat := BotCombatStyle.retreat_point(bot_pos, threat_pos, 8.0)
+	assert_float(retreat.y).is_equal_approx(0.0, 0.01)
+	assert_vector(retreat).is_equal_approx(Vector3(-8, 0, 0), Vector3(0.01, 0.01, 0.01))
+
+
+func test_retreat_point_picks_an_arbitrary_direction_when_superimposed_on_threat() -> void:
+	var retreat := BotCombatStyle.retreat_point(Vector3.ZERO, Vector3.ZERO, 8.0)
+	assert_float(retreat.length()).is_equal_approx(8.0, 0.01)

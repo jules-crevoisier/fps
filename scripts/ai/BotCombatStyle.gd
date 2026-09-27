@@ -337,3 +337,86 @@ static func nearest_ammo_point(bot_pos: Vector3, points: Array, radius: float = 
 			best_d = d
 			best = candidate
 	return best
+
+# ======================================================================
+#  RYTHME DE DÉPLACEMENT hors combat (tâche "bots humains", 2026-09-27,
+#  écarts « ils courent partout dans la map »/« sensation de bot humain ») —
+#  `player.input.walk_held` n'était vrai que pendant une enquête sur un bruit
+#  ou en fin de manche (`should_walk` ci-dessus, INCHANGÉ, toujours consulté
+#  par BotBrain via `or`) : hors de ces deux cas précis, un bot sprintait
+#  TOUJOURS, y compris pour parcourir 2 m en ligne droite. `movement_pace`
+#  ajoute 3 raisons humaines supplémentaires de ralentir/s'arrêter, aucune
+#  d'elles ne remplaçant `should_walk` :
+#   - un coin serré est imminent (pré-visée, voir BotLook.find_sharp_corner/
+#     "distance") : STOP juste avant, WALK en approche ;
+#   - un contact (vue/ouïe) est RÉCENT (< CONTACT_RECENT_S) : jamais de sprint
+#     bruyant près d'un ennemi potentiellement encore à portée d'oreille ;
+#   - repli sur SPRINT seulement pour une relocalisation LONGUE
+#     (> RELOCATE_SPRINT_MIN_M) sans contact récent ni coin proche — jamais le
+#     défaut implicite d'avant.
+# ======================================================================
+
+enum Pace { SPRINT, WALK, STOP }
+
+## Distance (m) mini d'une relocalisation pour justifier un sprint hors combat.
+const RELOCATE_SPRINT_MIN_M := 15.0
+## En dessous de ce délai (s) depuis le dernier contact (vue OU ouïe d'un
+## ennemi), un bot ne sprinte plus (pourrait trahir sa position).
+const CONTACT_RECENT_S := 6.0
+## Distance (m) au SOMMET d'un coin serré (BotLook.find_sharp_corner.distance)
+## sous laquelle le bot marche pour pré-viser — même portée que
+## BotLook.CORNER_RANGE_M (cohérence : marcher DÈS que la pré-visée L2 devient
+## active, pas avant, pas après).
+const CORNER_WALK_RANGE_M := 4.0
+## Distance (m) au sommet du coin sous laquelle le bot marque un temps d'arrêt
+## bref (Pace.STOP) — volontairement COURTE (pas un plantage complet loin du
+## coin, seulement juste avant de tourner, comme une vraie pré-visée).
+const CORNER_STOP_RANGE_M := 1.2
+
+## Décision de rythme PURE hors combat — `corner_distance` : distance (m) au
+## sommet du prochain coin serré si `BotLook.find_sharp_corner` en a trouvé un
+## CE tick, `-1.0` sinon (aucun coin imminent). `time_since_contact` : temps
+## (s) écoulé depuis la dernière vue OU le dernier bruit d'un ennemi par CE
+## bot (`INF` si aucun contact cette partie). `distance_to_goal` : distance
+## (m) restante vers le but de déplacement courant.
+static func movement_pace(distance_to_goal: float, time_since_contact: float, corner_distance: float) -> int:
+	if corner_distance >= 0.0 and corner_distance <= CORNER_STOP_RANGE_M:
+		return Pace.STOP
+	if corner_distance >= 0.0 and corner_distance <= CORNER_WALK_RANGE_M:
+		return Pace.WALK
+	if time_since_contact < CONTACT_RECENT_S:
+		return Pace.WALK
+	if distance_to_goal > RELOCATE_SPRINT_MIN_M:
+		return Pace.SPRINT
+	return Pace.WALK
+
+# ======================================================================
+#  REPLI À BASSE VIE (tâche "bots humains", 2026-09-27, "sensation de bot
+#  humain" : un bot au dernier souffle qui fonce quand même sur l'ennemi ne
+#  semble pas humain) — seulement pendant un engagement (BotBrain ne
+#  l'applique que si `_target_id != -1`, jamais hors combat) : recule vers la
+#  couverture/loin de la DERNIÈRE position ennemie PERÇUE (jamais une position
+#  ennemie hors perception — même discipline BOT-01 que TDMMode.bot_goal_for),
+#  sans abandonner le combat (BotBrain garde le strafe/tir, seul le BUT de
+#  déplacement change).
+# ======================================================================
+
+## Fraction de PV (0-1) sous laquelle le bot se replie en combat. `hp_ratio`
+## <= 0.0 (mort/donnée absente) ne compte jamais comme "bas" (repli inutile,
+## le bot ne va de toute façon plus tirer).
+const LOW_HP_RETREAT_RATIO := 0.3
+
+static func should_retreat_low_hp(hp_ratio: float) -> bool:
+	return hp_ratio > 0.0 and hp_ratio < LOW_HP_RETREAT_RATIO
+
+## Point de repli à `distance_m` de `bot_pos`, à l'opposé de `threat_pos` —
+## direction arbitraire (+X monde) si `bot_pos` et `threat_pos` coïncident
+## (aucune direction "loin de la menace" n'est alors définie).
+static func retreat_point(bot_pos: Vector3, threat_pos: Vector3, distance_m: float) -> Vector3:
+	var away := bot_pos - threat_pos
+	away.y = 0.0
+	if away.length() < 0.05:
+		away = Vector3(1.0, 0.0, 0.0)
+	else:
+		away = away.normalized()
+	return bot_pos + away * distance_m

@@ -920,8 +920,23 @@ func _pick_hotspot(bot_id: int, knowledge: Dictionary, exclude_current: bool) ->
 ## de l'équipe (essaim, T2) : seuls les bots mobilisés par
 ## `_maybe_trigger_sighting_reaction` l'investiguent (`_wasteland_bot_goal`),
 ## les autres continuent leur couloir. Sur toute AUTRE carte (pas de
-## `bot_knowledge`), comportement LD-25 inchangé : mémoire d'équipe partagée
-## en priorité pour tous, sinon hotspot, sinon marqueur de spawn.
+## `bot_knowledge`), comportement LD-25 étendu (tâche "bots humains",
+## 2026-09-27) : mémoire d'équipe partagée en priorité pour tous, sinon un
+## spot de TENUE baké (`GameWorld.bot_spots`, `_pick_hold_spot` ci-dessous) si
+## la carte en a, sinon hotspot, sinon marqueur de spawn.
+##
+## `not reached` (péremption de GOAL_REFRESH_INTERVAL=6 s PENDANT que le bot
+## est encore en chemin vers son but de ROULEMENT actuel — pas atteint, pas
+## d'évènement) : renvoie le MÊME but en cache SANS rappeler aucun des replis
+## ci-dessous. Avant ce garde, `_pick_patrol_point`/`_pick_hotspot` tiraient un
+## point AU HASARD à chaque recalcul de routine (même sans jamais l'avoir
+## atteint), ce qui pouvait faire "changer d'avis" un bot toutes les 6 s en
+## plein trajet (écart signalé : "ils courent partout dans la map") — un
+## contrat de but STABLE (BOT-01, doc de tête de GameMode.bot_goal_for) doit
+## se lire "jusqu'à atteint, invalidé par un évènement, OU supplanté par une
+## info plus fraîche" (`seen`, ci-dessous, qui reste vérifié AVANT ce garde :
+## une mémoire d'équipe qui vient d'apparaître doit primer immédiatement, même
+## en plein trajet).
 func _compute_bot_goal(team: int, bot_id: int, bot_pos: Vector3, reached: bool = false) -> Vector3:
 	var knowledge := _bot_knowledge()
 	var bk: Dictionary = knowledge.get("bot_knowledge", {})
@@ -930,9 +945,55 @@ func _compute_bot_goal(team: int, bot_id: int, bot_pos: Vector3, reached: bool =
 	var seen := _shared_last_seen_enemy(team)
 	if seen != Vector3.INF:
 		return seen
+	if not reached:
+		var cached: Dictionary = _bot_goal_cache.get(bot_id, {})
+		if not cached.is_empty():
+			return cached.get("pos", Vector3.ZERO)
+	var hold := _pick_hold_spot(bot_id, bot_pos)
+	if hold != Vector3.ZERO:
+		return hold
 	if not (knowledge.get("hotspots", []) as Array).is_empty():
 		return _pick_hotspot(bot_id, knowledge, reached)
 	return _pick_patrol_point(bot_id, bot_pos, reached)
+
+
+## bot_id -> Vector3 (spot de tenue COURANT de ce bot, `Vector3.INF` = aucun).
+var _hold_spot_pos: Dictionary = {}
+## bot_id -> float (horloge `_goal_clock_now()` de fin de tenue COURANTE).
+var _hold_spot_until: Dictionary = {}
+## U(3;8) s de tenue (brief "bots humains") avant de reprendre un autre spot.
+const HOLD_SPOT_MIN_S := 3.0
+const HOLD_SPOT_MAX_S := 8.0
+
+## Spot de TENUE baké (`GameWorld.bot_spots`, `BotHoldSelect.pick_hold_spot`)
+## pour `bot_id` — `Vector3.ZERO` si la carte n'a pas encore de spots bakés
+## (repli LD-25 inchangé sur hotspot/patrouille, voir `_compute_bot_goal`).
+## N'est appelé QUE quand `_compute_bot_goal` a déjà décidé qu'un recalcul de
+## ROULEMENT est dû (voir le garde `not reached` ci-dessus) : tant que la
+## tenue courante n'a pas expiré (`_hold_spot_until`), renvoie le MÊME spot —
+## sans repiocher `BotHoldSelect.pick_hold_spot` à chaque appel (ce dernier
+## n'est donc lui-même appelé qu'une fois par cycle "arrivée + tenue expirée",
+## jamais par tick, même si `bot_goal_for` réinvoque `_compute_bot_goal` à
+## CHAQUE tick pendant que le bot reste "sur" son spot — `reached` reste vrai
+## en continu tant qu'il ne bouge pas).
+func _pick_hold_spot(bot_id: int, bot_pos: Vector3) -> Vector3:
+	var world := get_tree().get_first_node_in_group("match")
+	if world == null or not ("bot_spots" in world):
+		return Vector3.ZERO
+	var spots_res := world.get("bot_spots") as BotSpots
+	if spots_res == null or spots_res.spots.is_empty():
+		return Vector3.ZERO
+	var now := _goal_clock_now()
+	if _hold_spot_until.has(bot_id) and now < float(_hold_spot_until[bot_id]) and _hold_spot_pos.has(bot_id):
+		return _hold_spot_pos[bot_id]
+	var exclude: Vector3 = _hold_spot_pos.get(bot_id, Vector3.INF)
+	var picked := BotHoldSelect.pick_hold_spot(spots_res.spots, bot_pos, exclude, _rng)
+	if not bool(picked.get("found", false)):
+		return Vector3.ZERO
+	var pos: Vector3 = picked.pos
+	_hold_spot_pos[bot_id] = pos
+	_hold_spot_until[bot_id] = now + _rng.randf_range(HOLD_SPOT_MIN_S, HOLD_SPOT_MAX_S)
+	return pos
 
 
 ## But effectif sur une carte à `bot_knowledge` : le point d'investigation en

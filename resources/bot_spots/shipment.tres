@@ -1,0 +1,2108 @@
+[gd_resource type="Resource" script_class="BotSpots" format=3]
+
+[ext_resource type="Script" path="res://scripts/ai/BotSpots.gd" id="1_aa83t"]
+
+[resource]
+script = ExtResource("1_aa83t")
+map_id = "shipment"
+spots = Array[Dictionary]([{
+"approach_points": PackedVector3Array(-15.5, 0.5, -17.5, -13.5, 0.5, -17.5, -17.5, 0.5, -15.5, -15.5, 0.5, -15.5, -17.5, 0.5, -13.5),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, true, true]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, true, true]),
+"position": Vector3(-17.5, 0.5, -17.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-17.5, 0.5, -17.5, -13.5, 0.5, -17.5, -11.5, 0.5, -17.5, -17.5, 0.5, -15.5, -15.5, 0.5, -15.5, -13.5, 0.5, -15.5, -15.5, 0.5, -13.75),
+"coverage_crouch": Array[bool]([true, false, false, true, true, true, true, false]),
+"coverage_stand": Array[bool]([true, false, false, true, true, true, true, false]),
+"position": Vector3(-15.5, 0.5, -17.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-17.5, 0.5, -17.5, -15.5, 0.5, -17.5, -11.5, 0.5, -17.5, -9.5, 0.5, -17.5, -15.5, 0.5, -15.5, -13.5, 0.5, -15.5, -11.5, 0.5, -15.5, -13.5, 0.5, -13.75),
+"coverage_crouch": Array[bool]([true, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([true, false, false, true, true, true, false, false]),
+"position": Vector3(-13.5, 0.5, -17.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-15.5, 0.5, -17.5, -13.5, 0.5, -17.5, -9.5, 0.5, -17.5, -7.5, 0.5, -17.5, -13.5, 0.5, -15.5, -11.5, 0.5, -15.5, -9.5, 0.5, -15.5, -11.5, 0.5, -13.75),
+"coverage_crouch": Array[bool]([true, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([true, false, false, true, true, true, false, false]),
+"position": Vector3(-11.5, 0.5, -17.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-13.5, 0.5, -17.5, -11.5, 0.5, -17.5, -7.5, 0.5, -17.5, -5.5, 0.5, -17.5, -11.5, 0.5, -15.5, -9.5, 0.5, -15.5, -7.5, 0.5, -15.5, -9.45, 0.5, -13.6),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, false, false]),
+"position": Vector3(-9.5, 0.5, -17.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-11.5, 0.5, -17.5, -9.5, 0.5, -17.5, -5.5, 0.5, -17.5, -9.5, 0.5, -15.5, -7.5, 0.5, -15.5, -5.5, 0.5, -15.5, -7.5, 0.5, -13.5),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, false, false]),
+"position": Vector3(-7.5, 0.5, -17.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-9.5, 0.5, -17.5, -7.5, 0.5, -17.5, -3.5, 0.5, -17.5, -1.5, 0.5, -17.5, -7.5, 0.5, -15.5, -5.5, 0.5, -15.5, -3.5, 0.5, -15.5, -5.5, 0.5, -13.5),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, false, false]),
+"position": Vector3(-5.5, 0.5, -17.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-5.5, 0.5, -17.5, -1.5, 0.5, -17.5, 0.5, 0.5, -17.5, -5.5, 0.5, -15.5, -3.5, 0.5, -15.5, -1.5, 0.5, -15.5, -3.5, 0.5, -13.5),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, false, false]),
+"position": Vector3(-3.5, 0.5, -17.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-5.5, 0.5, -17.5, -3.5, 0.5, -17.5, 0.5, 0.5, -17.5, 2.5, 0.5, -17.5, -3.5, 0.5, -15.5, -1.5, 0.5, -15.5, 0.5, 0.5, -15.5, -1.5, 0.5, -13.75),
+"coverage_crouch": Array[bool]([true, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([true, false, false, true, true, true, false, false]),
+"position": Vector3(-1.5, 0.5, -17.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-1.5, 0.5, -17.5, 2.5, 0.5, -17.5, 4.5, 0.5, -17.5, -1.5, 0.5, -15.5, 0.5, 0.5, -15.5, 2.5, 0.5, -15.5, 0.5, 0.5, -13.75),
+"coverage_crouch": Array[bool]([true, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([true, false, false, true, true, true, false, false]),
+"position": Vector3(0.5, 0.5, -17.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-1.5, 0.5, -17.5, 0.5, 0.5, -17.5, 4.5, 0.5, -17.5, 6.5, 0.5, -17.5, 0.5, 0.5, -15.5, 2.5, 0.5, -15.5, 4.5, 0.5, -15.5, 2.5, 0.5, -13.75),
+"coverage_crouch": Array[bool]([true, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([true, false, false, true, true, true, false, false]),
+"position": Vector3(2.5, 0.5, -17.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(0.5, 0.5, -17.5, 2.5, 0.5, -17.5, 6.5, 0.5, -17.5, 8.5, 0.5, -17.5, 2.5, 0.5, -15.5, 4.5, 0.5, -15.5, 6.5, 0.5, -15.5, 4.5, 0.5, -13.5),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, false, false]),
+"position": Vector3(4.5, 0.5, -17.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(2.5, 0.5, -17.5, 4.5, 0.5, -17.5, 8.5, 0.5, -17.5, 10.5, 0.5, -17.5, 4.5, 0.5, -15.5, 6.5, 0.5, -15.5, 8.5, 0.5, -15.5, 6.5, 0.5, -13.5),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, false, false]),
+"position": Vector3(6.5, 0.5, -17.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(4.5, 0.5, -17.5, 6.5, 0.5, -17.5, 10.5, 0.5, -17.5, 12.5, 0.5, -17.5, 6.5, 0.5, -15.5, 8.5, 0.5, -15.5, 10.5, 0.5, -15.5, 8.5, 0.5, -13.5),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, false, false]),
+"position": Vector3(8.5, 0.5, -17.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(6.5, 0.5, -17.5, 8.5, 0.5, -17.5, 12.5, 0.5, -17.5, 14.5, 0.5, -17.5, 8.5, 0.5, -15.5, 10.5, 0.5, -15.5, 12.5, 0.5, -15.5, 10.5, 0.5, -13.75),
+"coverage_crouch": Array[bool]([true, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([true, false, false, true, true, true, false, false]),
+"position": Vector3(10.5, 0.5, -17.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(8.5, 0.5, -17.5, 10.5, 0.5, -17.5, 14.5, 0.5, -17.5, 16.5, 0.5, -17.5, 10.5, 0.5, -15.5, 12.5, 0.5, -15.5, 14.5, 0.5, -15.5, 12.5, 0.5, -13.75),
+"coverage_crouch": Array[bool]([true, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([true, false, false, true, true, true, false, false]),
+"position": Vector3(12.5, 0.5, -17.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(10.5, 0.5, -17.5, 12.5, 0.5, -17.5, 16.5, 0.5, -17.5, 18.5, 0.5, -17.5, 12.5, 0.5, -15.5, 14.5, 0.5, -15.5, 16.5, 0.5, -15.5, 14.5, 0.5, -13.75),
+"coverage_crouch": Array[bool]([true, false, true, true, true, true, false, false]),
+"coverage_stand": Array[bool]([true, false, true, true, true, true, false, false]),
+"position": Vector3(14.5, 0.5, -17.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(12.5, 0.5, -17.5, 14.5, 0.5, -17.5, 18.5, 0.5, -17.5, 14.5, 0.5, -15.5, 16.5, 0.5, -15.5, 18.5, 0.5, -15.5, 16.535, 0.5, -13.505),
+"coverage_crouch": Array[bool]([false, true, true, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, true, true, true, true, true, false, false]),
+"position": Vector3(16.5, 0.5, -17.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(14.5, 0.5, -17.5, 16.5, 0.5, -17.5, 16.5, 0.5, -15.5, 18.5, 0.5, -15.5, 18.5, 0.5, -13.5),
+"coverage_crouch": Array[bool]([false, true, true, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, true, true, true, true, true, false, false]),
+"position": Vector3(18.5, 0.5, -17.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-17.5, 0.5, -17.5, -15.5, 0.5, -17.5, -15.5, 0.5, -15.5, -13.5, 0.5, -15.5, -17.5, 0.5, -13.5, -15.5, 0.5, -13.75, -17.5, 0.5, -11.5),
+"coverage_crouch": Array[bool]([false, true, false, false, true, true, true, true]),
+"coverage_stand": Array[bool]([false, true, false, false, true, true, true, true]),
+"position": Vector3(-17.5, 0.5, -15.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-17.5, 0.5, -17.5, -15.5, 0.5, -17.5, -13.5, 0.5, -17.5, -17.5, 0.5, -15.5, -13.5, 0.5, -15.5, -11.5, 0.5, -15.5, -17.5, 0.5, -13.5, -15.5, 0.5, -13.75, -13.5, 0.5, -13.75),
+"coverage_crouch": Array[bool]([true, true, false, false, true, false, true, false]),
+"coverage_stand": Array[bool]([true, true, false, false, true, false, true, false]),
+"position": Vector3(-15.5, 0.5, -15.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-15.5, 0.5, -17.5, -13.5, 0.5, -17.5, -11.5, 0.5, -17.5, -17.5, 0.5, -15.5, -15.5, 0.5, -15.5, -11.5, 0.5, -15.5, -9.5, 0.5, -15.5, -15.5, 0.5, -13.75, -13.5, 0.5, -13.75, -11.5, 0.5, -13.75),
+"coverage_crouch": Array[bool]([true, true, false, false, true, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, true, false, false, true]),
+"position": Vector3(-13.5, 0.5, -15.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-13.5, 0.5, -17.5, -11.5, 0.5, -17.5, -9.5, 0.5, -17.5, -15.5, 0.5, -15.5, -13.5, 0.5, -15.5, -9.5, 0.5, -15.5, -7.5, 0.5, -15.5, -13.5, 0.5, -13.75, -11.5, 0.5, -13.75, -9.45, 0.5, -13.6),
+"coverage_crouch": Array[bool]([true, false, false, false, true, false, false, true]),
+"coverage_stand": Array[bool]([true, false, false, false, true, false, false, true]),
+"position": Vector3(-11.5, 0.5, -15.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-11.5, 0.5, -17.5, -9.5, 0.5, -17.5, -7.5, 0.5, -17.5, -13.5, 0.5, -15.5, -11.5, 0.5, -15.5, -7.5, 0.5, -15.5, -5.5, 0.5, -15.5, -11.5, 0.5, -13.75, -9.45, 0.5, -13.6, -7.5, 0.5, -13.5),
+"coverage_crouch": Array[bool]([false, false, false, false, true, false, false, true]),
+"coverage_stand": Array[bool]([false, false, false, false, true, false, false, true]),
+"position": Vector3(-9.5, 0.5, -15.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-9.5, 0.5, -17.5, -7.5, 0.5, -17.5, -5.5, 0.5, -17.5, -11.5, 0.5, -15.5, -9.5, 0.5, -15.5, -5.5, 0.5, -15.5, -3.5, 0.5, -15.5, -9.45, 0.5, -13.6, -7.5, 0.5, -13.5, -5.5, 0.5, -13.5, -7.5, 0.5, -11.5),
+"coverage_crouch": Array[bool]([false, false, false, false, true, false, false, true]),
+"coverage_stand": Array[bool]([false, false, false, false, true, false, false, true]),
+"position": Vector3(-7.5, 0.5, -15.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-7.5, 0.5, -17.5, -5.5, 0.5, -17.5, -3.5, 0.5, -17.5, -9.5, 0.5, -15.5, -7.5, 0.5, -15.5, -3.5, 0.5, -15.5, -1.5, 0.5, -15.5, -7.5, 0.5, -13.5, -5.5, 0.5, -13.5, -3.5, 0.5, -13.5, -5.5, 0.5, -11.5),
+"coverage_crouch": Array[bool]([false, true, false, false, true, false, false, false]),
+"coverage_stand": Array[bool]([false, true, false, false, true, false, false, false]),
+"position": Vector3(-5.5, 0.5, -15.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-5.5, 0.5, -17.5, -3.5, 0.5, -17.5, -1.5, 0.5, -17.5, -7.5, 0.5, -15.5, -5.5, 0.5, -15.5, -1.5, 0.5, -15.5, 0.5, 0.5, -15.5, -5.5, 0.5, -13.5, -3.5, 0.5, -13.5, -1.5, 0.5, -13.75, -3.5, 0.5, -11.5),
+"coverage_crouch": Array[bool]([false, true, false, false, true, false, false, false]),
+"coverage_stand": Array[bool]([false, true, false, false, true, false, false, false]),
+"position": Vector3(-3.5, 0.5, -15.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-3.5, 0.5, -17.5, -1.5, 0.5, -17.5, 0.5, 0.5, -17.5, -5.5, 0.5, -15.5, -3.5, 0.5, -15.5, 0.5, 0.5, -15.5, -3.5, 0.5, -13.5, -1.5, 0.5, -13.75, 0.5, 0.5, -13.75),
+"coverage_crouch": Array[bool]([true, true, false, false, true, false, false, false]),
+"coverage_stand": Array[bool]([true, true, false, false, true, false, false, false]),
+"position": Vector3(-1.5, 0.5, -15.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-1.5, 0.5, -17.5, 0.5, 0.5, -17.5, 2.5, 0.5, -17.5, -3.5, 0.5, -15.5, -1.5, 0.5, -15.5, 2.5, 0.5, -15.5, 4.5, 0.5, -15.5, -1.5, 0.5, -13.75, 0.5, 0.5, -13.75, 2.5, 0.5, -13.75),
+"coverage_crouch": Array[bool]([true, true, false, false, true, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, true, false, false, true]),
+"position": Vector3(0.5, 0.5, -15.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(0.5, 0.5, -17.5, 2.5, 0.5, -17.5, 4.5, 0.5, -17.5, 0.5, 0.5, -15.5, 4.5, 0.5, -15.5, 6.5, 0.5, -15.5, 0.5, 0.5, -13.75, 2.5, 0.5, -13.75, 4.5, 0.5, -13.5),
+"coverage_crouch": Array[bool]([true, false, false, false, true, false, false, true]),
+"coverage_stand": Array[bool]([true, false, false, false, true, false, false, true]),
+"position": Vector3(2.5, 0.5, -15.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(2.5, 0.5, -17.5, 4.5, 0.5, -17.5, 6.5, 0.5, -17.5, 0.5, 0.5, -15.5, 2.5, 0.5, -15.5, 6.5, 0.5, -15.5, 8.5, 0.5, -15.5, 2.5, 0.5, -13.75, 4.5, 0.5, -13.5, 6.5, 0.5, -13.5, 4.5, 0.5, -11.5),
+"coverage_crouch": Array[bool]([false, false, false, false, true, false, false, true]),
+"coverage_stand": Array[bool]([false, false, false, false, true, false, false, true]),
+"position": Vector3(4.5, 0.5, -15.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(4.5, 0.5, -17.5, 6.5, 0.5, -17.5, 8.5, 0.5, -17.5, 2.5, 0.5, -15.5, 4.5, 0.5, -15.5, 8.5, 0.5, -15.5, 10.5, 0.5, -15.5, 4.5, 0.5, -13.5, 6.5, 0.5, -13.5, 8.5, 0.5, -13.5, 6.5, 0.5, -11.5),
+"coverage_crouch": Array[bool]([false, true, false, false, true, false, false, true]),
+"coverage_stand": Array[bool]([false, true, false, false, true, false, false, true]),
+"position": Vector3(6.5, 0.5, -15.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(6.5, 0.5, -17.5, 8.5, 0.5, -17.5, 10.5, 0.5, -17.5, 4.5, 0.5, -15.5, 6.5, 0.5, -15.5, 10.5, 0.5, -15.5, 12.5, 0.5, -15.5, 6.5, 0.5, -13.5, 8.5, 0.5, -13.5, 10.5, 0.5, -13.75),
+"coverage_crouch": Array[bool]([false, true, false, false, true, false, false, false]),
+"coverage_stand": Array[bool]([false, true, false, false, true, false, false, false]),
+"position": Vector3(8.5, 0.5, -15.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(8.5, 0.5, -17.5, 10.5, 0.5, -17.5, 12.5, 0.5, -17.5, 6.5, 0.5, -15.5, 8.5, 0.5, -15.5, 12.5, 0.5, -15.5, 14.5, 0.5, -15.5, 8.5, 0.5, -13.5, 10.5, 0.5, -13.75, 12.5, 0.5, -13.75),
+"coverage_crouch": Array[bool]([true, true, false, false, true, false, false, false]),
+"coverage_stand": Array[bool]([true, true, false, false, true, false, false, false]),
+"position": Vector3(10.5, 0.5, -15.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(10.5, 0.5, -17.5, 12.5, 0.5, -17.5, 14.5, 0.5, -17.5, 8.5, 0.5, -15.5, 10.5, 0.5, -15.5, 14.5, 0.5, -15.5, 16.5, 0.5, -15.5, 10.5, 0.5, -13.75, 12.5, 0.5, -13.75, 14.5, 0.5, -13.75),
+"coverage_crouch": Array[bool]([true, true, false, false, true, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, true, false, false, true]),
+"position": Vector3(12.5, 0.5, -15.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(12.5, 0.5, -17.5, 14.5, 0.5, -17.5, 16.5, 0.5, -17.5, 10.5, 0.5, -15.5, 12.5, 0.5, -15.5, 16.5, 0.5, -15.5, 18.5, 0.5, -15.5, 12.5, 0.5, -13.75, 14.5, 0.5, -13.75, 16.535, 0.5, -13.505),
+"coverage_crouch": Array[bool]([true, false, true, false, true, false, false, true]),
+"coverage_stand": Array[bool]([true, false, true, false, true, false, false, true]),
+"position": Vector3(14.5, 0.5, -15.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(14.5, 0.5, -17.5, 16.5, 0.5, -17.5, 18.5, 0.5, -17.5, 12.5, 0.5, -15.5, 14.5, 0.5, -15.5, 18.5, 0.5, -15.5, 14.5, 0.5, -13.75, 16.535, 0.5, -13.505, 18.5, 0.5, -13.5),
+"coverage_crouch": Array[bool]([false, true, true, true, true, false, false, true]),
+"coverage_stand": Array[bool]([false, true, true, true, true, false, false, true]),
+"position": Vector3(16.5, 0.5, -15.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(16.5, 0.5, -17.5, 18.5, 0.5, -17.5, 14.5, 0.5, -15.5, 16.5, 0.5, -15.5, 16.535, 0.5, -13.505, 18.5, 0.5, -13.5, 18.5, 0.5, -11.5),
+"coverage_crouch": Array[bool]([false, true, true, true, true, false, false, true]),
+"coverage_stand": Array[bool]([false, true, true, true, true, false, false, true]),
+"position": Vector3(18.5, 0.5, -15.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-17.5, 0.5, -17.5, -17.5, 0.5, -15.5, -15.5, 0.5, -15.5, -15.5, 0.5, -13.75, -17.5, 0.5, -11.5, -17.5, 0.5, -9.5),
+"coverage_crouch": Array[bool]([false, true, false, false, false, true, true, true]),
+"coverage_stand": Array[bool]([false, true, false, false, false, true, true, true]),
+"position": Vector3(-17.5, 0.5, -13.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-15.5, 0.5, -17.5, -17.5, 0.5, -15.5, -15.5, 0.5, -15.5, -13.5, 0.5, -15.5, -17.5, 0.5, -13.5, -13.5, 0.5, -13.75, -11.5, 0.5, -13.75, -17.5, 0.5, -11.5, -15.25, 0.5, -11.5),
+"coverage_crouch": Array[bool]([true, true, false, false, false, false, true, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, false, true, true]),
+"position": Vector3(-15.5, 0.5, -13.75),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-13.5, 0.5, -17.5, -15.5, 0.5, -15.5, -13.5, 0.5, -15.5, -11.5, 0.5, -15.5, -15.5, 0.5, -13.75, -11.5, 0.5, -13.75),
+"coverage_crouch": Array[bool]([true, true, false, false, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, false, false, true]),
+"position": Vector3(-13.5, 0.5, -13.75),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-11.5, 0.5, -17.5, -13.5, 0.5, -15.5, -11.5, 0.5, -15.5, -9.5, 0.5, -15.5, -15.5, 0.5, -13.75, -13.5, 0.5, -13.75, -9.45, 0.5, -13.6),
+"coverage_crouch": Array[bool]([true, true, false, false, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, false, false, true]),
+"position": Vector3(-11.5, 0.5, -13.75),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-9.5, 0.5, -17.5, -11.5, 0.5, -15.5, -9.5, 0.5, -15.5, -7.5, 0.5, -15.5, -11.5, 0.5, -13.75, -7.5, 0.5, -13.5, -5.5, 0.5, -13.5, -9.25, 0.5, -11.5, -7.5, 0.5, -11.5),
+"coverage_crouch": Array[bool]([false, false, false, false, false, false, false, true]),
+"coverage_stand": Array[bool]([false, false, false, false, false, false, false, true]),
+"position": Vector3(-9.45, 0.5, -13.6),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-7.5, 0.5, -17.5, -9.5, 0.5, -15.5, -7.5, 0.5, -15.5, -5.5, 0.5, -15.5, -9.45, 0.5, -13.6, -5.5, 0.5, -13.5, -3.5, 0.5, -13.5, -9.25, 0.5, -11.5, -7.5, 0.5, -11.5, -5.5, 0.5, -11.5),
+"coverage_crouch": Array[bool]([true, false, false, false, false, false, false, true]),
+"coverage_stand": Array[bool]([true, false, false, false, false, false, false, true]),
+"position": Vector3(-7.5, 0.5, -13.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-5.5, 0.5, -17.5, -7.5, 0.5, -15.5, -5.5, 0.5, -15.5, -3.5, 0.5, -15.5, -9.45, 0.5, -13.6, -7.5, 0.5, -13.5, -3.5, 0.5, -13.5, -7.5, 0.5, -11.5, -5.5, 0.5, -11.5, -3.5, 0.5, -11.5, -5.5, 0.5, -9.5),
+"coverage_crouch": Array[bool]([false, true, false, false, false, false, false, false]),
+"coverage_stand": Array[bool]([false, true, false, false, false, false, false, false]),
+"position": Vector3(-5.5, 0.5, -13.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-3.5, 0.5, -17.5, -5.5, 0.5, -15.5, -3.5, 0.5, -15.5, -1.5, 0.5, -15.5, -7.5, 0.5, -13.5, -5.5, 0.5, -13.5, -1.5, 0.5, -13.75, -5.5, 0.5, -11.5, -3.5, 0.5, -11.5, -3.5, 0.5, -9.5),
+"coverage_crouch": Array[bool]([false, true, false, false, false, false, false, false]),
+"coverage_stand": Array[bool]([false, true, false, false, false, false, false, false]),
+"position": Vector3(-3.5, 0.5, -13.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-1.5, 0.5, -17.5, -3.5, 0.5, -15.5, -1.5, 0.5, -15.5, 0.5, 0.5, -15.5, -3.5, 0.5, -13.5, 0.5, 0.5, -13.75, 2.5, 0.5, -13.75),
+"coverage_crouch": Array[bool]([true, true, false, false, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, false, false, true]),
+"position": Vector3(-1.5, 0.5, -13.75),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(0.5, 0.5, -17.5, -1.5, 0.5, -15.5, 0.5, 0.5, -15.5, 2.5, 0.5, -15.5, -1.5, 0.5, -13.75, 2.5, 0.5, -13.75),
+"coverage_crouch": Array[bool]([true, true, false, false, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, false, false, true]),
+"position": Vector3(0.5, 0.5, -13.75),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(2.5, 0.5, -17.5, 0.5, 0.5, -15.5, 2.5, 0.5, -15.5, 4.5, 0.5, -15.5, -1.5, 0.5, -13.75, 0.5, 0.5, -13.75, 4.5, 0.5, -13.5, 2.5, 0.5, -11.5, 4.5, 0.5, -11.5),
+"coverage_crouch": Array[bool]([true, true, false, false, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, false, false, true]),
+"position": Vector3(2.5, 0.5, -13.75),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(4.5, 0.5, -17.5, 2.5, 0.5, -15.5, 4.5, 0.5, -15.5, 6.5, 0.5, -15.5, 2.5, 0.5, -13.75, 6.5, 0.5, -13.5, 2.5, 0.5, -11.5, 4.5, 0.5, -11.5, 6.5, 0.5, -11.5, 4.5, 0.5, -9.5),
+"coverage_crouch": Array[bool]([false, false, false, false, false, false, false, true]),
+"coverage_stand": Array[bool]([false, false, false, false, false, false, false, true]),
+"position": Vector3(4.5, 0.5, -13.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(6.5, 0.5, -17.5, 4.5, 0.5, -15.5, 6.5, 0.5, -15.5, 8.5, 0.5, -15.5, 4.5, 0.5, -13.5, 8.5, 0.5, -13.5, 2.5, 0.5, -11.5, 4.5, 0.5, -11.5, 6.5, 0.5, -11.5, 8.5, 0.5, -11.5, 6.5, 0.5, -9.5),
+"coverage_crouch": Array[bool]([false, false, false, false, false, false, false, false]),
+"coverage_stand": Array[bool]([false, false, false, false, false, false, false, false]),
+"position": Vector3(6.5, 0.5, -13.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(8.5, 0.5, -17.5, 6.5, 0.5, -15.5, 8.5, 0.5, -15.5, 10.5, 0.5, -15.5, 6.5, 0.5, -13.5, 10.5, 0.5, -13.75, 6.5, 0.5, -11.5, 8.5, 0.5, -11.5, 8.5, 0.5, -9.5),
+"coverage_crouch": Array[bool]([true, true, false, false, false, false, false, false]),
+"coverage_stand": Array[bool]([true, true, false, false, false, false, false, false]),
+"position": Vector3(8.5, 0.5, -13.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(10.5, 0.5, -17.5, 8.5, 0.5, -15.5, 10.5, 0.5, -15.5, 12.5, 0.5, -15.5, 8.5, 0.5, -13.5, 12.5, 0.5, -13.75, 14.5, 0.5, -13.75, 8.5, 0.5, -11.5),
+"coverage_crouch": Array[bool]([true, true, false, false, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, false, false, true]),
+"position": Vector3(10.5, 0.5, -13.75),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(12.5, 0.5, -17.5, 10.5, 0.5, -15.5, 12.5, 0.5, -15.5, 14.5, 0.5, -15.5, 10.5, 0.5, -13.75, 14.5, 0.5, -13.75),
+"coverage_crouch": Array[bool]([true, true, false, false, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, false, false, true]),
+"position": Vector3(12.5, 0.5, -13.75),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(14.5, 0.5, -17.5, 12.5, 0.5, -15.5, 14.5, 0.5, -15.5, 16.5, 0.5, -15.5, 10.5, 0.5, -13.75, 12.5, 0.5, -13.75, 16.535, 0.5, -13.505),
+"coverage_crouch": Array[bool]([true, true, true, false, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, true, false, false, false, false, true]),
+"position": Vector3(14.5, 0.5, -13.75),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(16.5, 0.5, -17.5, 14.5, 0.5, -15.5, 16.5, 0.5, -15.5, 18.5, 0.5, -15.5, 14.5, 0.5, -13.75, 18.5, 0.5, -13.5, 16.75, 0.5, -11.5, 18.5, 0.5, -11.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, false, false, true]),
+"coverage_stand": Array[bool]([false, true, true, true, false, false, false, true]),
+"position": Vector3(16.535, 0.5, -13.505),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(18.5, 0.5, -17.5, 16.5, 0.5, -15.5, 18.5, 0.5, -15.5, 16.535, 0.5, -13.505, 16.75, 0.5, -11.5, 18.5, 0.5, -11.5, 18.5, 0.5, -9.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, false, false, true]),
+"coverage_stand": Array[bool]([false, true, true, true, false, false, false, true]),
+"position": Vector3(18.5, 0.5, -13.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-17.5, 0.5, -15.5, -17.5, 0.5, -13.5, -15.5, 0.5, -13.75, -15.25, 0.5, -11.5, -17.5, 0.5, -9.5, -15.5, 0.5, -9.5, -17.5, 0.5, -7.5),
+"coverage_crouch": Array[bool]([true, false, true, true, false, true, true, true]),
+"coverage_stand": Array[bool]([true, false, true, true, false, true, true, true]),
+"position": Vector3(-17.5, 0.5, -11.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-17.5, 0.5, -17.5, -15.5, 0.5, -17.5, -13.5, 0.5, -17.5, -11.5, 0.5, -17.5, -17.5, 0.5, -15.5, -15.5, 0.5, -15.5, -13.5, 0.5, -15.5, -11.5, 0.5, -15.5, -17.5, 0.5, -13.5, -15.5, 0.5, -13.75, -13.5, 0.5, -13.75, -11.5, 0.5, -13.75, -17.5, 0.5, -11.5, -17.5, 0.5, -9.5, -15.5, 0.5, -9.5, -13.5, 0.5, -9.5, -11.5, 0.5, -9.5, -17.5, 0.5, -7.5, -15.5, 0.5, -7.5, -13.5, 0.5, -7.5, -11.5, 0.5, -7.5, -17.5, 0.5, -5.25, -15, 0.5, -5.5, -13.5, 0.5, -5.5, -11.5, 0.5, -5.5, -17.5, 0.5, -3.5, -15, 0.5, -3.5, -13.5, 0.5, -3.5, -11.5, 0.5, -3.5),
+"coverage_crouch": Array[bool]([false, false, false, false, false, false, true, false]),
+"coverage_stand": Array[bool]([false, false, false, false, false, false, true, false]),
+"position": Vector3(-15.25, 0.5, -11.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-9.45, 0.5, -13.6, -7.5, 0.5, -13.5, -7.5, 0.5, -11.5, -5.5, 0.5, -11.5, -11.5, 0.5, -9.5, -9.5, 0.5, -9.5, -7.5, 0.5, -9.5),
+"coverage_crouch": Array[bool]([true, false, false, false, false, true, true, true]),
+"coverage_stand": Array[bool]([true, false, false, false, false, true, true, true]),
+"position": Vector3(-9.25, 0.5, -11.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-7.5, 0.5, -15.5, -9.45, 0.5, -13.6, -7.5, 0.5, -13.5, -5.5, 0.5, -13.5, -9.25, 0.5, -11.5, -5.5, 0.5, -11.5, -3.5, 0.5, -11.5, -9.5, 0.5, -9.5, -7.5, 0.5, -9.5, -5.5, 0.5, -9.5),
+"coverage_crouch": Array[bool]([true, false, true, false, false, false, true, false]),
+"coverage_stand": Array[bool]([true, false, true, false, false, false, true, false]),
+"position": Vector3(-7.5, 0.5, -11.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-5.5, 0.5, -15.5, -7.5, 0.5, -13.5, -5.5, 0.5, -13.5, -3.5, 0.5, -13.5, -9.25, 0.5, -11.5, -7.5, 0.5, -11.5, -3.5, 0.5, -11.5, -7.5, 0.5, -9.5, -5.5, 0.5, -9.5, -3.5, 0.5, -9.5, -7.5, 0.5, -7.25, -5.5, 0.5, -7.5),
+"coverage_crouch": Array[bool]([false, false, true, false, false, false, true, true]),
+"coverage_stand": Array[bool]([false, false, true, false, false, false, true, true]),
+"position": Vector3(-5.5, 0.5, -11.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-3.5, 0.5, -15.5, -5.5, 0.5, -13.5, -3.5, 0.5, -13.5, -7.5, 0.5, -11.5, -5.5, 0.5, -11.5, -5.5, 0.5, -9.5, -3.5, 0.5, -9.5, -1.5, 0.5, -9.5, -3.5, 0.5, -7.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, false, false, true]),
+"coverage_stand": Array[bool]([false, true, true, true, false, false, false, true]),
+"position": Vector3(-3.5, 0.5, -11.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(0.5, 0.5, -17.5, 2.5, 0.5, -17.5, 4.5, 0.5, -17.5, 6.5, 0.5, -17.5, 8.5, 0.5, -17.5, 10.5, 0.5, -17.5, 0.5, 0.5, -15.5, 2.5, 0.5, -15.5, 4.5, 0.5, -15.5, 6.5, 0.5, -15.5, 8.5, 0.5, -15.5, 10.5, 0.5, -15.5, 0.5, 0.5, -13.75, 2.5, 0.5, -13.75, 4.5, 0.5, -13.5, 6.5, 0.5, -13.5, 8.5, 0.5, -13.5, 10.5, 0.5, -13.75, 4.5, 0.5, -11.5, 6.5, 0.5, -11.5, 8.5, 0.5, -11.5, 0.5, 0.5, -9.5, 2.5, 0.5, -9.5, 4.5, 0.5, -9.5, 6.5, 0.5, -9.5, 8.5, 0.5, -9.5, 10.5, 0.5, -9.5, 0.5, 0.5, -7.5, 2.5, 0.5, -7.5, 4.5, 0.5, -7.5, 6.25, 0.5, -7.5, 8.5, 0.5, -7.25, 10.5, 0.5, -7.5, 0.5, 0.5, -5.5, 2.5, 0.5, -5.5, 4.5, 0.5, -5.5, 6.25, 0.5, -5.5, 8.5, 0.5, -5.5, 10.5, 0.5, -5.5, 0.5, 0.5, -3.5, 2.5, 0.5, -3.5, 4.5, 0.5, -3.5, 6.25, 0.5, -3.5, 2.5, 0.5, -1.5),
+"coverage_crouch": Array[bool]([false, false, false, false, false, false, false, false]),
+"coverage_stand": Array[bool]([false, false, false, false, false, false, false, false]),
+"position": Vector3(2.5, 0.5, -11.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(4.5, 0.5, -15.5, 2.5, 0.5, -13.75, 4.5, 0.5, -13.5, 6.5, 0.5, -13.5, 2.5, 0.5, -11.5, 6.5, 0.5, -11.5, 8.5, 0.5, -11.5, 2.5, 0.5, -9.5, 4.5, 0.5, -9.5, 6.5, 0.5, -9.5, 4.5, 0.5, -7.5),
+"coverage_crouch": Array[bool]([false, true, true, false, false, true, true, false]),
+"coverage_stand": Array[bool]([false, true, true, false, false, true, true, false]),
+"position": Vector3(4.5, 0.5, -11.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(6.5, 0.5, -15.5, 4.5, 0.5, -13.5, 6.5, 0.5, -13.5, 8.5, 0.5, -13.5, 2.5, 0.5, -11.5, 4.5, 0.5, -11.5, 8.5, 0.5, -11.5, 4.5, 0.5, -9.5, 6.5, 0.5, -9.5, 8.5, 0.5, -9.5),
+"coverage_crouch": Array[bool]([false, false, true, false, false, false, true, false]),
+"coverage_stand": Array[bool]([false, false, true, false, false, false, true, false]),
+"position": Vector3(6.5, 0.5, -11.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(6.5, 0.5, -13.5, 8.5, 0.5, -13.5, 10.5, 0.5, -13.75, 4.5, 0.5, -11.5, 6.5, 0.5, -11.5, 6.5, 0.5, -9.5, 8.5, 0.5, -9.5, 10.5, 0.5, -9.5),
+"coverage_crouch": Array[bool]([true, false, true, true, false, false, true, false]),
+"coverage_stand": Array[bool]([true, false, true, true, false, false, true, false]),
+"position": Vector3(8.5, 0.5, -11.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(16.535, 0.5, -13.505, 18.5, 0.5, -13.5, 18.5, 0.5, -11.5, 14.5, 0.5, -9.5, 16.5, 0.5, -9.5, 18.5, 0.5, -9.5),
+"coverage_crouch": Array[bool]([true, true, true, true, false, true, true, true]),
+"coverage_stand": Array[bool]([true, true, true, true, false, true, true, true]),
+"position": Vector3(16.75, 0.5, -11.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(18.5, 0.5, -15.5, 16.535, 0.5, -13.505, 18.5, 0.5, -13.5, 16.75, 0.5, -11.5, 16.5, 0.5, -9.5, 18.5, 0.5, -9.5, 18.5, 0.5, -7.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, false, true, false]),
+"coverage_stand": Array[bool]([false, true, true, true, false, false, true, false]),
+"position": Vector3(18.5, 0.5, -11.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-17.5, 0.5, -13.5, -17.5, 0.5, -11.5, -15.25, 0.5, -11.5, -15.5, 0.5, -9.5, -13.5, 0.5, -9.5, -17.5, 0.5, -7.5, -15.5, 0.5, -7.5),
+"coverage_crouch": Array[bool]([true, false, false, true, false, true, true, true]),
+"coverage_stand": Array[bool]([true, false, false, true, false, true, true, true]),
+"position": Vector3(-17.5, 0.5, -9.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-17.5, 0.5, -11.5, -15.25, 0.5, -11.5, -17.5, 0.5, -9.5, -13.5, 0.5, -9.5, -11.5, 0.5, -9.5, -17.5, 0.5, -7.5, -15.5, 0.5, -7.5, -13.5, 0.5, -7.5),
+"coverage_crouch": Array[bool]([false, false, false, true, true, false, true, false]),
+"coverage_stand": Array[bool]([false, false, false, true, true, false, true, false]),
+"position": Vector3(-15.5, 0.5, -9.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-17.5, 0.5, -9.5, -15.5, 0.5, -9.5, -11.5, 0.5, -9.5, -9.5, 0.5, -9.5, -15.5, 0.5, -7.5, -13.5, 0.5, -7.5, -11.5, 0.5, -7.5, -13.5, 0.5, -5.5),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, false, true]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, false, true]),
+"position": Vector3(-13.5, 0.5, -9.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-9.25, 0.5, -11.5, -15.5, 0.5, -9.5, -13.5, 0.5, -9.5, -9.5, 0.5, -9.5, -7.5, 0.5, -9.5, -13.5, 0.5, -7.5, -11.5, 0.5, -7.5, -9.72293, 0.5, -7.4920382, -11.5, 0.5, -5.5),
+"coverage_crouch": Array[bool]([false, true, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, true, false, true, true, true, false, false]),
+"position": Vector3(-11.5, 0.5, -9.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-9.25, 0.5, -11.5, -7.5, 0.5, -11.5, -13.5, 0.5, -9.5, -11.5, 0.5, -9.5, -7.5, 0.5, -9.5, -5.5, 0.5, -9.5, -11.5, 0.5, -7.5, -9.72293, 0.5, -7.4920382),
+"coverage_crouch": Array[bool]([false, true, false, false, false, true, false, false]),
+"coverage_stand": Array[bool]([false, true, false, false, false, true, false, false]),
+"position": Vector3(-9.5, 0.5, -9.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-9.25, 0.5, -11.5, -7.5, 0.5, -11.5, -5.5, 0.5, -11.5, -11.5, 0.5, -9.5, -9.5, 0.5, -9.5, -5.5, 0.5, -9.5, -3.5, 0.5, -9.5, -9.72293, 0.5, -7.4920382, -7.5, 0.5, -7.25, -5.5, 0.5, -7.5),
+"coverage_crouch": Array[bool]([true, false, false, false, false, true, false, true]),
+"coverage_stand": Array[bool]([true, false, false, false, false, true, false, true]),
+"position": Vector3(-7.5, 0.5, -9.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-5.5, 0.5, -13.5, -7.5, 0.5, -11.5, -5.5, 0.5, -11.5, -3.5, 0.5, -11.5, -9.5, 0.5, -9.5, -7.5, 0.5, -9.5, -3.5, 0.5, -9.5, -1.5, 0.5, -9.5, -7.5, 0.5, -7.25, -5.5, 0.5, -7.5, -3.5, 0.5, -7.5, -5.5, 0.5, -5.5),
+"coverage_crouch": Array[bool]([false, false, false, true, false, false, false, true]),
+"coverage_stand": Array[bool]([false, false, false, true, false, false, false, true]),
+"position": Vector3(-5.5, 0.5, -9.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-3.5, 0.5, -13.5, -5.5, 0.5, -11.5, -3.5, 0.5, -11.5, -7.5, 0.5, -9.5, -5.5, 0.5, -9.5, -1.5, 0.5, -9.5, 0.5, 0.5, -9.5, -5.5, 0.5, -7.5, -3.5, 0.5, -7.5, -1.5, 0.5, -7.5, -3.5, 0.5, -5.5),
+"coverage_crouch": Array[bool]([false, false, false, true, false, false, false, true]),
+"coverage_stand": Array[bool]([false, false, false, true, false, false, false, true]),
+"position": Vector3(-3.5, 0.5, -9.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-3.5, 0.5, -11.5, -5.5, 0.5, -9.5, -3.5, 0.5, -9.5, 0.5, 0.5, -9.5, 2.5, 0.5, -9.5, -3.5, 0.5, -7.5, -1.5, 0.5, -7.5, 0.5, 0.5, -7.5, -1.5, 0.5, -5.5),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, false, false]),
+"position": Vector3(-1.5, 0.5, -9.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(2.5, 0.5, -11.5, -3.5, 0.5, -9.5, -1.5, 0.5, -9.5, 2.5, 0.5, -9.5, 4.5, 0.5, -9.5, -1.5, 0.5, -7.5, 0.5, 0.5, -7.5, 2.5, 0.5, -7.5, 0.5, 0.5, -5.5),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, false, false]),
+"position": Vector3(0.5, 0.5, -9.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(2.5, 0.5, -11.5, 4.5, 0.5, -11.5, -1.5, 0.5, -9.5, 0.5, 0.5, -9.5, 4.5, 0.5, -9.5, 6.5, 0.5, -9.5, 0.5, 0.5, -7.5, 2.5, 0.5, -7.5, 4.5, 0.5, -7.5, 2.5, 0.5, -5.5),
+"coverage_crouch": Array[bool]([false, false, false, false, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, false, false, true, true, false, false]),
+"position": Vector3(2.5, 0.5, -9.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(4.5, 0.5, -13.5, 2.5, 0.5, -11.5, 4.5, 0.5, -11.5, 6.5, 0.5, -11.5, 0.5, 0.5, -9.5, 2.5, 0.5, -9.5, 6.5, 0.5, -9.5, 8.5, 0.5, -9.5, 2.5, 0.5, -7.5, 4.5, 0.5, -7.5, 6.25, 0.5, -7.5, 4.5, 0.5, -5.5),
+"coverage_crouch": Array[bool]([false, true, false, false, false, true, false, false]),
+"coverage_stand": Array[bool]([false, true, false, false, false, true, false, false]),
+"position": Vector3(4.5, 0.5, -9.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(6.5, 0.5, -13.5, 2.5, 0.5, -11.5, 4.5, 0.5, -11.5, 6.5, 0.5, -11.5, 8.5, 0.5, -11.5, 2.5, 0.5, -9.5, 4.5, 0.5, -9.5, 8.5, 0.5, -9.5, 10.5, 0.5, -9.5, 4.5, 0.5, -7.5, 6.25, 0.5, -7.5),
+"coverage_crouch": Array[bool]([false, true, false, true, false, true, false, false]),
+"coverage_stand": Array[bool]([false, true, false, true, false, true, false, false]),
+"position": Vector3(6.5, 0.5, -9.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(8.5, 0.5, -13.5, 6.5, 0.5, -11.5, 8.5, 0.5, -11.5, 4.5, 0.5, -9.5, 6.5, 0.5, -9.5, 10.5, 0.5, -9.5, 12.5, 0.5, -9.5, 6.25, 0.5, -7.5, 8.5, 0.5, -7.25, 10.5, 0.5, -7.5),
+"coverage_crouch": Array[bool]([true, false, false, true, false, false, false, true]),
+"coverage_stand": Array[bool]([true, false, false, true, false, false, false, true]),
+"position": Vector3(8.5, 0.5, -9.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(8.5, 0.5, -11.5, 6.5, 0.5, -9.5, 8.5, 0.5, -9.5, 12.5, 0.5, -9.5, 14.5, 0.5, -9.5, 8.5, 0.5, -7.25, 10.5, 0.5, -7.5, 12.5, 0.5, -7.5, 10.5, 0.5, -5.5),
+"coverage_crouch": Array[bool]([false, false, false, true, true, false, false, true]),
+"coverage_stand": Array[bool]([false, false, false, true, true, false, false, true]),
+"position": Vector3(10.5, 0.5, -9.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(8.5, 0.5, -9.5, 10.5, 0.5, -9.5, 14.5, 0.5, -9.5, 16.5, 0.5, -9.5, 10.5, 0.5, -7.5, 12.5, 0.5, -7.5, 14.5, 0.5, -7.5, 12.5, 0.5, -5.5),
+"coverage_crouch": Array[bool]([false, true, false, true, true, true, false, true]),
+"coverage_stand": Array[bool]([false, true, false, true, true, true, false, true]),
+"position": Vector3(12.5, 0.5, -9.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(16.75, 0.5, -11.5, 10.5, 0.5, -9.5, 12.5, 0.5, -9.5, 16.5, 0.5, -9.5, 18.5, 0.5, -9.5, 12.5, 0.5, -7.5, 14.5, 0.5, -7.5, 16.5, 0.5, -7.5, 14.5, 0.5, -5.5),
+"coverage_crouch": Array[bool]([false, true, true, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, true, true, true, true, true, false, false]),
+"position": Vector3(14.5, 0.5, -9.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(16.75, 0.5, -11.5, 18.5, 0.5, -11.5, 12.5, 0.5, -9.5, 14.5, 0.5, -9.5, 18.5, 0.5, -9.5, 14.5, 0.5, -7.5, 16.5, 0.5, -7.5, 18.5, 0.5, -7.5),
+"coverage_crouch": Array[bool]([true, true, true, true, false, true, false, false]),
+"coverage_stand": Array[bool]([true, true, true, true, false, true, false, false]),
+"position": Vector3(16.5, 0.5, -9.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(18.5, 0.5, -13.5, 16.75, 0.5, -11.5, 18.5, 0.5, -11.5, 14.5, 0.5, -9.5, 16.5, 0.5, -9.5, 16.5, 0.5, -7.5, 18.5, 0.5, -7.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, true, false, false]),
+"coverage_stand": Array[bool]([false, true, true, true, false, true, false, false]),
+"position": Vector3(18.5, 0.5, -9.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-17.5, 0.5, -11.5, -17.5, 0.5, -9.5, -15.5, 0.5, -9.5, -15.5, 0.5, -7.5, -13.5, 0.5, -7.5, -17.5, 0.5, -5.25, -15, 0.5, -5.5),
+"coverage_crouch": Array[bool]([true, true, false, true, false, true, true, true]),
+"coverage_stand": Array[bool]([true, true, false, true, false, true, true, true]),
+"position": Vector3(-17.5, 0.5, -7.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-17.5, 0.5, -9.5, -15.5, 0.5, -9.5, -13.5, 0.5, -9.5, -17.5, 0.5, -7.5, -13.5, 0.5, -7.5, -11.5, 0.5, -7.5, -15, 0.5, -5.5, -13.5, 0.5, -5.5),
+"coverage_crouch": Array[bool]([false, false, false, true, true, false, true, true]),
+"coverage_stand": Array[bool]([false, false, false, true, true, false, true, true]),
+"position": Vector3(-15.5, 0.5, -7.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-15.5, 0.5, -9.5, -13.5, 0.5, -9.5, -11.5, 0.5, -9.5, -17.5, 0.5, -7.5, -15.5, 0.5, -7.5, -11.5, 0.5, -7.5, -9.72293, 0.5, -7.4920382, -15, 0.5, -5.5, -13.5, 0.5, -5.5, -11.5, 0.5, -5.5, -13.5, 0.5, -3.5),
+"coverage_crouch": Array[bool]([false, false, true, true, true, false, false, true]),
+"coverage_stand": Array[bool]([false, false, true, true, true, false, false, true]),
+"position": Vector3(-13.5, 0.5, -7.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-13.5, 0.5, -9.5, -11.5, 0.5, -9.5, -9.5, 0.5, -9.5, -15.5, 0.5, -7.5, -13.5, 0.5, -7.5, -9.72293, 0.5, -7.4920382, -13.5, 0.5, -5.5, -11.5, 0.5, -5.5, -9.651592, 0.5, -5.494586, -11.5, 0.5, -3.5),
+"coverage_crouch": Array[bool]([false, true, true, false, true, true, false, false]),
+"coverage_stand": Array[bool]([false, true, true, false, true, true, false, false]),
+"position": Vector3(-11.5, 0.5, -7.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-11.5, 0.5, -9.5, -9.5, 0.5, -9.5, -7.5, 0.5, -9.5, -13.5, 0.5, -7.5, -11.5, 0.5, -7.5, -11.5, 0.5, -5.5, -9.651592, 0.5, -5.494586, -9.580255, 0.5, -3.4971337),
+"coverage_crouch": Array[bool]([false, true, true, true, false, true, false, false]),
+"coverage_stand": Array[bool]([false, true, true, true, false, true, false, false]),
+"position": Vector3(-9.72293, 0.5, -7.4920382),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-11.5, 0.5, -15.5, -9.5, 0.5, -15.5, -7.5, 0.5, -15.5, -5.5, 0.5, -15.5, -3.5, 0.5, -15.5, -13.5, 0.5, -13.75, -11.5, 0.5, -13.75, -9.45, 0.5, -13.6, -7.5, 0.5, -13.5, -5.5, 0.5, -13.5, -3.5, 0.5, -13.5, -1.5, 0.5, -13.75, -15.25, 0.5, -11.5, -9.25, 0.5, -11.5, -7.5, 0.5, -11.5, -5.5, 0.5, -11.5, -3.5, 0.5, -11.5, -15.5, 0.5, -9.5, -13.5, 0.5, -9.5, -11.5, 0.5, -9.5, -9.5, 0.5, -9.5, -7.5, 0.5, -9.5, -5.5, 0.5, -9.5, -3.5, 0.5, -9.5, -1.5, 0.5, -9.5, 0.5, 0.5, -9.5, -15.5, 0.5, -7.5, -13.5, 0.5, -7.5, -11.5, 0.5, -7.5, -9.72293, 0.5, -7.4920382, -5.5, 0.5, -7.5, -3.5, 0.5, -7.5, -1.5, 0.5, -7.5, 0.5, 0.5, -7.5, -15, 0.5, -5.5, -13.5, 0.5, -5.5, -11.5, 0.5, -5.5, -9.651592, 0.5, -5.494586, -7.5, 0.5, -5.5, -5.5, 0.5, -5.5, -3.5, 0.5, -5.5, -1.5, 0.5, -5.5, 0.5, 0.5, -5.5, -15, 0.5, -3.5, -13.5, 0.5, -3.5, -11.5, 0.5, -3.5, -9.580255, 0.5, -3.4971337, -5.5, 0.5, -3.5, -3.5, 0.5, -3.5, -1.5, 0.5, -3.5, 0.5, 0.5, -3.5),
+"coverage_crouch": Array[bool]([false, false, false, false, false, true, false, false]),
+"coverage_stand": Array[bool]([false, false, false, false, false, true, false, false]),
+"position": Vector3(-7.5, 0.5, -7.25),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-5.5, 0.5, -11.5, -7.5, 0.5, -9.5, -5.5, 0.5, -9.5, -3.5, 0.5, -9.5, -7.5, 0.5, -7.25, -3.5, 0.5, -7.5, -1.5, 0.5, -7.5, -7.5, 0.5, -5.5, -5.5, 0.5, -5.5, -3.5, 0.5, -5.5, -5.5, 0.5, -3.5),
+"coverage_crouch": Array[bool]([false, false, false, true, false, false, true, true]),
+"coverage_stand": Array[bool]([false, false, false, true, false, false, true, true]),
+"position": Vector3(-5.5, 0.5, -7.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-3.5, 0.5, -11.5, -5.5, 0.5, -9.5, -3.5, 0.5, -9.5, -1.5, 0.5, -9.5, -5.5, 0.5, -7.5, -1.5, 0.5, -7.5, 0.5, 0.5, -7.5, -7.5, 0.5, -5.5, -5.5, 0.5, -5.5, -3.5, 0.5, -5.5, -1.5, 0.5, -5.5),
+"coverage_crouch": Array[bool]([false, false, false, true, false, false, true, true]),
+"coverage_stand": Array[bool]([false, false, false, true, false, false, true, true]),
+"position": Vector3(-3.5, 0.5, -7.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-3.5, 0.5, -9.5, -1.5, 0.5, -9.5, 0.5, 0.5, -9.5, -5.5, 0.5, -7.5, -3.5, 0.5, -7.5, 0.5, 0.5, -7.5, 2.5, 0.5, -7.5, -3.5, 0.5, -5.5, -1.5, 0.5, -5.5, 0.5, 0.5, -5.5, -1.5, 0.5, -3.5),
+"coverage_crouch": Array[bool]([false, false, false, true, true, false, true, false]),
+"coverage_stand": Array[bool]([false, false, false, true, true, false, true, false]),
+"position": Vector3(-1.5, 0.5, -7.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(2.5, 0.5, -11.5, -1.5, 0.5, -9.5, 0.5, 0.5, -9.5, 2.5, 0.5, -9.5, -3.5, 0.5, -7.5, -1.5, 0.5, -7.5, 2.5, 0.5, -7.5, 4.5, 0.5, -7.5, -1.5, 0.5, -5.5, 0.5, 0.5, -5.5, 2.5, 0.5, -5.5),
+"coverage_crouch": Array[bool]([false, false, false, false, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, false, false, true, true, false, false]),
+"position": Vector3(0.5, 0.5, -7.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(2.5, 0.5, -11.5, 0.5, 0.5, -9.5, 2.5, 0.5, -9.5, 4.5, 0.5, -9.5, -1.5, 0.5, -7.5, 0.5, 0.5, -7.5, 4.5, 0.5, -7.5, 6.25, 0.5, -7.5, 0.5, 0.5, -5.5, 2.5, 0.5, -5.5, 4.5, 0.5, -5.5, 2.5, 0.5, -3.5),
+"coverage_crouch": Array[bool]([false, false, true, false, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, true, false, true, true, false, false]),
+"position": Vector3(2.5, 0.5, -7.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(2.5, 0.5, -11.5, 4.5, 0.5, -11.5, 2.5, 0.5, -9.5, 4.5, 0.5, -9.5, 6.5, 0.5, -9.5, 0.5, 0.5, -7.5, 2.5, 0.5, -7.5, 6.25, 0.5, -7.5, 2.5, 0.5, -5.5, 4.5, 0.5, -5.5, 6.25, 0.5, -5.5, 8.5, 0.5, -5.5, 4.5, 0.5, -3.5),
+"coverage_crouch": Array[bool]([false, true, true, false, false, true, false, false]),
+"coverage_stand": Array[bool]([false, true, true, false, false, true, false, false]),
+"position": Vector3(4.5, 0.5, -7.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(4.5, 0.5, -9.5, 6.5, 0.5, -9.5, 8.5, 0.5, -9.5, 2.5, 0.5, -7.5, 4.5, 0.5, -7.5, 4.5, 0.5, -5.5, 6.25, 0.5, -5.5, 6.25, 0.5, -3.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, true, false, false]),
+"coverage_stand": Array[bool]([false, true, true, true, false, true, false, false]),
+"position": Vector3(6.25, 0.5, -7.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(4.5, 0.5, -15.5, 6.5, 0.5, -15.5, 8.5, 0.5, -15.5, 10.5, 0.5, -15.5, 12.5, 0.5, -15.5, 2.5, 0.5, -13.75, 4.5, 0.5, -13.5, 6.5, 0.5, -13.5, 8.5, 0.5, -13.5, 10.5, 0.5, -13.75, 12.5, 0.5, -13.75, 14.5, 0.5, -13.75, 2.5, 0.5, -11.5, 4.5, 0.5, -11.5, 6.5, 0.5, -11.5, 8.5, 0.5, -11.5, 16.75, 0.5, -11.5, 0.5, 0.5, -9.5, 2.5, 0.5, -9.5, 4.5, 0.5, -9.5, 6.5, 0.5, -9.5, 8.5, 0.5, -9.5, 10.5, 0.5, -9.5, 12.5, 0.5, -9.5, 14.5, 0.5, -9.5, 16.5, 0.5, -9.5, 0.5, 0.5, -7.5, 2.5, 0.5, -7.5, 4.5, 0.5, -7.5, 6.25, 0.5, -7.5, 10.5, 0.5, -7.5, 12.5, 0.5, -7.5, 14.5, 0.5, -7.5, 16.5, 0.5, -7.5, 0.5, 0.5, -5.5, 2.5, 0.5, -5.5, 4.5, 0.5, -5.5, 6.25, 0.5, -5.5, 8.5, 0.5, -5.5, 10.5, 0.5, -5.5, 12.5, 0.5, -5.5, 14.5, 0.5, -5.5, 16.5, 0.5, -5.25, 0.5, 0.5, -3.5, 2.5, 0.5, -3.5, 4.5, 0.5, -3.5, 6.25, 0.5, -3.5, 10.5, 0.5, -3.5, 12.5, 0.5, -3.5, 14.5, 0.5, -3.5),
+"coverage_crouch": Array[bool]([false, false, false, true, false, false, false, false]),
+"coverage_stand": Array[bool]([false, false, false, true, false, false, false, false]),
+"position": Vector3(8.5, 0.5, -7.25),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(8.5, 0.5, -9.5, 10.5, 0.5, -9.5, 12.5, 0.5, -9.5, 8.5, 0.5, -7.25, 12.5, 0.5, -7.5, 14.5, 0.5, -7.5, 8.5, 0.5, -5.5, 10.5, 0.5, -5.5, 12.5, 0.5, -5.5, 10.5, 0.5, -3.5),
+"coverage_crouch": Array[bool]([false, false, false, true, true, false, true, true]),
+"coverage_stand": Array[bool]([false, false, false, true, true, false, true, true]),
+"position": Vector3(10.5, 0.5, -7.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(10.5, 0.5, -9.5, 12.5, 0.5, -9.5, 14.5, 0.5, -9.5, 10.5, 0.5, -7.5, 14.5, 0.5, -7.5, 16.5, 0.5, -7.5, 10.5, 0.5, -5.5, 12.5, 0.5, -5.5, 14.5, 0.5, -5.5, 12.5, 0.5, -3.5),
+"coverage_crouch": Array[bool]([false, true, false, true, true, false, true, true]),
+"coverage_stand": Array[bool]([false, true, false, true, true, false, true, true]),
+"position": Vector3(12.5, 0.5, -7.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(12.5, 0.5, -9.5, 14.5, 0.5, -9.5, 16.5, 0.5, -9.5, 10.5, 0.5, -7.5, 12.5, 0.5, -7.5, 16.5, 0.5, -7.5, 18.5, 0.5, -7.5, 12.5, 0.5, -5.5, 14.5, 0.5, -5.5, 16.5, 0.5, -5.25),
+"coverage_crouch": Array[bool]([false, true, true, false, true, true, true, false]),
+"coverage_stand": Array[bool]([false, true, true, false, true, true, true, false]),
+"position": Vector3(14.5, 0.5, -7.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(14.5, 0.5, -9.5, 16.5, 0.5, -9.5, 18.5, 0.5, -9.5, 12.5, 0.5, -7.5, 14.5, 0.5, -7.5, 18.5, 0.5, -7.5, 14.5, 0.5, -5.5, 16.5, 0.5, -5.25),
+"coverage_crouch": Array[bool]([true, true, true, true, false, true, false, false]),
+"coverage_stand": Array[bool]([true, true, true, true, false, true, false, false]),
+"position": Vector3(16.5, 0.5, -7.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(18.5, 0.5, -11.5, 16.5, 0.5, -9.5, 18.5, 0.5, -9.5, 14.5, 0.5, -7.5, 16.5, 0.5, -7.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, true, false, true]),
+"coverage_stand": Array[bool]([false, true, true, true, false, true, false, true]),
+"position": Vector3(18.5, 0.5, -7.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-15.5, 0.5, -13.75, -13.5, 0.5, -13.75, -15.25, 0.5, -11.5, -15.5, 0.5, -9.5, -13.5, 0.5, -9.5, -11.5, 0.5, -9.5, -9.5, 0.5, -9.5, -15.5, 0.5, -7.5, -13.5, 0.5, -7.5, -11.5, 0.5, -7.5, -9.72293, 0.5, -7.4920382, -15, 0.5, -5.5, -13.5, 0.5, -5.5, -11.5, 0.5, -5.5, -9.651592, 0.5, -5.494586, -17.5, 0.5, -3.5, -15, 0.5, -3.5, -13.5, 0.5, -3.5, -11.5, 0.5, -3.5, -9.580255, 0.5, -3.4971337, -15, 0.5, -1.5, -13.5, 0.5, -1.5, -11.5, 0.5, -1.5, -9.508917, 0.5, -1.4996815),
+"coverage_crouch": Array[bool]([false, false, false, false, false, true, true, true]),
+"coverage_stand": Array[bool]([false, false, false, false, false, true, true, true]),
+"position": Vector3(-17.5, 0.5, -5.25),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-17.5, 0.5, -7.5, -15.5, 0.5, -7.5, -13.5, 0.5, -7.5, -13.5, 0.5, -5.5, -11.5, 0.5, -5.5, -15, 0.5, -3.5, -13.5, 0.5, -3.5, -15, 0.5, -1.5),
+"coverage_crouch": Array[bool]([false, false, true, false, true, false, true, true]),
+"coverage_stand": Array[bool]([false, false, true, false, true, false, true, true]),
+"position": Vector3(-15, 0.5, -5.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-13.5, 0.5, -9.5, -15.5, 0.5, -7.5, -13.5, 0.5, -7.5, -11.5, 0.5, -7.5, -15, 0.5, -5.5, -11.5, 0.5, -5.5, -9.651592, 0.5, -5.494586, -15, 0.5, -3.5, -13.5, 0.5, -3.5, -11.5, 0.5, -3.5, -13.5, 0.5, -1.5),
+"coverage_crouch": Array[bool]([false, false, true, false, true, false, true, true]),
+"coverage_stand": Array[bool]([false, false, true, false, true, false, true, true]),
+"position": Vector3(-13.5, 0.5, -5.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-11.5, 0.5, -9.5, -13.5, 0.5, -7.5, -11.5, 0.5, -7.5, -9.72293, 0.5, -7.4920382, -15, 0.5, -5.5, -13.5, 0.5, -5.5, -9.651592, 0.5, -5.494586, -13.5, 0.5, -3.5, -11.5, 0.5, -3.5, -9.580255, 0.5, -3.4971337, -11.5, 0.5, -1.5),
+"coverage_crouch": Array[bool]([false, true, true, true, true, false, true, false]),
+"coverage_stand": Array[bool]([false, true, true, true, true, false, true, false]),
+"position": Vector3(-11.5, 0.5, -5.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-11.5, 0.5, -7.5, -9.72293, 0.5, -7.4920382, -13.5, 0.5, -5.5, -11.5, 0.5, -5.5, -11.5, 0.5, -3.5, -9.580255, 0.5, -3.4971337, -9.508917, 0.5, -1.4996815),
+"coverage_crouch": Array[bool]([false, true, true, true, false, false, false, false]),
+"coverage_stand": Array[bool]([false, true, true, true, false, false, false, false]),
+"position": Vector3(-9.651592, 0.5, -5.494586),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-7.5, 0.5, -15.5, -11.5, 0.5, -13.75, -9.45, 0.5, -13.6, -7.5, 0.5, -13.5, -5.5, 0.5, -13.5, -3.5, 0.5, -13.5, -15.25, 0.5, -11.5, -9.25, 0.5, -11.5, -7.5, 0.5, -11.5, -5.5, 0.5, -11.5, -3.5, 0.5, -11.5, -15.5, 0.5, -9.5, -13.5, 0.5, -9.5, -11.5, 0.5, -9.5, -9.5, 0.5, -9.5, -7.5, 0.5, -9.5, -5.5, 0.5, -9.5, -3.5, 0.5, -9.5, -1.5, 0.5, -9.5, 0.5, 0.5, -9.5, -15.5, 0.5, -7.5, -13.5, 0.5, -7.5, -11.5, 0.5, -7.5, -9.72293, 0.5, -7.4920382, -7.5, 0.5, -7.25, -5.5, 0.5, -7.5, -3.5, 0.5, -7.5, -1.5, 0.5, -7.5, 0.5, 0.5, -7.5, -15, 0.5, -5.5, -13.5, 0.5, -5.5, -11.5, 0.5, -5.5, -9.651592, 0.5, -5.494586, -5.5, 0.5, -5.5, -3.5, 0.5, -5.5, -1.5, 0.5, -5.5, 0.5, 0.5, -5.5, 2.5, 0.5, -5.5, -15, 0.5, -3.5, -13.5, 0.5, -3.5, -11.5, 0.5, -3.5, -9.580255, 0.5, -3.4971337, -5.5, 0.5, -3.5, -3.5, 0.5, -3.5, -1.5, 0.5, -3.5, 0.5, 0.5, -3.5, -15, 0.5, -1.5, -13.5, 0.5, -1.5, -11.5, 0.5, -1.5, -9.508917, 0.5, -1.4996815, -7.5, 0.5, -1.25, -5.5, 0.5, -1.5, -3.5, 0.5, -1.5, -1.5, 0.5, -1.5, 0.5, 0.5, -1.5, -15, 0.5, 0.5, -13.5, 0.5, 0.5, -11.5, 0.5, 0.5, -9.5, 0.5, 0.5, -7.5, 0.5, 0.5, -5.5, 0.5, 0.5, -3.5, 0.5, 0.5, -1.5, 0.5, 0.5, -13.5, 0.5, 2.5, -11.5, 0.5, 2.5, -9.75, 0.5, 2.5, -7.5, 0.5, 2.75, -5.5, 0.5, 2.5, -3.5, 0.5, 2.5, -1.5, 0.5, 2.5, -7.5, 0.5, 4.5),
+"coverage_crouch": Array[bool]([false, false, false, false, false, false, false, false]),
+"coverage_stand": Array[bool]([false, false, false, false, false, false, false, false]),
+"position": Vector3(-7.5, 0.5, -5.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-5.5, 0.5, -9.5, -5.5, 0.5, -7.5, -3.5, 0.5, -7.5, -7.5, 0.5, -5.5, -3.5, 0.5, -5.5, -1.5, 0.5, -5.5, -5.5, 0.5, -3.5, -3.5, 0.5, -3.5, -5.5, 0.5, -1.5),
+"coverage_crouch": Array[bool]([false, false, false, false, false, true, true, true]),
+"coverage_stand": Array[bool]([false, false, false, false, false, true, true, true]),
+"position": Vector3(-5.5, 0.5, -5.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-3.5, 0.5, -9.5, -5.5, 0.5, -7.5, -3.5, 0.5, -7.5, -1.5, 0.5, -7.5, -7.5, 0.5, -5.5, -5.5, 0.5, -5.5, -1.5, 0.5, -5.5, 0.5, 0.5, -5.5, -5.5, 0.5, -3.5, -3.5, 0.5, -3.5, -1.5, 0.5, -3.5, -3.5, 0.5, -1.5),
+"coverage_crouch": Array[bool]([false, false, false, false, false, false, true, true]),
+"coverage_stand": Array[bool]([false, false, false, false, false, false, true, true]),
+"position": Vector3(-3.5, 0.5, -5.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-1.5, 0.5, -9.5, -3.5, 0.5, -7.5, -1.5, 0.5, -7.5, 0.5, 0.5, -7.5, -5.5, 0.5, -5.5, -3.5, 0.5, -5.5, 0.5, 0.5, -5.5, 2.5, 0.5, -5.5, -3.5, 0.5, -3.5, -1.5, 0.5, -3.5, 0.5, 0.5, -3.5, -1.5, 0.5, -1.5),
+"coverage_crouch": Array[bool]([true, false, false, false, true, false, true, false]),
+"coverage_stand": Array[bool]([true, false, false, false, true, false, true, false]),
+"position": Vector3(-1.5, 0.5, -5.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(0.5, 0.5, -9.5, -1.5, 0.5, -7.5, 0.5, 0.5, -7.5, 2.5, 0.5, -7.5, -3.5, 0.5, -5.5, -1.5, 0.5, -5.5, 2.5, 0.5, -5.5, -1.5, 0.5, -3.5, 0.5, 0.5, -3.5, 2.5, 0.5, -3.5, 0.5, 0.5, -1.5),
+"coverage_crouch": Array[bool]([true, false, false, false, true, false, false, false]),
+"coverage_stand": Array[bool]([true, false, false, false, true, false, false, false]),
+"position": Vector3(0.5, 0.5, -5.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(2.5, 0.5, -9.5, 0.5, 0.5, -7.5, 2.5, 0.5, -7.5, 4.5, 0.5, -7.5, -1.5, 0.5, -5.5, 0.5, 0.5, -5.5, 4.5, 0.5, -5.5, 6.25, 0.5, -5.5, 8.5, 0.5, -5.5, 0.5, 0.5, -3.5, 2.5, 0.5, -3.5, 4.5, 0.5, -3.5),
+"coverage_crouch": Array[bool]([true, false, true, false, true, false, false, false]),
+"coverage_stand": Array[bool]([true, false, true, false, true, false, false, false]),
+"position": Vector3(2.5, 0.5, -5.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(4.5, 0.5, -9.5, 2.5, 0.5, -7.5, 4.5, 0.5, -7.5, 6.25, 0.5, -7.5, 2.5, 0.5, -5.5, 6.25, 0.5, -5.5, 2.5, 0.5, -3.5, 4.5, 0.5, -3.5, 6.25, 0.5, -3.5, 4.5, 0.5, -1.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, false, false, false]),
+"coverage_stand": Array[bool]([false, true, true, true, false, false, false, false]),
+"position": Vector3(4.5, 0.5, -5.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(4.5, 0.5, -7.5, 6.25, 0.5, -7.5, 2.5, 0.5, -5.5, 4.5, 0.5, -5.5, 8.5, 0.5, -5.5, 4.5, 0.5, -3.5, 6.25, 0.5, -3.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, false, false, false]),
+"coverage_stand": Array[bool]([false, true, true, true, false, false, false, false]),
+"position": Vector3(6.25, 0.5, -5.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(8.5, 0.5, -15.5, 4.5, 0.5, -13.5, 6.5, 0.5, -13.5, 8.5, 0.5, -13.5, 10.5, 0.5, -13.75, 12.5, 0.5, -13.75, 2.5, 0.5, -11.5, 4.5, 0.5, -11.5, 6.5, 0.5, -11.5, 8.5, 0.5, -11.5, 0.5, 0.5, -9.5, 2.5, 0.5, -9.5, 4.5, 0.5, -9.5, 6.5, 0.5, -9.5, 8.5, 0.5, -9.5, 10.5, 0.5, -9.5, 12.5, 0.5, -9.5, 14.5, 0.5, -9.5, 16.5, 0.5, -9.5, 0.5, 0.5, -7.5, 2.5, 0.5, -7.5, 4.5, 0.5, -7.5, 6.25, 0.5, -7.5, 8.5, 0.5, -7.25, 10.5, 0.5, -7.5, 12.5, 0.5, -7.5, 14.5, 0.5, -7.5, 16.5, 0.5, -7.5, -1.5, 0.5, -5.5, 0.5, 0.5, -5.5, 2.5, 0.5, -5.5, 4.5, 0.5, -5.5, 6.25, 0.5, -5.5, 10.5, 0.5, -5.5, 12.5, 0.5, -5.5, 14.5, 0.5, -5.5, 16.5, 0.5, -5.25, 0.5, 0.5, -3.5, 2.5, 0.5, -3.5, 4.5, 0.5, -3.5, 6.25, 0.5, -3.5, 10.5, 0.5, -3.5, 12.5, 0.5, -3.5, 14.5, 0.5, -3.5, 0.5, 0.5, -1.5, 2.5, 0.5, -1.5, 4.5, 0.5, -1.5, 6.4, 0.5, -1.45, 8.507353, 0.5, -1.4044118, 10.5, 0.5, -1.5, 12.5, 0.5, -1.5, 14.5, 0.5, -1.5, 2.5, 0.5, 0.5, 4.5, 0.5, 0.5, 6.5, 0.5, 0.5, 8.5, 0.5, 0.5, 10.5, 0.5, 0.5, 12.5, 0.5, 0.5, 14.5, 0.5, 0.5, 16.5, 0.5, 0.5, 2.5, 0.5, 2.5, 4.5, 0.5, 2.5, 6.25, 0.5, 2.5, 8.5, 0.5, 2.75, 10.5, 0.5, 2.5, 12.5, 0.5, 2.5, 14.5, 0.5, 2.5, 8.5, 0.5, 4.5),
+"coverage_crouch": Array[bool]([false, false, false, false, false, false, false, false]),
+"coverage_stand": Array[bool]([false, false, false, false, false, false, false, false]),
+"position": Vector3(8.5, 0.5, -5.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(10.5, 0.5, -9.5, 10.5, 0.5, -7.5, 12.5, 0.5, -7.5, 8.5, 0.5, -5.5, 12.5, 0.5, -5.5, 14.5, 0.5, -5.5, 10.5, 0.5, -3.5, 12.5, 0.5, -3.5, 10.5, 0.5, -1.5),
+"coverage_crouch": Array[bool]([false, false, true, false, true, true, true, true]),
+"coverage_stand": Array[bool]([false, false, true, false, true, true, true, true]),
+"position": Vector3(10.5, 0.5, -5.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(12.5, 0.5, -9.5, 10.5, 0.5, -7.5, 12.5, 0.5, -7.5, 14.5, 0.5, -7.5, 8.5, 0.5, -5.5, 10.5, 0.5, -5.5, 14.5, 0.5, -5.5, 10.5, 0.5, -3.5, 12.5, 0.5, -3.5, 14.5, 0.5, -3.5, 12.5, 0.5, -1.5),
+"coverage_crouch": Array[bool]([false, true, true, false, true, false, true, true]),
+"coverage_stand": Array[bool]([false, true, true, false, true, false, true, true]),
+"position": Vector3(12.5, 0.5, -5.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(14.5, 0.5, -9.5, 12.5, 0.5, -7.5, 14.5, 0.5, -7.5, 16.5, 0.5, -7.5, 10.5, 0.5, -5.5, 12.5, 0.5, -5.5, 16.5, 0.5, -5.25, 12.5, 0.5, -3.5, 14.5, 0.5, -3.5, 14.5, 0.5, -1.5),
+"coverage_crouch": Array[bool]([false, true, true, false, true, false, true, false]),
+"coverage_stand": Array[bool]([false, true, true, false, true, false, true, false]),
+"position": Vector3(14.5, 0.5, -5.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(16.535, 0.5, -13.505, 18.5, 0.5, -13.5, 16.75, 0.5, -11.5, 18.5, 0.5, -11.5, 18.5, 0.5, -9.5, 18.5, 0.5, -7.5, 10.5, 0.5, -3.5, 12.5, 0.5, -3.5, 14.5, 0.5, -3.5, 8.507353, 0.5, -1.4044118, 10.5, 0.5, -1.5, 12.5, 0.5, -1.5, 14.5, 0.5, -1.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, false, false, false]),
+"coverage_stand": Array[bool]([false, true, true, true, false, false, false, false]),
+"position": Vector3(16.5, 0.5, -5.25),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-17.5, 0.5, -13.5, -17.5, 0.5, -11.5, -15.25, 0.5, -11.5, -17.5, 0.5, -9.5, -15.5, 0.5, -9.5, -13.5, 0.5, -9.5, -11.5, 0.5, -9.5, -9.5, 0.5, -9.5, -17.5, 0.5, -7.5, -15.5, 0.5, -7.5, -13.5, 0.5, -7.5, -11.5, 0.5, -7.5, -9.72293, 0.5, -7.4920382, -17.5, 0.5, -5.25, -15, 0.5, -5.5, -13.5, 0.5, -5.5, -11.5, 0.5, -5.5, -9.651592, 0.5, -5.494586, -15, 0.5, -3.5, -13.5, 0.5, -3.5, -11.5, 0.5, -3.5, -9.580255, 0.5, -3.4971337, -15, 0.5, -1.5, -13.5, 0.5, -1.5, -11.5, 0.5, -1.5, -9.508917, 0.5, -1.4996815),
+"coverage_crouch": Array[bool]([false, false, false, false, false, true, true, true]),
+"coverage_stand": Array[bool]([false, false, false, false, false, true, true, true]),
+"position": Vector3(-17.5, 0.5, -3.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-15, 0.5, -5.5, -13.5, 0.5, -5.5, -13.5, 0.5, -3.5, -11.5, 0.5, -3.5, -15, 0.5, -1.5, -13.5, 0.5, -1.5, -15, 0.5, 0.5),
+"coverage_crouch": Array[bool]([false, false, true, false, false, true, true, true]),
+"coverage_stand": Array[bool]([false, false, true, false, false, true, true, true]),
+"position": Vector3(-15, 0.5, -3.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-13.5, 0.5, -7.5, -15, 0.5, -5.5, -13.5, 0.5, -5.5, -11.5, 0.5, -5.5, -15, 0.5, -3.5, -11.5, 0.5, -3.5, -9.580255, 0.5, -3.4971337, -15, 0.5, -1.5, -13.5, 0.5, -1.5, -11.5, 0.5, -1.5, -13.5, 0.5, 0.5),
+"coverage_crouch": Array[bool]([false, false, true, false, false, true, true, true]),
+"coverage_stand": Array[bool]([false, false, true, false, false, true, true, true]),
+"position": Vector3(-13.5, 0.5, -3.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-11.5, 0.5, -7.5, -13.5, 0.5, -5.5, -11.5, 0.5, -5.5, -9.651592, 0.5, -5.494586, -7.5, 0.5, -5.5, -15, 0.5, -3.5, -13.5, 0.5, -3.5, -9.580255, 0.5, -3.4971337, -13.5, 0.5, -1.5, -11.5, 0.5, -1.5, -9.508917, 0.5, -1.4996815, -11.5, 0.5, 0.5),
+"coverage_crouch": Array[bool]([false, false, true, true, false, false, true, false]),
+"coverage_stand": Array[bool]([false, false, true, true, false, false, true, false]),
+"position": Vector3(-11.5, 0.5, -3.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-9.72293, 0.5, -7.4920382, -11.5, 0.5, -5.5, -9.651592, 0.5, -5.494586, -7.5, 0.5, -5.5, -13.5, 0.5, -3.5, -11.5, 0.5, -3.5, -11.5, 0.5, -1.5, -9.508917, 0.5, -1.4996815, -9.5, 0.5, 0.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, false, false, false]),
+"coverage_stand": Array[bool]([false, true, true, true, false, false, false, false]),
+"position": Vector3(-9.580255, 0.5, -3.4971337),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-5.5, 0.5, -7.5, -7.5, 0.5, -5.5, -5.5, 0.5, -5.5, -3.5, 0.5, -5.5, -3.5, 0.5, -3.5, -1.5, 0.5, -3.5, -7.5, 0.5, -1.25, -5.5, 0.5, -1.5, -3.5, 0.5, -1.5, -5.5, 0.5, 0.5),
+"coverage_crouch": Array[bool]([false, true, false, false, false, true, true, true]),
+"coverage_stand": Array[bool]([false, true, false, false, false, true, true, true]),
+"position": Vector3(-5.5, 0.5, -3.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-7.5, 0.5, -5.5, -5.5, 0.5, -5.5, -3.5, 0.5, -5.5, -1.5, 0.5, -5.5, -5.5, 0.5, -3.5, -1.5, 0.5, -3.5, 0.5, 0.5, -3.5, -5.5, 0.5, -1.5, -3.5, 0.5, -1.5, -1.5, 0.5, -1.5, -3.5, 0.5, 0.5),
+"coverage_crouch": Array[bool]([false, true, false, false, false, true, true, false]),
+"coverage_stand": Array[bool]([false, true, false, false, false, true, true, false]),
+"position": Vector3(-3.5, 0.5, -3.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-1.5, 0.5, -7.5, -3.5, 0.5, -5.5, -1.5, 0.5, -5.5, 0.5, 0.5, -5.5, -5.5, 0.5, -3.5, -3.5, 0.5, -3.5, 0.5, 0.5, -3.5, 2.5, 0.5, -3.5, -3.5, 0.5, -1.5, -1.5, 0.5, -1.5, 0.5, 0.5, -1.5),
+"coverage_crouch": Array[bool]([true, true, false, false, false, false, true, false]),
+"coverage_stand": Array[bool]([true, true, false, false, false, false, true, false]),
+"position": Vector3(-1.5, 0.5, -3.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-1.5, 0.5, -5.5, 0.5, 0.5, -5.5, 2.5, 0.5, -5.5, -3.5, 0.5, -3.5, -1.5, 0.5, -3.5, 2.5, 0.5, -3.5, 4.5, 0.5, -3.5, -1.5, 0.5, -1.5, 0.5, 0.5, -1.5, 2.5, 0.5, -1.5),
+"coverage_crouch": Array[bool]([true, true, false, false, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, false, false, true]),
+"position": Vector3(0.5, 0.5, -3.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(2.5, 0.5, -7.5, 0.5, 0.5, -5.5, 2.5, 0.5, -5.5, 4.5, 0.5, -5.5, -1.5, 0.5, -3.5, 0.5, 0.5, -3.5, 4.5, 0.5, -3.5, 6.25, 0.5, -3.5, 0.5, 0.5, -1.5, 2.5, 0.5, -1.5, 4.5, 0.5, -1.5),
+"coverage_crouch": Array[bool]([true, false, true, false, false, false, false, true]),
+"coverage_stand": Array[bool]([true, false, true, false, false, false, false, true]),
+"position": Vector3(2.5, 0.5, -3.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(4.5, 0.5, -7.5, 2.5, 0.5, -5.5, 4.5, 0.5, -5.5, 6.25, 0.5, -5.5, 8.5, 0.5, -5.5, 0.5, 0.5, -3.5, 2.5, 0.5, -3.5, 6.25, 0.5, -3.5, 2.5, 0.5, -1.5, 4.5, 0.5, -1.5, 6.4, 0.5, -1.45),
+"coverage_crouch": Array[bool]([false, false, true, true, false, false, false, true]),
+"coverage_stand": Array[bool]([false, false, true, true, false, false, false, true]),
+"position": Vector3(4.5, 0.5, -3.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(6.25, 0.5, -7.5, 4.5, 0.5, -5.5, 6.25, 0.5, -5.5, 8.5, 0.5, -5.5, 2.5, 0.5, -3.5, 4.5, 0.5, -3.5, 4.5, 0.5, -1.5, 6.4, 0.5, -1.45),
+"coverage_crouch": Array[bool]([false, true, true, true, false, false, false, true]),
+"coverage_stand": Array[bool]([false, true, true, true, false, false, false, true]),
+"position": Vector3(6.25, 0.5, -3.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(10.5, 0.5, -7.5, 8.5, 0.5, -5.5, 10.5, 0.5, -5.5, 12.5, 0.5, -5.5, 12.5, 0.5, -3.5, 8.507353, 0.5, -1.4044118, 10.5, 0.5, -1.5, 12.5, 0.5, -1.5, 10.5, 0.5, 0.5),
+"coverage_crouch": Array[bool]([false, false, true, false, false, true, true, true]),
+"coverage_stand": Array[bool]([false, false, true, false, false, true, true, true]),
+"position": Vector3(10.5, 0.5, -3.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(12.5, 0.5, -7.5, 10.5, 0.5, -5.5, 12.5, 0.5, -5.5, 14.5, 0.5, -5.5, 10.5, 0.5, -3.5, 14.5, 0.5, -3.5, 10.5, 0.5, -1.5, 12.5, 0.5, -1.5, 14.5, 0.5, -1.5),
+"coverage_crouch": Array[bool]([false, true, true, false, false, true, true, false]),
+"coverage_stand": Array[bool]([false, true, true, false, false, true, true, false]),
+"position": Vector3(12.5, 0.5, -3.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(12.5, 0.5, -5.5, 14.5, 0.5, -5.5, 12.5, 0.5, -3.5, 12.5, 0.5, -1.5, 14.5, 0.5, -1.5, 14.5, 0.5, 0.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, false, true, false]),
+"coverage_stand": Array[bool]([false, true, true, true, false, false, true, false]),
+"position": Vector3(14.5, 0.5, -3.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-15, 0.5, -5.5, -15, 0.5, -3.5, -13.5, 0.5, -3.5, -13.5, 0.5, -1.5, -11.5, 0.5, -1.5, -15, 0.5, 0.5, -13.5, 0.5, 0.5, -15, 0.5, 2.5),
+"coverage_crouch": Array[bool]([false, false, false, false, false, true, true, true]),
+"coverage_stand": Array[bool]([false, false, false, false, false, true, true, true]),
+"position": Vector3(-15, 0.5, -1.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-13.5, 0.5, -5.5, -15, 0.5, -3.5, -13.5, 0.5, -3.5, -11.5, 0.5, -3.5, -15, 0.5, -1.5, -11.5, 0.5, -1.5, -9.508917, 0.5, -1.4996815, -15, 0.5, 0.5, -13.5, 0.5, 0.5, -11.5, 0.5, 0.5, -13.5, 0.5, 2.5),
+"coverage_crouch": Array[bool]([false, false, false, false, false, true, true, true]),
+"coverage_stand": Array[bool]([false, false, false, false, false, true, true, true]),
+"position": Vector3(-13.5, 0.5, -1.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-11.5, 0.5, -5.5, -13.5, 0.5, -3.5, -11.5, 0.5, -3.5, -9.580255, 0.5, -3.4971337, -15, 0.5, -1.5, -13.5, 0.5, -1.5, -9.508917, 0.5, -1.4996815, -13.5, 0.5, 0.5, -11.5, 0.5, 0.5, -9.5, 0.5, 0.5, -11.5, 0.5, 2.5),
+"coverage_crouch": Array[bool]([false, true, false, true, false, false, true, false]),
+"coverage_stand": Array[bool]([false, true, false, true, false, false, true, false]),
+"position": Vector3(-11.5, 0.5, -1.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-9.651592, 0.5, -5.494586, -7.5, 0.5, -5.5, -11.5, 0.5, -3.5, -9.580255, 0.5, -3.4971337, -13.5, 0.5, -1.5, -11.5, 0.5, -1.5, -7.5, 0.5, -1.25, -11.5, 0.5, 0.5, -9.5, 0.5, 0.5, -7.5, 0.5, 0.5),
+"coverage_crouch": Array[bool]([false, false, false, true, false, false, false, false]),
+"coverage_stand": Array[bool]([false, false, false, true, false, false, false, false]),
+"position": Vector3(-9.508917, 0.5, -1.4996815),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-5.5, 0.5, -3.5, -9.508917, 0.5, -1.4996815, -5.5, 0.5, -1.5, -9.5, 0.5, 0.5, -7.5, 0.5, 0.5, -5.5, 0.5, 0.5),
+"coverage_crouch": Array[bool]([true, false, true, false, true, true, false, false]),
+"coverage_stand": Array[bool]([true, false, true, false, true, true, false, false]),
+"position": Vector3(-7.5, 0.5, -1.25),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-5.5, 0.5, -5.5, -5.5, 0.5, -3.5, -3.5, 0.5, -3.5, -7.5, 0.5, -1.25, -3.5, 0.5, -1.5, -1.5, 0.5, -1.5, -7.5, 0.5, 0.5, -5.5, 0.5, 0.5, -3.5, 0.5, 0.5, -5.5, 0.5, 2.5),
+"coverage_crouch": Array[bool]([false, true, false, false, false, true, false, true]),
+"coverage_stand": Array[bool]([false, true, false, false, false, true, false, true]),
+"position": Vector3(-5.5, 0.5, -1.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-3.5, 0.5, -5.5, -5.5, 0.5, -3.5, -3.5, 0.5, -3.5, -1.5, 0.5, -3.5, -5.5, 0.5, -1.5, -1.5, 0.5, -1.5, 0.5, 0.5, -1.5, -5.5, 0.5, 0.5, -3.5, 0.5, 0.5, -1.5, 0.5, 0.5, -3.5, 0.5, 2.5),
+"coverage_crouch": Array[bool]([false, true, false, false, false, true, false, true]),
+"coverage_stand": Array[bool]([false, true, false, false, false, true, false, true]),
+"position": Vector3(-3.5, 0.5, -1.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-1.5, 0.5, -5.5, -3.5, 0.5, -3.5, -1.5, 0.5, -3.5, 0.5, 0.5, -3.5, -5.5, 0.5, -1.5, -3.5, 0.5, -1.5, 0.5, 0.5, -1.5, -3.5, 0.5, 0.5, -1.5, 0.5, 0.5),
+"coverage_crouch": Array[bool]([true, true, false, false, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, false, false, true]),
+"position": Vector3(-1.5, 0.5, -1.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(0.5, 0.5, -5.5, -1.5, 0.5, -3.5, 0.5, 0.5, -3.5, 2.5, 0.5, -3.5, -3.5, 0.5, -1.5, -1.5, 0.5, -1.5, 2.5, 0.5, -1.5, -1.5, 0.5, 0.5),
+"coverage_crouch": Array[bool]([true, true, false, false, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, false, false, true]),
+"position": Vector3(0.5, 0.5, -1.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(0.5, 0.5, -3.5, 2.5, 0.5, -3.5, 4.5, 0.5, -3.5, 0.5, 0.5, -1.5, 4.5, 0.5, -1.5, 6.4, 0.5, -1.45, 4.5, 0.5, 0.5),
+"coverage_crouch": Array[bool]([true, true, false, false, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, false, false, true]),
+"position": Vector3(2.5, 0.5, -1.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(4.5, 0.5, -5.5, 2.5, 0.5, -3.5, 4.5, 0.5, -3.5, 6.25, 0.5, -3.5, 2.5, 0.5, -1.5, 6.4, 0.5, -1.45, 2.5, 0.5, 0.5, 4.5, 0.5, 0.5, 6.5, 0.5, 0.5, 4.5, 0.5, 2.5),
+"coverage_crouch": Array[bool]([false, true, false, true, false, false, false, true]),
+"coverage_stand": Array[bool]([false, true, false, true, false, false, false, true]),
+"position": Vector3(4.5, 0.5, -1.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(4.5, 0.5, -3.5, 6.25, 0.5, -3.5, 2.5, 0.5, -1.5, 4.5, 0.5, -1.5, 8.507353, 0.5, -1.4044118, 4.5, 0.5, 0.5, 6.5, 0.5, 0.5, 8.5, 0.5, 0.5, 6.25, 0.5, 2.5),
+"coverage_crouch": Array[bool]([false, false, false, true, false, false, false, false]),
+"coverage_stand": Array[bool]([false, false, false, true, false, false, false, false]),
+"position": Vector3(6.4, 0.5, -1.45),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(10.5, 0.5, -3.5, 6.4, 0.5, -1.45, 10.5, 0.5, -1.5, 12.5, 0.5, -1.5, 6.5, 0.5, 0.5, 8.5, 0.5, 0.5, 10.5, 0.5, 0.5),
+"coverage_crouch": Array[bool]([true, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([true, false, false, true, true, true, false, false]),
+"position": Vector3(8.507353, 0.5, -1.4044118),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(10.5, 0.5, -5.5, 10.5, 0.5, -3.5, 12.5, 0.5, -3.5, 8.507353, 0.5, -1.4044118, 12.5, 0.5, -1.5, 14.5, 0.5, -1.5, 8.5, 0.5, 0.5, 10.5, 0.5, 0.5, 12.5, 0.5, 0.5, 10.5, 0.5, 2.5),
+"coverage_crouch": Array[bool]([false, false, true, false, false, true, false, true]),
+"coverage_stand": Array[bool]([false, false, true, false, false, true, false, true]),
+"position": Vector3(10.5, 0.5, -1.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(12.5, 0.5, -5.5, 10.5, 0.5, -3.5, 12.5, 0.5, -3.5, 14.5, 0.5, -3.5, 8.507353, 0.5, -1.4044118, 10.5, 0.5, -1.5, 14.5, 0.5, -1.5, 10.5, 0.5, 0.5, 12.5, 0.5, 0.5, 14.5, 0.5, 0.5, 16.5, 0.5, 0.5, 12.5, 0.5, 2.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, true, false, true]),
+"coverage_stand": Array[bool]([false, true, true, true, false, true, false, true]),
+"position": Vector3(12.5, 0.5, -1.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(14.5, 0.5, -5.5, 12.5, 0.5, -3.5, 14.5, 0.5, -3.5, 10.5, 0.5, -1.5, 12.5, 0.5, -1.5, 12.5, 0.5, 0.5, 14.5, 0.5, 0.5, 16.5, 0.5, 0.5, 14.5, 0.5, 2.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, false, false, false]),
+"coverage_stand": Array[bool]([false, true, true, true, false, false, false, false]),
+"position": Vector3(14.5, 0.5, -1.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-15, 0.5, -3.5, -15, 0.5, -1.5, -13.5, 0.5, -1.5, -13.5, 0.5, 0.5, -11.5, 0.5, 0.5, -15, 0.5, 2.5, -13.5, 0.5, 2.5),
+"coverage_crouch": Array[bool]([false, false, false, false, false, true, true, true]),
+"coverage_stand": Array[bool]([false, false, false, false, false, true, true, true]),
+"position": Vector3(-15, 0.5, 0.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-13.5, 0.5, -3.5, -15, 0.5, -1.5, -13.5, 0.5, -1.5, -11.5, 0.5, -1.5, -15, 0.5, 0.5, -11.5, 0.5, 0.5, -9.5, 0.5, 0.5, -15, 0.5, 2.5, -13.5, 0.5, 2.5, -11.5, 0.5, 2.5),
+"coverage_crouch": Array[bool]([false, false, false, false, false, true, true, true]),
+"coverage_stand": Array[bool]([false, false, false, false, false, true, true, true]),
+"position": Vector3(-13.5, 0.5, 0.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-11.5, 0.5, -3.5, -13.5, 0.5, -1.5, -11.5, 0.5, -1.5, -9.508917, 0.5, -1.4996815, -15, 0.5, 0.5, -13.5, 0.5, 0.5, -9.5, 0.5, 0.5, -7.5, 0.5, 0.5, -13.5, 0.5, 2.5, -11.5, 0.5, 2.5, -9.75, 0.5, 2.5, -11.5, 0.5, 4.5),
+"coverage_crouch": Array[bool]([false, true, false, true, false, false, true, false]),
+"coverage_stand": Array[bool]([false, true, false, true, false, false, true, false]),
+"position": Vector3(-11.5, 0.5, 0.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-9.580255, 0.5, -3.4971337, -11.5, 0.5, -1.5, -9.508917, 0.5, -1.4996815, -7.5, 0.5, -1.25, -13.5, 0.5, 0.5, -11.5, 0.5, 0.5, -7.5, 0.5, 0.5, -5.5, 0.5, 0.5, -11.5, 0.5, 2.5, -9.75, 0.5, 2.5),
+"coverage_crouch": Array[bool]([false, true, false, true, false, false, false, false]),
+"coverage_stand": Array[bool]([false, true, false, true, false, false, false, false]),
+"position": Vector3(-9.5, 0.5, 0.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-9.508917, 0.5, -1.4996815, -7.5, 0.5, -1.25, -5.5, 0.5, -1.5, -11.5, 0.5, 0.5, -9.5, 0.5, 0.5, -5.5, 0.5, 0.5, -3.5, 0.5, 0.5, -9.75, 0.5, 2.5, -7.5, 0.5, 2.75, -5.5, 0.5, 2.5),
+"coverage_crouch": Array[bool]([true, false, true, false, true, false, false, true]),
+"coverage_stand": Array[bool]([true, false, true, false, true, false, false, true]),
+"position": Vector3(-7.5, 0.5, 0.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-5.5, 0.5, -3.5, -7.5, 0.5, -1.25, -5.5, 0.5, -1.5, -3.5, 0.5, -1.5, -9.5, 0.5, 0.5, -7.5, 0.5, 0.5, -3.5, 0.5, 0.5, -7.5, 0.5, 2.75, -5.5, 0.5, 2.5, -3.5, 0.5, 2.5),
+"coverage_crouch": Array[bool]([false, false, true, false, false, true, false, true]),
+"coverage_stand": Array[bool]([false, false, true, false, false, true, false, true]),
+"position": Vector3(-5.5, 0.5, 0.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-3.5, 0.5, -3.5, -5.5, 0.5, -1.5, -3.5, 0.5, -1.5, -1.5, 0.5, -1.5, -7.5, 0.5, 0.5, -5.5, 0.5, 0.5, -1.5, 0.5, 0.5, -5.5, 0.5, 2.5, -3.5, 0.5, 2.5, -1.5, 0.5, 2.5, -3.5, 0.5, 4.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, true, false, true]),
+"coverage_stand": Array[bool]([false, true, true, true, false, true, false, true]),
+"position": Vector3(-3.5, 0.5, 0.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-1.5, 0.5, -9.5, -7.5, 0.5, -7.25, -5.5, 0.5, -7.5, -3.5, 0.5, -7.5, -1.5, 0.5, -7.5, 0.5, 0.5, -7.5, -7.5, 0.5, -5.5, -5.5, 0.5, -5.5, -3.5, 0.5, -5.5, -1.5, 0.5, -5.5, 0.5, 0.5, -5.5, -9.580255, 0.5, -3.4971337, -5.5, 0.5, -3.5, -3.5, 0.5, -3.5, -1.5, 0.5, -3.5, 0.5, 0.5, -3.5, -9.508917, 0.5, -1.4996815, -7.5, 0.5, -1.25, -5.5, 0.5, -1.5, -3.5, 0.5, -1.5, -1.5, 0.5, -1.5, 0.5, 0.5, -1.5, -11.5, 0.5, 0.5, -9.5, 0.5, 0.5, -7.5, 0.5, 0.5, -5.5, 0.5, 0.5, -3.5, 0.5, 0.5, 2.5, 0.5, 0.5, 4.5, 0.5, 0.5, 6.5, 0.5, 0.5, 8.5, 0.5, 0.5, -9.75, 0.5, 2.5, -7.5, 0.5, 2.75, -5.5, 0.5, 2.5, -3.5, 0.5, 2.5, -1.5, 0.5, 2.5, 0.5, 0.5, 2.5, -9.75, 0.5, 4.5, -7.5, 0.5, 4.5, -5.5, 0.5, 4.5, -3.5, 0.5, 4.5, -1.5, 0.5, 4.5, 0.5, 0.5, 4.5, -5.5, 0.5, 6.5, -3.5, 0.5, 6.5, -1.5, 0.5, 6.5, 0.5, 0.5, 6.5, -5.5, 0.5, 8.5, -3.5, 0.5, 8.5, -1.5, 0.5, 8.5, 0.5, 0.5, 8.5, -1.5, 0.5, 10.25, 0.5, 0.5, 10.25),
+"coverage_crouch": Array[bool]([false, false, false, false, false, false, false, false]),
+"coverage_stand": Array[bool]([false, false, false, false, false, false, false, false]),
+"position": Vector3(-1.5, 0.5, 0.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(2.5, 0.5, -9.5, 0.5, 0.5, -7.5, 2.5, 0.5, -7.5, 4.5, 0.5, -7.5, 6.25, 0.5, -7.5, 8.5, 0.5, -7.25, 0.5, 0.5, -5.5, 2.5, 0.5, -5.5, 4.5, 0.5, -5.5, 6.25, 0.5, -5.5, 8.5, 0.5, -5.5, 10.5, 0.5, -5.5, 0.5, 0.5, -3.5, 2.5, 0.5, -3.5, 4.5, 0.5, -3.5, 6.25, 0.5, -3.5, 10.5, 0.5, -3.5, 0.5, 0.5, -1.5, 2.5, 0.5, -1.5, 4.5, 0.5, -1.5, 6.4, 0.5, -1.45, 8.507353, 0.5, -1.4044118, 10.5, 0.5, -1.5, -1.5, 0.5, 0.5, 4.5, 0.5, 0.5, 6.5, 0.5, 0.5, 8.5, 0.5, 0.5, 10.5, 0.5, 0.5, 12.5, 0.5, 0.5, 0.5, 0.5, 2.5, 2.5, 0.5, 2.5, 4.5, 0.5, 2.5, 6.25, 0.5, 2.5, 8.5, 0.5, 2.75, 10.5, 0.5, 2.5, 0.5, 0.5, 4.5, 2.5, 0.5, 4.5, 4.5, 0.5, 4.5, 6.25, 0.5, 4.5, 8.5, 0.5, 4.5, 10.5, 0.5, 4.5, 0.5, 0.5, 6.5, 2.5, 0.5, 6.5, 4.5, 0.5, 6.5, 6.25, 0.5, 6.5, 10.5, 0.5, 6.5, 0.5, 0.5, 8.5, 2.5, 0.5, 8.5, 4.5, 0.5, 8.5, 6.4, 0.5, 8.55, 0.5, 0.5, 10.25, 2.5, 0.5, 10.25),
+"coverage_crouch": Array[bool]([false, false, false, false, false, false, false, false]),
+"coverage_stand": Array[bool]([false, false, false, false, false, false, false, false]),
+"position": Vector3(2.5, 0.5, 0.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(2.5, 0.5, -1.5, 4.5, 0.5, -1.5, 6.4, 0.5, -1.45, 2.5, 0.5, 0.5, 6.5, 0.5, 0.5, 8.5, 0.5, 0.5, 2.5, 0.5, 2.5, 4.5, 0.5, 2.5, 6.25, 0.5, 2.5, 4.5, 0.5, 4.5),
+"coverage_crouch": Array[bool]([false, true, false, true, false, true, true, false]),
+"coverage_stand": Array[bool]([false, true, false, true, false, true, true, false]),
+"position": Vector3(4.5, 0.5, 0.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(4.5, 0.5, -1.5, 6.4, 0.5, -1.45, 8.507353, 0.5, -1.4044118, 4.5, 0.5, 0.5, 8.5, 0.5, 0.5, 10.5, 0.5, 0.5, 4.5, 0.5, 2.5, 6.25, 0.5, 2.5),
+"coverage_crouch": Array[bool]([false, true, false, true, false, false, true, false]),
+"coverage_stand": Array[bool]([false, true, false, true, false, false, true, false]),
+"position": Vector3(6.5, 0.5, 0.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(6.4, 0.5, -1.45, 8.507353, 0.5, -1.4044118, 10.5, 0.5, -1.5, 4.5, 0.5, 0.5, 6.5, 0.5, 0.5, 10.5, 0.5, 0.5, 12.5, 0.5, 0.5, 6.25, 0.5, 2.5, 8.5, 0.5, 2.75, 10.5, 0.5, 2.5, 8.5, 0.5, 4.5),
+"coverage_crouch": Array[bool]([true, false, false, false, true, false, true, true]),
+"coverage_stand": Array[bool]([true, false, false, false, true, false, true, true]),
+"position": Vector3(8.5, 0.5, 0.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(10.5, 0.5, -3.5, 8.507353, 0.5, -1.4044118, 10.5, 0.5, -1.5, 12.5, 0.5, -1.5, 6.5, 0.5, 0.5, 8.5, 0.5, 0.5, 12.5, 0.5, 0.5, 14.5, 0.5, 0.5, 8.5, 0.5, 2.75, 10.5, 0.5, 2.5, 12.5, 0.5, 2.5, 10.5, 0.5, 4.5),
+"coverage_crouch": Array[bool]([false, false, true, false, false, true, false, true]),
+"coverage_stand": Array[bool]([false, false, true, false, false, true, false, true]),
+"position": Vector3(10.5, 0.5, 0.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(10.5, 0.5, -1.5, 12.5, 0.5, -1.5, 14.5, 0.5, -1.5, 8.5, 0.5, 0.5, 10.5, 0.5, 0.5, 14.5, 0.5, 0.5, 16.5, 0.5, 0.5, 10.5, 0.5, 2.5, 12.5, 0.5, 2.5, 14.5, 0.5, 2.5, 12.5, 0.5, 4.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, true, false, true]),
+"coverage_stand": Array[bool]([false, true, true, true, false, true, false, true]),
+"position": Vector3(12.5, 0.5, 0.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(14.5, 0.5, -3.5, 12.5, 0.5, -1.5, 14.5, 0.5, -1.5, 10.5, 0.5, 0.5, 12.5, 0.5, 0.5, 16.5, 0.5, 0.5, 12.5, 0.5, 2.5, 14.5, 0.5, 2.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, false, false, false]),
+"coverage_stand": Array[bool]([false, true, true, true, false, false, false, false]),
+"position": Vector3(14.5, 0.5, 0.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(10.5, 0.5, -3.5, 12.5, 0.5, -3.5, 14.5, 0.5, -3.5, 8.507353, 0.5, -1.4044118, 10.5, 0.5, -1.5, 12.5, 0.5, -1.5, 14.5, 0.5, -1.5, 6.5, 0.5, 0.5, 8.5, 0.5, 0.5, 10.5, 0.5, 0.5, 12.5, 0.5, 0.5, 14.5, 0.5, 0.5, 8.5, 0.5, 2.75, 10.5, 0.5, 2.5, 12.5, 0.5, 2.5, 14.5, 0.5, 2.5, 8.5, 0.5, 4.5, 10.5, 0.5, 4.5, 12.5, 0.5, 4.5, 14.5, 0.5, 4.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, false, false, false]),
+"coverage_stand": Array[bool]([false, true, true, true, false, false, false, false]),
+"position": Vector3(16.5, 0.5, 0.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-15, 0.5, -1.5, -15, 0.5, 0.5, -13.5, 0.5, 0.5, -13.5, 0.5, 2.5, -11.5, 0.5, 2.5, -15, 0.5, 4.5, -13.5, 0.5, 4.5),
+"coverage_crouch": Array[bool]([false, false, true, false, false, true, true, true]),
+"coverage_stand": Array[bool]([false, false, true, false, false, true, true, true]),
+"position": Vector3(-15, 0.5, 2.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-13.5, 0.5, -1.5, -15, 0.5, 0.5, -13.5, 0.5, 0.5, -11.5, 0.5, 0.5, -15, 0.5, 2.5, -11.5, 0.5, 2.5, -9.75, 0.5, 2.5, -15, 0.5, 4.5, -13.5, 0.5, 4.5, -11.5, 0.5, 4.5, -13.5, 0.5, 6.5),
+"coverage_crouch": Array[bool]([false, false, true, false, false, true, true, true]),
+"coverage_stand": Array[bool]([false, false, true, false, false, true, true, true]),
+"position": Vector3(-13.5, 0.5, 2.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-11.5, 0.5, -1.5, -13.5, 0.5, 0.5, -11.5, 0.5, 0.5, -9.5, 0.5, 0.5, -15, 0.5, 2.5, -13.5, 0.5, 2.5, -9.75, 0.5, 2.5, -13.5, 0.5, 4.5, -11.5, 0.5, 4.5, -9.75, 0.5, 4.5, -11.5, 0.5, 6.5),
+"coverage_crouch": Array[bool]([false, true, true, false, false, false, true, false]),
+"coverage_stand": Array[bool]([false, true, true, false, false, false, true, false]),
+"position": Vector3(-11.5, 0.5, 2.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-11.5, 0.5, 0.5, -9.5, 0.5, 0.5, -7.5, 0.5, 0.5, -13.5, 0.5, 2.5, -11.5, 0.5, 2.5, -11.5, 0.5, 4.5, -9.75, 0.5, 4.5, -9.75, 0.5, 6.5),
+"coverage_crouch": Array[bool]([false, true, true, false, false, false, true, false]),
+"coverage_stand": Array[bool]([false, true, true, false, false, false, true, false]),
+"position": Vector3(-9.75, 0.5, 2.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-7.5, 0.5, -7.25, -11.5, 0.5, -5.5, -9.651592, 0.5, -5.494586, -7.5, 0.5, -5.5, -5.5, 0.5, -5.5, -3.5, 0.5, -5.5, -15, 0.5, -3.5, -13.5, 0.5, -3.5, -11.5, 0.5, -3.5, -9.580255, 0.5, -3.4971337, -5.5, 0.5, -3.5, -3.5, 0.5, -3.5, -1.5, 0.5, -3.5, -15, 0.5, -1.5, -13.5, 0.5, -1.5, -11.5, 0.5, -1.5, -9.508917, 0.5, -1.4996815, -7.5, 0.5, -1.25, -5.5, 0.5, -1.5, -3.5, 0.5, -1.5, -1.5, 0.5, -1.5, 0.5, 0.5, -1.5, -15, 0.5, 0.5, -13.5, 0.5, 0.5, -11.5, 0.5, 0.5, -9.5, 0.5, 0.5, -7.5, 0.5, 0.5, -5.5, 0.5, 0.5, -3.5, 0.5, 0.5, -1.5, 0.5, 0.5, -15, 0.5, 2.5, -13.5, 0.5, 2.5, -11.5, 0.5, 2.5, -9.75, 0.5, 2.5, -5.5, 0.5, 2.5, -3.5, 0.5, 2.5, -1.5, 0.5, 2.5, 0.5, 0.5, 2.5, -15, 0.5, 4.5, -13.5, 0.5, 4.5, -11.5, 0.5, 4.5, -9.75, 0.5, 4.5, -7.5, 0.5, 4.5, -5.5, 0.5, 4.5, -3.5, 0.5, 4.5, -1.5, 0.5, 4.5, 0.5, 0.5, 4.5, -15.461538, 0.5, 6.5576925, -13.5, 0.5, 6.5, -11.5, 0.5, 6.5, -9.75, 0.5, 6.5, -5.5, 0.5, 6.5, -3.5, 0.5, 6.5, -1.5, 0.5, 6.5, 0.5, 0.5, 6.5),
+"coverage_crouch": Array[bool]([false, false, false, false, true, false, false, false]),
+"coverage_stand": Array[bool]([false, false, false, false, true, false, false, false]),
+"position": Vector3(-7.5, 0.5, 2.75),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-5.5, 0.5, -1.5, -7.5, 0.5, 0.5, -5.5, 0.5, 0.5, -3.5, 0.5, 0.5, -1.5, 0.5, 0.5, -7.5, 0.5, 2.75, -3.5, 0.5, 2.5, -7.5, 0.5, 4.5, -5.5, 0.5, 4.5, -3.5, 0.5, 4.5, -5.5, 0.5, 6.5),
+"coverage_crouch": Array[bool]([false, false, false, true, false, false, true, true]),
+"coverage_stand": Array[bool]([false, false, false, true, false, false, true, true]),
+"position": Vector3(-5.5, 0.5, 2.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-3.5, 0.5, -1.5, -5.5, 0.5, 0.5, -3.5, 0.5, 0.5, -1.5, 0.5, 0.5, -5.5, 0.5, 2.5, -1.5, 0.5, 2.5, 0.5, 0.5, 2.5, -7.5, 0.5, 4.5, -5.5, 0.5, 4.5, -3.5, 0.5, 4.5, -1.5, 0.5, 4.5, -3.5, 0.5, 6.5),
+"coverage_crouch": Array[bool]([false, false, false, true, false, false, true, true]),
+"coverage_stand": Array[bool]([false, false, false, true, false, false, true, true]),
+"position": Vector3(-3.5, 0.5, 2.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-3.5, 0.5, 0.5, -1.5, 0.5, 0.5, -3.5, 0.5, 2.5, 0.5, 0.5, 2.5, 2.5, 0.5, 2.5, -3.5, 0.5, 4.5, -1.5, 0.5, 4.5, 0.5, 0.5, 4.5, -1.5, 0.5, 6.5),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, true, false]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, true, false]),
+"position": Vector3(-1.5, 0.5, 2.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-1.5, 0.5, 0.5, -3.5, 0.5, 2.5, -1.5, 0.5, 2.5, 2.5, 0.5, 2.5, 4.5, 0.5, 2.5, -1.5, 0.5, 4.5, 0.5, 0.5, 4.5, 2.5, 0.5, 4.5, 0.5, 0.5, 6.5),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, false, false]),
+"position": Vector3(0.5, 0.5, 2.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(2.5, 0.5, 0.5, 4.5, 0.5, 0.5, -1.5, 0.5, 2.5, 0.5, 0.5, 2.5, 4.5, 0.5, 2.5, 6.25, 0.5, 2.5, 0.5, 0.5, 4.5, 2.5, 0.5, 4.5, 4.5, 0.5, 4.5, 2.5, 0.5, 6.5),
+"coverage_crouch": Array[bool]([false, false, true, false, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, true, false, true, true, false, false]),
+"position": Vector3(2.5, 0.5, 2.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(4.5, 0.5, -1.5, 2.5, 0.5, 0.5, 4.5, 0.5, 0.5, 6.5, 0.5, 0.5, 0.5, 0.5, 2.5, 2.5, 0.5, 2.5, 6.25, 0.5, 2.5, 2.5, 0.5, 4.5, 4.5, 0.5, 4.5, 6.25, 0.5, 4.5, 4.5, 0.5, 6.5),
+"coverage_crouch": Array[bool]([false, true, true, false, false, true, false, false]),
+"coverage_stand": Array[bool]([false, true, true, false, false, true, false, false]),
+"position": Vector3(4.5, 0.5, 2.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(6.4, 0.5, -1.45, 2.5, 0.5, 0.5, 4.5, 0.5, 0.5, 6.5, 0.5, 0.5, 8.5, 0.5, 0.5, 2.5, 0.5, 2.5, 4.5, 0.5, 2.5, 4.5, 0.5, 4.5, 6.25, 0.5, 4.5, 6.25, 0.5, 6.5),
+"coverage_crouch": Array[bool]([false, true, true, false, false, true, false, false]),
+"coverage_stand": Array[bool]([false, true, true, false, false, true, false, false]),
+"position": Vector3(6.25, 0.5, 2.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(8.5, 0.5, -7.25, 4.5, 0.5, -5.5, 6.25, 0.5, -5.5, 8.5, 0.5, -5.5, 10.5, 0.5, -5.5, 12.5, 0.5, -5.5, 2.5, 0.5, -3.5, 4.5, 0.5, -3.5, 6.25, 0.5, -3.5, 10.5, 0.5, -3.5, 12.5, 0.5, -3.5, 14.5, 0.5, -3.5, 0.5, 0.5, -1.5, 2.5, 0.5, -1.5, 4.5, 0.5, -1.5, 6.4, 0.5, -1.45, 8.507353, 0.5, -1.4044118, 10.5, 0.5, -1.5, 12.5, 0.5, -1.5, 14.5, 0.5, -1.5, 2.5, 0.5, 0.5, 4.5, 0.5, 0.5, 6.5, 0.5, 0.5, 8.5, 0.5, 0.5, 10.5, 0.5, 0.5, 12.5, 0.5, 0.5, 14.5, 0.5, 0.5, 16.5, 0.5, 0.5, 0.5, 0.5, 2.5, 2.5, 0.5, 2.5, 4.5, 0.5, 2.5, 6.25, 0.5, 2.5, 10.5, 0.5, 2.5, 12.5, 0.5, 2.5, 14.5, 0.5, 2.5, 0.5, 0.5, 4.5, 2.5, 0.5, 4.5, 4.5, 0.5, 4.5, 6.25, 0.5, 4.5, 8.5, 0.5, 4.5, 10.5, 0.5, 4.5, 12.5, 0.5, 4.5, 14.5, 0.5, 4.5, 0.5, 0.5, 6.5, 2.5, 0.5, 6.5, 4.5, 0.5, 6.5, 6.25, 0.5, 6.5, 10.5, 0.5, 6.5, 12.5, 0.5, 6.5, 14.5, 0.5, 6.5),
+"coverage_crouch": Array[bool]([false, false, false, false, true, false, false, false]),
+"coverage_stand": Array[bool]([false, false, false, false, true, false, false, false]),
+"position": Vector3(8.5, 0.5, 2.75),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(10.5, 0.5, -1.5, 8.5, 0.5, 0.5, 10.5, 0.5, 0.5, 12.5, 0.5, 0.5, 8.5, 0.5, 2.75, 12.5, 0.5, 2.5, 14.5, 0.5, 2.5, 8.5, 0.5, 4.5, 10.5, 0.5, 4.5, 12.5, 0.5, 4.5, 10.5, 0.5, 6.5),
+"coverage_crouch": Array[bool]([false, false, true, false, false, false, true, true]),
+"coverage_stand": Array[bool]([false, false, true, false, false, false, true, true]),
+"position": Vector3(10.5, 0.5, 2.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(12.5, 0.5, -1.5, 10.5, 0.5, 0.5, 12.5, 0.5, 0.5, 14.5, 0.5, 0.5, 16.5, 0.5, 0.5, 10.5, 0.5, 2.5, 14.5, 0.5, 2.5, 8.5, 0.5, 4.5, 10.5, 0.5, 4.5, 12.5, 0.5, 4.5, 14.5, 0.5, 4.5, 12.5, 0.5, 6.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, false, true, true]),
+"coverage_stand": Array[bool]([false, true, true, true, false, false, true, true]),
+"position": Vector3(12.5, 0.5, 2.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(14.5, 0.5, -1.5, 12.5, 0.5, 0.5, 14.5, 0.5, 0.5, 16.5, 0.5, 0.5, 10.5, 0.5, 2.5, 12.5, 0.5, 2.5, 12.5, 0.5, 4.5, 14.5, 0.5, 4.5, 14.5, 0.5, 6.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, false, true, false]),
+"coverage_stand": Array[bool]([false, true, true, true, false, false, true, false]),
+"position": Vector3(14.5, 0.5, 2.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-15, 0.5, 2.5, -13.5, 0.5, 2.5, -13.5, 0.5, 4.5, -11.5, 0.5, 4.5, -15.461538, 0.5, 6.5576925, -13.5, 0.5, 6.5),
+"coverage_crouch": Array[bool]([false, false, true, false, false, true, true, true]),
+"coverage_stand": Array[bool]([false, false, true, false, false, true, true, true]),
+"position": Vector3(-15, 0.5, 4.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-15, 0.5, 2.5, -13.5, 0.5, 2.5, -11.5, 0.5, 2.5, -15, 0.5, 4.5, -11.5, 0.5, 4.5, -9.75, 0.5, 4.5, -15.461538, 0.5, 6.5576925, -13.5, 0.5, 6.5, -11.5, 0.5, 6.5, -13.5, 0.5, 8.5),
+"coverage_crouch": Array[bool]([false, false, true, false, false, true, true, false]),
+"coverage_stand": Array[bool]([false, false, true, false, false, true, true, false]),
+"position": Vector3(-13.5, 0.5, 4.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-11.5, 0.5, 0.5, -13.5, 0.5, 2.5, -11.5, 0.5, 2.5, -9.75, 0.5, 2.5, -15, 0.5, 4.5, -13.5, 0.5, 4.5, -9.75, 0.5, 4.5, -13.5, 0.5, 6.5, -11.5, 0.5, 6.5, -9.75, 0.5, 6.5, -11.5, 0.5, 8.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, false, true, false]),
+"coverage_stand": Array[bool]([false, true, true, true, false, false, true, false]),
+"position": Vector3(-11.5, 0.5, 4.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-11.5, 0.5, 2.5, -9.75, 0.5, 2.5, -13.5, 0.5, 4.5, -11.5, 0.5, 4.5, -11.5, 0.5, 6.5, -9.75, 0.5, 6.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, false, false, false]),
+"coverage_stand": Array[bool]([false, true, true, true, false, false, false, false]),
+"position": Vector3(-9.75, 0.5, 4.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-7.5, 0.5, -5.5, -13.5, 0.5, -3.5, -11.5, 0.5, -3.5, -9.580255, 0.5, -3.4971337, -5.5, 0.5, -3.5, -3.5, 0.5, -3.5, -1.5, 0.5, -3.5, -15, 0.5, -1.5, -13.5, 0.5, -1.5, -11.5, 0.5, -1.5, -9.508917, 0.5, -1.4996815, -7.5, 0.5, -1.25, -5.5, 0.5, -1.5, -3.5, 0.5, -1.5, -1.5, 0.5, -1.5, 0.5, 0.5, -1.5, -15, 0.5, 0.5, -13.5, 0.5, 0.5, -11.5, 0.5, 0.5, -9.5, 0.5, 0.5, -7.5, 0.5, 0.5, -5.5, 0.5, 0.5, -3.5, 0.5, 0.5, -1.5, 0.5, 0.5, -15, 0.5, 2.5, -13.5, 0.5, 2.5, -11.5, 0.5, 2.5, -9.75, 0.5, 2.5, -7.5, 0.5, 2.75, -5.5, 0.5, 2.5, -3.5, 0.5, 2.5, -1.5, 0.5, 2.5, 0.5, 0.5, 2.5, -15, 0.5, 4.5, -13.5, 0.5, 4.5, -11.5, 0.5, 4.5, -9.75, 0.5, 4.5, -5.5, 0.5, 4.5, -3.5, 0.5, 4.5, -1.5, 0.5, 4.5, 0.5, 0.5, 4.5, 2.5, 0.5, 4.5, -15.461538, 0.5, 6.5576925, -13.5, 0.5, 6.5, -11.5, 0.5, 6.5, -9.75, 0.5, 6.5, -5.5, 0.5, 6.5, -3.5, 0.5, 6.5, -1.5, 0.5, 6.5, 0.5, 0.5, 6.5, -15.5, 0.5, 8.5, -13.5, 0.5, 8.5, -11.5, 0.5, 8.5, -9.501471, 0.5, 8.519117, -7.513235, 0.5, 8.672059, -5.5, 0.5, 8.5, -3.5, 0.5, 8.5, -1.5, 0.5, 8.5, 0.5, 0.5, 8.5, -15.5, 0.5, 10.25, -13.5, 0.5, 10.25, -11.5, 0.5, 10.25, -9.459459, 0.5, 10.493243, -7.5, 0.5, 10.5, -5.5, 0.5, 10.5, -3.5, 0.5, 10.5, -1.5, 0.5, 10.25, 0.5, 0.5, 10.25, -9.25, 0.5, 12.5, -7.5, 0.5, 12.5, -5.5, 0.5, 12.5, -3.5, 0.5, 12.5, -1.5, 0.5, 12.5, -7.5, 0.5, 14.5),
+"coverage_crouch": Array[bool]([false, false, false, false, false, false, false, false]),
+"coverage_stand": Array[bool]([false, false, false, false, false, false, false, false]),
+"position": Vector3(-7.5, 0.5, 4.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-5.5, 0.5, 2.5, -3.5, 0.5, 2.5, -7.5, 0.5, 4.5, -3.5, 0.5, 4.5, -1.5, 0.5, 4.5, -5.5, 0.5, 6.5, -3.5, 0.5, 6.5, -5.5, 0.5, 8.5),
+"coverage_crouch": Array[bool]([false, false, false, true, false, true, true, true]),
+"coverage_stand": Array[bool]([false, false, false, true, false, true, true, true]),
+"position": Vector3(-5.5, 0.5, 4.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-3.5, 0.5, 0.5, -1.5, 0.5, 0.5, -5.5, 0.5, 2.5, -3.5, 0.5, 2.5, -1.5, 0.5, 2.5, -7.5, 0.5, 4.5, -5.5, 0.5, 4.5, -1.5, 0.5, 4.5, 0.5, 0.5, 4.5, -5.5, 0.5, 6.5, -3.5, 0.5, 6.5, -1.5, 0.5, 6.5, -3.5, 0.5, 8.5),
+"coverage_crouch": Array[bool]([false, false, false, true, false, false, true, true]),
+"coverage_stand": Array[bool]([false, false, false, true, false, false, true, true]),
+"position": Vector3(-3.5, 0.5, 4.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-1.5, 0.5, 0.5, -3.5, 0.5, 2.5, -1.5, 0.5, 2.5, 0.5, 0.5, 2.5, -7.5, 0.5, 4.5, -5.5, 0.5, 4.5, -3.5, 0.5, 4.5, 0.5, 0.5, 4.5, 2.5, 0.5, 4.5, -3.5, 0.5, 6.5, -1.5, 0.5, 6.5, 0.5, 0.5, 6.5, -1.5, 0.5, 8.5),
+"coverage_crouch": Array[bool]([false, false, false, true, true, false, true, false]),
+"coverage_stand": Array[bool]([false, false, false, true, true, false, true, false]),
+"position": Vector3(-1.5, 0.5, 4.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-1.5, 0.5, 2.5, 0.5, 0.5, 2.5, 2.5, 0.5, 2.5, -3.5, 0.5, 4.5, -1.5, 0.5, 4.5, 2.5, 0.5, 4.5, -1.5, 0.5, 6.5, 0.5, 0.5, 6.5, 2.5, 0.5, 6.5, 0.5, 0.5, 8.5),
+"coverage_crouch": Array[bool]([false, false, false, false, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, false, false, true, true, false, false]),
+"position": Vector3(0.5, 0.5, 4.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(0.5, 0.5, 2.5, 2.5, 0.5, 2.5, 4.5, 0.5, 2.5, -1.5, 0.5, 4.5, 0.5, 0.5, 4.5, 4.5, 0.5, 4.5, 6.25, 0.5, 4.5, 0.5, 0.5, 6.5, 2.5, 0.5, 6.5, 4.5, 0.5, 6.5, 2.5, 0.5, 8.5),
+"coverage_crouch": Array[bool]([false, false, true, false, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, true, false, true, true, false, false]),
+"position": Vector3(2.5, 0.5, 4.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(4.5, 0.5, 0.5, 2.5, 0.5, 2.5, 4.5, 0.5, 2.5, 6.25, 0.5, 2.5, 2.5, 0.5, 4.5, 6.25, 0.5, 4.5, 8.5, 0.5, 4.5, 2.5, 0.5, 6.5, 4.5, 0.5, 6.5, 6.25, 0.5, 6.5, 4.5, 0.5, 8.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, true, false, false]),
+"coverage_stand": Array[bool]([false, true, true, true, false, true, false, false]),
+"position": Vector3(4.5, 0.5, 4.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(2.5, 0.5, 0.5, 4.5, 0.5, 2.5, 6.25, 0.5, 2.5, 2.5, 0.5, 4.5, 4.5, 0.5, 4.5, 4.5, 0.5, 6.5, 6.25, 0.5, 6.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, true, false, false]),
+"coverage_stand": Array[bool]([false, true, true, true, false, true, false, false]),
+"position": Vector3(6.25, 0.5, 4.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(8.5, 0.5, -5.5, 2.5, 0.5, -3.5, 4.5, 0.5, -3.5, 6.25, 0.5, -3.5, 10.5, 0.5, -3.5, 12.5, 0.5, -3.5, 14.5, 0.5, -3.5, 0.5, 0.5, -1.5, 2.5, 0.5, -1.5, 4.5, 0.5, -1.5, 6.4, 0.5, -1.45, 8.507353, 0.5, -1.4044118, 10.5, 0.5, -1.5, 12.5, 0.5, -1.5, 14.5, 0.5, -1.5, 2.5, 0.5, 0.5, 4.5, 0.5, 0.5, 6.5, 0.5, 0.5, 8.5, 0.5, 0.5, 10.5, 0.5, 0.5, 12.5, 0.5, 0.5, 14.5, 0.5, 0.5, 16.5, 0.5, 0.5, 0.5, 0.5, 2.5, 2.5, 0.5, 2.5, 4.5, 0.5, 2.5, 6.25, 0.5, 2.5, 8.5, 0.5, 2.75, 10.5, 0.5, 2.5, 12.5, 0.5, 2.5, 14.5, 0.5, 2.5, -1.5, 0.5, 4.5, 0.5, 0.5, 4.5, 2.5, 0.5, 4.5, 4.5, 0.5, 4.5, 6.25, 0.5, 4.5, 10.5, 0.5, 4.5, 12.5, 0.5, 4.5, 14.5, 0.5, 4.5, 0.5, 0.5, 6.5, 2.5, 0.5, 6.5, 4.5, 0.5, 6.5, 6.25, 0.5, 6.5, 10.5, 0.5, 6.5, 12.5, 0.5, 6.5, 14.5, 0.5, 6.5, 16.5, 0.5, 6.75, 0.5, 0.5, 8.5, 2.5, 0.5, 8.5, 4.5, 0.5, 8.5, 6.4, 0.5, 8.55, 8.5, 0.5, 8.75, 10.5, 0.5, 8.5, 12.5, 0.5, 8.5, 14.5, 0.5, 8.5, 16.5, 0.5, 8.5, 0.5, 0.5, 10.25, 2.5, 0.5, 10.25, 4.5, 0.5, 10.5, 6.5, 0.5, 10.5, 8.5, 0.5, 10.5, 10.5, 0.5, 10.25, 12.5, 0.5, 10.25, 14.5, 0.5, 10.25, 16.514706, 0.5, 10.441176, 2.5, 0.5, 12.5, 4.5, 0.5, 12.5, 6.5, 0.5, 12.5, 8.5, 0.5, 12.5, 10.75, 0.5, 12.5, 12.5, 0.5, 12.5, 8.5, 0.5, 14.5),
+"coverage_crouch": Array[bool]([false, false, false, false, false, false, false, false]),
+"coverage_stand": Array[bool]([false, false, false, false, false, false, false, false]),
+"position": Vector3(8.5, 0.5, 4.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(10.5, 0.5, 0.5, 10.5, 0.5, 2.5, 12.5, 0.5, 2.5, 8.5, 0.5, 4.5, 12.5, 0.5, 4.5, 14.5, 0.5, 4.5, 10.5, 0.5, 6.5, 12.5, 0.5, 6.5, 10.5, 0.5, 8.5),
+"coverage_crouch": Array[bool]([false, false, true, false, false, true, true, true]),
+"coverage_stand": Array[bool]([false, false, true, false, false, true, true, true]),
+"position": Vector3(10.5, 0.5, 4.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(12.5, 0.5, 0.5, 10.5, 0.5, 2.5, 12.5, 0.5, 2.5, 14.5, 0.5, 2.5, 8.5, 0.5, 4.5, 10.5, 0.5, 4.5, 14.5, 0.5, 4.5, 10.5, 0.5, 6.5, 12.5, 0.5, 6.5, 14.5, 0.5, 6.5, 12.5, 0.5, 8.5),
+"coverage_crouch": Array[bool]([false, false, true, true, false, false, true, true]),
+"coverage_stand": Array[bool]([false, false, true, true, false, false, true, true]),
+"position": Vector3(12.5, 0.5, 4.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(12.5, 0.5, 2.5, 14.5, 0.5, 2.5, 10.5, 0.5, 4.5, 12.5, 0.5, 4.5, 12.5, 0.5, 6.5, 14.5, 0.5, 6.5, 16.5, 0.5, 6.75, 14.5, 0.5, 8.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, false, true, false]),
+"coverage_stand": Array[bool]([false, true, true, true, false, false, true, false]),
+"position": Vector3(14.5, 0.5, 4.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-15.461538, 0.5, 6.5576925, -17.5, 0.5, 8.5, -15.5, 0.5, 8.5, -17.5, 0.5, 10.5),
+"coverage_crouch": Array[bool]([false, true, false, true, true, true, true, true]),
+"coverage_stand": Array[bool]([false, true, false, true, true, true, true, true]),
+"position": Vector3(-17.508621, 0.5, 6.6034484),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-15, 0.5, 4.5, -13.5, 0.5, 4.5, -17.508621, 0.5, 6.6034484, -13.5, 0.5, 6.5, -11.5, 0.5, 6.5, -17.5, 0.5, 8.5, -15.5, 0.5, 8.5, -13.5, 0.5, 8.5, -15.5, 0.5, 10.25),
+"coverage_crouch": Array[bool]([true, true, false, false, false, true, true, false]),
+"coverage_stand": Array[bool]([true, true, false, false, false, true, true, false]),
+"position": Vector3(-15.461538, 0.5, 6.5576925),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-13.5, 0.5, 2.5, -15, 0.5, 4.5, -13.5, 0.5, 4.5, -11.5, 0.5, 4.5, -15.461538, 0.5, 6.5576925, -11.5, 0.5, 6.5, -9.75, 0.5, 6.5, -15.5, 0.5, 8.5, -13.5, 0.5, 8.5, -11.5, 0.5, 8.5, -13.5, 0.5, 10.25),
+"coverage_crouch": Array[bool]([true, false, true, false, false, true, false, false]),
+"coverage_stand": Array[bool]([true, false, true, false, false, true, false, false]),
+"position": Vector3(-13.5, 0.5, 6.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-11.5, 0.5, 2.5, -13.5, 0.5, 4.5, -11.5, 0.5, 4.5, -9.75, 0.5, 4.5, -7.5, 0.5, 4.5, -15.461538, 0.5, 6.5576925, -13.5, 0.5, 6.5, -9.75, 0.5, 6.5, -13.5, 0.5, 8.5, -11.5, 0.5, 8.5, -9.501471, 0.5, 8.519117, -11.5, 0.5, 10.25),
+"coverage_crouch": Array[bool]([true, false, true, true, false, false, false, false]),
+"coverage_stand": Array[bool]([true, false, true, true, false, false, false, false]),
+"position": Vector3(-11.5, 0.5, 6.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-9.75, 0.5, 2.5, -11.5, 0.5, 4.5, -9.75, 0.5, 4.5, -7.5, 0.5, 4.5, -13.5, 0.5, 6.5, -11.5, 0.5, 6.5, -11.5, 0.5, 8.5, -9.501471, 0.5, 8.519117),
+"coverage_crouch": Array[bool]([false, true, true, true, false, false, false, false]),
+"coverage_stand": Array[bool]([false, true, true, true, false, false, false, false]),
+"position": Vector3(-9.75, 0.5, 6.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-7.5, 0.5, 2.75, -5.5, 0.5, 2.5, -7.5, 0.5, 4.5, -5.5, 0.5, 4.5, -3.5, 0.5, 4.5, -3.5, 0.5, 6.5, -1.5, 0.5, 6.5, -7.513235, 0.5, 8.672059, -5.5, 0.5, 8.5, -3.5, 0.5, 8.5, -5.5, 0.5, 10.5),
+"coverage_crouch": Array[bool]([false, false, false, false, false, true, true, true]),
+"coverage_stand": Array[bool]([false, false, false, false, false, true, true, true]),
+"position": Vector3(-5.5, 0.5, 6.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-3.5, 0.5, 2.5, -7.5, 0.5, 4.5, -5.5, 0.5, 4.5, -3.5, 0.5, 4.5, -1.5, 0.5, 4.5, -5.5, 0.5, 6.5, -1.5, 0.5, 6.5, 0.5, 0.5, 6.5, -5.5, 0.5, 8.5, -3.5, 0.5, 8.5, -1.5, 0.5, 8.5, -3.5, 0.5, 10.5),
+"coverage_crouch": Array[bool]([false, false, false, false, false, true, true, false]),
+"coverage_stand": Array[bool]([false, false, false, false, false, true, true, false]),
+"position": Vector3(-3.5, 0.5, 6.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-1.5, 0.5, 2.5, -3.5, 0.5, 4.5, -1.5, 0.5, 4.5, 0.5, 0.5, 4.5, -5.5, 0.5, 6.5, -3.5, 0.5, 6.5, 0.5, 0.5, 6.5, -3.5, 0.5, 8.5, -1.5, 0.5, 8.5, 0.5, 0.5, 8.5, -1.5, 0.5, 10.25),
+"coverage_crouch": Array[bool]([true, false, false, false, true, false, true, false]),
+"coverage_stand": Array[bool]([true, false, false, false, true, false, true, false]),
+"position": Vector3(-1.5, 0.5, 6.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(0.5, 0.5, 2.5, -1.5, 0.5, 4.5, 0.5, 0.5, 4.5, 2.5, 0.5, 4.5, -3.5, 0.5, 6.5, -1.5, 0.5, 6.5, 2.5, 0.5, 6.5, 4.5, 0.5, 6.5, -1.5, 0.5, 8.5, 0.5, 0.5, 8.5, 2.5, 0.5, 8.5, 0.5, 0.5, 10.25),
+"coverage_crouch": Array[bool]([true, false, false, false, true, false, false, false]),
+"coverage_stand": Array[bool]([true, false, false, false, true, false, false, false]),
+"position": Vector3(0.5, 0.5, 6.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(2.5, 0.5, 2.5, 0.5, 0.5, 4.5, 2.5, 0.5, 4.5, 4.5, 0.5, 4.5, 0.5, 0.5, 6.5, 4.5, 0.5, 6.5, 6.25, 0.5, 6.5, 0.5, 0.5, 8.5, 2.5, 0.5, 8.5, 4.5, 0.5, 8.5, 2.5, 0.5, 10.25),
+"coverage_crouch": Array[bool]([true, false, true, false, true, false, false, false]),
+"coverage_stand": Array[bool]([true, false, true, false, true, false, false, false]),
+"position": Vector3(2.5, 0.5, 6.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(4.5, 0.5, 2.5, 2.5, 0.5, 4.5, 4.5, 0.5, 4.5, 6.25, 0.5, 4.5, 0.5, 0.5, 6.5, 2.5, 0.5, 6.5, 6.25, 0.5, 6.5, 2.5, 0.5, 8.5, 4.5, 0.5, 8.5, 6.4, 0.5, 8.55, 4.5, 0.5, 10.5),
+"coverage_crouch": Array[bool]([false, false, true, true, false, false, false, false]),
+"coverage_stand": Array[bool]([false, false, true, true, false, false, false, false]),
+"position": Vector3(4.5, 0.5, 6.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(6.25, 0.5, 2.5, 4.5, 0.5, 4.5, 6.25, 0.5, 4.5, 8.5, 0.5, 4.5, 2.5, 0.5, 6.5, 4.5, 0.5, 6.5, 4.5, 0.5, 8.5, 6.4, 0.5, 8.55),
+"coverage_crouch": Array[bool]([false, true, true, true, false, false, false, false]),
+"coverage_stand": Array[bool]([false, true, true, true, false, false, false, false]),
+"position": Vector3(6.25, 0.5, 6.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(10.5, 0.5, 2.5, 8.5, 0.5, 4.5, 10.5, 0.5, 4.5, 12.5, 0.5, 4.5, 12.5, 0.5, 6.5, 14.5, 0.5, 6.5, 8.5, 0.5, 8.75, 10.5, 0.5, 8.5, 12.5, 0.5, 8.5, 10.5, 0.5, 10.25),
+"coverage_crouch": Array[bool]([true, false, false, false, false, true, true, true]),
+"coverage_stand": Array[bool]([true, false, false, false, false, true, true, true]),
+"position": Vector3(10.5, 0.5, 6.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(12.5, 0.5, 2.5, 8.5, 0.5, 4.5, 10.5, 0.5, 4.5, 12.5, 0.5, 4.5, 14.5, 0.5, 4.5, 10.5, 0.5, 6.5, 14.5, 0.5, 6.5, 10.5, 0.5, 8.5, 12.5, 0.5, 8.5, 14.5, 0.5, 8.5, 12.5, 0.5, 10.25),
+"coverage_crouch": Array[bool]([true, false, false, true, false, true, true, false]),
+"coverage_stand": Array[bool]([true, false, false, true, false, true, true, false]),
+"position": Vector3(12.5, 0.5, 6.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(14.5, 0.5, 2.5, 12.5, 0.5, 4.5, 14.5, 0.5, 4.5, 10.5, 0.5, 6.5, 12.5, 0.5, 6.5, 16.5, 0.5, 6.75, 12.5, 0.5, 8.5, 14.5, 0.5, 8.5, 16.5, 0.5, 8.5, 14.5, 0.5, 10.25),
+"coverage_crouch": Array[bool]([true, false, true, true, false, false, true, false]),
+"coverage_stand": Array[bool]([true, false, true, true, false, false, true, false]),
+"position": Vector3(14.5, 0.5, 6.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(14.5, 0.5, 4.5, 14.5, 0.5, 6.5, 18.625, 0.5, 6.625, 14.5, 0.5, 8.5, 16.5, 0.5, 8.5, 18.5, 0.5, 8.5, 16.514706, 0.5, 10.441176),
+"coverage_crouch": Array[bool]([false, true, true, true, true, false, false, true]),
+"coverage_stand": Array[bool]([false, true, true, true, true, false, false, true]),
+"position": Vector3(16.5, 0.5, 6.75),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(16.5, 0.5, 6.75, 16.5, 0.5, 8.5, 18.5, 0.5, 8.5, 18.5, 0.5, 10.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, true, false, true]),
+"coverage_stand": Array[bool]([false, true, true, true, false, true, false, true]),
+"position": Vector3(18.625, 0.5, 6.625),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-17.508621, 0.5, 6.6034484, -15.461538, 0.5, 6.5576925, -15.5, 0.5, 8.5, -13.5, 0.5, 8.5, -17.5, 0.5, 10.5, -15.5, 0.5, 10.25, -17.5, 0.5, 12.5),
+"coverage_crouch": Array[bool]([false, true, false, false, true, true, true, true]),
+"coverage_stand": Array[bool]([false, true, false, false, true, true, true, true]),
+"position": Vector3(-17.5, 0.5, 8.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-17.508621, 0.5, 6.6034484, -15.461538, 0.5, 6.5576925, -13.5, 0.5, 6.5, -17.5, 0.5, 8.5, -13.5, 0.5, 8.5, -11.5, 0.5, 8.5, -17.5, 0.5, 10.5, -15.5, 0.5, 10.25, -13.5, 0.5, 10.25),
+"coverage_crouch": Array[bool]([true, true, false, false, false, true, true, false]),
+"coverage_stand": Array[bool]([true, true, false, false, false, true, true, false]),
+"position": Vector3(-15.5, 0.5, 8.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-13.5, 0.5, 4.5, -15.461538, 0.5, 6.5576925, -13.5, 0.5, 6.5, -11.5, 0.5, 6.5, -17.5, 0.5, 8.5, -15.5, 0.5, 8.5, -11.5, 0.5, 8.5, -9.501471, 0.5, 8.519117, -15.5, 0.5, 10.25, -13.5, 0.5, 10.25, -11.5, 0.5, 10.25),
+"coverage_crouch": Array[bool]([true, true, false, false, false, true, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, true, false, true]),
+"position": Vector3(-13.5, 0.5, 8.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-11.5, 0.5, 4.5, -13.5, 0.5, 6.5, -11.5, 0.5, 6.5, -9.75, 0.5, 6.5, -15.5, 0.5, 8.5, -13.5, 0.5, 8.5, -9.501471, 0.5, 8.519117, -7.513235, 0.5, 8.672059, -13.5, 0.5, 10.25, -11.5, 0.5, 10.25, -9.459459, 0.5, 10.493243),
+"coverage_crouch": Array[bool]([true, false, false, true, false, false, false, true]),
+"coverage_stand": Array[bool]([true, false, false, true, false, false, false, true]),
+"position": Vector3(-11.5, 0.5, 8.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-11.5, 0.5, 6.5, -9.75, 0.5, 6.5, -13.5, 0.5, 8.5, -11.5, 0.5, 8.5, -7.513235, 0.5, 8.672059, -11.5, 0.5, 10.25, -9.459459, 0.5, 10.493243, -7.5, 0.5, 10.5, -9.25, 0.5, 12.5),
+"coverage_crouch": Array[bool]([false, false, false, true, false, false, false, true]),
+"coverage_stand": Array[bool]([false, false, false, true, false, false, false, true]),
+"position": Vector3(-9.501471, 0.5, 8.519117),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-5.5, 0.5, 6.5, -11.5, 0.5, 8.5, -9.501471, 0.5, 8.519117, -5.5, 0.5, 8.5, -9.459459, 0.5, 10.493243, -7.5, 0.5, 10.5, -5.5, 0.5, 10.5, -7.5, 0.5, 12.5),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, false, true]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, false, true]),
+"position": Vector3(-7.513235, 0.5, 8.672059),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-5.5, 0.5, 4.5, -5.5, 0.5, 6.5, -3.5, 0.5, 6.5, -7.513235, 0.5, 8.672059, -3.5, 0.5, 8.5, -1.5, 0.5, 8.5, -7.5, 0.5, 10.5, -5.5, 0.5, 10.5, -3.5, 0.5, 10.5, -5.5, 0.5, 12.5),
+"coverage_crouch": Array[bool]([false, true, false, false, false, true, false, false]),
+"coverage_stand": Array[bool]([false, true, false, false, false, true, false, false]),
+"position": Vector3(-5.5, 0.5, 8.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-3.5, 0.5, 4.5, -5.5, 0.5, 6.5, -3.5, 0.5, 6.5, -1.5, 0.5, 6.5, -5.5, 0.5, 8.5, -1.5, 0.5, 8.5, -5.5, 0.5, 10.5, -3.5, 0.5, 10.5, -1.5, 0.5, 10.25, -3.5, 0.5, 12.5),
+"coverage_crouch": Array[bool]([false, true, false, false, false, true, false, false]),
+"coverage_stand": Array[bool]([false, true, false, false, false, true, false, false]),
+"position": Vector3(-3.5, 0.5, 8.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-1.5, 0.5, 4.5, -3.5, 0.5, 6.5, -1.5, 0.5, 6.5, 0.5, 0.5, 6.5, -5.5, 0.5, 8.5, -3.5, 0.5, 8.5, 0.5, 0.5, 8.5, -3.5, 0.5, 10.5, -1.5, 0.5, 10.25, 0.5, 0.5, 10.25),
+"coverage_crouch": Array[bool]([true, true, false, false, false, false, false, false]),
+"coverage_stand": Array[bool]([true, true, false, false, false, false, false, false]),
+"position": Vector3(-1.5, 0.5, 8.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(0.5, 0.5, 4.5, -1.5, 0.5, 6.5, 0.5, 0.5, 6.5, 2.5, 0.5, 6.5, -1.5, 0.5, 8.5, 2.5, 0.5, 8.5, 4.5, 0.5, 8.5, -1.5, 0.5, 10.25, 0.5, 0.5, 10.25, 2.5, 0.5, 10.25),
+"coverage_crouch": Array[bool]([true, true, false, false, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, false, false, true]),
+"position": Vector3(0.5, 0.5, 8.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(2.5, 0.5, 4.5, 0.5, 0.5, 6.5, 2.5, 0.5, 6.5, 4.5, 0.5, 6.5, 0.5, 0.5, 8.5, 4.5, 0.5, 8.5, 6.4, 0.5, 8.55, 0.5, 0.5, 10.25, 2.5, 0.5, 10.25, 4.5, 0.5, 10.5),
+"coverage_crouch": Array[bool]([true, false, false, false, false, false, false, true]),
+"coverage_stand": Array[bool]([true, false, false, false, false, false, false, true]),
+"position": Vector3(2.5, 0.5, 8.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(4.5, 0.5, 4.5, 2.5, 0.5, 6.5, 4.5, 0.5, 6.5, 6.25, 0.5, 6.5, 0.5, 0.5, 8.5, 2.5, 0.5, 8.5, 6.4, 0.5, 8.55, 2.5, 0.5, 10.25, 4.5, 0.5, 10.5, 6.5, 0.5, 10.5, 4.5, 0.5, 12.5),
+"coverage_crouch": Array[bool]([false, false, false, true, false, false, false, true]),
+"coverage_stand": Array[bool]([false, false, false, true, false, false, false, true]),
+"position": Vector3(4.5, 0.5, 8.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(4.5, 0.5, 6.5, 6.25, 0.5, 6.5, 2.5, 0.5, 8.5, 4.5, 0.5, 8.5, 8.5, 0.5, 8.75, 4.5, 0.5, 10.5, 6.5, 0.5, 10.5, 8.5, 0.5, 10.5, 6.5, 0.5, 12.5),
+"coverage_crouch": Array[bool]([false, true, false, true, false, false, false, true]),
+"coverage_stand": Array[bool]([false, true, false, true, false, false, false, true]),
+"position": Vector3(6.4, 0.5, 8.55),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(10.5, 0.5, 6.5, 6.4, 0.5, 8.55, 10.5, 0.5, 8.5, 6.5, 0.5, 10.5, 8.5, 0.5, 10.5, 10.5, 0.5, 10.25, 8.5, 0.5, 12.5, 10.75, 0.5, 12.5),
+"coverage_crouch": Array[bool]([false, true, false, false, true, true, false, false]),
+"coverage_stand": Array[bool]([false, true, false, false, true, true, false, false]),
+"position": Vector3(8.5, 0.5, 8.75),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(10.5, 0.5, 4.5, 10.5, 0.5, 6.5, 12.5, 0.5, 6.5, 8.5, 0.5, 8.75, 12.5, 0.5, 8.5, 14.5, 0.5, 8.5, 8.5, 0.5, 10.5, 10.5, 0.5, 10.25, 12.5, 0.5, 10.25),
+"coverage_crouch": Array[bool]([true, true, false, false, false, true, false, false]),
+"coverage_stand": Array[bool]([true, true, false, false, false, true, false, false]),
+"position": Vector3(10.5, 0.5, 8.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(12.5, 0.5, 4.5, 10.5, 0.5, 6.5, 12.5, 0.5, 6.5, 14.5, 0.5, 6.5, 10.5, 0.5, 8.5, 14.5, 0.5, 8.5, 16.5, 0.5, 8.5, 10.5, 0.5, 10.25, 12.5, 0.5, 10.25, 14.5, 0.5, 10.25),
+"coverage_crouch": Array[bool]([true, true, false, true, false, true, false, true]),
+"coverage_stand": Array[bool]([true, true, false, true, false, true, false, true]),
+"position": Vector3(12.5, 0.5, 8.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(14.5, 0.5, 4.5, 12.5, 0.5, 6.5, 14.5, 0.5, 6.5, 16.5, 0.5, 6.75, 10.5, 0.5, 8.5, 12.5, 0.5, 8.5, 16.5, 0.5, 8.5, 18.5, 0.5, 8.5, 12.5, 0.5, 10.25, 14.5, 0.5, 10.25, 16.514706, 0.5, 10.441176, 12.5, 0.5, 12.5),
+"coverage_crouch": Array[bool]([true, false, true, true, false, false, false, true]),
+"coverage_stand": Array[bool]([true, false, true, true, false, false, false, true]),
+"position": Vector3(14.5, 0.5, 8.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(14.5, 0.5, 6.5, 16.5, 0.5, 6.75, 18.625, 0.5, 6.625, 12.5, 0.5, 8.5, 14.5, 0.5, 8.5, 18.5, 0.5, 8.5, 14.5, 0.5, 10.25, 16.514706, 0.5, 10.441176, 18.5, 0.5, 10.5),
+"coverage_crouch": Array[bool]([false, true, true, true, true, false, false, true]),
+"coverage_stand": Array[bool]([false, true, true, true, true, false, false, true]),
+"position": Vector3(16.5, 0.5, 8.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(16.5, 0.5, 6.75, 18.625, 0.5, 6.625, 14.5, 0.5, 8.5, 16.5, 0.5, 8.5, 16.514706, 0.5, 10.441176, 18.5, 0.5, 10.5, 18.5, 0.5, 12.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, true, false, true]),
+"coverage_stand": Array[bool]([false, true, true, true, false, true, false, true]),
+"position": Vector3(18.5, 0.5, 8.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-17.508621, 0.5, 6.6034484, -17.5, 0.5, 8.5, -15.5, 0.5, 8.5, -15.5, 0.5, 10.25, -17.5, 0.5, 12.5, -15.25, 0.5, 12.5, -17.5, 0.5, 14.5),
+"coverage_crouch": Array[bool]([false, true, false, false, true, true, true, true]),
+"coverage_stand": Array[bool]([false, true, false, false, true, true, true, true]),
+"position": Vector3(-17.5, 0.5, 10.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-15.461538, 0.5, 6.5576925, -17.5, 0.5, 8.5, -15.5, 0.5, 8.5, -13.5, 0.5, 8.5, -17.5, 0.5, 10.5, -13.5, 0.5, 10.25, -11.5, 0.5, 10.25, -17.5, 0.5, 12.5, -15.25, 0.5, 12.5),
+"coverage_crouch": Array[bool]([true, true, false, false, false, false, true, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, false, true, true]),
+"position": Vector3(-15.5, 0.5, 10.25),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-13.5, 0.5, 6.5, -15.5, 0.5, 8.5, -13.5, 0.5, 8.5, -11.5, 0.5, 8.5, -15.5, 0.5, 10.25, -11.5, 0.5, 10.25),
+"coverage_crouch": Array[bool]([true, true, false, false, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, false, false, true]),
+"position": Vector3(-13.5, 0.5, 10.25),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-11.5, 0.5, 6.5, -13.5, 0.5, 8.5, -11.5, 0.5, 8.5, -9.501471, 0.5, 8.519117, -15.5, 0.5, 10.25, -13.5, 0.5, 10.25, -9.459459, 0.5, 10.493243),
+"coverage_crouch": Array[bool]([true, true, false, true, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, true, false, false, false, true]),
+"position": Vector3(-11.5, 0.5, 10.25),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-11.5, 0.5, 8.5, -9.501471, 0.5, 8.519117, -7.513235, 0.5, 8.672059, -11.5, 0.5, 10.25, -7.5, 0.5, 10.5, -5.5, 0.5, 10.5, -9.25, 0.5, 12.5, -7.5, 0.5, 12.5),
+"coverage_crouch": Array[bool]([false, false, false, true, false, false, false, true]),
+"coverage_stand": Array[bool]([false, false, false, true, false, false, false, true]),
+"position": Vector3(-9.459459, 0.5, 10.493243),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-9.501471, 0.5, 8.519117, -7.513235, 0.5, 8.672059, -5.5, 0.5, 8.5, -9.459459, 0.5, 10.493243, -5.5, 0.5, 10.5, -9.25, 0.5, 12.5, -7.5, 0.5, 12.5, -5.5, 0.5, 12.5, -7.5, 0.5, 14.5),
+"coverage_crouch": Array[bool]([false, false, false, false, true, false, false, true]),
+"coverage_stand": Array[bool]([false, false, false, false, true, false, false, true]),
+"position": Vector3(-7.5, 0.5, 10.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-5.5, 0.5, 6.5, -7.513235, 0.5, 8.672059, -5.5, 0.5, 8.5, -3.5, 0.5, 8.5, -9.459459, 0.5, 10.493243, -7.5, 0.5, 10.5, -3.5, 0.5, 10.5, -7.5, 0.5, 12.5, -5.5, 0.5, 12.5, -3.5, 0.5, 12.5),
+"coverage_crouch": Array[bool]([false, true, false, false, false, true, false, false]),
+"coverage_stand": Array[bool]([false, true, false, false, false, true, false, false]),
+"position": Vector3(-5.5, 0.5, 10.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-3.5, 0.5, 6.5, -5.5, 0.5, 8.5, -3.5, 0.5, 8.5, -1.5, 0.5, 8.5, -5.5, 0.5, 10.5, -1.5, 0.5, 10.25, -5.5, 0.5, 12.5, -3.5, 0.5, 12.5, -1.5, 0.5, 12.5, -3.5, 0.5, 14.5),
+"coverage_crouch": Array[bool]([false, true, false, false, false, true, false, false]),
+"coverage_stand": Array[bool]([false, true, false, false, false, true, false, false]),
+"position": Vector3(-3.5, 0.5, 10.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-1.5, 0.5, 6.5, -3.5, 0.5, 8.5, -1.5, 0.5, 8.5, 0.5, 0.5, 8.5, -3.5, 0.5, 10.5, 0.5, 0.5, 10.25, 2.5, 0.5, 10.25),
+"coverage_crouch": Array[bool]([true, true, false, false, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, false, false, true]),
+"position": Vector3(-1.5, 0.5, 10.25),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(0.5, 0.5, 6.5, -1.5, 0.5, 8.5, 0.5, 0.5, 8.5, 2.5, 0.5, 8.5, -1.5, 0.5, 10.25, 2.5, 0.5, 10.25),
+"coverage_crouch": Array[bool]([true, true, false, false, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, false, false, true]),
+"position": Vector3(0.5, 0.5, 10.25),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(2.5, 0.5, 6.5, 0.5, 0.5, 8.5, 2.5, 0.5, 8.5, 4.5, 0.5, 8.5, -1.5, 0.5, 10.25, 0.5, 0.5, 10.25, 4.5, 0.5, 10.5, 2.5, 0.5, 12.5, 4.5, 0.5, 12.5),
+"coverage_crouch": Array[bool]([true, true, false, false, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, false, false, true]),
+"position": Vector3(2.5, 0.5, 10.25),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(4.5, 0.5, 6.5, 2.5, 0.5, 8.5, 4.5, 0.5, 8.5, 6.4, 0.5, 8.55, 2.5, 0.5, 10.25, 6.5, 0.5, 10.5, 8.5, 0.5, 10.5, 4.5, 0.5, 12.5, 6.5, 0.5, 12.5),
+"coverage_crouch": Array[bool]([false, false, false, true, false, false, false, true]),
+"coverage_stand": Array[bool]([false, false, false, true, false, false, false, true]),
+"position": Vector3(4.5, 0.5, 10.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(4.5, 0.5, 8.5, 6.4, 0.5, 8.55, 8.5, 0.5, 8.75, 4.5, 0.5, 10.5, 8.5, 0.5, 10.5, 4.5, 0.5, 12.5, 6.5, 0.5, 12.5, 8.5, 0.5, 12.5, 10.75, 0.5, 12.5, 6.5, 0.5, 14.5),
+"coverage_crouch": Array[bool]([false, false, false, true, false, false, false, false]),
+"coverage_stand": Array[bool]([false, false, false, true, false, false, false, false]),
+"position": Vector3(6.5, 0.5, 10.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(6.4, 0.5, 8.55, 8.5, 0.5, 8.75, 10.5, 0.5, 8.5, 4.5, 0.5, 10.5, 6.5, 0.5, 10.5, 10.5, 0.5, 10.25, 6.5, 0.5, 12.5, 8.5, 0.5, 12.5, 10.75, 0.5, 12.5, 8.5, 0.5, 14.5),
+"coverage_crouch": Array[bool]([false, true, false, false, true, false, false, false]),
+"coverage_stand": Array[bool]([false, true, false, false, true, false, false, false]),
+"position": Vector3(8.5, 0.5, 10.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(10.5, 0.5, 6.5, 8.5, 0.5, 8.75, 10.5, 0.5, 8.5, 12.5, 0.5, 8.5, 8.5, 0.5, 10.5, 12.5, 0.5, 10.25, 14.5, 0.5, 10.25, 8.5, 0.5, 12.5),
+"coverage_crouch": Array[bool]([true, true, false, false, false, true, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, true, false, true]),
+"position": Vector3(10.5, 0.5, 10.25),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(12.5, 0.5, 6.5, 10.5, 0.5, 8.5, 12.5, 0.5, 8.5, 14.5, 0.5, 8.5, 10.5, 0.5, 10.25, 14.5, 0.5, 10.25),
+"coverage_crouch": Array[bool]([true, true, false, false, false, true, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, true, false, true]),
+"position": Vector3(12.5, 0.5, 10.25),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(14.5, 0.5, 6.5, 12.5, 0.5, 8.5, 14.5, 0.5, 8.5, 16.5, 0.5, 8.5, 10.5, 0.5, 10.25, 12.5, 0.5, 10.25, 16.514706, 0.5, 10.441176, 12.5, 0.5, 12.5),
+"coverage_crouch": Array[bool]([true, true, true, false, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, true, false, false, false, false, true]),
+"position": Vector3(14.5, 0.5, 10.25),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(16.5, 0.5, 6.75, 14.5, 0.5, 8.5, 16.5, 0.5, 8.5, 18.5, 0.5, 8.5, 14.5, 0.5, 10.25, 18.5, 0.5, 10.5, 16.75, 0.5, 12.5, 18.5, 0.5, 12.5),
+"coverage_crouch": Array[bool]([false, true, true, true, true, false, false, true]),
+"coverage_stand": Array[bool]([false, true, true, true, true, false, false, true]),
+"position": Vector3(16.514706, 0.5, 10.441176),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(18.625, 0.5, 6.625, 16.5, 0.5, 8.5, 18.5, 0.5, 8.5, 16.514706, 0.5, 10.441176, 16.75, 0.5, 12.5, 18.5, 0.5, 12.5, 18.5, 0.5, 14.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, false, false, true]),
+"coverage_stand": Array[bool]([false, true, true, true, false, false, false, true]),
+"position": Vector3(18.5, 0.5, 10.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-17.5, 0.5, 8.5, -17.5, 0.5, 10.5, -15.5, 0.5, 10.25, -15.25, 0.5, 12.5, -17.5, 0.5, 14.5, -15.5, 0.5, 14.5, -17.5, 0.5, 16.5),
+"coverage_crouch": Array[bool]([false, false, true, true, false, true, true, true]),
+"coverage_stand": Array[bool]([false, false, true, true, false, true, true, true]),
+"position": Vector3(-17.5, 0.5, 12.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-15, 0.5, 4.5, -13.5, 0.5, 4.5, -11.5, 0.5, 4.5, -17.508621, 0.5, 6.6034484, -15.461538, 0.5, 6.5576925, -13.5, 0.5, 6.5, -11.5, 0.5, 6.5, -17.5, 0.5, 8.5, -15.5, 0.5, 8.5, -13.5, 0.5, 8.5, -11.5, 0.5, 8.5, -17.5, 0.5, 10.5, -15.5, 0.5, 10.25, -13.5, 0.5, 10.25, -11.5, 0.5, 10.25, -17.5, 0.5, 12.5, -17.5, 0.5, 14.5, -15.5, 0.5, 14.5, -13.5, 0.5, 14.5, -11.5, 0.5, 14.5, -17.5, 0.5, 16.5, -15.5, 0.5, 16.5, -13.5, 0.5, 16.5, -11.5, 0.5, 16.5, -17.5, 0.5, 18.5, -15.5, 0.5, 18.5, -13.5, 0.5, 18.5, -11.5, 0.5, 18.5, -19.25, 0.5, 21, -17.5, 0.5, 21, -15.5, 0.5, 21, -13.5, 0.5, 21),
+"coverage_crouch": Array[bool]([false, false, false, false, false, false, true, false]),
+"coverage_stand": Array[bool]([false, false, false, false, false, false, true, false]),
+"position": Vector3(-15.25, 0.5, 12.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-9.501471, 0.5, 8.519117, -9.459459, 0.5, 10.493243, -7.5, 0.5, 10.5, -7.5, 0.5, 12.5, -5.5, 0.5, 12.5, -11.5, 0.5, 14.5, -9.5, 0.5, 14.5, -7.5, 0.5, 14.5),
+"coverage_crouch": Array[bool]([false, false, false, false, true, true, true, true]),
+"coverage_stand": Array[bool]([false, false, false, false, true, true, true, true]),
+"position": Vector3(-9.25, 0.5, 12.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-7.513235, 0.5, 8.672059, -9.459459, 0.5, 10.493243, -7.5, 0.5, 10.5, -5.5, 0.5, 10.5, -9.25, 0.5, 12.5, -5.5, 0.5, 12.5, -3.5, 0.5, 12.5, -9.5, 0.5, 14.5, -7.5, 0.5, 14.5, -5.5, 0.5, 14.5, -7.5, 0.5, 16.5),
+"coverage_crouch": Array[bool]([false, false, true, false, true, false, true, false]),
+"coverage_stand": Array[bool]([false, false, true, false, true, false, true, false]),
+"position": Vector3(-7.5, 0.5, 12.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-5.5, 0.5, 8.5, -7.5, 0.5, 10.5, -5.5, 0.5, 10.5, -3.5, 0.5, 10.5, -9.25, 0.5, 12.5, -7.5, 0.5, 12.5, -3.5, 0.5, 12.5, -7.5, 0.5, 14.5, -5.5, 0.5, 14.5, -3.5, 0.5, 14.5, -5.5, 0.5, 16.5),
+"coverage_crouch": Array[bool]([false, false, true, false, false, false, true, false]),
+"coverage_stand": Array[bool]([false, false, true, false, false, false, true, false]),
+"position": Vector3(-5.5, 0.5, 12.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-3.5, 0.5, 8.5, -5.5, 0.5, 10.5, -3.5, 0.5, 10.5, -7.5, 0.5, 12.5, -5.5, 0.5, 12.5, -1.5, 0.5, 12.5, -5.5, 0.5, 14.5, -3.5, 0.5, 14.5, -1.5, 0.5, 14.5, -3.5, 0.5, 16.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, false, false, false]),
+"coverage_stand": Array[bool]([false, true, true, true, false, false, false, false]),
+"position": Vector3(-3.5, 0.5, 12.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-1.5, 0.5, 2.5, -7.5, 0.5, 4.5, -5.5, 0.5, 4.5, -3.5, 0.5, 4.5, -1.5, 0.5, 4.5, 0.5, 0.5, 4.5, -5.5, 0.5, 6.5, -3.5, 0.5, 6.5, -1.5, 0.5, 6.5, 0.5, 0.5, 6.5, -9.501471, 0.5, 8.519117, -7.513235, 0.5, 8.672059, -5.5, 0.5, 8.5, -3.5, 0.5, 8.5, -1.5, 0.5, 8.5, 0.5, 0.5, 8.5, -9.459459, 0.5, 10.493243, -7.5, 0.5, 10.5, -5.5, 0.5, 10.5, -3.5, 0.5, 10.5, -1.5, 0.5, 10.25, 0.5, 0.5, 10.25, -9.25, 0.5, 12.5, -7.5, 0.5, 12.5, -5.5, 0.5, 12.5, -3.5, 0.5, 12.5, 0.5, 0.5, 12.5, 2.5, 0.5, 12.5, 4.5, 0.5, 12.5, 6.5, 0.5, 12.5, 8.5, 0.5, 12.5, -9.5, 0.5, 14.5, -7.5, 0.5, 14.5, -5.5, 0.5, 14.5, -3.5, 0.5, 14.5, -1.5, 0.5, 14.5, 0.5, 0.5, 14.5, -9.5, 0.5, 16.5, -7.5, 0.5, 16.5, -5.5, 0.5, 16.5, -3.5, 0.5, 16.5, -1.5, 0.5, 16.5, 0.5, 0.5, 16.5, -9.5, 0.5, 18.5, -7.5, 0.5, 18.5, -5.5, 0.5, 18.5, -3.5, 0.5, 18.5, -1.5, 0.5, 18.5, 0.5, 0.5, 18.5, -5.5, 0.5, 21, -3.5, 0.5, 21, -1.5, 0.5, 21, 0.5, 0.5, 21),
+"coverage_crouch": Array[bool]([false, false, false, false, false, false, false, false]),
+"coverage_stand": Array[bool]([false, false, false, false, false, false, false, false]),
+"position": Vector3(-1.5, 0.5, 12.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(0.5, 0.5, 2.5, -5.5, 0.5, 4.5, -3.5, 0.5, 4.5, -1.5, 0.5, 4.5, 0.5, 0.5, 4.5, 2.5, 0.5, 4.5, 4.5, 0.5, 4.5, 6.25, 0.5, 4.5, -5.5, 0.5, 6.5, -3.5, 0.5, 6.5, -1.5, 0.5, 6.5, 0.5, 0.5, 6.5, 2.5, 0.5, 6.5, 4.5, 0.5, 6.5, 6.25, 0.5, 6.5, -7.513235, 0.5, 8.672059, -5.5, 0.5, 8.5, -3.5, 0.5, 8.5, -1.5, 0.5, 8.5, 0.5, 0.5, 8.5, 2.5, 0.5, 8.5, 4.5, 0.5, 8.5, 6.4, 0.5, 8.55, 8.5, 0.5, 8.75, -7.5, 0.5, 10.5, -5.5, 0.5, 10.5, -3.5, 0.5, 10.5, -1.5, 0.5, 10.25, 0.5, 0.5, 10.25, 2.5, 0.5, 10.25, 4.5, 0.5, 10.5, 6.5, 0.5, 10.5, 8.5, 0.5, 10.5, -9.25, 0.5, 12.5, -7.5, 0.5, 12.5, -5.5, 0.5, 12.5, -3.5, 0.5, 12.5, -1.5, 0.5, 12.5, 2.5, 0.5, 12.5, 4.5, 0.5, 12.5, 6.5, 0.5, 12.5, 8.5, 0.5, 12.5, -7.5, 0.5, 14.5, -5.5, 0.5, 14.5, -3.5, 0.5, 14.5, -1.5, 0.5, 14.5, 0.5, 0.5, 14.5, 2.5, 0.5, 14.5, 4.5, 0.5, 14.5, 6.5, 0.5, 14.5, 8.5, 0.5, 14.5, -7.5, 0.5, 16.5, -5.5, 0.5, 16.5, -3.5, 0.5, 16.5, -1.5, 0.5, 16.5, 0.5, 0.5, 16.5, 2.5, 0.5, 16.5, 4.5, 0.5, 16.5, 6.5, 0.5, 16.5, 8.5, 0.5, 16.5, -7.5, 0.5, 18.5, -5.5, 0.5, 18.5, -3.5, 0.5, 18.5, -1.5, 0.5, 18.5, 0.5, 0.5, 18.5, 2.5, 0.5, 18.5, 4.5, 0.5, 18.5, 6.5, 0.5, 18.5, 8.5, 0.5, 18.5, -3.5, 0.5, 21, -1.5, 0.5, 21, 0.5, 0.5, 21, 2.5, 0.5, 21, 4.5, 0.5, 21),
+"coverage_crouch": Array[bool]([false, false, false, false, false, false, false, false]),
+"coverage_stand": Array[bool]([false, false, false, false, false, false, false, false]),
+"position": Vector3(0.5, 0.5, 12.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(2.5, 0.5, 2.5, 0.5, 0.5, 4.5, 2.5, 0.5, 4.5, 4.5, 0.5, 4.5, 6.25, 0.5, 4.5, 8.5, 0.5, 4.5, 0.5, 0.5, 6.5, 2.5, 0.5, 6.5, 4.5, 0.5, 6.5, 6.25, 0.5, 6.5, 10.5, 0.5, 6.5, 0.5, 0.5, 8.5, 2.5, 0.5, 8.5, 4.5, 0.5, 8.5, 6.4, 0.5, 8.55, 8.5, 0.5, 8.75, 10.5, 0.5, 8.5, 0.5, 0.5, 10.25, 2.5, 0.5, 10.25, 4.5, 0.5, 10.5, 6.5, 0.5, 10.5, 8.5, 0.5, 10.5, 10.5, 0.5, 10.25, -1.5, 0.5, 12.5, 0.5, 0.5, 12.5, 4.5, 0.5, 12.5, 6.5, 0.5, 12.5, 8.5, 0.5, 12.5, 10.75, 0.5, 12.5, 12.5, 0.5, 12.5, 0.5, 0.5, 14.5, 2.5, 0.5, 14.5, 4.5, 0.5, 14.5, 6.5, 0.5, 14.5, 8.5, 0.5, 14.5, 10.5, 0.5, 14.5, 0.5, 0.5, 16.5, 2.5, 0.5, 16.5, 4.5, 0.5, 16.5, 6.5, 0.5, 16.5, 8.5, 0.5, 16.5, 10.5, 0.5, 16.5, 0.5, 0.5, 18.5, 2.5, 0.5, 18.5, 4.5, 0.5, 18.5, 6.5, 0.5, 18.5, 8.5, 0.5, 18.5, 10.5, 0.5, 18.5, 0.5, 0.5, 21, 2.5, 0.5, 21, 4.5, 0.5, 21, 6.5, 0.5, 21),
+"coverage_crouch": Array[bool]([false, false, false, false, false, false, false, false]),
+"coverage_stand": Array[bool]([false, false, false, false, false, false, false, false]),
+"position": Vector3(2.5, 0.5, 12.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(4.5, 0.5, 8.5, 2.5, 0.5, 10.25, 4.5, 0.5, 10.5, 6.5, 0.5, 10.5, 2.5, 0.5, 12.5, 6.5, 0.5, 12.5, 8.5, 0.5, 12.5, 2.5, 0.5, 14.5, 4.5, 0.5, 14.5, 6.5, 0.5, 14.5),
+"coverage_crouch": Array[bool]([false, false, true, false, false, true, true, false]),
+"coverage_stand": Array[bool]([false, false, true, false, false, true, true, false]),
+"position": Vector3(4.5, 0.5, 12.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(6.4, 0.5, 8.55, 4.5, 0.5, 10.5, 6.5, 0.5, 10.5, 8.5, 0.5, 10.5, 2.5, 0.5, 12.5, 4.5, 0.5, 12.5, 8.5, 0.5, 12.5, 10.75, 0.5, 12.5, 4.5, 0.5, 14.5, 6.5, 0.5, 14.5, 8.5, 0.5, 14.5, 6.5, 0.5, 16.5),
+"coverage_crouch": Array[bool]([false, false, true, false, false, false, true, false]),
+"coverage_stand": Array[bool]([false, false, true, false, false, false, true, false]),
+"position": Vector3(6.5, 0.5, 12.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(8.5, 0.5, 8.75, 6.5, 0.5, 10.5, 8.5, 0.5, 10.5, 10.5, 0.5, 10.25, 4.5, 0.5, 12.5, 6.5, 0.5, 12.5, 10.75, 0.5, 12.5, 6.5, 0.5, 14.5, 8.5, 0.5, 14.5, 10.5, 0.5, 14.5, 8.5, 0.5, 16.5),
+"coverage_crouch": Array[bool]([false, false, true, true, true, false, true, false]),
+"coverage_stand": Array[bool]([false, false, true, true, true, false, true, false]),
+"position": Vector3(8.5, 0.5, 12.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(6.25, 0.5, 4.5, 8.5, 0.5, 4.5, 10.5, 0.5, 4.5, 12.5, 0.5, 4.5, 14.5, 0.5, 4.5, 4.5, 0.5, 6.5, 6.25, 0.5, 6.5, 10.5, 0.5, 6.5, 12.5, 0.5, 6.5, 14.5, 0.5, 6.5, 2.5, 0.5, 8.5, 4.5, 0.5, 8.5, 6.4, 0.5, 8.55, 8.5, 0.5, 8.75, 10.5, 0.5, 8.5, 12.5, 0.5, 8.5, 14.5, 0.5, 8.5, 2.5, 0.5, 10.25, 4.5, 0.5, 10.5, 6.5, 0.5, 10.5, 8.5, 0.5, 10.5, 10.5, 0.5, 10.25, 12.5, 0.5, 10.25, 14.5, 0.5, 10.25, 2.5, 0.5, 12.5, 4.5, 0.5, 12.5, 6.5, 0.5, 12.5, 8.5, 0.5, 12.5, 12.5, 0.5, 12.5, 2.5, 0.5, 14.5, 4.5, 0.5, 14.5, 6.5, 0.5, 14.5, 8.5, 0.5, 14.5, 10.5, 0.5, 14.5, 12.5, 0.5, 14.5, 14.5, 0.5, 14.5, 2.5, 0.5, 16.5, 4.5, 0.5, 16.5, 6.5, 0.5, 16.5, 8.5, 0.5, 16.5, 10.5, 0.5, 16.5, 12.5, 0.5, 16.5, 14.5, 0.5, 16.5, 4.5, 0.5, 18.5, 6.5, 0.5, 18.5, 8.5, 0.5, 18.5, 10.5, 0.5, 18.5, 12.5, 0.5, 18.5, 14.5, 0.5, 18.5, 6.5, 0.5, 21, 10.5, 0.5, 21, 12.5, 0.5, 21, 14.5, 0.5, 21),
+"coverage_crouch": Array[bool]([false, false, false, false, false, false, false, false]),
+"coverage_stand": Array[bool]([false, false, false, false, false, false, false, false]),
+"position": Vector3(10.75, 0.5, 12.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(12.5, 0.5, 2.5, 8.5, 0.5, 4.5, 10.5, 0.5, 4.5, 12.5, 0.5, 4.5, 14.5, 0.5, 4.5, 4.5, 0.5, 6.5, 6.25, 0.5, 6.5, 10.5, 0.5, 6.5, 12.5, 0.5, 6.5, 14.5, 0.5, 6.5, 16.5, 0.5, 6.75, 18.625, 0.5, 6.625, 4.5, 0.5, 8.5, 6.4, 0.5, 8.55, 8.5, 0.5, 8.75, 10.5, 0.5, 8.5, 12.5, 0.5, 8.5, 14.5, 0.5, 8.5, 16.5, 0.5, 8.5, 18.5, 0.5, 8.5, 4.5, 0.5, 10.5, 6.5, 0.5, 10.5, 8.5, 0.5, 10.5, 10.5, 0.5, 10.25, 12.5, 0.5, 10.25, 14.5, 0.5, 10.25, 16.514706, 0.5, 10.441176, 18.5, 0.5, 10.5, 2.5, 0.5, 12.5, 4.5, 0.5, 12.5, 6.5, 0.5, 12.5, 8.5, 0.5, 12.5, 10.75, 0.5, 12.5, 16.75, 0.5, 12.5, 18.5, 0.5, 12.5, 4.5, 0.5, 14.5, 6.5, 0.5, 14.5, 8.5, 0.5, 14.5, 10.5, 0.5, 14.5, 12.5, 0.5, 14.5, 14.5, 0.5, 14.5, 16.5, 0.5, 14.5, 18.5, 0.5, 14.5, 4.5, 0.5, 16.5, 6.5, 0.5, 16.5, 8.5, 0.5, 16.5, 10.5, 0.5, 16.5, 12.5, 0.5, 16.5, 14.5, 0.5, 16.5, 16.5, 0.5, 16.5, 18.5, 0.5, 16.5, 4.5, 0.5, 18.5, 6.5, 0.5, 18.5, 8.5, 0.5, 18.5, 10.5, 0.5, 18.5, 12.5, 0.5, 18.5, 14.5, 0.5, 18.5, 16.5, 0.5, 18.5, 18.5, 0.5, 18.5, 10.5, 0.5, 21, 12.5, 0.5, 21, 14.5, 0.5, 21, 16.5, 0.5, 21),
+"coverage_crouch": Array[bool]([false, false, false, false, false, false, false, false]),
+"coverage_stand": Array[bool]([false, false, false, false, false, false, false, false]),
+"position": Vector3(12.5, 0.5, 12.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(16.514706, 0.5, 10.441176, 18.5, 0.5, 10.5, 18.5, 0.5, 12.5, 14.5, 0.5, 14.5, 16.5, 0.5, 14.5, 18.5, 0.5, 14.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, true, true, true]),
+"coverage_stand": Array[bool]([false, true, true, true, false, true, true, true]),
+"position": Vector3(16.75, 0.5, 12.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(18.5, 0.5, 8.5, 16.514706, 0.5, 10.441176, 18.5, 0.5, 10.5, 16.75, 0.5, 12.5, 16.5, 0.5, 14.5, 18.5, 0.5, 14.5, 18.5, 0.5, 16.5),
+"coverage_crouch": Array[bool]([false, true, true, true, false, false, true, false]),
+"coverage_stand": Array[bool]([false, true, true, true, false, false, true, false]),
+"position": Vector3(18.5, 0.5, 12.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-17.5, 0.5, 10.5, -17.5, 0.5, 12.5, -15.25, 0.5, 12.5, -15.5, 0.5, 14.5, -13.5, 0.5, 14.5, -17.5, 0.5, 16.5, -15.5, 0.5, 16.5, -17.5, 0.5, 18.5),
+"coverage_crouch": Array[bool]([true, false, false, true, false, true, true, true]),
+"coverage_stand": Array[bool]([true, false, false, true, false, true, true, true]),
+"position": Vector3(-17.5, 0.5, 14.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-17.5, 0.5, 12.5, -15.25, 0.5, 12.5, -17.5, 0.5, 14.5, -13.5, 0.5, 14.5, -11.5, 0.5, 14.5, -17.5, 0.5, 16.5, -15.5, 0.5, 16.5, -13.5, 0.5, 16.5, -15.5, 0.5, 18.5),
+"coverage_crouch": Array[bool]([true, false, false, true, true, false, true, false]),
+"coverage_stand": Array[bool]([true, false, false, true, true, false, true, false]),
+"position": Vector3(-15.5, 0.5, 14.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-17.5, 0.5, 14.5, -15.5, 0.5, 14.5, -11.5, 0.5, 14.5, -9.5, 0.5, 14.5, -15.5, 0.5, 16.5, -13.5, 0.5, 16.5, -11.5, 0.5, 16.5, -13.5, 0.5, 18.5),
+"coverage_crouch": Array[bool]([true, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([true, false, false, true, true, true, false, false]),
+"position": Vector3(-13.5, 0.5, 14.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-9.25, 0.5, 12.5, -15.5, 0.5, 14.5, -13.5, 0.5, 14.5, -9.5, 0.5, 14.5, -7.5, 0.5, 14.5, -13.5, 0.5, 16.5, -11.5, 0.5, 16.5, -9.5, 0.5, 16.5, -11.5, 0.5, 18.5),
+"coverage_crouch": Array[bool]([true, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([true, false, false, true, true, true, false, false]),
+"position": Vector3(-11.5, 0.5, 14.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-9.25, 0.5, 12.5, -7.5, 0.5, 12.5, -13.5, 0.5, 14.5, -11.5, 0.5, 14.5, -7.5, 0.5, 14.5, -5.5, 0.5, 14.5, -11.5, 0.5, 16.5, -9.5, 0.5, 16.5, -7.5, 0.5, 16.5, -9.5, 0.5, 18.5),
+"coverage_crouch": Array[bool]([true, false, false, false, false, true, false, false]),
+"coverage_stand": Array[bool]([true, false, false, false, false, true, false, false]),
+"position": Vector3(-9.5, 0.5, 14.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-7.5, 0.5, 10.5, -9.25, 0.5, 12.5, -7.5, 0.5, 12.5, -5.5, 0.5, 12.5, -11.5, 0.5, 14.5, -9.5, 0.5, 14.5, -5.5, 0.5, 14.5, -3.5, 0.5, 14.5, -9.5, 0.5, 16.5, -7.5, 0.5, 16.5, -5.5, 0.5, 16.5, -7.5, 0.5, 18.5),
+"coverage_crouch": Array[bool]([true, false, false, false, false, true, false, false]),
+"coverage_stand": Array[bool]([true, false, false, false, false, true, false, false]),
+"position": Vector3(-7.5, 0.5, 14.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-7.5, 0.5, 12.5, -5.5, 0.5, 12.5, -3.5, 0.5, 12.5, -9.5, 0.5, 14.5, -7.5, 0.5, 14.5, -3.5, 0.5, 14.5, -1.5, 0.5, 14.5, -7.5, 0.5, 16.5, -5.5, 0.5, 16.5, -3.5, 0.5, 16.5, -5.5, 0.5, 18.5),
+"coverage_crouch": Array[bool]([true, false, false, true, false, false, false, false]),
+"coverage_stand": Array[bool]([true, false, false, true, false, false, false, false]),
+"position": Vector3(-5.5, 0.5, 14.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-3.5, 0.5, 10.5, -5.5, 0.5, 12.5, -3.5, 0.5, 12.5, -1.5, 0.5, 12.5, -7.5, 0.5, 14.5, -5.5, 0.5, 14.5, -1.5, 0.5, 14.5, -5.5, 0.5, 16.5, -3.5, 0.5, 16.5, -1.5, 0.5, 16.5, -3.5, 0.5, 18.5),
+"coverage_crouch": Array[bool]([true, false, false, true, false, false, false, false]),
+"coverage_stand": Array[bool]([true, false, false, true, false, false, false, false]),
+"position": Vector3(-3.5, 0.5, 14.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-3.5, 0.5, 12.5, -1.5, 0.5, 12.5, 0.5, 0.5, 12.5, -5.5, 0.5, 14.5, -3.5, 0.5, 14.5, 0.5, 0.5, 14.5, 2.5, 0.5, 14.5, -3.5, 0.5, 16.5, -1.5, 0.5, 16.5, 0.5, 0.5, 16.5, -1.5, 0.5, 18.5),
+"coverage_crouch": Array[bool]([true, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([true, false, false, true, true, true, false, false]),
+"position": Vector3(-1.5, 0.5, 14.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-1.5, 0.5, 12.5, 0.5, 0.5, 12.5, -1.5, 0.5, 14.5, 2.5, 0.5, 14.5, -1.5, 0.5, 16.5, 0.5, 0.5, 16.5, 2.5, 0.5, 16.5, 0.5, 0.5, 18.5),
+"coverage_crouch": Array[bool]([true, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([true, false, false, true, true, true, false, false]),
+"position": Vector3(0.5, 0.5, 14.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(0.5, 0.5, 12.5, 2.5, 0.5, 12.5, 4.5, 0.5, 12.5, -1.5, 0.5, 14.5, 0.5, 0.5, 14.5, 4.5, 0.5, 14.5, 6.5, 0.5, 14.5, 0.5, 0.5, 16.5, 2.5, 0.5, 16.5, 4.5, 0.5, 16.5, 2.5, 0.5, 18.5),
+"coverage_crouch": Array[bool]([true, false, false, false, true, true, false, false]),
+"coverage_stand": Array[bool]([true, false, false, false, true, true, false, false]),
+"position": Vector3(2.5, 0.5, 14.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(2.5, 0.5, 12.5, 4.5, 0.5, 12.5, 6.5, 0.5, 12.5, 2.5, 0.5, 14.5, 6.5, 0.5, 14.5, 8.5, 0.5, 14.5, 2.5, 0.5, 16.5, 4.5, 0.5, 16.5, 6.5, 0.5, 16.5, 4.5, 0.5, 18.5),
+"coverage_crouch": Array[bool]([true, false, false, false, false, true, false, false]),
+"coverage_stand": Array[bool]([true, false, false, false, false, true, false, false]),
+"position": Vector3(4.5, 0.5, 14.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(6.5, 0.5, 10.5, 4.5, 0.5, 12.5, 6.5, 0.5, 12.5, 8.5, 0.5, 12.5, 2.5, 0.5, 14.5, 4.5, 0.5, 14.5, 8.5, 0.5, 14.5, 10.5, 0.5, 14.5, 4.5, 0.5, 16.5, 6.5, 0.5, 16.5, 8.5, 0.5, 16.5, 6.5, 0.5, 18.5),
+"coverage_crouch": Array[bool]([true, false, false, true, false, true, false, false]),
+"coverage_stand": Array[bool]([true, false, false, true, false, true, false, false]),
+"position": Vector3(6.5, 0.5, 14.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(8.5, 0.5, 10.5, 6.5, 0.5, 12.5, 8.5, 0.5, 12.5, 10.75, 0.5, 12.5, 4.5, 0.5, 14.5, 6.5, 0.5, 14.5, 10.5, 0.5, 14.5, 12.5, 0.5, 14.5, 6.5, 0.5, 16.5, 8.5, 0.5, 16.5, 10.5, 0.5, 16.5, 8.5, 0.5, 18.5),
+"coverage_crouch": Array[bool]([true, false, false, true, false, false, false, false]),
+"coverage_stand": Array[bool]([true, false, false, true, false, false, false, false]),
+"position": Vector3(8.5, 0.5, 14.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(8.5, 0.5, 12.5, 10.75, 0.5, 12.5, 12.5, 0.5, 12.5, 6.5, 0.5, 14.5, 8.5, 0.5, 14.5, 12.5, 0.5, 14.5, 14.5, 0.5, 14.5, 8.5, 0.5, 16.5, 10.5, 0.5, 16.5, 12.5, 0.5, 16.5, 10.5, 0.5, 18.5),
+"coverage_crouch": Array[bool]([true, false, false, true, true, false, false, false]),
+"coverage_stand": Array[bool]([true, false, false, true, true, false, false, false]),
+"position": Vector3(10.5, 0.5, 14.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(12.5, 0.5, 12.5, 8.5, 0.5, 14.5, 10.5, 0.5, 14.5, 14.5, 0.5, 14.5, 16.5, 0.5, 14.5, 10.5, 0.5, 16.5, 12.5, 0.5, 16.5, 14.5, 0.5, 16.5, 12.5, 0.5, 18.5),
+"coverage_crouch": Array[bool]([true, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([true, false, false, true, true, true, false, false]),
+"position": Vector3(12.5, 0.5, 14.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(12.5, 0.5, 12.5, 16.75, 0.5, 12.5, 10.5, 0.5, 14.5, 12.5, 0.5, 14.5, 16.5, 0.5, 14.5, 12.5, 0.5, 16.5, 14.5, 0.5, 16.5, 16.5, 0.5, 16.5, 14.5, 0.5, 18.5),
+"coverage_crouch": Array[bool]([true, false, true, true, true, true, false, false]),
+"coverage_stand": Array[bool]([true, false, true, true, true, true, false, false]),
+"position": Vector3(14.5, 0.5, 14.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(16.75, 0.5, 12.5, 18.5, 0.5, 12.5, 12.5, 0.5, 14.5, 14.5, 0.5, 14.5, 18.5, 0.5, 14.5, 14.5, 0.5, 16.5, 16.5, 0.5, 16.5, 18.5, 0.5, 16.5, 16.5, 0.5, 18.5),
+"coverage_crouch": Array[bool]([true, true, true, true, false, true, false, false]),
+"coverage_stand": Array[bool]([true, true, true, true, false, true, false, false]),
+"position": Vector3(16.5, 0.5, 14.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(18.5, 0.5, 10.5, 16.75, 0.5, 12.5, 18.5, 0.5, 12.5, 16.5, 0.5, 14.5, 16.5, 0.5, 16.5, 18.5, 0.5, 16.5, 18.5, 0.5, 18.5),
+"coverage_crouch": Array[bool]([true, true, true, true, false, true, false, false]),
+"coverage_stand": Array[bool]([true, true, true, true, false, true, false, false]),
+"position": Vector3(18.5, 0.5, 14.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-17.5, 0.5, 12.5, -17.5, 0.5, 14.5, -15.5, 0.5, 14.5, -15.5, 0.5, 16.5, -13.5, 0.5, 16.5, -17.5, 0.5, 18.5, -15.5, 0.5, 18.5, -19.25, 0.5, 21, -17.5, 0.5, 21, -15.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, true, false, true, true, true]),
+"coverage_stand": Array[bool]([true, true, false, true, false, true, true, true]),
+"position": Vector3(-17.5, 0.5, 16.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-17.5, 0.5, 14.5, -15.5, 0.5, 14.5, -13.5, 0.5, 14.5, -17.5, 0.5, 16.5, -13.5, 0.5, 16.5, -11.5, 0.5, 16.5, -17.5, 0.5, 18.5, -15.5, 0.5, 18.5, -13.5, 0.5, 18.5, -17.5, 0.5, 21, -15.5, 0.5, 21, -13.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, true, true, false, true, true]),
+"coverage_stand": Array[bool]([true, true, false, true, true, false, true, true]),
+"position": Vector3(-15.5, 0.5, 16.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-15.5, 0.5, 14.5, -13.5, 0.5, 14.5, -11.5, 0.5, 14.5, -17.5, 0.5, 16.5, -15.5, 0.5, 16.5, -11.5, 0.5, 16.5, -9.5, 0.5, 16.5, -15.5, 0.5, 18.5, -13.5, 0.5, 18.5, -11.5, 0.5, 18.5, -15.5, 0.5, 21, -13.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, true, true, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, true, true, false, false, true]),
+"position": Vector3(-13.5, 0.5, 16.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-13.5, 0.5, 14.5, -11.5, 0.5, 14.5, -9.5, 0.5, 14.5, -15.5, 0.5, 16.5, -13.5, 0.5, 16.5, -9.5, 0.5, 16.5, -7.5, 0.5, 16.5, -13.5, 0.5, 18.5, -11.5, 0.5, 18.5, -9.5, 0.5, 18.5, -13.5, 0.5, 21, -9.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, false, true, true, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, true, true, false, true]),
+"position": Vector3(-11.5, 0.5, 16.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-11.5, 0.5, 14.5, -9.5, 0.5, 14.5, -7.5, 0.5, 14.5, -13.5, 0.5, 16.5, -11.5, 0.5, 16.5, -7.5, 0.5, 16.5, -5.5, 0.5, 16.5, -11.5, 0.5, 18.5, -9.5, 0.5, 18.5, -7.5, 0.5, 18.5, -9.5, 0.5, 21, -7.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, false, false, true, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, true, false, true]),
+"position": Vector3(-9.5, 0.5, 16.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-7.5, 0.5, 12.5, -9.5, 0.5, 14.5, -7.5, 0.5, 14.5, -5.5, 0.5, 14.5, -11.5, 0.5, 16.5, -9.5, 0.5, 16.5, -5.5, 0.5, 16.5, -3.5, 0.5, 16.5, -9.5, 0.5, 18.5, -7.5, 0.5, 18.5, -5.5, 0.5, 18.5, -9.5, 0.5, 21, -7.5, 0.5, 21, -5.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, false, false, true, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, true, false, true]),
+"position": Vector3(-7.5, 0.5, 16.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-5.5, 0.5, 12.5, -7.5, 0.5, 14.5, -5.5, 0.5, 14.5, -3.5, 0.5, 14.5, -9.5, 0.5, 16.5, -7.5, 0.5, 16.5, -3.5, 0.5, 16.5, -1.5, 0.5, 16.5, -7.5, 0.5, 18.5, -5.5, 0.5, 18.5, -3.5, 0.5, 18.5, -7.5, 0.5, 21, -5.5, 0.5, 21, -3.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, true, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, true, false, false, false, true]),
+"position": Vector3(-5.5, 0.5, 16.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-3.5, 0.5, 12.5, -5.5, 0.5, 14.5, -3.5, 0.5, 14.5, -1.5, 0.5, 14.5, -7.5, 0.5, 16.5, -5.5, 0.5, 16.5, -1.5, 0.5, 16.5, -5.5, 0.5, 18.5, -3.5, 0.5, 18.5, -1.5, 0.5, 18.5, -5.5, 0.5, 21, -3.5, 0.5, 21, -1.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, true, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, true, false, false, false, true]),
+"position": Vector3(-3.5, 0.5, 16.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(0.5, 0.5, 12.5, -3.5, 0.5, 14.5, -1.5, 0.5, 14.5, 0.5, 0.5, 14.5, -5.5, 0.5, 16.5, -3.5, 0.5, 16.5, 0.5, 0.5, 16.5, -3.5, 0.5, 18.5, -1.5, 0.5, 18.5, 0.5, 0.5, 18.5, -3.5, 0.5, 21, -1.5, 0.5, 21, 0.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, true, true, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, true, true, false, false, true]),
+"position": Vector3(-1.5, 0.5, 16.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-1.5, 0.5, 12.5, 0.5, 0.5, 12.5, -1.5, 0.5, 14.5, 0.5, 0.5, 14.5, 2.5, 0.5, 14.5, -1.5, 0.5, 16.5, 2.5, 0.5, 16.5, 4.5, 0.5, 16.5, -1.5, 0.5, 18.5, 0.5, 0.5, 18.5, 2.5, 0.5, 18.5, -1.5, 0.5, 21, 0.5, 0.5, 21, 2.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, false, true, true, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, true, true, false, true]),
+"position": Vector3(0.5, 0.5, 16.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(0.5, 0.5, 14.5, 2.5, 0.5, 14.5, 4.5, 0.5, 14.5, 0.5, 0.5, 16.5, 4.5, 0.5, 16.5, 0.5, 0.5, 18.5, 2.5, 0.5, 18.5, 4.5, 0.5, 18.5, 0.5, 0.5, 21, 2.5, 0.5, 21, 4.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, false, true, true, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, true, true, false, true]),
+"position": Vector3(2.5, 0.5, 16.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(2.5, 0.5, 14.5, 4.5, 0.5, 14.5, 6.5, 0.5, 14.5, 0.5, 0.5, 16.5, 2.5, 0.5, 16.5, 6.5, 0.5, 16.5, 8.5, 0.5, 16.5, 2.5, 0.5, 18.5, 4.5, 0.5, 18.5, 6.5, 0.5, 18.5, 2.5, 0.5, 21, 4.5, 0.5, 21, 6.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, false, false, true, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, true, false, true]),
+"position": Vector3(4.5, 0.5, 16.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(6.5, 0.5, 12.5, 4.5, 0.5, 14.5, 6.5, 0.5, 14.5, 8.5, 0.5, 14.5, 4.5, 0.5, 16.5, 8.5, 0.5, 16.5, 10.5, 0.5, 16.5, 4.5, 0.5, 18.5, 6.5, 0.5, 18.5, 8.5, 0.5, 18.5, 4.5, 0.5, 21, 6.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, true, false, true, false, true]),
+"coverage_stand": Array[bool]([true, true, false, true, false, true, false, true]),
+"position": Vector3(6.5, 0.5, 16.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(8.5, 0.5, 12.5, 6.5, 0.5, 14.5, 8.5, 0.5, 14.5, 10.5, 0.5, 14.5, 4.5, 0.5, 16.5, 6.5, 0.5, 16.5, 10.5, 0.5, 16.5, 12.5, 0.5, 16.5, 6.5, 0.5, 18.5, 8.5, 0.5, 18.5, 10.5, 0.5, 18.5, 6.5, 0.5, 21, 10.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, true, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, true, false, false, false, true]),
+"position": Vector3(8.5, 0.5, 16.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(12.5, 0.5, 12.5, 8.5, 0.5, 14.5, 10.5, 0.5, 14.5, 12.5, 0.5, 14.5, 6.5, 0.5, 16.5, 8.5, 0.5, 16.5, 12.5, 0.5, 16.5, 14.5, 0.5, 16.5, 8.5, 0.5, 18.5, 10.5, 0.5, 18.5, 12.5, 0.5, 18.5, 10.5, 0.5, 21, 12.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, true, true, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, true, true, false, false, true]),
+"position": Vector3(10.5, 0.5, 16.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(12.5, 0.5, 12.5, 10.5, 0.5, 14.5, 12.5, 0.5, 14.5, 14.5, 0.5, 14.5, 8.5, 0.5, 16.5, 10.5, 0.5, 16.5, 14.5, 0.5, 16.5, 16.5, 0.5, 16.5, 10.5, 0.5, 18.5, 12.5, 0.5, 18.5, 14.5, 0.5, 18.5, 10.5, 0.5, 21, 12.5, 0.5, 21, 14.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, true, true, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, true, true, false, false, true]),
+"position": Vector3(12.5, 0.5, 16.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(12.5, 0.5, 14.5, 14.5, 0.5, 14.5, 16.5, 0.5, 14.5, 10.5, 0.5, 16.5, 12.5, 0.5, 16.5, 16.5, 0.5, 16.5, 18.5, 0.5, 16.5, 12.5, 0.5, 18.5, 14.5, 0.5, 18.5, 16.5, 0.5, 18.5, 12.5, 0.5, 21, 14.5, 0.5, 21, 16.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, true, false, true, true, false, true]),
+"coverage_stand": Array[bool]([true, true, true, false, true, true, false, true]),
+"position": Vector3(14.5, 0.5, 16.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(14.5, 0.5, 14.5, 16.5, 0.5, 14.5, 18.5, 0.5, 14.5, 12.5, 0.5, 16.5, 14.5, 0.5, 16.5, 18.5, 0.5, 16.5, 14.5, 0.5, 18.5, 16.5, 0.5, 18.5, 18.5, 0.5, 18.5, 14.5, 0.5, 21, 16.5, 0.5, 21, 18.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, true, true, false, true, false, true]),
+"coverage_stand": Array[bool]([true, true, true, true, false, true, false, true]),
+"position": Vector3(16.5, 0.5, 16.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(18.5, 0.5, 12.5, 16.5, 0.5, 14.5, 18.5, 0.5, 14.5, 14.5, 0.5, 16.5, 16.5, 0.5, 16.5, 16.5, 0.5, 18.5, 18.5, 0.5, 18.5, 16.5, 0.5, 21, 18.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, true, true, false, true, false, true]),
+"coverage_stand": Array[bool]([true, true, true, true, false, true, false, true]),
+"position": Vector3(18.5, 0.5, 16.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-17.5, 0.5, 14.5, -17.5, 0.5, 16.5, -15.5, 0.5, 16.5, -15.5, 0.5, 18.5, -13.5, 0.5, 18.5, -19.25, 0.5, 21, -17.5, 0.5, 21, -15.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, false, false, true, true, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, true, true, true]),
+"position": Vector3(-17.5, 0.5, 18.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-15.5, 0.5, 14.5, -17.5, 0.5, 16.5, -15.5, 0.5, 16.5, -13.5, 0.5, 16.5, -17.5, 0.5, 18.5, -13.5, 0.5, 18.5, -11.5, 0.5, 18.5, -19.25, 0.5, 21, -17.5, 0.5, 21, -15.5, 0.5, 21, -13.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, false, true, false, true, true]),
+"coverage_stand": Array[bool]([true, true, false, false, true, false, true, true]),
+"position": Vector3(-15.5, 0.5, 18.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-13.5, 0.5, 14.5, -15.5, 0.5, 16.5, -13.5, 0.5, 16.5, -11.5, 0.5, 16.5, -17.5, 0.5, 18.5, -15.5, 0.5, 18.5, -11.5, 0.5, 18.5, -9.5, 0.5, 18.5, -15.5, 0.5, 21, -13.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, false, true, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, true, false, false, true]),
+"position": Vector3(-13.5, 0.5, 18.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-11.5, 0.5, 14.5, -13.5, 0.5, 16.5, -11.5, 0.5, 16.5, -9.5, 0.5, 16.5, -15.5, 0.5, 18.5, -13.5, 0.5, 18.5, -9.5, 0.5, 18.5, -7.5, 0.5, 18.5, -13.5, 0.5, 21, -9.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, false, true, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, true, false, false, true]),
+"position": Vector3(-11.5, 0.5, 18.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-9.5, 0.5, 14.5, -11.5, 0.5, 16.5, -9.5, 0.5, 16.5, -7.5, 0.5, 16.5, -13.5, 0.5, 18.5, -11.5, 0.5, 18.5, -7.5, 0.5, 18.5, -5.5, 0.5, 18.5, -9.5, 0.5, 21, -7.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, false, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, false, false, true]),
+"position": Vector3(-9.5, 0.5, 18.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-7.5, 0.5, 14.5, -9.5, 0.5, 16.5, -7.5, 0.5, 16.5, -5.5, 0.5, 16.5, -11.5, 0.5, 18.5, -9.5, 0.5, 18.5, -5.5, 0.5, 18.5, -3.5, 0.5, 18.5, -9.5, 0.5, 21, -7.5, 0.5, 21, -5.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, false, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, false, false, true]),
+"position": Vector3(-7.5, 0.5, 18.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(-5.5, 0.5, 14.5, -7.5, 0.5, 16.5, -5.5, 0.5, 16.5, -3.5, 0.5, 16.5, -9.5, 0.5, 18.5, -7.5, 0.5, 18.5, -3.5, 0.5, 18.5, -7.5, 0.5, 21, -5.5, 0.5, 21, -3.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, false, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, false, false, true]),
+"position": Vector3(-5.5, 0.5, 18.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-3.5, 0.5, 14.5, -5.5, 0.5, 16.5, -3.5, 0.5, 16.5, -1.5, 0.5, 16.5, -7.5, 0.5, 18.5, -5.5, 0.5, 18.5, -1.5, 0.5, 18.5, 0.5, 0.5, 18.5, -5.5, 0.5, 21, -3.5, 0.5, 21, -1.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, false, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, false, false, true]),
+"position": Vector3(-3.5, 0.5, 18.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-1.5, 0.5, 14.5, -3.5, 0.5, 16.5, -1.5, 0.5, 16.5, 0.5, 0.5, 16.5, -3.5, 0.5, 18.5, 0.5, 0.5, 18.5, 2.5, 0.5, 18.5, -3.5, 0.5, 21, -1.5, 0.5, 21, 0.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, false, true, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, true, false, false, true]),
+"position": Vector3(-1.5, 0.5, 18.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(0.5, 0.5, 14.5, -1.5, 0.5, 16.5, 0.5, 0.5, 16.5, 2.5, 0.5, 16.5, -3.5, 0.5, 18.5, -1.5, 0.5, 18.5, 2.5, 0.5, 18.5, 4.5, 0.5, 18.5, -1.5, 0.5, 21, 0.5, 0.5, 21, 2.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, false, true, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, true, false, false, true]),
+"position": Vector3(0.5, 0.5, 18.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(2.5, 0.5, 14.5, 0.5, 0.5, 16.5, 2.5, 0.5, 16.5, 4.5, 0.5, 16.5, -1.5, 0.5, 18.5, 0.5, 0.5, 18.5, 4.5, 0.5, 18.5, 6.5, 0.5, 18.5, 0.5, 0.5, 21, 2.5, 0.5, 21, 4.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, false, true, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, true, false, false, true]),
+"position": Vector3(2.5, 0.5, 18.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(4.5, 0.5, 14.5, 2.5, 0.5, 16.5, 4.5, 0.5, 16.5, 6.5, 0.5, 16.5, 0.5, 0.5, 18.5, 2.5, 0.5, 18.5, 6.5, 0.5, 18.5, 8.5, 0.5, 18.5, 2.5, 0.5, 21, 4.5, 0.5, 21, 6.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, false, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, false, false, true]),
+"position": Vector3(4.5, 0.5, 18.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(6.5, 0.5, 14.5, 4.5, 0.5, 16.5, 6.5, 0.5, 16.5, 8.5, 0.5, 16.5, 2.5, 0.5, 18.5, 4.5, 0.5, 18.5, 8.5, 0.5, 18.5, 10.5, 0.5, 18.5, 4.5, 0.5, 21, 6.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, false, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, false, false, true]),
+"position": Vector3(6.5, 0.5, 18.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(8.5, 0.5, 14.5, 6.5, 0.5, 16.5, 8.5, 0.5, 16.5, 10.5, 0.5, 16.5, 4.5, 0.5, 18.5, 6.5, 0.5, 18.5, 10.5, 0.5, 18.5, 12.5, 0.5, 18.5, 6.5, 0.5, 21, 10.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, false, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, false, false, false, true]),
+"position": Vector3(8.5, 0.5, 18.5),
+"sniping": false
+}, {
+"approach_points": PackedVector3Array(10.5, 0.5, 14.5, 8.5, 0.5, 16.5, 10.5, 0.5, 16.5, 12.5, 0.5, 16.5, 6.5, 0.5, 18.5, 8.5, 0.5, 18.5, 12.5, 0.5, 18.5, 14.5, 0.5, 18.5, 10.5, 0.5, 21, 12.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, false, true, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, true, false, false, true]),
+"position": Vector3(10.5, 0.5, 18.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(12.5, 0.5, 14.5, 10.5, 0.5, 16.5, 12.5, 0.5, 16.5, 14.5, 0.5, 16.5, 8.5, 0.5, 18.5, 10.5, 0.5, 18.5, 14.5, 0.5, 18.5, 16.5, 0.5, 18.5, 10.5, 0.5, 21, 12.5, 0.5, 21, 14.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, false, false, true, false, false, true]),
+"coverage_stand": Array[bool]([true, true, false, false, true, false, false, true]),
+"position": Vector3(12.5, 0.5, 18.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(14.5, 0.5, 14.5, 12.5, 0.5, 16.5, 14.5, 0.5, 16.5, 16.5, 0.5, 16.5, 10.5, 0.5, 18.5, 12.5, 0.5, 18.5, 16.5, 0.5, 18.5, 18.5, 0.5, 18.5, 12.5, 0.5, 21, 14.5, 0.5, 21, 16.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, true, false, true, false, false, true]),
+"coverage_stand": Array[bool]([true, true, true, false, true, false, false, true]),
+"position": Vector3(14.5, 0.5, 18.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(16.5, 0.5, 14.5, 14.5, 0.5, 16.5, 16.5, 0.5, 16.5, 18.5, 0.5, 16.5, 12.5, 0.5, 18.5, 14.5, 0.5, 18.5, 18.5, 0.5, 18.5, 14.5, 0.5, 21, 16.5, 0.5, 21, 18.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, true, true, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, true, true, false, false, false, true]),
+"position": Vector3(16.5, 0.5, 18.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(18.5, 0.5, 14.5, 16.5, 0.5, 16.5, 18.5, 0.5, 16.5, 14.5, 0.5, 18.5, 16.5, 0.5, 18.5, 16.5, 0.5, 21, 18.5, 0.5, 21),
+"coverage_crouch": Array[bool]([true, true, true, true, false, false, false, true]),
+"coverage_stand": Array[bool]([true, true, true, true, false, false, false, true]),
+"position": Vector3(18.5, 0.5, 18.5),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-17.5, 0.5, 12.5, -15.25, 0.5, 12.5, -17.5, 0.5, 14.5, -15.5, 0.5, 14.5, -17.5, 0.5, 16.5, -15.5, 0.5, 16.5, -17.5, 0.5, 18.5, -15.5, 0.5, 18.5, -17.5, 0.5, 21, -15.5, 0.5, 21),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, true, false]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, true, false]),
+"position": Vector3(-19.25, 0.5, 21),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-17.5, 0.5, 12.5, -15.25, 0.5, 12.5, -17.5, 0.5, 14.5, -15.5, 0.5, 14.5, -13.5, 0.5, 14.5, -17.5, 0.5, 16.5, -15.5, 0.5, 16.5, -13.5, 0.5, 16.5, -17.5, 0.5, 18.5, -15.5, 0.5, 18.5, -13.5, 0.5, 18.5, -19.25, 0.5, 21, -15.5, 0.5, 21, -13.5, 0.5, 21),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, true, false]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, true, false]),
+"position": Vector3(-17.5, 0.5, 21),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-17.5, 0.5, 12.5, -15.25, 0.5, 12.5, -17.5, 0.5, 14.5, -15.5, 0.5, 14.5, -13.5, 0.5, 14.5, -11.5, 0.5, 14.5, -17.5, 0.5, 16.5, -15.5, 0.5, 16.5, -13.5, 0.5, 16.5, -11.5, 0.5, 16.5, -17.5, 0.5, 18.5, -15.5, 0.5, 18.5, -13.5, 0.5, 18.5, -11.5, 0.5, 18.5, -19.25, 0.5, 21, -17.5, 0.5, 21, -13.5, 0.5, 21),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, true, false]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, true, false]),
+"position": Vector3(-15.5, 0.5, 21),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-17.5, 0.5, 12.5, -15.25, 0.5, 12.5, -17.5, 0.5, 14.5, -15.5, 0.5, 14.5, -13.5, 0.5, 14.5, -11.5, 0.5, 14.5, -9.5, 0.5, 14.5, -17.5, 0.5, 16.5, -15.5, 0.5, 16.5, -13.5, 0.5, 16.5, -11.5, 0.5, 16.5, -9.5, 0.5, 16.5, -17.5, 0.5, 18.5, -15.5, 0.5, 18.5, -13.5, 0.5, 18.5, -11.5, 0.5, 18.5, -9.5, 0.5, 18.5, -17.5, 0.5, 21, -15.5, 0.5, 21, -9.5, 0.5, 21),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, false, false]),
+"position": Vector3(-13.5, 0.5, 21),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-9.25, 0.5, 12.5, -7.5, 0.5, 12.5, -5.5, 0.5, 12.5, -13.5, 0.5, 14.5, -11.5, 0.5, 14.5, -9.5, 0.5, 14.5, -7.5, 0.5, 14.5, -5.5, 0.5, 14.5, -13.5, 0.5, 16.5, -11.5, 0.5, 16.5, -9.5, 0.5, 16.5, -7.5, 0.5, 16.5, -5.5, 0.5, 16.5, -13.5, 0.5, 18.5, -11.5, 0.5, 18.5, -9.5, 0.5, 18.5, -7.5, 0.5, 18.5, -5.5, 0.5, 18.5, -13.5, 0.5, 21, -7.5, 0.5, 21, -5.5, 0.5, 21),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, false, false]),
+"position": Vector3(-9.5, 0.5, 21),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-9.25, 0.5, 12.5, -7.5, 0.5, 12.5, -5.5, 0.5, 12.5, -11.5, 0.5, 14.5, -9.5, 0.5, 14.5, -7.5, 0.5, 14.5, -5.5, 0.5, 14.5, -11.5, 0.5, 16.5, -9.5, 0.5, 16.5, -7.5, 0.5, 16.5, -5.5, 0.5, 16.5, -11.5, 0.5, 18.5, -9.5, 0.5, 18.5, -7.5, 0.5, 18.5, -5.5, 0.5, 18.5, -9.5, 0.5, 21, -5.5, 0.5, 21),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, false, false]),
+"position": Vector3(-7.5, 0.5, 21),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-9.25, 0.5, 12.5, -7.5, 0.5, 12.5, -5.5, 0.5, 12.5, -3.5, 0.5, 12.5, -1.5, 0.5, 12.5, -9.5, 0.5, 14.5, -7.5, 0.5, 14.5, -5.5, 0.5, 14.5, -3.5, 0.5, 14.5, -1.5, 0.5, 14.5, -9.5, 0.5, 16.5, -7.5, 0.5, 16.5, -5.5, 0.5, 16.5, -3.5, 0.5, 16.5, -1.5, 0.5, 16.5, -9.5, 0.5, 18.5, -7.5, 0.5, 18.5, -5.5, 0.5, 18.5, -3.5, 0.5, 18.5, -1.5, 0.5, 18.5, -9.5, 0.5, 21, -7.5, 0.5, 21, -3.5, 0.5, 21, -1.5, 0.5, 21),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, false, false]),
+"position": Vector3(-5.5, 0.5, 21),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-5.5, 0.5, 12.5, -3.5, 0.5, 12.5, -1.5, 0.5, 12.5, 0.5, 0.5, 12.5, -5.5, 0.5, 14.5, -3.5, 0.5, 14.5, -1.5, 0.5, 14.5, 0.5, 0.5, 14.5, -5.5, 0.5, 16.5, -3.5, 0.5, 16.5, -1.5, 0.5, 16.5, 0.5, 0.5, 16.5, -5.5, 0.5, 18.5, -3.5, 0.5, 18.5, -1.5, 0.5, 18.5, 0.5, 0.5, 18.5, -5.5, 0.5, 21, -1.5, 0.5, 21, 0.5, 0.5, 21),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, false, false]),
+"position": Vector3(-3.5, 0.5, 21),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-5.5, 0.5, 12.5, -3.5, 0.5, 12.5, -1.5, 0.5, 12.5, 0.5, 0.5, 12.5, 2.5, 0.5, 12.5, -5.5, 0.5, 14.5, -3.5, 0.5, 14.5, -1.5, 0.5, 14.5, 0.5, 0.5, 14.5, 2.5, 0.5, 14.5, -5.5, 0.5, 16.5, -3.5, 0.5, 16.5, -1.5, 0.5, 16.5, 0.5, 0.5, 16.5, 2.5, 0.5, 16.5, -5.5, 0.5, 18.5, -3.5, 0.5, 18.5, -1.5, 0.5, 18.5, 0.5, 0.5, 18.5, 2.5, 0.5, 18.5, -5.5, 0.5, 21, -3.5, 0.5, 21, 0.5, 0.5, 21, 2.5, 0.5, 21),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, false, false]),
+"position": Vector3(-1.5, 0.5, 21),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-3.5, 0.5, 12.5, -1.5, 0.5, 12.5, 0.5, 0.5, 12.5, 2.5, 0.5, 12.5, 4.5, 0.5, 12.5, -3.5, 0.5, 14.5, -1.5, 0.5, 14.5, 0.5, 0.5, 14.5, 2.5, 0.5, 14.5, 4.5, 0.5, 14.5, -3.5, 0.5, 16.5, -1.5, 0.5, 16.5, 0.5, 0.5, 16.5, 2.5, 0.5, 16.5, 4.5, 0.5, 16.5, -3.5, 0.5, 18.5, -1.5, 0.5, 18.5, 0.5, 0.5, 18.5, 2.5, 0.5, 18.5, 4.5, 0.5, 18.5, -3.5, 0.5, 21, -1.5, 0.5, 21, 2.5, 0.5, 21, 4.5, 0.5, 21),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, false, false]),
+"position": Vector3(0.5, 0.5, 21),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(-1.5, 0.5, 12.5, 0.5, 0.5, 12.5, 2.5, 0.5, 12.5, 4.5, 0.5, 12.5, 6.5, 0.5, 12.5, -1.5, 0.5, 14.5, 0.5, 0.5, 14.5, 2.5, 0.5, 14.5, 4.5, 0.5, 14.5, 6.5, 0.5, 14.5, -1.5, 0.5, 16.5, 0.5, 0.5, 16.5, 2.5, 0.5, 16.5, 4.5, 0.5, 16.5, 6.5, 0.5, 16.5, -1.5, 0.5, 18.5, 0.5, 0.5, 18.5, 2.5, 0.5, 18.5, 4.5, 0.5, 18.5, 6.5, 0.5, 18.5, -1.5, 0.5, 21, 0.5, 0.5, 21, 4.5, 0.5, 21, 6.5, 0.5, 21),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, false, false]),
+"position": Vector3(2.5, 0.5, 21),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(0.5, 0.5, 12.5, 2.5, 0.5, 12.5, 4.5, 0.5, 12.5, 6.5, 0.5, 12.5, 8.5, 0.5, 12.5, 0.5, 0.5, 14.5, 2.5, 0.5, 14.5, 4.5, 0.5, 14.5, 6.5, 0.5, 14.5, 8.5, 0.5, 14.5, 0.5, 0.5, 16.5, 2.5, 0.5, 16.5, 4.5, 0.5, 16.5, 6.5, 0.5, 16.5, 8.5, 0.5, 16.5, 0.5, 0.5, 18.5, 2.5, 0.5, 18.5, 4.5, 0.5, 18.5, 6.5, 0.5, 18.5, 8.5, 0.5, 18.5, 0.5, 0.5, 21, 2.5, 0.5, 21, 6.5, 0.5, 21),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, false, false]),
+"position": Vector3(4.5, 0.5, 21),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(2.5, 0.5, 12.5, 4.5, 0.5, 12.5, 6.5, 0.5, 12.5, 8.5, 0.5, 12.5, 2.5, 0.5, 14.5, 4.5, 0.5, 14.5, 6.5, 0.5, 14.5, 8.5, 0.5, 14.5, 10.5, 0.5, 14.5, 2.5, 0.5, 16.5, 4.5, 0.5, 16.5, 6.5, 0.5, 16.5, 8.5, 0.5, 16.5, 10.5, 0.5, 16.5, 2.5, 0.5, 18.5, 4.5, 0.5, 18.5, 6.5, 0.5, 18.5, 8.5, 0.5, 18.5, 10.5, 0.5, 18.5, 2.5, 0.5, 21, 4.5, 0.5, 21, 10.5, 0.5, 21),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, false, false]),
+"position": Vector3(6.5, 0.5, 21),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(6.5, 0.5, 12.5, 8.5, 0.5, 12.5, 10.75, 0.5, 12.5, 12.5, 0.5, 12.5, 6.5, 0.5, 14.5, 8.5, 0.5, 14.5, 10.5, 0.5, 14.5, 12.5, 0.5, 14.5, 14.5, 0.5, 14.5, 6.5, 0.5, 16.5, 8.5, 0.5, 16.5, 10.5, 0.5, 16.5, 12.5, 0.5, 16.5, 14.5, 0.5, 16.5, 6.5, 0.5, 18.5, 8.5, 0.5, 18.5, 10.5, 0.5, 18.5, 12.5, 0.5, 18.5, 14.5, 0.5, 18.5, 6.5, 0.5, 21, 12.5, 0.5, 21, 14.5, 0.5, 21),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, false, false]),
+"position": Vector3(10.5, 0.5, 21),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(8.5, 0.5, 12.5, 10.75, 0.5, 12.5, 12.5, 0.5, 12.5, 8.5, 0.5, 14.5, 10.5, 0.5, 14.5, 12.5, 0.5, 14.5, 14.5, 0.5, 14.5, 16.5, 0.5, 14.5, 8.5, 0.5, 16.5, 10.5, 0.5, 16.5, 12.5, 0.5, 16.5, 14.5, 0.5, 16.5, 16.5, 0.5, 16.5, 8.5, 0.5, 18.5, 10.5, 0.5, 18.5, 12.5, 0.5, 18.5, 14.5, 0.5, 18.5, 16.5, 0.5, 18.5, 10.5, 0.5, 21, 14.5, 0.5, 21, 16.5, 0.5, 21),
+"coverage_crouch": Array[bool]([false, false, false, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, false, true, true, true, false, false]),
+"position": Vector3(12.5, 0.5, 21),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(10.75, 0.5, 12.5, 12.5, 0.5, 12.5, 16.75, 0.5, 12.5, 18.5, 0.5, 12.5, 10.5, 0.5, 14.5, 12.5, 0.5, 14.5, 14.5, 0.5, 14.5, 16.5, 0.5, 14.5, 18.5, 0.5, 14.5, 10.5, 0.5, 16.5, 12.5, 0.5, 16.5, 14.5, 0.5, 16.5, 16.5, 0.5, 16.5, 18.5, 0.5, 16.5, 10.5, 0.5, 18.5, 12.5, 0.5, 18.5, 14.5, 0.5, 18.5, 16.5, 0.5, 18.5, 18.5, 0.5, 18.5, 10.5, 0.5, 21, 12.5, 0.5, 21, 16.5, 0.5, 21, 18.5, 0.5, 21),
+"coverage_crouch": Array[bool]([false, false, true, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, true, true, true, true, false, false]),
+"position": Vector3(14.5, 0.5, 21),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(12.5, 0.5, 12.5, 16.75, 0.5, 12.5, 18.5, 0.5, 12.5, 12.5, 0.5, 14.5, 14.5, 0.5, 14.5, 16.5, 0.5, 14.5, 18.5, 0.5, 14.5, 12.5, 0.5, 16.5, 14.5, 0.5, 16.5, 16.5, 0.5, 16.5, 18.5, 0.5, 16.5, 12.5, 0.5, 18.5, 14.5, 0.5, 18.5, 16.5, 0.5, 18.5, 18.5, 0.5, 18.5, 12.5, 0.5, 21, 14.5, 0.5, 21, 18.5, 0.5, 21),
+"coverage_crouch": Array[bool]([false, false, true, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, true, true, true, true, false, false]),
+"position": Vector3(16.5, 0.5, 21),
+"sniping": true
+}, {
+"approach_points": PackedVector3Array(16.75, 0.5, 12.5, 18.5, 0.5, 12.5, 14.5, 0.5, 14.5, 16.5, 0.5, 14.5, 18.5, 0.5, 14.5, 14.5, 0.5, 16.5, 16.5, 0.5, 16.5, 18.5, 0.5, 16.5, 14.5, 0.5, 18.5, 16.5, 0.5, 18.5, 18.5, 0.5, 18.5, 14.5, 0.5, 21, 16.5, 0.5, 21),
+"coverage_crouch": Array[bool]([false, false, true, true, true, true, false, false]),
+"coverage_stand": Array[bool]([false, false, true, true, true, true, false, false]),
+"position": Vector3(18.5, 0.5, 21),
+"sniping": true
+}])

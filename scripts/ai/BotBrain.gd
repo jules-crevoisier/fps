@@ -41,6 +41,22 @@ const AVOIDANCE_RADIUS := 0.45             ## Rayon (m) d'évitement RVO entre b
 const AVOIDANCE_REF_SPEED_FALLBACK := 8.2  ## m/s — repli si `player.config` est null (ne devrait pas arriver) ; valeur par défaut de MovementConfig.sprint_speed.
 const STRAFE_LOOKAHEAD := 1.0              ## m — distance de projection du strafe de combat sur la navmesh avant application (BOT-09).
 
+# --- Connaissance de carte SYNTHÉTIQUE (BotLook L7, tâche "bots humains",
+# 2026-09-27) : sur toute carte SANS `bot_knowledge` authored (Shipment
+# comprise, voir `_map_bot_knowledge_data`), un éventail de rayons géométriques
+# REMPLACE les angles K manquants — sans lui `BotMapKnowledge` reste `null`
+# et le regard hors combat ne s'écarte jamais du point du chemin 4 m devant
+# (écart signalé : "les bots ne tournent pas la caméra"). THROTTLÉ (pas un
+# rayon par tick) : régénéré au plus une fois par SYNTHETIC_SCAN_INTERVAL,
+# voir `_map_knowledge`.
+const SYNTHETIC_SCAN_INTERVAL := 2.5   ## s — cadence de régénération de l'éventail (throttle, jamais par tick).
+const SYNTHETIC_SCAN_RAYS := 16        ## Rayons de l'éventail (360° / 16 = 22.5° d'écart, assez fin pour distinguer une porte d'un mur voisin).
+const SYNTHETIC_SCAN_RANGE := 25.0     ## Portée (m) d'un rayon — même portée qu'un angle K authored (BotLook.ANGLE_RANGE_M).
+
+# --- Rythme de déplacement hors combat / repli à basse vie (BotCombatStyle,
+# tâche "bots humains", 2026-09-27) -------------------------------------
+const LOW_HP_RETREAT_DISTANCE_M := 8.0  ## m — distance de repli visée quand STYLE.should_retreat_low_hp est vrai.
+
 var player: PlayerController
 var nav_agent: NavigationAgent3D
 
@@ -69,6 +85,26 @@ var _look_force_walk: bool = false            ## L6 : sortie de `_tick_look`, lu
 var _enemy_memory := MEMORY.new()
 var _map_knowledge_loaded: bool = false       ## Construction paresseuse (une fois par match, la carte ne change pas en cours de partie) de `_map_knowledge_cache`.
 var _map_knowledge_cache: BotMapKnowledge = null
+## Repli SYNTHÉTIQUE (voir la doc de `SYNTHETIC_SCAN_INTERVAL` ci-dessus) quand
+## `_map_bot_knowledge_data` est vide — contrairement à `_map_knowledge_cache`
+## (construit UNE fois pour le match entier, la connaissance AUTHORED ne
+## bouge pas), celui-ci est régénéré PÉRIODIQUEMENT depuis la position
+## courante du bot (throttle `_synthetic_scan_timer`).
+var _synthetic_knowledge_cache: BotMapKnowledge = null
+var _synthetic_scan_timer: float = 0.0
+## Horloge (`_now()`) du dernier contact PERÇU par CE bot (vue OU ouïe,
+## `_visible_enemies`/`_hear_event` — jamais un rapport d'équipe : le rythme
+## de déplacement (BotCombatStyle.movement_pace) ne doit réagir qu'à ce que CE
+## bot a lui-même perçu) — `-INF` tant qu'aucun contact n'a encore eu lieu
+## cette partie.
+var _last_contact_time: float = -INF
+## Fraction de PV courante (0-1, `Health.current_health / Health.max_health`)
+## — mise à jour chaque tick par `_physics_process` (même nœud "Health" déjà
+## résolu pour `hp.is_dead`/`hp.damaged`), consommée par `_tick_movement` pour
+## le repli à basse vie (BotCombatStyle.should_retreat_low_hp/retreat_point).
+## `1.0` par défaut (avant tout premier tick, ou si le nœud "Health" est
+## introuvable) : jamais un repli sur une donnée absente.
+var _hp_ratio: float = 1.0
 
 # --- Partage d'équipe retardé + réaction à un dégât reçu (BOT-03) -------
 ## Délai (s) avant qu'un rapport de CE bot à son équipe (`PERCEPTION.
@@ -182,6 +218,10 @@ func _physics_process(delta: float) -> void:
 	if hp and not _health_signal_connected:
 		hp.damaged.connect(_on_health_damaged)
 		_health_signal_connected = true
+	if hp and hp.max_health > 0.0:
+		# Tâche "bots humains" (2026-09-27) : fraction de PV courante, lue par
+		# `_tick_movement` pour le repli à basse vie (STYLE.should_retreat_low_hp).
+		_hp_ratio = hp.current_health / hp.max_health
 	if hp and hp.is_dead:
 		player.input.clear()
 		_target_id = -1
@@ -196,8 +236,14 @@ func _physics_process(delta: float) -> void:
 		if heard != null:
 			_heard_pos = heard
 			_heard_until = _now() + HEAR_MEMORY
+			# Tâche "bots humains" : contact PERÇU (ouïe) — voir la doc de
+			# `_last_contact_time` (BotCombatStyle.movement_pace).
+			_last_contact_time = _now()
 	else:
 		_report_sightings(candidates)
+		# Tâche "bots humains" : contact PERÇU (vue) — voir la doc de
+		# `_last_contact_time` (BotCombatStyle.movement_pace).
+		_last_contact_time = _now()
 
 	# BOT-03 : consomme le dernier rapport d'équipe déjà "arrivé" (délai
 	# `_team_share_delay_s`) — fusionné dans la mémoire d'ennemi (`fuse`,
@@ -795,7 +841,7 @@ func _tick_look(delta: float, move_world_dir: Vector3, has_active_path: bool) ->
 		"enemy_pos": _enemy_memory.predicted_position(_now()),
 		"has_heard": _now() < _heard_until,
 		"heard_pos": _heard_pos,
-		"map_knowledge": _map_knowledge(),
+		"map_knowledge": _map_knowledge(delta),
 		# Rôles de tenue (perchoir/surveillance, BOT-24/27) pas encore
 		# assignés à ce stade : repli sur "le bot est arrivé et ne navigue
 		# plus" comme approximation de "tenue d'angle" (L1) — à affiner
@@ -803,6 +849,13 @@ func _tick_look(delta: float, move_world_dir: Vector3, has_active_path: bool) ->
 		# BotMapKnowledge n'expose pas encore les perchoirs eux-mêmes).
 		"holding_angle": not has_active_path,
 		"goal_reached": not has_active_path,
+		# L8 (BotLook, coup d'œil de roulement bref) : "seulement en marche,
+		# des vérifications plus longues" -- lu sur `player.input.walk_held`
+		# TEL QUEL, donc la valeur DÉCIDÉE au tick précédent (`_tick_look` tourne
+		# AVANT que ce tick-ci ne la recalcule plus bas dans `_tick_movement`) --
+		# un retard d'un seul tick physique (1/60 s), sans conséquence sur un
+		# simple gate de coup d'œil (jamais un signal de sécurité).
+		"is_sprinting": not player.input.walk_held,
 		"rng": _rng,
 	}
 	var result := _look.tick(delta, ctx)
@@ -833,20 +886,78 @@ func _upcoming_path_points() -> Array:
 ## (`WastelandBots.data()`), jamais une méthode `_`-préfixée de `GameMode`
 ## (même discipline que `GameHUD._acquire_map_setup`, voir GameMode.gd
 ## `_current_map_id`/`_bot_knowledge` : dupliquer la lecture d'un champ/source
-## PUBLIC plutôt que d'appeler du `_`-préfixé hors de mon périmètre). `null`
-## pour toute carte qui n'expose pas encore ces données.
-func _map_knowledge() -> BotMapKnowledge:
-	if not _map_knowledge_loaded:
-		_map_knowledge_loaded = true
-		var data := _map_bot_knowledge_data()
-		_map_knowledge_cache = BotMapKnowledge.new(data) if not data.is_empty() else null
-	return _map_knowledge_cache
+## PUBLIC plutôt que d'appeler du `_`-préfixé hors de mon périmètre).
+## Tâche "bots humains" (2026-09-27) : sur une carte SANS `bot_knowledge`
+## authored (`_map_bot_knowledge_data` vide — Shipment aujourd'hui, comme
+## toute carte sans données authored), repli sur une connaissance SYNTHÉTIQUE
+## (BotLook L7, `_synthetic_map_knowledge_data`) régénérée depuis la position
+## COURANTE du bot au plus une fois par `SYNTHETIC_SCAN_INTERVAL` (throttle —
+## jamais un éventail de rayons par tick, voir la doc de la constante) : à la
+## différence de la connaissance AUTHORED (figée pour tout le match, elle ne
+## dépend pas de la position), la synthétique DOIT suivre le bot pour rester
+## pertinente. Jamais `null` une fois qu'un premier éventail a été tiré (le
+## bot a toujours une géométrie autour de lui, même sans rien toucher —
+## `_synthetic_map_knowledge_data` renvoie alors des angles à portée max).
+func _map_knowledge(delta: float) -> BotMapKnowledge:
+	var data := _map_bot_knowledge_data()
+	if not data.is_empty():
+		if not _map_knowledge_loaded:
+			_map_knowledge_loaded = true
+			_map_knowledge_cache = BotMapKnowledge.new(data)
+		return _map_knowledge_cache
+	_synthetic_scan_timer -= delta
+	if _synthetic_knowledge_cache == null or _synthetic_scan_timer <= 0.0:
+		_synthetic_scan_timer = SYNTHETIC_SCAN_INTERVAL
+		_synthetic_knowledge_cache = BotMapKnowledge.new(_synthetic_map_knowledge_data())
+	return _synthetic_knowledge_cache
 
 ## Nettoyage du prototype 2026-09-26 : plus aucune carte n'expose de données
-## de connaissance de carte (voir GameMode._bot_knowledge) — `null`
-## inconditionnel, `BotLook` retombe sur ses replis génériques (L1..).
+## de connaissance de carte AUTHORED (voir GameMode._bot_knowledge) — `null`
+## inconditionnel, `_map_knowledge` retombe sur la connaissance SYNTHÉTIQUE
+## ci-dessous plutôt que sur les replis génériques bruts de BotLook (L1..).
 func _map_bot_knowledge_data() -> Dictionary:
 	return {}
+
+## Éventail de SYNTHETIC_SCAN_RAYS rayons horizontaux (calque
+## `PhysicsLayers.WORLD` uniquement, comme `BotSpots`/`_visible_enemies` — pas
+## VISION, une fumée ne bloque pas un rayon de géométrie) depuis la tête du
+## bot, classé par `LOOK.rank_scan_angles` (portée ouverte + rupture entre
+## voisins, approxime « couloirs/portes où un ennemi peut apparaître » sans
+## connaissance de carte authored) — impur (SEULE fonction de ce fichier à
+## lancer ces rayons, throttlée par `_map_knowledge`, jamais par tick). Renvoie
+## `{"angles": Array[{"pos": Vector3, "dir": Vector3}]}`, le seul champ que
+## `BotMapKnowledge`/`BotLook` consomment encore sur une carte sans zones/
+## couloirs/perchoirs/couvertures/tenues Hardpoint authored. `{}` si la tête
+## du bot n'est pas encore résolue (repli identique à `_tick_look`).
+func _synthetic_map_knowledge_data() -> Dictionary:
+	if player.head == null:
+		return {}
+	var eye_pos: Vector3 = player.head.global_position
+	var bot_pos: Vector3 = player.global_position
+	var space := player.get_world_3d().direct_space_state
+	var my_rid := player.get_rid()
+	var samples: Array = []
+	for i in SYNTHETIC_SCAN_RAYS:
+		var yaw := TAU * float(i) / float(SYNTHETIC_SCAN_RAYS)
+		var sample_dir := Vector3(-sin(yaw), 0.0, -cos(yaw))  # même convention que LOOK.yaw_forward_dir(0) = (0,0,-1).
+		var query := PhysicsRayQueryParameters3D.create(eye_pos, eye_pos + sample_dir * SYNTHETIC_SCAN_RANGE)
+		query.collision_mask = PhysicsLayers.WORLD
+		query.exclude = [my_rid]
+		var hit := space.intersect_ray(query)
+		var open_dist := SYNTHETIC_SCAN_RANGE
+		if not hit.is_empty():
+			open_dist = eye_pos.distance_to(hit["position"] as Vector3)
+		samples.append({"dir": sample_dir, "open_dist": open_dist})
+	var ranked := LOOK.rank_scan_angles(samples, LOOK.SYNTHETIC_ANGLE_COUNT)
+	var angles: Array = []
+	for entry in ranked:
+		var e: Dictionary = entry
+		var sample_dir: Vector3 = e.dir
+		angles.append({
+			"pos": LOOK.angle_pos_from_sample(bot_pos, sample_dir, float(e.open_dist)),
+			"dir": sample_dir,
+		})
+	return {"angles": angles}
 
 ## Identifiant de la carte courante — même lecture que `GameMode._current_map_id`
 ## (champ PUBLIC `map_id` du `MapSetup` parent du mode), dupliquée ici plutôt
@@ -878,6 +989,17 @@ func _tick_movement(delta: float) -> void:
 	var holds := _mode_holds_position()
 	var engaged := _target_id != -1 and _target_pos != Vector3.INF
 	var goal := _target_pos if chases_combat_target(engaged, holds) else _current_goal(holds)
+	# Repli à basse vie (BotCombatStyle.should_retreat_low_hp/retreat_point,
+	# tâche "bots humains", 2026-09-27, "sensation de bot humain") : SEULEMENT
+	# engagé (une cible RÉELLEMENT perçue ce tick, `_target_pos` — jamais une
+	# position ennemie hors perception, même discipline BOT-01 que
+	# TDMMode.bot_goal_for) et pas en train de TENIR une position de mode
+	# (Hardpoint T5 : tenir la zone prime sur la survie individuelle). Change
+	# SEULEMENT le BUT de déplacement — le strafe/tir de combat ci-dessous
+	# reste actif tel quel : le bot recule EN CONTINUANT de se battre, il
+	# n'abandonne pas l'engagement.
+	if engaged and not holds and STYLE.should_retreat_low_hp(_hp_ratio):
+		goal = STYLE.retreat_point(player.global_position, _target_pos, LOW_HP_RETREAT_DISTANCE_M)
 	_repath_timer -= delta
 	if _repath_timer <= 0.0 and nav_agent:
 		_repath_timer = REPATH_INTERVAL
@@ -974,10 +1096,30 @@ func _tick_movement(delta: float) -> void:
 	# combat compris (inchangé). Un bot qui tient une position n'enquête pas
 	# (`hearing_diverts_goal`) : il rejoint son point au pas de course.
 	var investigating := not in_combat and hearing_diverts_goal(_now() < _heard_until, holds)
+	# Tâche "bots humains" (2026-09-27, écart « ils courent partout dans la
+	# map ») : hors combat, BotCombatStyle.movement_pace ajoute 2 raisons
+	# supplémentaires de marcher (jamais à la place de `investigating`
+	# ci-dessus, qui reste inchangée) — un coin serré imminent
+	# (BotLook.find_sharp_corner, déjà calculé chaque tick pour L2 côté
+	# regard, ré-utilisé ici pour le rythme) et un contact PERÇU récent
+	# (`_last_contact_time`, vue OU ouïe DE CE BOT — jamais un wall-hack). Le
+	# sprint reste réservé aux relocalisations LONGUES (> 15 m) sans ni l'un
+	# ni l'autre : avant ce correctif, un bot sprintait par défaut dès qu'il
+	# n'enquêtait pas et n'était pas en fin de manche, même pour 2 m en ligne
+	# droite. Jamais consultée EN COMBAT (`in_combat` : strafe/plant
+	# inchangés ci-dessus, aucun ralentissement de rythme n'y est ajouté).
+	var pace_walk := false
+	if not in_combat:
+		var corner := LOOK.find_sharp_corner(_upcoming_path_points(), player.global_position)
+		var corner_distance := float(corner.get("distance", -1.0)) if bool(corner.get("found", false)) else -1.0
+		var time_since_contact := _now() - _last_contact_time
+		var pace := STYLE.movement_pace(player.global_position.distance_to(goal), time_since_contact, corner_distance)
+		pace_walk = pace != STYLE.Pace.SPRINT
 	# BOT-25 (BotLook, L6) : marche aussi quand le regard s'écarte de plus de
 	# 70° du cap de déplacement (jamais de sprint à reculons) — un signal EN
-	# PLUS de l'enquête/fin de round de BOT-21, jamais à leur place.
-	player.input.walk_held = STYLE.should_walk(investigating, _round_ending()) or _look_force_walk
+	# PLUS de l'enquête/fin de round de BOT-21/du rythme ci-dessus, jamais à
+	# leur place.
+	player.input.walk_held = STYLE.should_walk(investigating, _round_ending()) or _look_force_walk or pace_walk
 
 	# BOT-21 (M1, écart #2 de 08_bots_humanlike.md : "sauts/accroupis au hasard
 	# toutes les 3-7 s, même à l'arrêt", perçu comme du teabag) : plus AUCUN

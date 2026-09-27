@@ -28,9 +28,14 @@ extends GdUnitTestSuite
 ## `call_deferred`, RoundMode._ready) venait à s'exécuter pendant qu'un test de
 ## ce fichier laisse ce double dans le groupe "match" — jamais besoin d'un
 ## GameWorld réel (réseau, spawner...) pour un test de logique de but.
+## `bot_spots` (tâche "bots humains", 2026-09-27) : `null` par défaut, comme
+## `GameWorld.bot_spots` avant tout bake (`TDMMode._pick_hold_spot` retombe
+## alors silencieusement sur hotspot/patrouille — AUCUN changement de
+## comportement pour les tests existants qui ne le renseignent pas).
 class _FakeWorld extends Node3D:
 	var spawn_points_root: NodePath = ^"SpawnPoints"
 	var players_root: NodePath = ^"Players"
+	var bot_spots: BotSpots = null
 
 
 ## Sous-classe de test de GameMode : `_compute_bot_goal` renvoie une position
@@ -72,6 +77,26 @@ func _make_world(points: Array) -> Node3D:
 		root_node.add_child(marker)
 	add_child(world)
 	auto_free(world)
+	return world
+
+
+## Même monde que `_make_world`, plus des spots `BotSpots` À COUVERT bakés aux
+## positions `hold_positions` — tâche "bots humains", 2026-09-27
+## (`TDMMode._pick_hold_spot`). Coverage synthétique (1 direction bloquée sur
+## 8, comme tests/ai/test_bot_hold_select.gd) : suffisant pour
+## `BotSpots.is_covered`, jamais besoin d'un vrai bake physique ici.
+func _make_world_with_hold_spots(points: Array, hold_positions: Array) -> Node3D:
+	var world := _make_world(points)
+	var spots := BotSpots.new()
+	var built: Array[Dictionary] = []
+	for p in hold_positions:
+		built.append({
+			"position": p, "coverage_crouch": [true, false, false, false, false, false, false, false],
+			"coverage_stand": [false, false, false, false, false, false, false, false],
+			"sniping": false, "approach_points": PackedVector3Array(),
+		})
+	spots.spots = built
+	world.bot_spots = spots
 	return world
 
 
@@ -285,4 +310,101 @@ func test_60s_simulation_stays_within_12_goal_changes_per_bot_and_never_leaks_un
 		assert_int(changes[bot_id]).append_failure_message(
 			"bot %s : %s changements de but en 60 s de simulation (<= 12 attendu)" % [bot_id, changes[bot_id]]
 		).is_less_equal(12)
+
+
+# ======================================================================
+#  Tâche "bots humains" (2026-09-27) : un simple recalcul de routine (6 s,
+#  PAS "atteint") ne doit JAMAIS refaire tirer un nouveau point de roulement
+#  (patrouille) — écart "ils courent partout dans la map" (l'ancien
+#  `_pick_patrol_point` tirait au hasard à CHAQUE recalcul, atteint ou non).
+# ======================================================================
+func test_patrol_goal_never_changes_from_mere_staleness_while_travelling() -> void:
+	var points := [Vector3(10, 0, 0), Vector3(-10, 0, 0), Vector3(0, 0, 10), Vector3(0, 0, -10)]
+	_make_world(points)
+	var mode := _ClockedTDMMode.new()
+	add_child(mode)
+	auto_free(mode)
+
+	var bot_pos := Vector3(1000, 0, 1000)  # loin de tout point : "atteint" ne se déclenche jamais.
+	var first: Vector3 = mode.bot_goal_for(0, 1, bot_pos)
+	for _i in range(20):
+		mode.fake_now += GameMode.GOAL_REFRESH_INTERVAL
+		var goal: Vector3 = mode.bot_goal_for(0, 1, bot_pos)
+		assert_vector(goal).append_failure_message(
+			"une simple péremption de GOAL_REFRESH_INTERVAL, sans avoir atteint le but, ne doit jamais le changer"
+		).is_equal(first)
+
+
+func test_patrol_goal_still_changes_once_reached() -> void:
+	# Le garde "not reached" ne doit PAS empêcher un vrai recalcul quand le
+	# bot ARRIVE sur son point (contrat BOT-01 inchangé pour cet évènement).
+	var points := [Vector3(10, 0, 0), Vector3(-10, 0, 0)]
+	_make_world(points)
+	var mode := TDMMode.new()
+	add_child(mode)
+	auto_free(mode)
+
+	var first: Vector3 = mode.bot_goal_for(0, 1, Vector3(1000, 0, 1000))
+	var second: Vector3 = mode.bot_goal_for(0, 1, first)  # le bot est maintenant SUR son but.
+	# Un seul point restant une fois `first` exclu -> le second tirage DOIT
+	# retomber sur l'autre point de patrouille (jamais le même, exclusion
+	# `exclude_current` de `_pick_patrol_point`).
+	assert_bool(second.is_equal_approx(first)).is_false()
+
+
+# ======================================================================
+#  Tâche "bots humains" (2026-09-27) : spot de TENUE baké (`GameWorld.
+#  bot_spots`) préféré au marqueur de spawn quand la carte en expose, tenue
+#  U(3;8) s avant de reprendre un AUTRE spot.
+# ======================================================================
+func test_hold_spot_is_preferred_over_patrol_point_when_map_has_bot_spots() -> void:
+	var hold_positions := [Vector3(10, 0, 0)]
+	_make_world_with_hold_spots([Vector3(500, 0, 500)], hold_positions)  # marqueur de spawn HORS de portée hold-spot.
+	var mode := TDMMode.new()
+	add_child(mode)
+	auto_free(mode)
+
+	var goal: Vector3 = mode.bot_goal_for(0, 1, Vector3.ZERO)
+	assert_vector(goal).is_equal_approx(hold_positions[0], Vector3(0.01, 0.01, 0.01))
+
+
+func test_hold_spot_is_kept_for_the_dwell_window_then_can_change() -> void:
+	var hold_positions := [Vector3(10, 0, 0), Vector3(0, 0, 10)]
+	_make_world_with_hold_spots([], hold_positions)
+	var mode := _ClockedTDMMode.new()
+	add_child(mode)
+	auto_free(mode)
+
+	# Premier appel (cache vide) : un spot QUALIFIANT est choisi parmi les 2
+	# (celui à < MIN_RANGE_M du bot, ici, est écarté — peu importe LEQUEL des
+	# deux qualifie, seul compte qu'il reste IDENTIQUE tant que la tenue n'a
+	# pas expiré, testé ci-dessous).
+	var first: Vector3 = mode.bot_goal_for(0, 1, Vector3(10, 0, 0))
+	# Toujours dans la fenêtre de tenue (< 8 s) : un recalcul "atteint" répété
+	# ne doit pas changer le spot tenu.
+	mode.fake_now += 1.0
+	var still_holding: Vector3 = mode.bot_goal_for(0, 1, first)
+	assert_vector(still_holding).is_equal(first)
+
+	# Fenêtre de tenue largement dépassée (> 8 s) : un nouveau recalcul
+	# "atteint" doit reprendre un AUTRE spot (exclusion du précédent).
+	mode.fake_now += HOLD_SPOT_MAX_S_FOR_TEST + 1.0
+	var after_dwell: Vector3 = mode.bot_goal_for(0, 1, first)
+	assert_bool(after_dwell.is_equal_approx(first)).append_failure_message(
+		"la tenue expirée doit reprendre un AUTRE spot que le précédent").is_false()
+
+
+const HOLD_SPOT_MAX_S_FOR_TEST := 8.0  ## == TDMMode.HOLD_SPOT_MAX_S, dupliqué ici (constante non exportée par le mode).
+
+
+func test_no_hold_spot_qualifies_falls_back_to_patrol_point() -> void:
+	var points := [Vector3(10, 0, 0)]
+	var world := _make_world_with_hold_spots(points, [])  # bot_spots présent mais VIDE.
+	var mode := TDMMode.new()
+	add_child(mode)
+	auto_free(mode)
+
+	var goal: Vector3 = mode.bot_goal_for(0, 1, Vector3(1000, 0, 1000))
+	assert_vector(goal).is_equal_approx(points[0], Vector3(0.01, 0.01, 0.01))
+	assert_object(world).is_not_null()  # tient juste la référence vivante (auto_free du monde géré par _make_world).
 
