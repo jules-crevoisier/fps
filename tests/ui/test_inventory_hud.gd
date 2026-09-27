@@ -51,34 +51,40 @@ func test_panel_rect_never_overlaps_the_center_zone() -> void:
 	).is_false()
 
 
-func test_panel_rect_sits_in_the_bottom_right_quadrant() -> void:
+## Choix utilisateur 2026-09-27 : barre d'inventaire centrée en bas (plus au-dessus des munitions).
+func test_panel_rect_sits_centered_at_the_bottom() -> void:
 	var viewport := Vector2(1920.0, 1080.0)
 	var r := InventoryHUD.panel_rect()
-	assert_float(r.position.x).append_failure_message("le panneau doit être ancré à DROITE").is_greater(viewport.x * 0.5)
+	assert_float(r.get_center().x).append_failure_message("le panneau doit être CENTRÉ").is_equal_approx(viewport.x * 0.5, 1.0)
 	assert_float(r.position.y).append_failure_message("le panneau doit être ancré en BAS").is_greater(viewport.y * 0.5)
 
 
 # ---- update_weapon_slots (rangées 1/2) ----
 
-func test_update_weapon_slots_shows_the_weapon_name() -> void:
+## CHANGÉ (restyle "HUD en jeu" point 3, 2026-09-27) : le contrat visuel
+## remplace le NOM textuel de l'arme par sa silhouette d'icône
+## (WeaponIcon.sil, comme le fil des éliminations) — le nom en toutes lettres
+## disparaît des rangées d'armes, `text_label` ne sert plus qu'au "—" grisé
+## d'un slot VIDE (voir les deux tests suivants).
+func test_update_weapon_slots_shows_the_weapon_icon() -> void:
 	var hud := _hud()
 	hud.update_weapon_slots(["RAVAGE", ""])
 	var row0: Dictionary = hud._rows[0]
-	var label: Label = row0["text_label"]
-	assert_str(label.text).is_equal("RAVAGE")
+	var icon: TextureRect = row0["icon"]
+	assert_bool(icon.visible).is_true()
+	assert_str(icon.texture.resource_path.get_file().get_basename()).is_equal("ravage_sil")
 
 
-## Tâche "revolver" (2026-09-27) : row 2 affiche désormais le NOM de l'arme
+## Tâche "revolver" (2026-09-27) : row 2 affiche désormais l'icône de l'arme
 ## secondaire réelle du loadout (WeaponDatabase.default_loadout_ids, slot 2)
 ## au lieu du "—" grisé historique (aucune arme secondaire n'existait avant
-## cette tâche) — verrouille le libellé EXACT attendu, GameHUD._update_
-## inventory_hud passant `WeaponConfig.weapon_name.to_upper()`.
-func test_update_weapon_slots_shows_revolver_in_row_2() -> void:
+## cette tâche).
+func test_update_weapon_slots_shows_revolver_icon_in_row_2() -> void:
 	var hud := _hud()
 	hud.update_weapon_slots(["RAVAGE", "REVOLVER"])
 	var row1: Dictionary = hud._rows[1]
-	var label: Label = row1["text_label"]
-	assert_str(label.text).is_equal("REVOLVER")
+	var icon: TextureRect = row1["icon"]
+	assert_str(icon.texture.resource_path.get_file().get_basename()).is_equal("revolver_sil")
 	var root: Control = row1["root"]
 	assert_float(root.modulate.a).append_failure_message(
 		"un slot d'arme REMPLI ne doit jamais être assombri"
@@ -91,6 +97,11 @@ func test_update_weapon_slots_shows_em_dash_for_empty_slot() -> void:
 	var row1: Dictionary = hud._rows[1]
 	var label: Label = row1["text_label"]
 	assert_str(label.text).is_equal("—")
+	assert_bool(label.visible).is_true()
+	var icon: TextureRect = row1["icon"]
+	assert_bool(icon.visible).append_failure_message(
+		"un slot d'arme vide ne doit montrer aucune icône"
+	).is_false()
 	var root: Control = row1["root"]
 	assert_float(root.modulate.a).append_failure_message(
 		"un slot d'arme vide doit être assombri à 35%"
@@ -131,17 +142,17 @@ func test_update_charges_restores_full_opacity_when_refilled() -> void:
 
 # ---- set_equipped (rangée surlignée, contrat : "signal yellow #FFCE1F fill or border, ink text") ----
 
+# CHANGÉ (restyle "HUD en jeu" point 3) : les rangées sont désormais des
+# plaques BD INCLINÉES (StyleBoxComic, contrat "5 skewed slots"), plus des
+# StyleBoxFlat sans pente — `bg_color` devient `fill`, mêmes seuils de
+# couleur/contraste attendus.
 func test_set_equipped_highlights_the_row_in_signal_yellow() -> void:
 	var hud := _hud()
 	hud.set_equipped(0)
 	var row0: Dictionary = hud._rows[0]
-	var sb: StyleBoxFlat = row0["style"]
-	assert_bool(sb.bg_color.is_equal_approx(Color("FFCE1F"))).append_failure_message(
+	var sb: StyleBoxComic = row0["style"]
+	assert_bool(sb.fill.is_equal_approx(Color("FFCE1F"))).append_failure_message(
 		"la rangée équipée doit être surlignée en jaune signal #FFCE1F"
-	).is_true()
-	var number_label: Label = row0["number_label"]
-	assert_bool(number_label.get_theme_color("font_color").is_equal_approx(Color("0E0A12"))).append_failure_message(
-		"le texte de la rangée équipée doit passer en encre (lisible sur fond jaune)"
 	).is_true()
 
 
@@ -150,13 +161,13 @@ func test_set_equipped_unhighlights_the_previous_row() -> void:
 	hud.set_equipped(0)
 	hud.set_equipped(2)
 	var row0: Dictionary = hud._rows[0]
-	var sb0: StyleBoxFlat = row0["style"]
-	assert_bool(sb0.bg_color.is_equal_approx(Color("FFCE1F"))).append_failure_message(
+	var sb0: StyleBoxComic = row0["style"]
+	assert_bool(sb0.fill.is_equal_approx(Color("FFCE1F"))).append_failure_message(
 		"seule la rangée COURANTE doit rester surlignée"
 	).is_false()
 	var row2: Dictionary = hud._rows[2]
-	var sb2: StyleBoxFlat = row2["style"]
-	assert_bool(sb2.bg_color.is_equal_approx(Color("FFCE1F"))).is_true()
+	var sb2: StyleBoxComic = row2["style"]
+	assert_bool(sb2.fill.is_equal_approx(Color("FFCE1F"))).is_true()
 
 
 func test_set_equipped_forces_full_opacity_even_if_just_emptied() -> void:
@@ -184,17 +195,24 @@ func test_glyph_textures_are_generated_without_crashing() -> void:
 		).is_false()
 
 
-## Revue lead 2026-09-27 : le chiffre est dans une colonne à GAUCHE de la rangée,
-## avant le nom d'arme / le pictogramme (ancré sur toute la largeur, il finissait
-## centré : « RAVAGE 1 »).
-func test_slot_number_sits_in_a_left_column_before_the_item() -> void:
+## CHANGÉ (restyle "HUD en jeu" point 3) : le chiffre n'est plus une COLONNE
+## à gauche de la rangée mais une étiquette FLOTTANTE posée sur le coin
+## haut-gauche du slot (contrat : "number tag", voir la maquette `.inv .s b`
+## en position absolue au-dessus du coin) — elle peut donc chevaucher
+## l'icône, mais reste toujours dans la MOITIÉ gauche du slot et au-dessus (ou
+## au niveau) du haut de l'icône.
+func test_slot_number_badge_floats_over_the_top_left_corner() -> void:
 	var hud := _hud()
 	await get_tree().process_frame
 	for row in hud._rows:
 		var root: Control = row["root"]
-		var number_label: Label = row["number_label"]
+		var number_label: Control = row["number_label"]
 		var num_rect := number_label.get_global_rect()
-		assert_float(num_rect.size.x).is_less(root.size.x * 0.5)
-		assert_float(num_rect.position.x - root.get_global_rect().position.x).is_less_equal(1.0)
-		var item: Control = row["text_label"] if row["text_label"] != null else row["glyph"]
-		assert_float(item.get_global_rect().position.x).is_greater_equal(num_rect.end.x - 1.0)
+		var root_rect := root.get_global_rect()
+		assert_float(num_rect.position.x - root_rect.position.x).append_failure_message(
+			"le chiffre doit rester dans la moitié GAUCHE du slot"
+		).is_less(root_rect.size.x * 0.5)
+		var icon: Control = row["icon"]
+		assert_float(num_rect.position.y).append_failure_message(
+			"le chiffre doit flotter AU-DESSUS (ou au niveau) du haut de l'icône"
+		).is_less_equal(icon.get_global_rect().position.y + 1.0)

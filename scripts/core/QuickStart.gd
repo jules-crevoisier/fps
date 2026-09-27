@@ -1,35 +1,33 @@
 ## QuickStart.gd
-## Prototype minimal (décision 2026-09-26, "strip to minimal prototype", puis
-## "clean absolument tout, repart sur de bonnes bases") : le jeu n'a plus de
-## menu principal — cette scène de boot (scenes/boot.tscn, run/main_scene dans
-## project.godot) reproduit directement l'ancienne logique
-## MainMenu._on_host()/_start_game() pour une partie locale TDM sur Shipment,
-## bots activés (4v4 : le joueur + 3 bots alliés contre 4 bots ennemis,
-## difficulté Vétéran) — sans écran à traverser. Settings.gd reste lu
-## normalement (sensibilité/AZERTY depuis user://settings.cfg), juste sans
-## interface pour les modifier.
+## Scène de boot (scenes/boot.tscn, run/main_scene dans project.godot).
+##
+## Deux chemins (tâche "lobby / menus", 2026-09-27) :
+##  - normal (défaut) : va au menu principal (scenes/ui/main_menu.tscn), qui
+##    laisse le joueur choisir mode/carte/bots avant de lancer une partie ;
+##  - `--quickstart` (argument utilisateur, `OS.get_cmdline_user_args()`) :
+##    reproduit EXACTEMENT l'ancien comportement "prototype minimal" (décision
+##    2026-09-26) — TDM sur Shipment, joueur contre un bot Vétéran, sans écran
+##    à traverser. Réservé aux captures du lead (tools/ui/*.gd, comparaisons
+##    avant/après) : jamais le chemin normal d'un joueur.
+## La logique de lancement elle-même (config + hébergement + changement de
+## scène, même course "Parent node is busy adding/removing children" que
+## documentée ici avant cette tâche) vit maintenant dans MatchLauncher.gd,
+## réutilisée par le menu principal — ce fichier ne fait plus que choisir
+## LEQUEL des deux chemins prendre.
 extends Node
+
+const MAIN_MENU_SCENE := "res://scenes/ui/main_menu.tscn"
 
 func _ready() -> void:
 	Settings.load_all()
-	MatchConfig.set_mode("tdm")
-	# 1v1 (demande utilisateur 2026-09-26) : le joueur contre un seul bot.
-	# `set_mode` remet team_size à la taille du mode : on le fixe APRÈS.
-	MatchConfig.team_size = 1
-	MatchConfig.map_id = "shipment"
-	MatchConfig.bots_enabled = true
-	MatchConfig.bot_difficulty = MatchConfig.Difficulty.VETERAN
-
-	# `_ready()` s'exécute pendant que l'arbre ajoute encore la scène
-	# principale (même course que ServerBoot._ready, voir sa doc) : toucher le
-	# pair multijoueur ou changer de scène ICI lève "Parent node is busy
-	# adding/removing children". On attend deux frames complètes avant d'agir.
-	await get_tree().process_frame
-	await get_tree().process_frame
-
-	var net := NetworkManager.get_net(get_tree())
-	net.disconnect_from_game()  # jamais de connexion résiduelle sur un boot frais.
-	if net.host() == OK:
-		get_tree().change_scene_to_file(MatchConfig.resolve_scene(MatchConfig.mode_id, MatchConfig.map_id))
+	if OS.get_cmdline_user_args().has("--quickstart"):
+		await _quickstart()
 	else:
+		get_tree().change_scene_to_file(MAIN_MENU_SCENE)
+
+## Ancien comportement direct-au-match (voir doc de tête) : TDM, 1v1 (joueur
+## contre un bot), Shipment, bot Vétéran.
+func _quickstart() -> void:
+	var err := await MatchLauncher.start_local(get_tree(), "tdm", 1, true, MatchConfig.Difficulty.VETERAN, "shipment")
+	if err != OK:
 		push_error("QuickStart : échec de l'hébergement local.")
