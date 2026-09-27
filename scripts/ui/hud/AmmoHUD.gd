@@ -122,8 +122,9 @@ func _build_ammo_row() -> HBoxContainer:
 
 	var numbers := VBoxContainer.new()
 	numbers.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	# négatif : la boîte de ligne de Bangers à 135 px a un grand vide au-dessus des chiffres
-	numbers.add_theme_constant_override("separation", -26)
+	# petit écart positif : à -26 les pastilles touchaient le chiffre et « RECHARGE » les
+	# chevauchait (retour utilisateur 2026-09-27)
+	numbers.add_theme_constant_override("separation", 2)
 	numbers.alignment = BoxContainer.ALIGNMENT_END
 
 	_reload_label = UiTokens.make_label("RECHARGE", UiTokens.label(UiTokens.T_M, UiTokens.YELLOW, 3, true), true)
@@ -216,8 +217,10 @@ func _rebuild_pips(ammo: int, mag_size: int) -> void:
 
 
 ## GameHUD.gd -> Weapon.reload_started/ammo_changed (fin de rechargement).
+## Pendant le rechargement, « RECHARGE » prend la place des pastilles (jamais les deux empilés).
 func set_reloading(reloading: bool) -> void:
 	_reload_label.visible = reloading
+	_pips_row.visible = not reloading and show_pips(_mag_size)
 
 
 ## GameHUD.gd -> Weapon.weapon_changed(cfg) : icône + relance le minuteur

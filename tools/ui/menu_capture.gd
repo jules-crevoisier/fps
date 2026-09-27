@@ -21,14 +21,26 @@ func _wait(frames: int = 8) -> void:
 	await RenderingServer.frame_post_draw
 
 
+## `-- --size=WxH` : tous les écrans à cette taille (contrôle d'adaptation 16:10, ultra-large…),
+## fichiers préfixés « WxH_ » pour ne pas écraser les captures de référence en 1920×1080.
+var _base_size := Vector2i(1920, 1080)
+var _prefix := ""
+
+
 func _save(file_name: String) -> void:
 	await RenderingServer.frame_post_draw
 	var img := get_root().get_texture().get_image()
-	img.save_png(ProjectSettings.globalize_path(OUT_DIR.path_join(file_name)))
+	img.save_png(ProjectSettings.globalize_path(OUT_DIR.path_join(_prefix + file_name)))
 	print("MENU_CAPTURE_OK ", file_name)
 
 
 func _run() -> void:
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--size="):
+			var wh := arg.trim_prefix("--size=").split("x")
+			_base_size = Vector2i(int(wh[0]), int(wh[1]))
+			_prefix = "%dx%d_" % [_base_size.x, _base_size.y]
+	get_root().size = _base_size
 	Settings.load_all()
 	MatchConfig.load_last()
 
@@ -40,7 +52,7 @@ func _run() -> void:
 	get_root().size = Vector2i(1280, 800)
 	await _wait(8)
 	await _save("menu_home_1280x800.png")
-	get_root().size = Vector2i(1920, 1080)
+	get_root().size = _base_size
 	await _wait(8)
 
 	var home := menu._screens["accueil"] as HomeScreen
