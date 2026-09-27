@@ -45,8 +45,34 @@ const DEFAULT_PATH := "res://assets/models/characters/frog_cowboy_fp.glb"
 const WEAPON_GRIP_BONE := "WeaponGrip"
 const FP_CAMERA_BONE := "FPCamera"
 const WEAPON_ATTACHMENT_NAME := "WeaponGripAttachment"
+## Tâche "utilitaires" (contrat lead) : os enfant de la main GAUCHE (celle qui
+## tient la grenade pendant l'armement, l'arme restant tenue à droite) où le
+## mesh de la grenade tenue s'attache, transform locale IDENTITÉ (contrairement
+## à `attach_weapon`, qui contre-échelle : le placeholder de grenade est déjà
+## modélisé à l'échelle du rig, voir ThrownUtility._build_*_mesh). Livré par
+## le lead EN PARALLÈLE des clips FP_Throw_* (voir `_THROW_CLIPS`) — jamais un
+## critère d'échec de `load()`, tolérance identique (`has_grenade_grip`).
+const GRENADE_GRIP_BONE := "GrenadeGrip"
+const GRENADE_ATTACHMENT_NAME := "GrenadeGripAttachment"
+## Grenade tenue en vue FPS : un peu plus grosse que nature (x1,5) et sortie de la
+## paume (+Y de l'os, en unités du rig), sinon la grosse main de la grenouille la
+## cachait entièrement (revue captures 2026-09-27). Le projectile lancé garde la
+## taille réelle.
+const HELD_GRENADE_FP_SCALE := 1.5
+const HELD_GRENADE_PALM_OFFSET := Vector3(0.0, 0.012, 0.0)
 
 const _CLIPS := ["FP_Idle", "FP_ADS", "FP_ADS_In", "FP_Fire", "FP_Reload", "FP_Draw", "FP_Sprint", "FP_Inspect"]
+## Lancer d'utilitaire (frag/flash/smoke, tâche "utilitaires") — DÉLIBÉRÉMENT
+## absents de `_CLIPS` ci-dessus (jamais un critère d'échec de `load()`, voir
+## sa docstring) : le lead livre ces deux clips EN PARALLÈLE de cette tâche,
+## et `load()` ne doit surtout pas régresser (repli sur les gants flottants,
+## voir la docstring de classe) tant qu'ils ne sont pas encore dans le glb.
+## `FP_Throw_Ready` : pose statique tenue tant que la touche de lancer est
+## maintenue (bras cocké en arrière). `FP_Throw` : le geste de lancer,
+## ≈0,4 s, joué au relâchement. Vérifiés ENSEMBLE après un `load()` réussi
+## (voir `_build_tree`) — jamais l'un sans l'autre : une pose "prêt" sans
+## geste de lancer (ou l'inverse) n'aurait aucun sens.
+const _THROW_CLIPS := ["FP_Throw_Ready", "FP_Throw"]
 ## FP_ADS_In : passage hanche -> visée (1 s, chaque image calculée mains sur l'arme, voir
 ## art/.../anim/fp.py). On ne le joue pas : on se place à l'instant = avancement de la visée.
 const _ADS_IN := "FP_ADS_In"
@@ -68,9 +94,14 @@ var _skeleton: Skeleton3D
 var _anim_player: AnimationPlayer
 var _tree: AnimationTree
 var _weapon_attachment: BoneAttachment3D
+var _grenade_attachment: BoneAttachment3D
 var _fp_camera_bone_idx: int = -1
 var _fp_camera_rest: Transform3D = Transform3D.IDENTITY
 var _ads_in_length: float = 1.0
+## Vrai seulement si LES DEUX clips de `_THROW_CLIPS` sont présents (voir sa
+## docstring) — pilote le câblage optionnel du lancer dans `_build_tree` et le
+## no-op défensif de `set_throw_ready`/`trigger_throw`.
+var _has_throw_clips: bool = false
 
 func is_loaded() -> bool:
 	return _loaded
@@ -207,6 +238,46 @@ func _ensure_weapon_attachment() -> BoneAttachment3D:
 	_weapon_attachment.bone_name = WEAPON_GRIP_BONE
 	return _weapon_attachment
 
+## Vrai si le glb chargé expose déjà l'os "GrenadeGrip" (voir sa docstring) —
+## UtilityThrower/ViewModel.gd s'en servent pour savoir s'ils doivent tenter
+## d'attacher un placeholder de grenade, plutôt que de deviner depuis
+## `attach_grenade` qui échouerait silencieusement de toute façon.
+func has_grenade_grip() -> bool:
+	return _loaded and _skeleton != null and _skeleton.find_bone(GRENADE_GRIP_BONE) >= 0
+
+## Attache `model` sous "GrenadeGrip" : orientation IDENTITÉ (os : +Y = haut de la
+## grenade, sortant de la paume) et, comme `attach_weapon`, contre-échelle du rig
+## (grenades modélisées à l'échelle réelle ; sans elle, frag de 20 cm dans la main),
+## puis HELD_GRENADE_FP_SCALE / HELD_GRENADE_PALM_OFFSET pour la lisibilité.
+## No-op silencieux si l'os n'existe pas encore.
+func attach_grenade(model: Node3D) -> void:
+	if model == null or not has_grenade_grip():
+		return
+	if _grenade_attachment == null:
+		_grenade_attachment = BoneAttachment3D.new()
+		_grenade_attachment.name = GRENADE_ATTACHMENT_NAME
+		_skeleton.add_child(_grenade_attachment)
+		_grenade_attachment.bone_name = GRENADE_GRIP_BONE
+	for c in _grenade_attachment.get_children():
+		_grenade_attachment.remove_child(c)
+	var old_parent := model.get_parent()
+	if old_parent and old_parent != _grenade_attachment:
+		old_parent.remove_child(model)
+	if model.get_parent() != _grenade_attachment:
+		_grenade_attachment.add_child(model)
+	model.owner = null
+	model.transform = Transform3D.IDENTITY
+	model.position = HELD_GRENADE_PALM_OFFSET
+	model.scale = FPArmsMath.weapon_counter_scale(FPArmsMath.RIG_SCALE) * HELD_GRENADE_FP_SCALE
+
+## Retire (sans libérer) tout mesh actuellement attaché à "GrenadeGrip" —
+## l'appelant (ViewModel.gd) garde la responsabilité de libérer le nœud.
+func detach_grenade() -> void:
+	if _grenade_attachment == null:
+		return
+	for c in _grenade_attachment.get_children():
+		_grenade_attachment.remove_child(c)
+
 # ---------------------------------------------------------------- AnimationTree
 func _build_tree() -> void:
 	_tree = AnimationTree.new()
@@ -290,7 +361,33 @@ func _build_tree() -> void:
 	bt.connect_node("InspectShot", 0, "DrawShot")
 	bt.connect_node("InspectShot", 1, "InspectClip")
 
-	bt.connect_node("output", 0, "InspectShot")
+	# Lancer d'utilitaire — optionnel, voir `_THROW_CLIPS`/`_has_throw_clips` :
+	# câblé SEULEMENT si les deux clips existent déjà dans le glb, sinon la
+	# sortie reste directement sur InspectShot comme avant cette tâche.
+	_has_throw_clips = _anim_player.has_animation(_THROW_CLIPS[0]) and _anim_player.has_animation(_THROW_CLIPS[1])
+	var last_node := "InspectShot"
+	if _has_throw_clips:
+		var throw_ready := AnimationNodeAnimation.new()
+		throw_ready.animation = _THROW_CLIPS[0]
+		bt.add_node("ThrowReadyClip", throw_ready)
+		var throw_ready_blend := AnimationNodeBlend2.new()
+		throw_ready_blend.sync = true
+		bt.add_node("ThrowReadyBlend", throw_ready_blend)
+		bt.connect_node("ThrowReadyBlend", 0, "InspectShot")
+		bt.connect_node("ThrowReadyBlend", 1, "ThrowReadyClip")
+
+		var throw_clip := AnimationNodeAnimation.new()
+		throw_clip.animation = _THROW_CLIPS[1]
+		bt.add_node("ThrowClip", throw_clip)
+		var throw_shot := AnimationNodeOneShot.new()
+		throw_shot.fadein_time = _INSPECT_FADE_IN
+		throw_shot.fadeout_time = _INSPECT_FADE_OUT
+		bt.add_node("ThrowShot", throw_shot)
+		bt.connect_node("ThrowShot", 0, "ThrowReadyBlend")
+		bt.connect_node("ThrowShot", 1, "ThrowClip")
+		last_node = "ThrowShot"
+
+	bt.connect_node("output", 0, last_node)
 
 	_tree.tree_root = bt
 	_tree.active = true
@@ -337,3 +434,21 @@ func trigger_inspect() -> void:
 func cancel_inspect() -> void:
 	if _tree:
 		_tree.set("parameters/InspectShot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_ABORT)
+
+## Vrai si `FP_Throw_Ready`/`FP_Throw` sont chargés et câblés (voir
+## `_THROW_CLIPS`) — UtilityThrower.gd s'en sert pour savoir s'il doit driver
+## la pose de préparation, plutôt que de deviner depuis `has_clip` deux fois.
+func has_throw_clips() -> bool:
+	return _has_throw_clips
+
+## Pose "prêt à lancer" (bras cocké) — maintenue tant que `active` est vrai
+## (touche de lancer enfoncée), no-op si les clips ne sont pas chargés.
+func set_throw_ready(active: bool) -> void:
+	if _tree and _has_throw_clips:
+		_tree.set("parameters/ThrowReadyBlend/blend_amount", 1.0 if active else 0.0)
+
+## Geste de lancer (≈0,4 s, joué au relâchement de la touche) — no-op si les
+## clips ne sont pas chargés (voir docstring de `_THROW_CLIPS`).
+func trigger_throw() -> void:
+	if _tree and _has_throw_clips:
+		_tree.set("parameters/ThrowShot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_FIRE)

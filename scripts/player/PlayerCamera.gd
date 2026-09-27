@@ -245,8 +245,15 @@ func _update_roll(delta: float) -> void:
 			_tilt_z = 0.0
 
 func _update_fov(delta: float) -> void:
+	# Inventaire CS-style (contrat lead 2026-09-27, point 4/5) : "the gun
+	# cannot ... ADS" / "RMB does nothing with a grenade" tant qu'une grenade
+	# est équipée -- aucun zoom, quel que soit `aim_held` (duck-typé via
+	# `has_method`, UtilityThrower n'étant pas toujours présent, ex. scènes de
+	# test minimales).
+	var utility := player.get_node_or_null("UtilityThrower") as UtilityThrower
+	var nade_equipped := utility != null and utility.is_utility_equipped()
 	# Visée (ADS) : zoom au FOV de l'arme courante. Prioritaire sur tout le reste.
-	if player.input.aim_held:
+	if player.input.aim_held and not nade_equipped:
 		var w := player.get_node_or_null("Weapon")
 		var aim_target: float = w.current_aim_fov() if w and w.has_method("current_aim_fov") else 55.0
 		fov = lerp(fov, aim_target, 16.0 * delta)

@@ -257,12 +257,23 @@ func _owner_tick(delta: float) -> void:
 	var sm := player.state_machine.current_name
 	_since_dive = 0.0 if sm == "Dive" else _since_dive + delta
 
+	# Inventaire CS-style (contrat lead 2026-09-27, point 4) : "the gun cannot
+	# fire, reload, ADS or inspect" tant qu'une grenade est équipée --
+	# `UtilityEquip.blocks_weapon_actions()` (copie PRÉDITE, voir
+	# UtilityThrower._equip). L'ADS/l'inspection restent gérées par
+	# ViewModel.gd/PlayerCamera.gd (ce fichier ne pilote ni l'une ni l'autre) ;
+	# `_handle_switch_input` reste APPELÉ malgré ce blocage : une pression
+	# directe 1/2 doit toujours pouvoir reprendre l'arme (UtilityThrower s'en
+	# sert pour dé-équiper la grenade, voir sa docstring).
+	var utility := player.get_node_or_null("UtilityThrower") as UtilityThrower
+	var nade_equipped := utility != null and utility.is_utility_equipped()
+
 	var can_act := _can_act()
 	if can_act:
 		_handle_switch_input()
 		if player.input.drop_pressed:
 			_request_drop()
-		if player.input.reload_pressed and not _inv.reloading:
+		if player.input.reload_pressed and not _inv.reloading and not nade_equipped:
 			_start_reload_predicted()
 
 	var c := WeaponDatabase.get_by_id(_inv.current_id())
@@ -271,7 +282,7 @@ func _owner_tick(delta: float) -> void:
 	# peut encore bloquer le tir.
 	var move_blocked := c != null and WeaponFeel.fire_delay_left(c, INF, _since_dive) > 0.0
 	var trigger := false
-	if can_act and c != null and not _inv.reloading and _switch_cooldown <= 0.0 and not move_blocked:
+	if can_act and c != null and not _inv.reloading and _switch_cooldown <= 0.0 and not move_blocked and not nade_equipped:
 		trigger = player.input.fire_held if c.automatic else player.input.fire_pressed
 	if not trigger:
 		_spray_shot_index = 0  # relâché => le prochain tir reprend le motif au début.
@@ -319,6 +330,16 @@ func _can_act() -> bool:
 	var s := player.state_machine.current_name
 	return s != "Dive" and s != "Roll"
 
+## Molette (weapon_next_pressed/weapon_prev_pressed) : retirée d'ici (tâche
+## "inventaire CS-style", 2026-09-27) -- la molette doit désormais cycler à
+## travers les 5 emplacements unifiés (2 armes + 3 grenades, voir
+## InventorySelection.next_selectable), pas seulement les 2 slots de CET
+## inventaire. Ce cycle unifié vit dans UtilityThrower._owner_tick (qui
+## connaît À LA FOIS le remplissage des slots d'armes -- `weapons` ci-dessous
+## -- et les charges de grenades), et rappelle `equip_weapon_slot` ci-dessous
+## quand la molette atterrit sur une arme. Les pressions DIRECTES 1/2
+## restent gérées ICI (inchangé : bots ET humains, voir BotBrain._tick_ammo
+## qui écrit `weapon_slot_pressed` directement).
 func _handle_switch_input() -> void:
 	if _inv.slots.size() <= 1:
 		return
@@ -327,10 +348,13 @@ func _handle_switch_input() -> void:
 		_try_equip(0)
 	elif slot == 1:
 		_try_equip(1)
-	elif player.input.weapon_next_pressed:
-		_try_equip((_inv.current + 1) % _inv.slots.size())
-	elif player.input.weapon_prev_pressed:
-		_try_equip((_inv.current - 1 + _inv.slots.size()) % _inv.slots.size())
+
+## Enveloppe PUBLIQUE de `_try_equip` (tâche "inventaire CS-style") : appelée
+## par UtilityThrower quand la molette unifiée atterrit sur un emplacement
+## d'arme -- même chemin prédiction+RPC que les touches 1/2 directes
+## ci-dessus, aucune logique dupliquée.
+func equip_weapon_slot(slot: int) -> void:
+	_try_equip(slot)
 
 func _try_equip(slot: int) -> void:
 	if _inv.equip(slot):
@@ -527,6 +551,14 @@ func _server_fire(sender_id: int, origin: Vector3, dirs: Array, weapon_id: int) 
 	if hp and hp.is_dead:
 		_reject_shot()
 		return
+	# Inventaire CS-style (contrat lead 2026-09-27, point 8) : "the server
+	# REJECTS weapon shots while a utility is equipped" -- copie AUTORITAIRE
+	# serveur (UtilityThrower.is_server_utility_equipped), jamais la copie
+	# prédite (un client modifié pourrait mentir sur son propre état local).
+	var utility := player.get_node_or_null("UtilityThrower") as UtilityThrower
+	if utility and utility.is_server_utility_equipped():
+		_reject_shot()
+		return
 	if weapon_id != _server_inv.current_id():
 		_reject_shot()
 		return
@@ -698,6 +730,14 @@ func server_add_reserve_mags(mags: int = 1) -> bool:
 	if changed:
 		_push_server_sync()
 	return changed
+
+## Emplacement d'arme COURANT côté serveur (copie autoritaire, `_server_inv.
+## current`) — consommé par UtilityThrower._current_unified côté serveur
+## (InventorySelection a besoin de l'emplacement unifié 0..4 AUTORITAIRE pour
+## valider une sélection de grenade, jamais de la copie prédite propriétaire).
+## `0` si l'inventaire serveur n'existe pas (client pur).
+func server_current_slot() -> int:
+	return _server_inv.current if _server_inv else 0
 
 ## Ids possédés côté serveur (copie en lecture seule), [] si l'inventaire
 ## serveur n'existe pas (client pur).

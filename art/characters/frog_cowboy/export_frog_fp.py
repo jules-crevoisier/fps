@@ -19,7 +19,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
 sys.path.insert(0, str(HERE / "anim"))
 from fp import FP_EYE, add_fp_camera, build_fp  # noqa: E402
-from rifle import add_weapon_grip  # noqa: E402
+from rifle import add_grenade_grip, add_weapon_grip  # noqa: E402
 from rigkit import Rig  # noqa: E402
 
 ALBEDO = HERE / "frog_cowboy_albedo.png"
@@ -61,6 +61,7 @@ if ALBEDO.exists():
     tex_node.image = bpy.data.images.load(str(ALBEDO))
 
 add_weapon_grip(arm)
+add_grenade_grip(arm)
 add_fp_camera(arm)
 rig = Rig(arm)
 clips = build_fp(rig)
@@ -90,8 +91,19 @@ if preview_dir:
     gun.location = (0.0, -arm.data.bones["WeaponGrip"].length, 0.0)
     gun.rotation_euler = (-math.pi / 2.0, 0.0, 0.0)  # os : Y = haut de l'arme
     gun.scale = (1.0 / 1.8,) * 3
+    # Vraie frag dans la paume gauche (os GrenadeGrip), pour juger la prise en main :
+    # dans le jeu, le GLB (+Y = haut) est attaché en transform identité sous l'os.
+    before = set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=str(ROOT / "assets/models/utilities/frag.glb"))
+    nade = next(o for o in bpy.data.objects if o not in before and o.type == "MESH")
+    nade.parent = arm
+    nade.parent_type = "BONE"
+    nade.parent_bone = "GrenadeGrip"
+    nade.location = (0.0, -arm.data.bones["GrenadeGrip"].length, 0.0)
+    nade.rotation_euler = (-math.pi / 2.0, 0.0, 0.0)  # os : Y = haut de la grenade
+    nade.scale = (1.0 / 1.8,) * 3
     for o in bpy.data.objects:
-        if o.type in ("CAMERA", "LIGHT") or (o.type == "MESH" and o not in (mesh, gun)):
+        if o.type in ("CAMERA", "LIGHT") or (o.type == "MESH" and o not in (mesh, gun, nade)):
             o.hide_render = True
     scene = bpy.context.scene
     scene.render.engine = "BLENDER_WORKBENCH"

@@ -10,7 +10,7 @@ import bpy
 from mathutils import Matrix, Vector
 
 from clips import _frames
-from rifle import BOLT, GUN_SCALE, L_WRIST, MAG, hold
+from rifle import BOLT, GUN_SCALE, L_WRIST, L_X, L_Y, MAG, hold
 from rigkit import AX_Y, Rig, lerp, smooth
 
 FP_EYE = Vector((0.0, -0.06, 0.93))
@@ -53,12 +53,12 @@ def add_fp_camera(arm_obj):
     bpy.ops.object.mode_set(mode="OBJECT")
 
 
-def fp_hold(rig: Rig, g: Matrix, left=None, left_curl=65.0):
+def fp_hold(rig: Rig, g: Matrix, left=None, left_curl=65.0, left_y=None, left_x=None):
     # Épaules remontées et avancées : le corps est invisible, seules les mains comptent.
     rig.rot("LeftShoulder", AX_Y, -16.0)
     rig.rot("RightShoulder", AX_Y, 14.0)
-    return hold(rig, g, left=left, head_follow=0.0, base_twist=(-10.0, -12.0), clav=(-30.0, 8.0),
-                base_lean=22.0, left_curl=left_curl)
+    return hold(rig, g, left=left, left_y=left_y, left_x=left_x, head_follow=0.0,
+                base_twist=(-10.0, -12.0), clav=(-30.0, 8.0), base_lean=22.0, left_curl=left_curl)
 
 
 REACH_FP = []
@@ -107,6 +107,53 @@ def _static_clip(rig: Rig, name, g: Matrix):
         rig.reset()
         fp_hold(rig, g)
         rig.key(f)
+
+
+# Lancer de grenade (main gauche ; l'arme reste dans la main droite, baissée à droite).
+THROW_GUN = dict(right=0.10, down=0.13, fwd=0.12, pitch_up=-30.0, roll=-25.0, yaw=22.0)
+PALM_FWD = (Vector((0.0, -0.4, 0.9)), Vector((-1.0, 0.0, 0.0)))  # doigts vers le haut, paume vers l'avant
+PALM_UP = (Vector((0.0, -1.0, 0.2)), Vector((1.0, 0.0, 0.0)))     # paume vers le haut, pouce vers l'extérieur
+THROW_READY = (FP_EYE + Vector((0.07, -0.22, -0.10)),) + PALM_UP    # grenade posée dans la paume, bas gauche
+THROW_WINDUP = (FP_EYE + Vector((0.10, -0.03, -0.02)),) + PALM_FWD    # armement : main ramenée près de l'oreille
+
+
+def _throw_clip(rig: Rig, name, duration, keys):
+    """keys : (t, paramètres fp_gun, main gauche (pos, doigts Y, pouce X) ou None = garde-main)."""
+    rig.new_action(name)
+    n = _frames(duration)
+    for f in range(n + 1):
+        t = f / n
+        i = max(j for j in range(len(keys)) if keys[j][0] <= t + 1e-9)
+        j = min(i + 1, len(keys) - 1)
+        t0, p0, l0 = keys[i]
+        t1, p1, l1 = keys[j]
+        u = 0.0 if j == i else smooth((t - t0) / (t1 - t0))
+        g = fp_gun(**{k: lerp(p0.get(k, 0.0), p1.get(k, 0.0), u) for k in set(p0) | set(p1)})
+        gr = g.to_3x3()
+
+        def spec(l):
+            return (g @ (L_WRIST * GUN_SCALE), gr @ L_Y, gr @ L_X) if l is None else l
+
+        a0, a1 = spec(l0), spec(l1)
+        free = l0 is not None or l1 is not None
+        rig.reset()
+        fp_hold(rig, g, left=a0[0].lerp(a1[0], u) if free else None,
+                left_y=a0[1].lerp(a1[1], u) if free else None,
+                left_x=a0[2].lerp(a1[2], u) if free else None, left_curl=55.0 if free else 65.0)
+        rig.key(f)
+
+
+def build_throw_fp(rig: Rig):
+    _throw_clip(rig, "FP_Throw_Ready", 1.0 / 30.0, [(0.0, THROW_GUN, THROW_READY), (1.0, THROW_GUN, THROW_READY)])
+    release = (FP_EYE + Vector((0.05, -0.30, -0.03)), Vector((0.0, -1.0, 0.1)), Vector((-1.0, 0.0, 0.0)))
+    follow = (FP_EYE + Vector((0.0, -0.22, -0.20)), Vector((0.0, -0.7, -0.7)), Vector((-1.0, 0.0, 0.0)))
+    _throw_clip(rig, "FP_Throw", 0.4, [
+        (0.00, THROW_GUN, THROW_READY),
+        (0.18, THROW_GUN, THROW_WINDUP),
+        (0.42, THROW_GUN, release),
+        (0.60, _with(THROW_GUN, down=0.10, pitch_up=-18.0), follow),
+        (1.00, IDLE, None),
+    ])
 
 
 def _with(base, **kw):
@@ -178,7 +225,9 @@ def build_fp(rig: Rig):
     ])
     for e in REACH_FP:
         print("REACH_FP", e)
-    return ["FP_Idle", "FP_ADS", "FP_ADS_In", "FP_Fire", "FP_Reload", "FP_Draw", "FP_Sprint", "FP_Inspect"]
+    build_throw_fp(rig)
+    return ["FP_Idle", "FP_ADS", "FP_ADS_In", "FP_Fire", "FP_Reload", "FP_Draw", "FP_Sprint", "FP_Inspect",
+            "FP_Throw_Ready", "FP_Throw"]
 
 
 FP_LOOPS = ("FP_Idle", "FP_ADS", "FP_Sprint")

@@ -51,6 +51,17 @@ var pickup_pressed: bool = false
 var pickup_held: bool = false
 var drop_pressed: bool = false
 var weapon_slot_pressed: int = -1  ## -1 = aucun ; sinon index de slot (0/1).
+## Inventaire façon CS (tâche "inventaire CS-style", contrat lead 2026-09-27) :
+## front montant des touches 3/4/5 (physiques, actions weapon_3/weapon_4/
+## weapon_5) -- -1 = aucune, sinon l'index UtilityDatabase demandé (FRAG/
+## FLASH/SMOKE, voir scripts/combat/utility/UtilityDatabase.gd). HUMAIN
+## UNIQUEMENT : les bots ne lancent jamais de grenade (contrat point 9),
+## BotBrain n'écrit jamais ce champ, qui reste donc à -1 pour eux (repli par
+## défaut, jamais réinitialisé explicitement côté bot -- inutile, il ne
+## change jamais). Consommé par scripts/combat/utility/UtilityThrower.gd
+## (jamais par Weapon.gd, voir InventorySelection.gd pour la sémantique des
+## index unifiés 0..4).
+var grenade_slot_pressed: int = -1
 var weapon_next_pressed: bool = false
 var weapon_prev_pressed: bool = false
 
@@ -116,6 +127,7 @@ func clear() -> void:
 	pickup_held = false
 	drop_pressed = false
 	weapon_slot_pressed = -1
+	grenade_slot_pressed = -1
 	weapon_next_pressed = false
 	weapon_prev_pressed = false
 
@@ -157,6 +169,10 @@ func gather_from_devices() -> void:
 	drop_pressed = Input.is_action_just_pressed("drop")
 	weapon_slot_pressed = slot_from_presses(
 		Input.is_action_just_pressed("weapon_1"), Input.is_action_just_pressed("weapon_2"))
+	grenade_slot_pressed = grenade_slot_from_presses(
+		Input.is_action_just_pressed("weapon_3"),
+		Input.is_action_just_pressed("weapon_4"),
+		Input.is_action_just_pressed("weapon_5"))
 	weapon_next_pressed = Input.is_action_just_pressed("weapon_next")
 	weapon_prev_pressed = Input.is_action_just_pressed("weapon_prev")
 
@@ -168,6 +184,19 @@ static func slot_from_presses(slot0_pressed: bool, slot1_pressed: bool) -> int:
 		return 0
 	if slot1_pressed:
 		return 1
+	return -1
+
+## -1 = aucune ; sinon l'index UtilityDatabase (FRAG=0/FLASH=1/SMOKE=2) de la
+## première touche pressée cette frame parmi 3/4/5 (contrat "inventaire
+## CS-style" : "3, 4, 5 = les grenades") -- même convention "le premier gagne
+## en cas de conflit" que `slot_from_presses` ci-dessus.
+static func grenade_slot_from_presses(slot3_pressed: bool, slot4_pressed: bool, slot5_pressed: bool) -> int:
+	if slot3_pressed:
+		return UtilityDatabase.FRAG
+	if slot4_pressed:
+		return UtilityDatabase.FLASH
+	if slot5_pressed:
+		return UtilityDatabase.SMOKE
 	return -1
 
 ## Maintien (`hold_enabled` vrai — comportement brut inchangé, le résultat

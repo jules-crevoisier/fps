@@ -10,6 +10,7 @@ const SHOTS := {
 	"FP_Idle": [0.0], "FP_ADS_In": [0.25, 0.5, 0.75], "FP_ADS": [0.0], "FP_Fire": [0.03],
 	"FP_Reload": [0.15, 0.35, 0.55, 0.78, 0.84, 0.89, 0.94], "FP_Draw": [0.0, 0.5, 1.0],
 	"FP_Sprint": [0.0, 0.5], "FP_Inspect": [0.2, 0.45, 0.7],
+	"FP_Throw_Ready": [0.0], "FP_Throw": [0.18, 0.42, 0.6, 0.8],
 }
 
 var _cam: Camera3D

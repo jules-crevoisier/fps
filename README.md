@@ -30,6 +30,9 @@ en LAN).
 | Dash dans la direction des touches (ZQSD) + roulade qui garde l'élan | V | LB |
 | Tirer / Viser (ADS) | Clic gauche / Clic droit | RT / LT |
 | Recharger | R | X |
+| Inventaire façon CS : 1/2 = armes (primaire/secondaire), 3/4/5 = grenades (frag/flash/fumigène) | 1, 2, 3, 4, 5 | — |
+| Changer d'emplacement (cycle 1→5, ignore les emplacements vides/épuisés) | Molette | — |
+| Lancer une grenade équipée : appui bref = lancer immédiat, maintien = amorce + aperçu de trajectoire, relâchement = lancer | Clic gauche | RT |
 | Quitter | Échap | Start |
 
 Le mouvement est hybride : sprint automatique, glissade qui accélère en pente,

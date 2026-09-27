@@ -1,7 +1,7 @@
 """Construit tous les clips de la grenouille sur son armature (appelé par export_frog.py et preview.py)."""
 from clips import GAITS, build_gait, build_idle
 from extra import EXTRA
-from rifle import REACH_LOG, add_weapon_grip, build_rifle
+from rifle import REACH_LOG, add_grenade_grip, add_weapon_grip, build_rifle
 from rigkit import Rig
 
 LOOPS = ("Idle", "Walk", "Jog_Fwd", "Sprint", "Crouch_Idle", "Crouch_Fwd", "Jump",
@@ -10,6 +10,7 @@ LOOPS = ("Idle", "Walk", "Jog_Fwd", "Sprint", "Crouch_Idle", "Crouch_Fwd", "Jump
 
 def build_library(arm_obj, only=None):
     add_weapon_grip(arm_obj)
+    add_grenade_grip(arm_obj)
     rig = Rig(arm_obj)
     names = ["Idle", "Crouch_Idle", *GAITS, *EXTRA]
 

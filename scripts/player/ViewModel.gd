@@ -346,6 +346,14 @@ var _using_arms: bool = false
 
 var player: PlayerController
 var weapon: Weapon
+## Tâche "utilitaires" — lecture de la pose "prêt à lancer"/déclenchement du
+## geste, voir `_ready()`/`_process_arms`/`_on_utility_thrown`.
+var _utility: UtilityThrower
+## Placeholder de grenade actuellement attaché sous "GrenadeGrip" (voir
+## FPArmsRig.attach_grenade), null quand aucune touche de lancer n'est
+## maintenue — voir `_process_arms`.
+var _held_grenade: Node3D
+var _held_grenade_kind: int = -1
 var _anim := AnimState.new()
 var _current_id: int = Inventory.EMPTY
 var _model: Node3D
@@ -382,6 +390,10 @@ func _ready() -> void:
 		weapon.fired.connect(_on_fired)
 		weapon.reload_started.connect(_on_reload_started)
 		weapon.weapon_changed.connect(_on_weapon_changed)
+	_utility = player.get_node_or_null("UtilityThrower") as UtilityThrower
+	if _utility:
+		_utility.fired.connect(_on_utility_thrown)
+		_utility.equipped_changed.connect(_on_equipped_changed)
 	position = REST_POS
 	# Bras FP grenouille EN PRIORITÉ (tâche "frog fp arms") -- `add_child` AVANT
 	# `load()` : FPArmsRig a besoin d'être dans l'arbre de scène pour que
@@ -549,7 +561,18 @@ func _process(delta: float) -> void:
 	if player == null or weapon == null:
 		return
 	var sm := player.state_machine.current_name if player.state_machine else ""
-	var aiming := player.input.aim_held
+	# Contrat "inventaire CS-style" point 4 (ADS bloquée pendant qu'une grenade
+	# est équipée) + tâche "utilitaires" 2026-09-27 point 1 ("short throw on
+	# RIGHT click") : RMB sert maintenant AUSSI à lancer un lob court pendant
+	# qu'une grenade est en main -- sans ce garde, tenir RMB ferait migrer
+	# `_ads_t` vers la pose de visée (`_arms.set_ads_amount`) EN MÊME TEMPS que
+	# `UtilityThrower`/`_process_arms` pilotent la pose "prêt à lancer"
+	# (`set_throw_ready`) et le one-shot `FP_Throw` -- deux poses de bras
+	# concurrentes sur le MÊME rig. Hors grenade, comportement STRICTEMENT
+	# inchangé (`_utility` est toujours nul/dé-équipé sur un joueur sans arme
+	# secondaire de ce type).
+	var nade_equipped := _utility != null and _utility.is_utility_equipped()
+	var aiming := player.input.aim_held and not nade_equipped
 	var c := weapon.cfg()
 	var ads_speed := 1.0 / maxf(c.ads_time, 0.001) if c else 10.0
 	_ads_t = _anim.ads_blend(aiming, _ads_t, delta, ads_speed)
@@ -644,12 +667,34 @@ func _process_arms(aiming: bool, reloading: bool, bob: Vector3, fov_scale: float
 		0.0, deg_to_rad(SPRINT_ARMS_ROLL_DEG) * _sprint_t))
 	_arms.align_to_camera(player.camera, Transform3D(proc_rot, proc_pos), fov_scale)
 
+	# Inventaire CS-style (contrat lead 2026-09-27, point 4) : "the gun cannot
+	# fire, reload, ADS or inspect" tant qu'une grenade est équipée -- couvre
+	# aussi bien le geste de lancer PRÉDIT (`firing`, tâche "utilitaires"
+	# d'origine) que ce nouvel état.
+	var nade_equipped := _utility.is_utility_equipped() if _utility else false
 	var firing := player.input.fire_held if player.input else false
-	var block_inspect := FPArmsMath.should_cancel_inspect(firing, aiming, reloading)
+	var block_inspect := FPArmsMath.should_cancel_inspect(firing, aiming, reloading) or nade_equipped
 	if block_inspect:
 		_arms.cancel_inspect()
 	elif player.input and player.input.inspect_pressed:
 		_arms.trigger_inspect()
+
+	# Contrat point 4 : pose "prêt à lancer" tant qu'une grenade est ÉQUIPÉE
+	# (plus seulement pendant l'appui sur "fire", contrairement à l'ancien
+	# système par touche dédiée) -- no-op si les clips FP_Throw_* ne sont pas
+	# encore chargés (FPArmsRig.set_throw_ready, voir sa doc). Le modèle
+	# d'arme lui-même reste masqué tout du long (contrat : "the gun model is
+	# hidden in FP").
+	if _utility:
+		_arms.set_throw_ready(nade_equipped)
+		# Le mesh de grenade tenue disparaît dès le lancer réel (voir
+		# `_on_utility_thrown`) -- `is_returning()` couvre le temps du geste
+		# FP_Throw où `nade_equipped` reste vrai (retour auto à l'arme, point 6)
+		# mais la grenade a déjà quitté la main : sans ce garde-fou, CE code
+		# la rattacherait chaque frame jusqu'à la fin du retour.
+		_update_held_grenade(nade_equipped and not _utility.is_returning(), _utility.equipped_kind())
+	if _model:
+		_model.visible = not nade_equipped
 
 ## Facteur qui neutralise le FOV RÉEL de la caméra (`player.camera.fov`,
 ## Camera3D porté par PlayerCamera.gd — voir sa doc) pour TARGET_FOV_DEG (voir
@@ -670,6 +715,50 @@ func _on_fired(cfg: WeaponConfig) -> void:
 		# et faisait sauter l'arme. Le recul procédural (`kick_recoil`, via `align_to_camera`)
 		# s'ajoute à la pose courante, en visée comme à la hanche.
 		_arms.cancel_inspect()
+
+## Tâche "utilitaires" : geste de lancer (≈0,4 s, FP_Throw) — déclenché à
+## chaque lancer PRÉDIT localement (UtilityThrower.fired, propriétaire
+## uniquement, même schéma que `_on_fired` pour les tirs). No-op défensif si
+## les bras/le clip ne sont pas chargés (voir FPArmsRig.trigger_throw).
+func _on_utility_thrown(_kind: int) -> void:
+	if _using_arms:
+		_arms.trigger_throw()
+		_arms.cancel_inspect()
+	_update_held_grenade(false, -1)  # la grenade a quitté la main : jamais retenue plus d'une frame.
+
+## Contrat "inventaire CS-style", point 6 : "After the throw animation
+## (FP_Throw) ends, auto-switch back to the last equipped WEAPON slot, with
+## its normal draw (FP_Draw)" — UtilityThrower.equipped_changed(-1) ne se
+## déclenche QUE sur une transition RÉELLE vers l'arme (retour auto après un
+## lancer, OU reprise manuelle de l'arme par touche/molette pendant qu'une
+## grenade était en main) : un tirage normal (même clip que
+## `_on_weapon_changed`) est donc approprié dans les deux cas.
+func _on_equipped_changed(kind: int) -> void:
+	if kind == -1 and _using_arms:
+		_arms.trigger_draw()
+
+## Attache/détache le placeholder de grenade tenue sous "GrenadeGrip" selon
+## `holding`/`kind` (UtilityThrower.is_utility_equipped/equipped_kind, filtré
+## par `is_returning()` — voir l'appelant) — no-op si le rig n'expose pas
+## encore l'os (FPArmsRig.has_grenade_grip, voir sa doc).
+func _update_held_grenade(holding: bool, kind: int) -> void:
+	if not _using_arms or not _arms.has_grenade_grip():
+		return
+	if not holding:
+		if _held_grenade:
+			_arms.detach_grenade()
+			_held_grenade.queue_free()
+			_held_grenade = null
+			_held_grenade_kind = -1
+		return
+	if _held_grenade and _held_grenade_kind == kind:
+		return  # déjà le bon placeholder en main.
+	if _held_grenade:
+		_arms.detach_grenade()
+		_held_grenade.queue_free()
+	_held_grenade = ThrownUtility.build_held_mesh(kind)
+	_held_grenade_kind = kind
+	_arms.attach_grenade(_held_grenade)
 
 func _on_reload_started(cfg: WeaponConfig) -> void:
 	if cfg:

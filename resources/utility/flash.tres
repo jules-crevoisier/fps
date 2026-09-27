@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="UtilityConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/utility/UtilityConfig.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+utility_name = "Flash"
+kind = 1
+throw_speed = 26.0
+short_throw_speed_factor = 0.32
+collision_radius = 0.04
+restitution = 0.4
+friction = 0.3
+rest_speed = 0.4
+fuse_time = 1.2
+fuse_starts_on_press = false
+flash_radius = 20.0
+flash_facing_seconds = 1.5
+flash_side_seconds = 0.7
+flash_behind_seconds = 0.25

@@ -1,0 +1,12 @@
+{
+  "tool": "Tripo Studio — génération texte → 3D, puis Retopo (quads, Smart Mesh) + Smart UV ; AUCUNE texture Tripo",
+  "tripo_task_id": "3dea62a1-d2a7-469e-90e0-3c9ae6e31ec7",
+  "tripo_task_url": "https://studio.tripo3d.ai/fr/workspace/smart-uv/3dea62a1-d2a7-469e-90e0-3c9ae6e31ec7",
+  "source_glb": "assets/incoming/tripo/frag.glb",
+  "prompt": "Stylized cartoon frag grenade game asset, chunky oversized round olive green body with deep segmented grooves, brass spoon lever and pull ring pin on top, hand-painted texture with bold dark ink outlines, saturated colors, comic book style like Borderlands, single object, clean simple shapes",
+  "prompt_source": "tapé par le lead (Claude) dans Tripo Studio, mode texte",
+  "date": "2026-09-27",
+  "post_processing": "art/utilities/grenades/texture_grenades.py : texture peinte par script (aplats de la palette du projet par zone, encre tirée de la normal map Tripo, débordement UV), échelle réelle, origine au centre",
+  "licence": "Sorties Tripo Studio générées avec le compte de l'auteur ; usage soumis aux conditions Tripo AI du plan du compte (preuve hors dépôt).",
+  "notes": "Forme seule venant de l'IA ; la couleur est entièrement celle du projet (pas de texture Tripo, consigne de l'utilisateur du 2026-09-27)."
+}

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="UtilityConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/utility/UtilityConfig.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+utility_name = "Frag"
+kind = 0
+throw_speed = 24.0
+short_throw_speed_factor = 0.32
+collision_radius = 0.05
+restitution = 0.35
+friction = 0.35
+rest_speed = 0.4
+fuse_time = 2.5
+fuse_starts_on_press = true
+frag_damage = 130.0
+frag_damage_radius = 6.5

@@ -1,4 +1,4 @@
-[gd_scene load_steps=28 format=3]
+[gd_scene load_steps=29 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/PlayerController.gd" id="1_ctrl"]
 [ext_resource type="Script" path="res://scripts/player/PlayerInput.gd" id="22_input"]
@@ -23,6 +23,7 @@
 [ext_resource type="Script" path="res://scripts/player/PlayerLook.gd" id="21_look"]
 [ext_resource type="Script" path="res://scripts/player/CharacterBody.gd" id="24_charbody"]
 [ext_resource type="Script" path="res://scripts/player/CharacterAnimator.gd" id="25_charanim"]
+[ext_resource type="Script" path="res://scripts/combat/utility/UtilityThrower.gd" id="26_utility"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
 radius = 0.4
@@ -148,6 +149,9 @@ script = ExtResource("15_health")
 
 [node name="Weapon" type="Node" parent="."]
 script = ExtResource("16_weapon")
+
+[node name="UtilityThrower" type="Node" parent="."]
+script = ExtResource("26_utility")
 
 [node name="ThirdPersonWeapon" type="Node3D" parent="."]
 unique_name_in_owner = true

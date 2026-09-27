@@ -25,7 +25,7 @@ func after_test() -> void:
 func _release_all() -> void:
 	for a in ["move_left", "move_right", "move_forward", "move_back", "jump", "crouch", "sprint",
 			"dive", "fire", "aim", "reload", "pickup", "drop", "weapon_1", "weapon_2",
-			"weapon_next", "weapon_prev"]:
+			"weapon_3", "weapon_4", "weapon_5", "weapon_next", "weapon_prev"]:
 		Input.action_release(a)
 
 
@@ -45,6 +45,28 @@ func test_slot_from_presses_second_slot() -> void:
 
 func test_slot_from_presses_prefers_first_on_conflict() -> void:
 	assert_int(PlayerInput.slot_from_presses(true, true)).is_equal(0)
+
+
+# ---- grenade_slot_from_presses (touches 3/4/5, contrat "inventaire CS-style") ----
+
+func test_grenade_slot_from_presses_none() -> void:
+	assert_int(PlayerInput.grenade_slot_from_presses(false, false, false)).is_equal(-1)
+
+
+func test_grenade_slot_from_presses_frag() -> void:
+	assert_int(PlayerInput.grenade_slot_from_presses(true, false, false)).is_equal(UtilityDatabase.FRAG)
+
+
+func test_grenade_slot_from_presses_flash() -> void:
+	assert_int(PlayerInput.grenade_slot_from_presses(false, true, false)).is_equal(UtilityDatabase.FLASH)
+
+
+func test_grenade_slot_from_presses_smoke() -> void:
+	assert_int(PlayerInput.grenade_slot_from_presses(false, false, true)).is_equal(UtilityDatabase.SMOKE)
+
+
+func test_grenade_slot_from_presses_prefers_first_on_conflict() -> void:
+	assert_int(PlayerInput.grenade_slot_from_presses(true, true, true)).is_equal(UtilityDatabase.FRAG)
 
 
 # ---- gather_from_devices() : mappage Input -> champs (état "held", fiable
@@ -123,4 +145,5 @@ func test_clear_resets_every_field() -> void:
 	assert_bool(_input.fire_pressed).is_false()
 	assert_bool(_input.aim_held).is_false()
 	assert_int(_input.weapon_slot_pressed).is_equal(-1)
+	assert_int(_input.grenade_slot_pressed).is_equal(-1)
 	assert_float(_input.move.x).is_equal_approx(0.0, 0.0001)

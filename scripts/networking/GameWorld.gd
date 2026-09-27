@@ -540,6 +540,12 @@ func _on_player_died(killer_id: int, player: Node) -> void:
 		return
 	_record_kill(killer_id, str(player.name).to_int())
 	_record_recent_death(player)
+	# Tâche "utilitaires" (contrat lead : "lost on death") — vide les charges
+	# de grenades IMMÉDIATEMENT à la mort, avant même le respawn différé
+	# ci-dessous (server_refill_charges les remplira à nouveau au spawn suivant).
+	var dead_utility := player.get_node_or_null("UtilityThrower")
+	if dead_utility and dead_utility.has_method("server_clear_charges"):
+		dead_utility.server_clear_charges()
 	# GF-22 (docs/research/10_ammo_kits_input.md §2.4, « Cartouchière ») :
 	# capture la position DE LA MORT avant toute téléportation de respawn plus
 	# bas (`_teleport_player` déplace ce même nœud `player`) — même prudence que
@@ -580,6 +586,13 @@ func _on_player_died(killer_id: int, player: Node) -> void:
 	var weapon := player.get_node_or_null("Weapon")
 	if weapon and weapon.has_method("server_refill_ammo"):
 		weapon.server_refill_ammo()
+	# Tâche "utilitaires" (contrat lead : "refilled on every spawn") — même
+	# appel direct que server_refill_ammo ci-dessus (déjà côté serveur ici,
+	# UtilityThrower.server_refill_charges pousse lui-même la correction au
+	# propriétaire une fois l'inventaire autoritaire rempli).
+	var utility := player.get_node_or_null("UtilityThrower")
+	if utility and utility.has_method("server_refill_charges"):
+		utility.server_refill_charges()
 
 ## Alimente l'AssistTracker PARTAGÉ à CHAQUE dégât serveur, quel que soit
 ## l'attaquant (dégât d'environnement/de soi-même compris -- `record_damage`

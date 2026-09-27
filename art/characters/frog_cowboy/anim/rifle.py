@@ -71,6 +71,30 @@ def add_weapon_grip(arm_obj):
     bpy.ops.object.mode_set(mode="OBJECT")
 
 
+def add_grenade_grip(arm_obj):
+    """Os GrenadeGrip (enfant de la main gauche) au creux de la paume : la grenade tenue y
+    est attachée (transform identité). +Y de l'os (= haut de la grenade, fusée) sort de la
+    PAUME : main paume en l'air, on voit la fusée et le levier (avec +Y vers le dos de la
+    main, la grenade était tenue à l'envers, culot vers la caméra)."""
+    if "GrenadeGrip" in arm_obj.data.bones:
+        return
+    bpy.context.view_layer.objects.active = arm_obj
+    bpy.ops.object.mode_set(mode="EDIT")
+    ebs = arm_obj.data.edit_bones
+    hand = ebs["mixamorig:LeftHand"]
+    eb = ebs.new("GrenadeGrip")
+    eb.head = (0.0, 0.0, 0.0)
+    eb.tail = (0.0, 0.02, 0.0)
+    eb.parent = hand
+    eb.use_deform = False
+    rest = arm_obj.data.bones["mixamorig:LeftHand"].matrix_local.copy()
+    # Paume gauche = -Z local de la main ; creux de la paume ~3,5 cm (rig) le long des doigts.
+    local = Matrix.Translation(Vector((0.0, 0.035, -0.016)))
+    eb.matrix = rest @ local @ Matrix.Rotation(math.radians(-90.0), 4, "X")
+    eb.length = 0.02
+    bpy.ops.object.mode_set(mode="OBJECT")
+
+
 def hold(rig: Rig, g: Matrix, pitch_up=0.0, left=None, left_x=None, left_y=None, chest=(0.0, 0.0),
          head_follow=0.5, right_curl=78.0, left_curl=65.0, base_twist=(-12.0, -14.0), clav=(-24.0, 4.0),
          base_lean=0.0):
@@ -192,6 +216,44 @@ def build_reload(rig, duration=2.5):
         rig.key(f)
 
 
+def build_throw(rig, duration=0.5):
+    """Lancer 3e personne (haut du corps) : arme baissée à droite, main gauche armée derrière
+    la tête puis lancer par-dessus l'épaule, retour en visée."""
+    rig.new_action("Rifle_Throw")
+    keys = [  # (t, arme, poignet gauche, doigts (Y), pouce (X))
+        (0.00, dict(), None, None, None),
+        (0.25, dict(pitch_up=-35.0, roll=25.0, back=0.02, lift=-0.06), Vector((0.13, 0.06, 0.92)),
+         Vector((0.0, -0.4, 0.9)), Vector((-1.0, 0.0, 0.0))),
+        (0.45, dict(pitch_up=-35.0, roll=25.0, back=0.02, lift=-0.06), Vector((0.06, -0.22, 0.90)),
+         Vector((0.0, -1.0, 0.1)), Vector((-1.0, 0.0, 0.0))),
+        (0.65, dict(pitch_up=-25.0, roll=18.0, back=0.015, lift=-0.04), Vector((0.0, -0.18, 0.66)),
+         Vector((0.0, -0.7, -0.7)), Vector((-1.0, 0.0, 0.0))),
+        (1.00, dict(), None, None, None),
+    ]
+    n = _frames(duration)
+    for f in range(n + 1):
+        t = f / n
+        i = max(j for j in range(len(keys)) if keys[j][0] <= t + 1e-9)
+        j = min(i + 1, len(keys) - 1)
+        t0, g0, l0, y0, x0 = keys[i]
+        t1, g1, l1, y1, x1 = keys[j]
+        u = 0.0 if j == i else smooth((t - t0) / (t1 - t0))
+        g = gun_frame(**{k: lerp(g0.get(k, 0.0), g1.get(k, 0.0), u) for k in ("pitch_up", "roll", "back", "lift")})
+        gr = g.to_3x3()
+        def spec(pos, yd, xd):
+            if pos is None:
+                return g @ (L_WRIST * GUN_SCALE), gr @ L_Y, gr @ L_X
+            return pos, yd, xd
+        p0, ya, xa = spec(l0, y0, x0)
+        p1, yb, xb = spec(l1, y1, x1)
+        free = l0 is not None or l1 is not None
+        rig.reset()
+        hold(rig, g, left=p0.lerp(p1, u) if free else None,
+             left_y=ya.lerp(yb, u) if free else None, left_x=xa.lerp(xb, u) if free else None,
+             left_curl=55.0)
+        rig.key(f)
+
+
 def build_rifle(rig, only=None):
     # Torsion de référence : celle de la visée neutre (tous les clips fusil partent de là).
     rig.reset()
@@ -203,6 +265,7 @@ def build_rifle(rig, only=None):
         "Rifle_Idle": lambda: build_idle_breath(rig),
         "Rifle_Shoot": lambda: build_shoot(rig),
         "Rifle_Reload": lambda: build_reload(rig),
+        "Rifle_Throw": lambda: build_throw(rig),
     }
     if only is None or any(n.startswith("Rifle_Aim") for n in only):
         build_aims(rig)

@@ -582,6 +582,7 @@ static func body_squash_scale(elapsed_s: float) -> float:
 var _character_body: CharacterBody
 var _player: PlayerController
 var _weapon: Weapon
+var _utility_thrower: UtilityThrower
 var _health: Health
 var _built: bool = false
 var _current_locomotion: int = -1
@@ -630,6 +631,13 @@ func _ready() -> void:
 		# ne lit `_inv` (prédiction locale) qu'à jour côté PROPRIÉTAIRE ou
 		# SERVEUR pour un bot, pas sur un corps distant quelconque.
 		_weapon.current_id_changed.connect(_on_current_weapon_changed)
+	# Tâche "utilitaires" : lancer de frag/flash/smoke — même schéma que
+	# `_weapon.fired`/`remote_fired` juste au-dessus (prédiction propriétaire +
+	# écho diffusé aux observateurs), voir UtilityThrower.gd.
+	_utility_thrower = _player.get_node_or_null("UtilityThrower") if _player else null
+	if _utility_thrower:
+		_utility_thrower.fired.connect(_on_utility_thrown)
+		_utility_thrower.remote_fired.connect(_on_utility_thrown)
 	# GF-10 "Réaction visible de la cible" : flinch (haut du corps) + gel de
 	# pose au kill, sur TOUS les pairs (Health.hit_reaction/died sont déjà
 	# diffusés à tous, voir Health.gd) — jamais pour ce corps si `_player` est
@@ -719,6 +727,19 @@ func _trigger_shoot() -> void:
 	if not _built:
 		return
 	set("parameters/ShootShot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_FIRE)
+
+## Lancer d'utilitaire (tâche "utilitaires") — appelé par UtilityThrower.gd/
+## ThrownUtility.gd à chaque lancer accepté (prédiction locale ET écho des
+## pairs distants, même schéma que `_on_fired`/`_on_remote_fired` pour les
+## tirs). No-op défensif si l'arbre n'est pas encore construit (modèle pas
+## chargé) — jamais d'exception.
+func trigger_throw() -> void:
+	if not _built:
+		return
+	set("parameters/ThrowShot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_FIRE)
+
+func _on_utility_thrown(_kind: int) -> void:
+	trigger_throw()
 
 ## GF-27 : arme en main CHANGÉE (équipée/achetée/ramassée/lâchée, voir
 ## `Weapon.current_id_changed`, diffusé à TOUS les pairs) — recalcule
@@ -954,6 +975,23 @@ func _build_tree() -> void:
 	bt.connect_node("ReloadSpeed", 0, "ReloadClip")
 	bt.connect_node("ReloadShot", 1, "ReloadSpeed")
 
+	# -- Lancer d'utilitaire (frag/flash/smoke, tâche "utilitaires") : one-shot
+	# haut du corps ≈0,5 s (Rifle_Throw), déclenché par UtilityThrower.gd sur
+	# ThrownUtility côté client (voir `trigger_throw`). Même tolérance que
+	# ShootClip/ReloadClip ci-dessus : `AnimationNodeAnimation.animation` référence
+	# un nom de clip qui peut ne pas encore exister dans l'AnimationPlayer (le
+	# lead livre l'anim en parallèle) — Godot ne joue simplement rien pour ce
+	# one-shot tant que le clip est absent, jamais d'exception.
+	var throw_shot := AnimationNodeOneShot.new()
+	throw_shot.fadein_time = 0.05
+	throw_shot.fadeout_time = 0.15
+	bt.add_node("ThrowShot", throw_shot)
+	bt.connect_node("ThrowShot", 0, "ReloadShot")
+	var throw_clip := AnimationNodeAnimation.new()
+	throw_clip.animation = "%sThrow" % _clip_prefix
+	bt.add_node("ThrowClip", throw_clip)
+	bt.connect_node("ThrowShot", 1, "ThrowClip")
+
 	# -- Cadence : vitesse de lecture propre à l'agent (§4.6, ×0,9 à ×1,15) -
 	# Ne modifie QUE la vitesse de LECTURE du clip dans l'AnimationTree —
 	# jamais MovementConfig ni la vitesse réelle du joueur (couche 100 %
@@ -969,7 +1007,7 @@ func _build_tree() -> void:
 		upper_body.set_filter_path(path, true)
 	bt.add_node("UpperBody", upper_body)
 	bt.connect_node("UpperBody", 0, "Cadence")
-	bt.connect_node("UpperBody", 1, "ReloadShot")
+	bt.connect_node("UpperBody", 1, "ThrowShot")
 
 	bt.connect_node("output", 0, "UpperBody")
 
