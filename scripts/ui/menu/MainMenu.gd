@@ -105,13 +105,37 @@ func _build_topbar() -> void:
 		x += _TAB_SIZE.x + 6.0
 	bar.add_child(tabs_root)
 
+	# « Échap Quitter » CLIQUABLE (retour utilisateur 2026-09-27) : même effet que la touche Échap
+	# (confirmation « Quitter le jeu ? »), texte jaune au survol / focus clavier.
+	var quit_btn := Button.new()
+	quit_btn.flat = true
+	quit_btn.focus_mode = Control.FOCUS_ALL
+	quit_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	quit_btn.tooltip_text = "Quitter le jeu"
+	for st in ["normal", "hover", "pressed", "focus", "disabled"]:
+		quit_btn.add_theme_stylebox_override(st, StyleBoxEmpty.new())
+	quit_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	quit_btn.position = Vector2(-48 - 170, 26)
+	quit_btn.custom_minimum_size = Vector2(170, 52)
 	var right := HBoxContainer.new()
-	right.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	right.position = Vector2(-48 - 170, 34)
+	right.set_anchors_preset(Control.PRESET_FULL_RECT)
+	right.alignment = BoxContainer.ALIGNMENT_CENTER
+	right.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	right.add_theme_constant_override("separation", UiTokens.S2)
-	right.add_child(MenuWidgets.key_chip("Échap"))
-	right.add_child(UiTokens.make_label("Quitter", UiTokens.label(UiTokens.T_S, UiTokens.PAPER)))
-	bar.add_child(right)
+	var esc_chip := MenuWidgets.key_chip("Échap")
+	esc_chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	right.add_child(esc_chip)
+	var quit_label := UiTokens.make_label("Quitter", UiTokens.label(UiTokens.T_S, UiTokens.PAPER))
+	right.add_child(quit_label)
+	quit_btn.add_child(right)
+	var set_hot := func(hot: bool) -> void:
+		quit_label.label_settings.font_color = UiTokens.YELLOW if hot else UiTokens.PAPER
+	quit_btn.mouse_entered.connect(set_hot.bind(true))
+	quit_btn.mouse_exited.connect(set_hot.bind(false))
+	quit_btn.focus_entered.connect(set_hot.bind(true))
+	quit_btn.focus_exited.connect(set_hot.bind(false))
+	quit_btn.pressed.connect(_handle_escape)
+	bar.add_child(quit_btn)
 
 	add_child(bar)
 
