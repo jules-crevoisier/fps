@@ -259,6 +259,18 @@ static func spine_counter_yaw_deg(hip_yaw_deg: float, chain_size: int) -> float:
 	return -hip_yaw_deg / float(chain_size)
 
 
+## Borne de STABILITÉ de l'intégration explicite (Euler) ci-dessous, pour un
+## `time_constant_s` donné -- wn = 4/time_constant_s, un pas explicite
+## diverge si wn·delta n'est pas petit. Bug trouvé en sondant
+## `bot_aim_capture.gd` (2026-09-27, mesure du diagnostic lead) : un à-coup de
+## frame RÉEL (I/O disque pendant une capture, mais tout aussi possible en jeu
+## -- hoquet GC/réseau, chargement, alt-tab) livre un `delta` énorme à ce
+## modifier ; sans cette borne, `_hip_yaw_state` explosait jusqu'à NaN (Basis
+## résultante rejetée par Skeleton3D, "must be normalized ..." en boucle à
+## CHAQUE frame suivante -- la récurrence du ressort ne guérit JAMAIS toute
+## seule d'un état NaN). Fraction conservatrice (1/2) de `time_constant_s`.
+const _MAX_STABLE_DELTA_FACTOR := 0.5
+
 ## Un pas de ressort-amortisseur CRITIQUEMENT amorti (zeta=1, aucun
 ## dépassement) vers `target`, avec un temps de réponse `time_constant_s`
 ## (réglé pour un régime établi -- ~98 % de l'écart -- à `t ~= time_constant_s`,
@@ -266,14 +278,24 @@ static func spine_counter_yaw_deg(hip_yaw_deg: float, chain_size: int) -> float:
 ## `BotLook.spring_step_capped`/`BotAim.spring_natural_freq` (zeta=0,9, un
 ## léger dépassement toléré pour le regard) : ici AUCUN dépassement n'est
 ## toléré (contrat lead "no snaps"). État `{"value": float, "speed": float}`
-## (`{}` = première invocation, valeur/vitesse nulles).
+## (`{}` = première invocation, valeur/vitesse nulles) -- un état déjà non
+## fini (NaN/Inf, ex. hérité d'un appel précédent corrompu par un ancien
+## `delta` non borné) est RÉPARÉ ici (repli à zéro) plutôt que perpétué, et
+## `delta` est borné à `_MAX_STABLE_DELTA_FACTOR * time_constant_s` avant
+## intégration (un à-coup de frame ralentit alors le rattrapage visuel d'UNE
+## frame au lieu de faire diverger l'intégrateur -- jamais de NaN).
 static func critically_damped_step(state: Dictionary, target: float, time_constant_s: float, delta: float) -> Dictionary:
 	var value: float = float(state.get("value", 0.0))
 	var speed: float = float(state.get("speed", 0.0))
-	var wn := 4.0 / maxf(time_constant_s, 0.001)
+	if not is_finite(value) or not is_finite(speed):
+		value = 0.0
+		speed = 0.0
+	var safe_time_constant := maxf(time_constant_s, 0.001)
+	var safe_delta := clampf(delta, 0.0, safe_time_constant * _MAX_STABLE_DELTA_FACTOR)
+	var wn := 4.0 / safe_time_constant
 	var k := wn * wn
 	var d := 2.0 * wn
 	var accel := k * (target - value) - d * speed
-	var new_speed := speed + accel * delta
-	var new_value := value + new_speed * delta
+	var new_speed := speed + accel * safe_delta
+	var new_value := value + new_speed * safe_delta
 	return {"value": new_value, "speed": new_speed}

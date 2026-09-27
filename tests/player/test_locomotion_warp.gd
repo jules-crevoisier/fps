@@ -170,3 +170,31 @@ func test_critically_damped_step_zero_delta_is_a_no_op() -> void:
 	var state := {"value": 5.0, "speed": 2.0}
 	var next := Warp.critically_damped_step(state, 50.0, LocomotionWarp.SMOOTH_TIME_CONSTANT_S, 0.0)
 	assert_float(next["value"]).is_equal_approx(5.0, 0.001)
+
+
+## Robustesse (bug trouvé en sondant `bot_aim_capture.gd`, 2026-09-27) : un
+## à-coup de frame (I/O disque, GC, hoquet réseau -- déjà réel en jeu, PAS
+## seulement un artefact de sonde) livre un `delta` énorme à un modifier de
+## squelette. `critically_damped_step` intègre par Euler explicite (wn =
+## 4/tau, wn·delta doit rester petit pour ne pas diverger) : un `delta` non
+## borné a fait EXPLOSER `_hip_yaw_state` jusqu'à NaN en jeu réel (Skeleton3D
+## a ensuite refusé la Basis résultante -- "must be normalized ... erreur
+## répétée à chaque frame suivante), un état NaN NE GUÉRISSANT JAMAIS tout
+## seul (la récurrence du ressort reste NaN indéfiniment). Le correctif borne
+## `delta` en interne (jamais plus qu'une fraction stable de `time_constant_s`)
+## ET répare un état déjà corrompu au lieu de le perpétuer.
+func test_critically_damped_step_huge_delta_stays_finite() -> void:
+	var state := {}
+	state = Warp.critically_damped_step(state, 70.0, LocomotionWarp.SMOOTH_TIME_CONSTANT_S, 5.0)
+	assert_bool(is_finite(float(state["value"]))).append_failure_message("valeur non finie après un delta énorme").is_true()
+	assert_bool(is_finite(float(state["speed"]))).append_failure_message("vitesse non finie après un delta énorme").is_true()
+	# Doit rester dans une plage raisonnable (jamais un dépassement délirant) --
+	# à défaut d'un rattrapage exact, JAMAIS une explosion numérique.
+	assert_float(absf(state["value"])).is_less(1000.0)
+
+
+func test_critically_damped_step_recovers_from_already_corrupted_state() -> void:
+	var poisoned := {"value": NAN, "speed": NAN}
+	var next := Warp.critically_damped_step(poisoned, 30.0, LocomotionWarp.SMOOTH_TIME_CONSTANT_S, 1.0 / 60.0)
+	assert_bool(is_finite(float(next["value"]))).append_failure_message("un état NaN doit être réparé, pas perpétué").is_true()
+	assert_bool(is_finite(float(next["speed"]))).is_true()

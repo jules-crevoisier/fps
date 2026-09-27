@@ -9,3 +9,5 @@ bone_name = "WeaponGrip"
 bone_idx = -1
 
 [node name="WeaponSocket" type="Node3D" parent="Armature/Skeleton3D/BoneAttachment3D"]
+; demi-tour autour de Y : le Ravage 3P pointait dans le dos (mesuré 172-180° du tir, 2026-09-27)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)

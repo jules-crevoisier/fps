@@ -15,6 +15,7 @@ func _ready() -> void:
 	super._ready()
 	mode_name = "Team Deathmatch"
 	hud_state = "Premier à %d éliminations" % score_to_win
+	_hunt_clock_origin = _goal_clock_now()  # T4 "chasse" -- voir la docstring de _hunt_clock_origin.
 
 ## Échange de côté (maps-spec-v2.md §5.6.2/§7.5, maps ASYMÉTRIQUES seulement,
 ## ex. wasteland) : MapSetup positionne `asymmetric_map` (data "asymmetric")
@@ -129,10 +130,30 @@ func on_kill(_killer_id: int, _victim_id: int, killer_team: int, victim_team: in
 	_bot_goal_cache.erase(_victim_id)
 	var bk: Dictionary = _bot_knowledge().get("bot_knowledge", {})
 	if bk.is_empty():
+		_record_kill_location(killer_team, victim_team)  # T4 "chasse" -- voir _record_kill_location.
 		_invalidate_bot_goals()  # évènement BOT-01 : comportement historique (pas de connaissance de carte).
 	else:
 		_register_targeted_kill(bk, killer_team, victim_team)
 	_sync_state(team_scores, winner, hud_state)
+
+## T4 -- appel "chasse" (tâche "bots humains", 2026-09-27, §"Also") : garde un
+## instantané INFO-FAIR du lieu du kill, pour les cartes SANS `bot_knowledge`
+## (Shipment et toute autre carte statique générique -- la variante `bk` a déjà
+## son propre équivalent, `_kill_event`/`_register_targeted_kill` ci-dessus).
+## Jamais la position RÉELLE de la victime/de l'attaquant (`on_kill` ne la
+## reçoit d'ailleurs pas) : seulement la mémoire de vue PARTAGÉE de l'équipe du
+## tireur (repli sur celle de la victime), déjà alimentée UNIQUEMENT par la
+## perception réelle d'un bot (`report_enemy_sighting`, contrat BOT-01) -- même
+## principe que `_maybe_trigger_kill_reaction` pour les cartes `bk`. Ni l'une
+## ni l'autre mémoire n'est fraîche (kill hors de toute perception d'équipe,
+## ex. sniper hors LOS) : `_last_kill_pos` reste inchangé plutôt qu'écrasé par
+## une valeur non fiable.
+func _record_kill_location(killer_team: int, victim_team: int) -> void:
+	var pos := _shared_last_seen_enemy(killer_team)
+	if pos == Vector3.INF:
+		pos = _shared_last_seen_enemy(victim_team)
+	if pos != Vector3.INF:
+		_last_kill_pos = pos
 
 
 # ======================================================================
@@ -944,17 +965,132 @@ func _compute_bot_goal(team: int, bot_id: int, bot_pos: Vector3, reached: bool =
 		return _wasteland_bot_goal(bk, team, bot_id, bot_pos, reached)
 	var seen := _shared_last_seen_enemy(team)
 	if seen != Vector3.INF:
+		_hunt_threshold_s.erase(team)  # contact frais : la prochaine chasse retire un NOUVEAU délai U(6;10).
 		return seen
 	if not reached:
 		var cached: Dictionary = _bot_goal_cache.get(bot_id, {})
 		if not cached.is_empty():
 			return cached.get("pos", Vector3.ZERO)
+	# T4 "chasse" (tâche "bots humains", 2026-09-27, §"Also") : silence PROLONGÉ
+	# (aucun contact perçu depuis un délai U(6;10) s propre à cette FENÊTRE de
+	# silence, tiré une seule fois -- voir `_hunt_threshold_for_team`) -> pousse
+	# vers une zone où l'ennemi est probable plutôt que de tourner sans fin sur
+	# les spots de tenue LOCAUX ci-dessous (écart signalé : "seulement des
+	# spots de tenue près d'eux-mêmes"). `Vector3.ZERO` (rien de disponible,
+	# ex. carte sans le moindre marqueur de spawn) : retombe sur le repli
+	# habituel, comportement historique inchangé.
+	if should_hunt(_seconds_since_last_contact(team), _hunt_threshold_for_team(team)):
+		var hunt := hunt_goal(_last_kill_pos, _enemy_spawn_points(team), _rng)
+		if hunt != Vector3.ZERO:
+			return hunt
 	var hold := _pick_hold_spot(bot_id, bot_pos)
 	if hold != Vector3.ZERO:
 		return hold
 	if not (knowledge.get("hotspots", []) as Array).is_empty():
 		return _pick_hotspot(bot_id, knowledge, reached)
 	return _pick_patrol_point(bot_id, bot_pos, reached)
+
+
+# ======================================================================
+#  T4 -- appel "chasse" (tâche "bots humains", 2026-09-27, §"Also") : une
+#  équipe SANS AUCUN contact (mémoire de vue partagée, `_shared_last_seen_
+#  enemy`) depuis un moment doit arrêter de cycler ses spots de tenue LOCAUX
+#  et pousser vers une zone où l'ennemi est probable -- toujours SANS lire une
+#  position ennemie VIVANTE (contrat BOT-01, comme le reste de ce fichier).
+#  Seuil U(6;10) s (jamais fixe -- imprévisible, comme le reste des délais
+#  bot), tiré UNE FOIS par fenêtre de silence (`_hunt_threshold_for_team`,
+#  retiré au prochain contact par `_compute_bot_goal` ci-dessus).
+# ======================================================================
+
+const HUNT_NO_CONTACT_MIN_S := 6.0
+const HUNT_NO_CONTACT_MAX_S := 10.0
+
+## bot_id de l'équipe -> délai (s) tiré pour la fenêtre de silence COURANTE ;
+## absent = pas encore de fenêtre de silence en cours (contact frais, ou
+## jamais encore interrogé) -- voir `_hunt_threshold_for_team`.
+var _hunt_threshold_s: Dictionary = {}
+## Dernier lieu de kill connu (INFO-FAIR, voir `_record_kill_location`) --
+## `Vector3.INF` tant qu'aucun kill n'a encore livré de position fiable.
+var _last_kill_pos: Vector3 = Vector3.INF
+## Horloge (`_goal_clock_now()`) à la PREMIÈRE interrogation de la chasse --
+## sert d'origine "début de partie" pour `_seconds_since_last_contact` quand
+## une équipe n'a ENCORE JAMAIS rien perçu (`_goal_clock_now()` par défaut
+## renvoie `Time.get_ticks_msec()`, le temps depuis le DÉMARRAGE DU PROCESSUS,
+## pas depuis le début du match -- sans cette origine, une équipe qui n'a
+## simplement pas encore eu l'occasion de percevoir quoi que ce soit se serait
+## mise à chasser DÈS LE PREMIER TICK d'une partie démarrée après quelques
+## minutes de jeu/menus, sans la moindre grâce de 6-10 s). `-1.0` = pas encore
+## initialisée.
+var _hunt_clock_origin: float = -1.0
+
+## `true` si `seconds_since_contact` (s, depuis le dernier contact PERÇU par
+## l'équipe -- `INF` si aucun contact n'a jamais eu lieu) a dépassé
+## `threshold_s` -- fonction PURE, testée directement (tests/ai/test_bot_goals.gd).
+static func should_hunt(seconds_since_contact: float, threshold_s: float) -> bool:
+	return seconds_since_contact >= threshold_s
+
+## Temps (s) écoulé depuis le dernier contact PERÇU par `team` (mémoire de vue
+## partagée BRUTE, `GameMode._last_seen_enemy` -- SANS le TTL de fraîcheur de
+## `_shared_last_seen_enemy`, qui n'a de sens que pour "suivre" une cible :
+## ici on veut au contraire savoir depuis QUAND le silence dure, y compris
+## bien après ENEMY_MEMORY_TTL). `INF` si l'équipe n'a JAMAIS rien perçu.
+func _seconds_since_last_contact(team: int) -> float:
+	var mem: Dictionary = _last_seen_enemy.get(team, {})
+	if mem.is_empty():
+		# Aucun contact depuis le début de la partie -- "depuis toujours" se
+		# mesure depuis `_hunt_clock_origin` (posée UNE FOIS dans `_ready()`,
+		# ~début de partie), jamais l'horloge BRUTE (qui ferait chasser dès le
+		# premier tick d'une partie démarrée après un moment de jeu/menus) --
+		# repli défensif sur l'horloge brute si jamais interrogée avant
+		# `_ready()` (ne devrait pas arriver en jeu, `_ready()` tourne avant
+		# tout `_physics_process`).
+		var origin := _hunt_clock_origin if _hunt_clock_origin >= 0.0 else _goal_clock_now()
+		return _goal_clock_now() - origin
+	return _goal_clock_now() - float(mem.get("time", -INF))
+
+## Délai (s) de la fenêtre de silence COURANTE de `team`, tiré U(HUNT_NO_
+## CONTACT_MIN_S; HUNT_NO_CONTACT_MAX_S) à la PREMIÈRE interrogation de cette
+## fenêtre (mis en cache ensuite -- jamais retiré à chaque tick, sinon le
+## seuil "bougerait" sans cesse et la chasse ne se déclencherait jamais de
+## façon prévisible pour les tests/le réglage). Retiré par `_compute_bot_goal`
+## dès qu'un contact frais revient (voir plus haut).
+func _hunt_threshold_for_team(team: int) -> float:
+	if not _hunt_threshold_s.has(team):
+		_hunt_threshold_s[team] = _rng.randf_range(HUNT_NO_CONTACT_MIN_S, HUNT_NO_CONTACT_MAX_S)
+	return float(_hunt_threshold_s[team])
+
+## But de CHASSE -- ordre de priorité INFO-FAIR (contrat BOT-01, jamais une
+## position ennemie vivante) : le dernier lieu de kill connu (mémoire déjà
+## partagée, instantané pris au moment du kill -- voir `_record_kill_location`),
+## sinon un marqueur de spawn de l'équipe ADVERSE (statique, connu d'avance --
+## "loin, côté adverse", même esprit que `GameMode._pick_patrol_point`/BUG-
+## REGR-01, mais filtré pour ne JAMAIS renvoyer un spawn de sa PROPRE équipe),
+## sinon `Vector3.ZERO` ("rien de disponible", l'appelant retombe sur son
+## repli habituel). Fonction PURE, testée directement.
+static func hunt_goal(recent_kill_pos: Vector3, enemy_spawn_points: Array, rng: RandomNumberGenerator) -> Vector3:
+	if recent_kill_pos != Vector3.INF:
+		return recent_kill_pos
+	if not enemy_spawn_points.is_empty():
+		return enemy_spawn_points[rng.randi() % enemy_spawn_points.size()]
+	return Vector3.ZERO
+
+## Marqueurs de spawn (statiques, connus d'avance) de l'équipe ADVERSE à
+## `team` -- contrairement à `GameMode._map_patrol_points` (toutes équipes
+## confondues), filtré par la méta "team" de chaque marqueur (voir `MapSetup`).
+## Tableau vide si la carte n'expose aucun marqueur adverse (repli `hunt_goal`
+## sur `Vector3.ZERO`).
+func _enemy_spawn_points(team: int) -> Array:
+	var world := get_tree().get_first_node_in_group("match")
+	if world == null:
+		return []
+	var root := world.get_node_or_null(world.spawn_points_root)
+	if root == null:
+		return []
+	var out: Array = []
+	for p in root.get_children():
+		if int((p as Node).get_meta("team", -1)) != team:
+			out.append((p as Node3D).global_position)
+	return out
 
 
 ## bot_id -> Vector3 (spot de tenue COURANT de ce bot, `Vector3.INF` = aucun).

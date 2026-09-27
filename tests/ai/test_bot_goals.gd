@@ -100,6 +100,34 @@ func _make_world_with_hold_spots(points: Array, hold_positions: Array) -> Node3D
 	return world
 
 
+## Monde avec des marqueurs de spawn TAGUÉS par équipe (méta "team", comme
+## `scenes/levels/maps/*.tscn` -- voir `MapSetup`), pour les tests de chasse
+## (T4, tâche "bots humains" 2026-09-27, §"Also") : `TDMMode._enemy_spawn_
+## points` filtre par cette méta, contrairement à `GameMode._map_patrol_
+## points` (toutes équipes confondues, voir sa docstring BUG-REGR-01).
+func _make_world_with_team_spawns(team0_points: Array, team1_points: Array) -> Node3D:
+	var world := _FakeWorld.new()
+	world.add_to_group("match")
+	var root_node := Node3D.new()
+	root_node.name = "SpawnPoints"
+	world.add_child(root_node)
+	var players_node := Node3D.new()
+	players_node.name = "Players"
+	world.add_child(players_node)
+	for p in team0_points:
+		var marker := Node3D.new()
+		marker.position = p
+		marker.set_meta("team", 0)
+		root_node.add_child(marker)
+	for p in team1_points:
+		var marker := Node3D.new()
+		marker.position = p
+		marker.set_meta("team", 1)
+		root_node.add_child(marker)
+	add_child(world)
+	auto_free(world)
+	return world
+
 
 ## BOT-31 : établit le RANG (et donc la lane, voir `TDMMode._team_rank_of`/
 ## `_lane_for_bot_id`) de chaque bot de `bot_ids_in_rank_order`, DANS CET
@@ -407,4 +435,129 @@ func test_no_hold_spot_qualifies_falls_back_to_patrol_point() -> void:
 	var goal: Vector3 = mode.bot_goal_for(0, 1, Vector3(1000, 0, 1000))
 	assert_vector(goal).is_equal_approx(points[0], Vector3(0.01, 0.01, 0.01))
 	assert_object(world).is_not_null()  # tient juste la référence vivante (auto_free du monde géré par _make_world).
+
+
+# ======================================================================
+#  T4 -- appel "chasse" (tâche "bots humains" 2026-09-27, §"Also") : constaté
+#  par le lead qu'un bot 1v1 ne retrouve plus un joueur SILENCIEUX/IMMOBILE
+#  (contrat information-fair de la passe 1, inchangé), mais qu'en TDM, une
+#  équipe SANS AUCUN contact pendant un moment ne devait pas se contenter de
+#  tourner indéfiniment sur ses spots de tenue LOCAUX (`_pick_hold_spot`) --
+#  elle doit pousser vers une zone où l'ennemi est probable (spawn adverse,
+#  dernier lieu de kill connu), toujours SANS lire une position ennemie
+#  vivante (BOT-01).
+# ======================================================================
+
+func test_should_hunt_false_before_threshold() -> void:
+	assert_bool(TDMMode.should_hunt(5.9, 6.0)).is_false()
+
+
+func test_should_hunt_true_once_elapsed_reaches_threshold() -> void:
+	assert_bool(TDMMode.should_hunt(6.0, 6.0)).is_true()
+	assert_bool(TDMMode.should_hunt(11.0, 6.0)).is_true()
+
+
+func test_should_hunt_false_when_contact_is_still_fresh() -> void:
+	# INF = "jamais eu le moindre contact" -- mais un contact qui vient de
+	# tomber (0 s écoulée) ne doit pas non plus déclencher la chasse.
+	assert_bool(TDMMode.should_hunt(0.0, 6.0)).is_false()
+
+
+func test_hunt_goal_prefers_recent_kill_location_over_enemy_spawn() -> void:
+	var rng := RandomNumberGenerator.new()
+	var kill_pos := Vector3(5, 0, 5)
+	var goal := TDMMode.hunt_goal(kill_pos, [Vector3(50, 0, 50)], rng)
+	assert_vector(goal).is_equal(kill_pos)
+
+
+func test_hunt_goal_falls_back_to_enemy_spawn_when_no_recent_kill() -> void:
+	var rng := RandomNumberGenerator.new()
+	var enemy_spawn := Vector3(50, 0, 50)
+	var goal := TDMMode.hunt_goal(Vector3.INF, [enemy_spawn], rng)
+	assert_vector(goal).is_equal(enemy_spawn)
+
+
+func test_hunt_goal_is_zero_when_nothing_available() -> void:
+	var rng := RandomNumberGenerator.new()
+	var goal := TDMMode.hunt_goal(Vector3.INF, [], rng)
+	assert_vector(goal).is_equal(Vector3.ZERO)
+
+
+## Intégration : une équipe sans AUCUN contact depuis > HUNT_NO_CONTACT_MAX_S
+## doit pousser vers le spawn ADVERSE (un seul marqueur adverse ici -> résultat
+## déterministe quel que soit le tirage RNG), jamais vers un point de SA PROPRE
+## équipe -- et jamais AVANT le seuil. La vérification "avant le seuil" compare
+## au lieu de KILL connu (voir `_record_kill_location`) plutôt qu'au spawn
+## adverse : ce dernier reste un candidat LÉGITIME du repli patrouille
+## historique (`GameMode._pick_patrol_point`, toutes équipes confondues) même
+## SANS chasse active, ce qui rendrait une comparaison directe non fiable
+## (faux positif ~50 % du temps) -- alors qu'AUCUN repli (tenue/hotspot/
+## patrouille) ne renvoie jamais `_last_kill_pos`, seule la branche chasse le
+## fait : un résultat qui l'égale AVANT le seuil ne peut venir que d'une
+## chasse déclenchée trop tôt, un vrai bug.
+func test_tdm_pushes_toward_enemy_spawn_after_prolonged_no_contact() -> void:
+	var enemy_spawn := Vector3(80, 0, 80)
+	_make_world_with_team_spawns([Vector3(1, 0, 1)], [enemy_spawn])
+	var mode := _ClockedTDMMode.new()
+	add_child(mode)
+	auto_free(mode)
+	var kill_pos := Vector3(3, 0, 4)
+	mode.report_enemy_sighting(1, kill_pos)
+	mode.on_kill(-1, -1, 1, 0)  # tireur team 1, victime team 0 -- fige _last_kill_pos = kill_pos.
+
+	# Avant le seuil MIN (6 s, tirage U(6;10) -- AUCUN tirage possible n'est
+	# sous 6 s) : jamais de push, quel que soit le repli retenu par ailleurs.
+	mode.fake_now = TDMMode.HUNT_NO_CONTACT_MIN_S - 0.5
+	var too_soon: Vector3 = mode.bot_goal_for(0, 1, Vector3(1000, 0, 1000))
+	assert_bool(too_soon.is_equal_approx(kill_pos)).append_failure_message(
+		"ne doit pas encore chasser (lieu de kill) avant le seuil de chasse").is_false()
+
+	# Bien après le seuil MAX (aucun tirage U(6;10) ne peut dépasser 10 s) :
+	# doit désormais chasser -- ici vers le lieu de kill connu (priorité sur
+	# le spawn adverse, voir le test suivant pour le repli SANS kill connu).
+	mode.fake_now = TDMMode.HUNT_NO_CONTACT_MAX_S + 5.0
+	mode._invalidate_bot_goals()
+	var hunting: Vector3 = mode.bot_goal_for(0, 1, Vector3(1000, 0, 1000))
+	assert_vector(hunting).append_failure_message(
+		"après un long silence, l'équipe doit chasser (ici : le dernier lieu de kill connu)"
+	).is_equal_approx(kill_pos, Vector3(0.01, 0.01, 0.01))
+
+
+## Aucun kill (donc aucun `_last_kill_pos`) n'a encore été enregistré : la
+## chasse doit alors retomber sur le marqueur de spawn ADVERSE (un seul ici --
+## résultat déterministe quel que soit le tirage RNG), jamais sur un point de
+## sa PROPRE équipe.
+func test_tdm_hunt_falls_back_to_enemy_spawn_without_a_known_kill() -> void:
+	var enemy_spawn := Vector3(80, 0, 80)
+	_make_world_with_team_spawns([Vector3(1, 0, 1)], [enemy_spawn])
+	var mode := _ClockedTDMMode.new()
+	add_child(mode)
+	auto_free(mode)
+
+	mode.fake_now = TDMMode.HUNT_NO_CONTACT_MAX_S + 5.0
+	mode._invalidate_bot_goals()
+	var hunting: Vector3 = mode.bot_goal_for(0, 1, Vector3(1000, 0, 1000))
+	assert_vector(hunting).append_failure_message(
+		"sans lieu de kill connu, la chasse doit pousser vers le spawn ADVERSE"
+	).is_equal_approx(enemy_spawn, Vector3(0.01, 0.01, 0.01))
+
+
+func test_tdm_hunt_threshold_resets_once_contact_resumes() -> void:
+	var enemy_spawn := Vector3(80, 0, 80)
+	_make_world_with_team_spawns([Vector3(1, 0, 1)], [enemy_spawn])
+	var mode := _ClockedTDMMode.new()
+	add_child(mode)
+	auto_free(mode)
+
+	mode.fake_now = TDMMode.HUNT_NO_CONTACT_MAX_S + 5.0
+	mode._invalidate_bot_goals()
+	var hunting: Vector3 = mode.bot_goal_for(0, 1, Vector3(1000, 0, 1000))
+	assert_vector(hunting).is_equal_approx(enemy_spawn, Vector3(0.01, 0.01, 0.01))
+
+	# Contact frais : la mémoire d'équipe reprend la main IMMÉDIATEMENT (jamais
+	# besoin d'attendre un nouveau silence prolongé pour redevenir réactif).
+	mode.report_enemy_sighting(0, Vector3(2, 0, 2))
+	mode._invalidate_bot_goals()
+	var after_contact: Vector3 = mode.bot_goal_for(0, 1, Vector3(1000, 0, 1000))
+	assert_vector(after_contact).is_equal_approx(Vector3(2, 0, 2), Vector3(0.01, 0.01, 0.01))
 
