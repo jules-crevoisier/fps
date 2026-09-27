@@ -78,3 +78,12 @@ soit la forme exacte de l'identifiant écrite dans la provenance (voir
 - Un asset de `assets/models/**` sans ligne ci-dessus NI provenance IA (voir section
   précédente) ne doit pas entrer dans le jeu — vérifié par
   `python tools/ai3d/licence_check.py` (voir aussi la liste noire ci-dessus).
+
+## Audio (bruitages, 2026-09-27)
+
+| Chemin | Source | Auteur | Licence |
+|---|---|---|---|
+| `assets/audio/sfx/*.wav` (armes, grenades) | [The Free Firearm Sound Library](https://opengameart.org/content/the-free-firearm-sound-library) | Ben Jaszczak, Brian Nelson, Kevin Heras, Matthew Nanney | CC0 |
+| `assets/audio/sfx/*.wav` (pas, impacts, foley, interface) | [Kenney Impact Sounds](https://kenney.nl/assets/impact-sounds), [RPG Audio](https://kenney.nl/assets/rpg-audio), [Interface Sounds](https://kenney.nl/assets/interface-sounds) | Kenney | CC0 |
+
+Sons retravaillés par `tools/audio/build_sfx.py` (découpe, filtres, couches, niveaux) ; détail fichier par fichier dans `assets/audio/sfx/PROVENANCE.md`. Sources brutes non versionnées (`art/audio/source/`).

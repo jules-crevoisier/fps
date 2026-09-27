@@ -49,3 +49,6 @@ _captures/
 /scratchpad_*
 /tools/**/_tmp_*
 /tests/**/_diag_*
+
+# Sources audio brutes (packs CC0 téléchargés, ~200 Mo) : jamais versionnées, seuls les sons retravaillés vont dans assets/audio
+/art/audio/source/

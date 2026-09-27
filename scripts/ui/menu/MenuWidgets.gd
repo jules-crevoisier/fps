@@ -46,6 +46,7 @@ static func tab_button(text: String, selected: bool, font_size: int = UiTokens.T
 	if selected:
 		var sb := b.get_theme_stylebox("normal") as StyleBoxComic
 		sb.drop = Vector2(6, 6)
+	b.set_meta("sfx_click", "ui_tab")  # Audio.gd lit cette méta plutôt que le clic générique.
 	return b
 
 ## Carte/rangée sélectionnable (mode d'accueil, rôle d'armurerie…) : jaune +
@@ -71,6 +72,7 @@ static func switch_control(pressed: bool) -> Button:
 	b.custom_minimum_size = Vector2(86, 40)
 	b.focus_mode = Control.FOCUS_ALL
 	_style_switch(b)
+	b.set_meta("sfx_click", "ui_toggle")  # Audio.gd lit cette méta plutôt que le clic générique.
 	return b
 
 static func _style_switch(b: Button) -> void:

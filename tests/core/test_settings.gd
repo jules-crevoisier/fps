@@ -684,7 +684,8 @@ func test_voice_and_ambience_buses_exist_and_follow_their_dedicated_volume() -> 
 	Settings.volume_ambience = 0.25
 	sfx._apply_volumes()
 	assert_float(AudioServer.get_bus_volume_db(voice_idx)).is_equal_approx(linear_to_db(0.5), 0.01)
-	assert_float(AudioServer.get_bus_volume_db(ambience_idx)).is_equal_approx(linear_to_db(0.25), 0.01)
+	# le mixage (2026-09-27) ajoute un décalage fixe par bus PAR-DESSUS le curseur du joueur
+	assert_float(AudioServer.get_bus_volume_db(ambience_idx)).is_equal_approx(linear_to_db(0.25) + sfx.MIX_OFFSET_AMBIENCE_DB, 0.01)
 	_restore(before)
 	sfx._apply_volumes()
 

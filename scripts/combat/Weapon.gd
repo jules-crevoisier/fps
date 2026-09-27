@@ -529,7 +529,7 @@ func _fire_local(c: WeaponConfig, is_fan: bool = false) -> void:
 
 	var muzzle := _muzzle_position()
 	for d in dirs:
-		_fire_visuals(muzzle, origin, d, c.max_range)
+		_fire_visuals(muzzle, origin, d, c.max_range, false)
 
 	# Recul (vrai recoil : déplace la visée, récupère ensuite) — motif fixe
 	# (recoil_pattern/pattern_shots) puis aléatoire au-delà (WeaponFeel).
@@ -781,7 +781,7 @@ func _remote_shot_fx(weapon_id: int, origin: Vector3, dirs: Array) -> void:
 	var range_m: float = c.max_range if c else 200.0
 	var muzzle := _muzzle_position()
 	for d in dirs:
-		_fire_visuals(muzzle, origin, d, range_m)
+		_fire_visuals(muzzle, origin, d, range_m, true)
 
 ## Manche verrouillée (BUY/PREROUND, GameWorld.round_locked — R-B1, serveur
 ## autoritaire) : aucun tir accepté tant que c'est le cas. Groupe "match"
@@ -1121,20 +1121,72 @@ func _local_impact(origin: Vector3, dir: Vector3, max_range: float) -> Dictionar
 ## Trace le traceur du `muzzle` jusqu'au premier impact d'un raycast LOCAL
 ## (`_local_impact`, même masque que le serveur) et y pose l'effet d'impact
 ## (`ImpactFx`), dans la MÊME frame que le tir — appelé aussi bien pour la
-## prédiction locale (`_fire_local`) que pour l'écho cosmétique d'un tir
-## distant (`_remote_shot_fx`). Sans impact touché (rayon dans le vide), le
-## traceur va jusqu'à `max_range` et aucun `ImpactFx` n'apparaît.
-func _fire_visuals(muzzle: Vector3, origin: Vector3, dir: Vector3, max_range: float) -> void:
+## prédiction locale (`_fire_local`, `is_observer = false` : CE pair est le
+## TIREUR) que pour l'écho cosmétique d'un tir distant (`_remote_shot_fx`,
+## `is_observer = true` : CE pair regarde le tir d'un AUTRE). Sans impact
+## touché (rayon dans le vide), le traceur va jusqu'à `max_range` et aucun
+## `ImpactFx`/son d'impact n'apparaît — le sifflement de balle (tâche "son",
+## point 6), lui, peut encore se déclencher sur tout le segment.
+func _fire_visuals(muzzle: Vector3, origin: Vector3, dir: Vector3, max_range: float, is_observer: bool = false) -> void:
 	var hit := _local_impact(origin, dir, max_range)
 	var end_pos: Vector3 = hit.position if not hit.is_empty() else origin + dir.normalized() * max_range
 	_spawn_tracer(muzzle, end_pos)
 	if not hit.is_empty():
 		_spawn_impact(hit.position, hit.normal)
+		_play_impact_sound(hit, is_observer)
+	if is_observer:
+		_maybe_play_whizz(origin, end_pos)
 
 func _spawn_impact(pos: Vector3, normal: Vector3) -> void:
 	if player == null or not player.is_inside_tree():
 		return
 	ImpactFx.spawn(player.get_tree().current_scene, pos, normal)
+
+## Tâche "son" 2026-09-27 (point 6 "impacts/whizz") : impact_metal/impact_concrete
+## selon la surface touchée (SurfaceSound.surface_of -- méta "surface" posée
+## par l'auteur de carte en priorité, repli sur le nom, voir sa docstring),
+## joué pour TOUT observateur (tireur inclus -- contrat : "at the local shot
+## hit point"). `impact_body` (silhouette qui touche un joueur) est réservé
+## aux OBSERVATEURS : le tireur a déjà le hitmarker (Audio._play_feedback),
+## un second son ferait doublon.
+func _play_impact_sound(hit: Dictionary, is_observer: bool) -> void:
+	var collider: Node = hit.collider
+	if collider == null:
+		return
+	if collider.get_node_or_null("Health") != null:
+		if is_observer:
+			_play_positional_sfx("impact_body", hit.position)
+		return
+	var surface := SurfaceSound.surface_of(collider)
+	_play_positional_sfx(SurfaceSound.impact_sound_for(surface), hit.position)
+
+## Sifflement de balle (tâche "son", point 6) : uniquement pour un
+## OBSERVATEUR (jamais le tireur -- une balle ne siffle pas pour soi-même),
+## au point de moindre approche du segment [origin, end_pos] par rapport à la
+## tête du joueur LOCAL (BulletWhizz, pure) -- silencieux si aucun joueur
+## local n'existe encore (ex. juste après un despawn/reconnexion).
+func _maybe_play_whizz(origin: Vector3, end_pos: Vector3) -> void:
+	if player == null or not player.is_inside_tree():
+		return
+	var local := player.get_tree().get_first_node_in_group("local_player")
+	var listener := local as Node3D
+	if listener == null:
+		return
+	var head_pos: Vector3 = listener.head.global_position if ("head" in listener and listener.head) else listener.global_position
+	var closest := BulletWhizz.closest_point_on_segment(origin, end_pos, head_pos)
+	var dist := closest.distance_to(head_pos)
+	if BulletWhizz.should_whizz(dist):
+		_play_positional_sfx("bullet_whizz", closest)
+
+## Son positionnel cosmétique via l'autoload "Sfx" -- même repli défensif que
+## ThrownUtility._play_sfx/UtilityThrower._play_local_sfx_at (résolution par
+## chemin ABSOLU, jamais l'identifiant nu, voir leurs docstrings).
+func _play_positional_sfx(name: String, pos: Vector3) -> void:
+	if player == null or not player.is_inside_tree():
+		return
+	var sfx := player.get_node_or_null("/root/Sfx")
+	if sfx and sfx.has_method("play_at"):
+		sfx.call("play_at", name, pos)
 
 ## Empilement des chiffres PAR CIBLE (GF-07, `HitFeedback.should_stack_damage`/
 ## `damage_stack_scale`) : target_id -> {"node": DamageNumber3D, "total":

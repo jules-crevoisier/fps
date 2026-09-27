@@ -15,11 +15,12 @@
 ## slices, posé avec `has_signal()` pour ne jamais planter si un signal
 ## n'est pas encore arrivé (construction en parallèle) :
 ##  - chaque BaseButton qui entre dans l'arbre (survol/focus + clic) ;
-##  - l'arme du joueur LOCAL (fired/reload_started/hit_confirmed/weapon_changed) —
-##    "reload_in" (sur reload_started) est différé sans bloquer sur l'arme :
-##    `_step_pending_reload_ins` revérifie à l'échéance qu'elle existe ENCORE
-##    et recharge TOUJOURS (docs/audit/bugs.md BUG-K02, voir aussi la règle
-##    minuteries plus bas) ;
+##  - l'arme du joueur LOCAL (fired/hit_confirmed/weapon_changed) ;
+##  - le foley d'arme (rechargement/inspection, revolver+Ravage, tâche "son"
+##    2026-09-27) est programmé pour TOUT joueur suivi (local + distants) sur
+##    le front montant du bit "reloading" de `anim_state` (répliqué TOUJOURS),
+##    voir `_poll_weapon_foley`/WeaponFoley.gd — plus fiable que
+##    `reload_started` (prédiction PROPRIÉTAIRE seule) pour un corps distant ;
 ##  - la vie de TOUS les joueurs suivis (Health.died, déjà présent sans garde,
 ##    sert aussi à détecter "c'est MOI qui ai fait le kill" via killer_id) ;
 ##  - Health.damaged (dégâts reçus) du joueur LOCAL seulement ;
@@ -171,6 +172,35 @@ const SPRINT_STRIDE := 1.7
 const FALLBACK_WALK_SPEED := 5.2
 const FALLBACK_SPRINT_SPEED := 8.2
 
+## ------------------------------------------------------------ MIX (tâche "son", 2026-09-27)
+## Écarts de mix STATIQUES par bus, ADDITIFS au-dessus du réglage utilisateur
+## (Settings.volume_*, voir `_apply_volumes`) — jamais à sa place : monter le
+## curseur SFX garde le MÊME équilibre relatif entre ces bus. Choix (dB) :
+## les tirs doivent DOMINER (+3, en plus du ducking Feedback existant), les
+## pas restent au niveau neutre du bus SFX (0 -- déjà clairement audibles,
+## contrat "compétitif"), l'interface reste sous le jeu (-4), le feedback de
+## hit doit PERCER même par-dessus des tirs proches (+1.5, avant le ducking
+## manuel du bus Shots qui le protège déjà), musique et ambiance de carte
+## restent des toiles de fond (-8 / -10).
+const MIX_OFFSET_SHOTS_DB := 3.0
+const MIX_OFFSET_SFX_DB := 0.0
+const MIX_OFFSET_UI_DB := -4.0
+const MIX_OFFSET_FEEDBACK_DB := 1.5
+const MIX_OFFSET_MUSIC_DB := -8.0
+const MIX_OFFSET_AMBIENCE_DB := -10.0
+## Foley d'arme (revolver/Ravage) et pas d'un joueur DISTANT : plus discret
+## que la version LOCALE en 2D (contrat : "remote players/bots in 3D, quieter").
+const MIX_OFFSET_REMOTE_FOLEY_DB := -6.0
+
+## ------------------------------------------------------------ SPATIALISATION/OCCLUSION
+## Cadence (s) du sondage occlusion + surface au sol (raycasts, voir
+## `_poll_spatial_audio`) — throttlé/mis en cache (contrat), jamais à chaque frame.
+const SPATIAL_POLL_INTERVAL := 0.2
+## Portée (m) du raycast sol qui classe la surface sous un joueur (voir
+## `_classify_ground_surface`) — un peu plus que la marge de collage au sol
+## (floor_snap_length 0.4 m, PlayerController) pour rester fiable en pente légère.
+const GROUND_SURFACE_RAYCAST_M := 0.6
+
 ## Mots-clés (déjà en minuscules, sans accents) -> nom de son, pour classer une
 ## capacité par son display_name (voir ability_sound_name). Ordre = priorité.
 const _ABILITY_KEYWORDS := [
@@ -217,16 +247,60 @@ var _rng := RandomNumberGenerator.new()
 var _tracked: Dictionary = {}        # instance_id -> {node, is_local, accum}
 var _wired_buttons: Dictionary = {}  # instance_id -> true (anti double-câblage)
 
-## Rechargements LOCAUX en attente du son différé "reload_in" (voir
-## `_wire_local_extras`) — id d'instance de l'arme (jamais une référence
-## directe : voir docstring minuteries, tête de fichier) -> secondes restantes
-## avant de rejouer le son. Avancé chaque frame comme le ducking Feedback / le
-## fondu d'ambiance (voir `_step_pending_reload_ins`), plutôt qu'un
-## `get_tree().create_timer()` dont le lambda capturerait l'arme.
-var _pending_reload_ins: Dictionary = {}
+## Dernier id d'arme ayant réellement joué "equip" (voir la docstring de son
+## câblage, `_wire_local_extras`) -- LOCAL uniquement (un seul joueur humain
+## par client), sentinel -999 pour que le tout premier appel (arme de spawn)
+## joue quand même son "equip".
+var _local_last_equip_id: int = -999
 
 var _discovery_left: float = 0.0
 var _volume_left: float = 0.0
+
+# ------------------------------------------------------------------ journal de debug (vérification mix)
+
+## Off par défaut (coût nul en jeu normal) — activé par un outil de capture
+## (tools/audio/audio_capture.gd, tâche "son" 2026-09-27, "vérification que
+## tu ne peux pas sauter") pour horodater CHAQUE son réellement joué (nom,
+## volume_db résolu) et comparer au log attendu après coup.
+var debug_log_enabled: bool = false
+var debug_log: Array = []
+
+func _debug_log(name: String, volume_db: float) -> void:
+	if debug_log_enabled:
+		debug_log.append({"t": Time.get_ticks_msec() / 1000.0, "sound": name, "volume_db": volume_db})
+
+# ------------------------------------------------------------------ spatialisation/occlusion (tâche "son")
+
+## instance_id joueur -> occlus (raycast tête locale -> joueur, throttlé, voir `_poll_spatial_audio`).
+var _occlusion_cache: Dictionary = {}
+## instance_id joueur -> "metal"/"concrete" (raycast sol sous ses pieds, throttlé).
+var _ground_surface_cache: Dictionary = {}
+var _spatial_poll_left: float = 0.0
+
+# ------------------------------------------------------------------ foley d'arme (revolver/Ravage, tâche "son")
+
+## instance_id joueur -> id d'arme courant (`Weapon.current_id_changed`,
+## diffusé à TOUS les pairs — voir CharacterAnimator._on_current_weapon_changed
+## pour le même besoin déjà résolu ainsi côté anim). -1 = encore inconnu.
+var _weapon_current_id: Dictionary = {}
+## instance_id joueur -> dernier bit "reloading" vu (`anim_state`, répliqué
+## TOUJOURS — voir PlayerController.anim_state/CharacterAnimator.unpack_reloading)
+## pour détecter le FRONT MONTANT d'un rechargement, pour LE LOCAL comme pour
+## un DISTANT : contrairement à `Weapon.reload_started` (prédiction, propriétaire
+## SEULEMENT — voir sa docstring), ce bit est fiable pour n'importe quel joueur.
+var _reload_flags: Dictionary = {}
+## instance_id joueur -> génération de rechargement (incrémentée à chaque
+## front montant) : un événement de foley programmé compare sa génération à
+## celle-ci avant de jouer, pour ignorer un rechargement déjà ANNULÉ (arme
+## changée, mort) même si un autre a démarré entre-temps.
+var _reload_session: Dictionary = {}
+## Même rôle que `_reload_session`, pour l'inspection du revolver (E) — dict
+## séparé : les deux gestes ont chacun leur propre file d'événements/génération.
+var _inspect_session: Dictionary = {}
+## File des événements de foley programmés (rechargement/inspection) : chacun
+## {"player_id", "session", "time_left", "sound", "is_local"} — avancée chaque
+## frame comme le ducking Feedback/le fondu d'ambiance (voir `_step_pending_foley`).
+var _pending_foley: Array = []
 
 # ------------------------------------------------------------------ ducking (GF-11)
 
@@ -235,6 +309,18 @@ var _volume_left: float = 0.0
 var _shots_base_db: float = 0.0
 ## Secondes écoulées depuis le dernier son Feedback ; -1 = aucun ducking actif.
 var _shots_duck_elapsed: float = -1.0
+
+# ------------------------------------------------------------------ assourdissement flash (grenades, tâche "son")
+
+## Filtres passe-bas idempotents posés sur SFX/Shots (voir `_setup_muffle_effects`)
+## — modulés en continu par `_step_blind_muffle` pendant que le joueur LOCAL est
+## ébloui (UtilityThrower.local_blinded, câblé dans `_wire_local_extras`).
+var _sfx_lowpass: AudioEffectLowPassFilter
+var _shots_lowpass: AudioEffectLowPassFilter
+## Durée (s) d'éblouissement plein écran de l'éblouissement LOCAL en cours (0 =
+## aucun) et secondes écoulées depuis son déclenchement (-1 = pas d'éblouissement).
+var _blind_duration: float = 0.0
+var _blind_elapsed: float = -1.0
 
 # ------------------------------------------------------------------ atterrissage (GF-11, LOCAL uniquement)
 
@@ -279,7 +365,10 @@ func _process(delta: float) -> void:
 	_poll_landing()
 	_update_map_ambience(delta)  # fondu enchaîné : doit avancer à chaque frame, pas au sondage
 	_step_shots_duck(delta)  # ducking Feedback -> Shots : doit avancer à chaque frame
-	_step_pending_reload_ins(delta)  # son "reload_in" différé : doit avancer à chaque frame
+	_poll_spatial_audio(delta)  # occlusion + surface au sol : throttlé en interne (SPATIAL_POLL_INTERVAL)
+	_poll_weapon_foley(delta)  # front montant "reloading" (anim_state) -> programme le foley d'arme
+	_step_pending_foley(delta)  # avance/déclenche les événements de foley programmés
+	_step_blind_muffle(delta)  # lowpass SFX/Shots pendant l'éblouissement local (grenades)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
@@ -300,6 +389,7 @@ func play_ui(name: String) -> void:
 	p.stream = s
 	p.pitch_scale = pitch_variation(_rng.randf())
 	p.play()
+	_debug_log(name, p.volume_db)
 
 ## Son du joueur LOCAL (tir, pas, capacité, dégâts reçus...) — bus SFX, non
 ## positionnel. Hitmarker/headshot/kill_confirm (voir `is_feedback_sound`)
@@ -321,11 +411,19 @@ func play_local(name: String) -> void:
 	p.stream = s
 	p.pitch_scale = pitch_variation(_rng.randf())
 	p.play()
+	_debug_log(name, p.volume_db)
 
 ## Son positionnel 3D (tirs/pas des autres joueurs, capacités visibles...).
 ## `distance` (déjà connue par l'appelant) choisit la variante "_far" au besoin.
 ## `volume_offset_db` : décalage additif (ex. +3 dB pas ennemi vs allié, GF-11).
-func play_at(name: String, pos: Vector3, distance: float = 0.0, volume_offset_db: float = 0.0) -> void:
+## `occluded` (tâche "son", 2026-09-27, point 3) : la SOURCE est-elle derrière
+## de la géométrie du monde vue depuis l'auditeur local (voir
+## `_poll_spatial_audio`/AudioOcclusion, throttlé/mis en cache par l'appelant —
+## jamais recalculé ici) ? Assombrit le filtre de distance et ajoute une
+## atténuation, PAR-DESSUS les réglages de spatialisation par catégorie
+## (SpatialAudioParams, point 2 — gunshot/footstep_walk/footstep_sprint/
+## grenade/explosion, portée + modèle d'atténuation propres à chacun).
+func play_at(name: String, pos: Vector3, distance: float = 0.0, volume_offset_db: float = 0.0, occluded: bool = false) -> void:
 	if name == "":
 		return
 	var suffix := far_suffix(distance)
@@ -337,11 +435,16 @@ func play_at(name: String, pos: Vector3, distance: float = 0.0, volume_offset_db
 	var p: AudioStreamPlayer3D = _free_player(_pool3d)
 	if p == null:
 		return
+	var category := SpatialAudioParams.category_for_sound(name)
+	SpatialAudioParams.apply_to(p, category)
+	var base_cutoff: float = SpatialAudioParams.params_for(category)["attenuation_filter_cutoff_hz"]
+	p.attenuation_filter_cutoff_hz = AudioOcclusion.occluded_cutoff_hz(occluded, base_cutoff)
 	p.stream = s
 	p.pitch_scale = pitch_variation(_rng.randf())
-	p.volume_db = volume_offset_db
+	p.volume_db = volume_offset_db + AudioOcclusion.occluded_volume_offset_db(occluded)
 	p.global_position = pos
 	p.play()
+	_debug_log(name, p.volume_db)
 
 # ======================================================================
 #  FONCTIONS PURES (testées directement dans tests/audio/, sans autoload)
@@ -442,6 +545,9 @@ static func weapon_gunshot_name(cfg: WeaponConfig) -> String:
 			return "gunshot_rifle" if cfg.automatic else "gunshot_marksman"
 		WeaponConfig.Category.SIDEARM:
 			return "gunshot_magnum" if cfg.damage >= 45.0 else "gunshot_pistol"
+		# Revolver (catégorie PISTOL) : tombait dans le cas par défaut et jouait le FUSIL.
+		WeaponConfig.Category.PISTOL:
+			return "gunshot_revolver"
 		_:
 			return "gunshot_rifle"
 
@@ -663,6 +769,7 @@ func _build_pools() -> void:
 	_last_minute_player.bus = BUS_MUSIC
 	add_child(_last_minute_player)
 	_setup_mono_effect()
+	_setup_muffle_effects()
 
 ## Crée le bus `name` s'il n'existe pas encore (UX-06 : BUS_VOICE/BUS_AMBIENCE,
 ## absents de default_bus_layout.tres — hors du périmètre de cette tâche),
@@ -714,6 +821,43 @@ static func mono_pan_pullout(enabled: bool) -> float:
 func apply_audio_mono() -> void:
 	if _mono_effect:
 		_mono_effect.pan_pullout = mono_pan_pullout(Settings.audio_mono)
+
+## Pose (idempotent, même patron que `_setup_mono_effect`) un
+## AudioEffectLowPassFilter sur SFX et Shots — modulé en continu par
+## `_step_blind_muffle` pendant l'éblouissement LOCAL (contrat : "muffle the
+## world"). Ouvert (GrenadeAudio.OPEN_CUTOFF_HZ) hors éblouissement : ne
+## touche jamais le son en dehors de cette fenêtre.
+func _setup_muffle_effects() -> void:
+	_sfx_lowpass = _ensure_lowpass(BUS_SFX)
+	_shots_lowpass = _ensure_lowpass(BUS_SHOTS)
+
+func _ensure_lowpass(bus_name: String) -> AudioEffectLowPassFilter:
+	var idx := AudioServer.get_bus_index(bus_name)
+	if idx < 0:
+		return null
+	for i in AudioServer.get_bus_effect_count(idx):
+		var existing := AudioServer.get_bus_effect(idx, i)
+		if existing is AudioEffectLowPassFilter:
+			return existing
+	var lp := AudioEffectLowPassFilter.new()
+	lp.cutoff_hz = GrenadeAudio.OPEN_CUTOFF_HZ
+	AudioServer.add_bus_effect(idx, lp)
+	return lp
+
+## Avance l'assourdissement (GrenadeAudio.muffle_cutoff_hz, voir sa docstring :
+## plein étouffement pendant l'éblouissement, puis fondu linéaire sur
+## FlashMath.RECOVERY_S) — appelé chaque frame comme le ducking Feedback.
+func _step_blind_muffle(delta: float) -> void:
+	if _blind_elapsed < 0.0:
+		return
+	_blind_elapsed += delta
+	var cutoff := GrenadeAudio.muffle_cutoff_hz(_blind_elapsed, _blind_duration, FlashMath.RECOVERY_S)
+	if _sfx_lowpass:
+		_sfx_lowpass.cutoff_hz = cutoff
+	if _shots_lowpass:
+		_shots_lowpass.cutoff_hz = cutoff
+	if cutoff >= GrenadeAudio.OPEN_CUTOFF_HZ - 0.01:
+		_blind_elapsed = -1.0
 
 # ======================================================================
 #  RÉSOLUTION SON -> FLUX
@@ -770,14 +914,16 @@ func _wire_button(b: BaseButton) -> void:
 	_wired_buttons[id] = true
 	b.mouse_entered.connect(_on_button_hover)
 	b.focus_entered.connect(_on_button_hover)
-	b.pressed.connect(_on_button_pressed)
+	# Tâche "son" (point 8, UI) : le clic varie selon le widget — méta
+	# "sfx_click" posée par MenuWidgets.gd (tab_button -> "ui_tab", switch_control
+	# -> "ui_toggle") ou directement par l'écran qui construit le bouton
+	# (HomeScreen._play_button -> "ui_confirm") ; "ui_click" par défaut pour
+	# tout bouton ordinaire (inchangé). Jamais posée deux fois (hover séparé).
+	b.pressed.connect(func(): play_ui(String(b.get_meta("sfx_click", "ui_click"))))
 	b.tree_exited.connect(func(): _wired_buttons.erase(id))
 
 func _on_button_hover() -> void:
 	play_ui("ui_hover")
-
-func _on_button_pressed() -> void:
-	play_ui("ui_click")
 
 # ======================================================================
 #  AUTO-CÂBLAGE — JOUEURS (local + distants)
@@ -797,12 +943,32 @@ func _discover_players() -> void:
 func _track_player(node: Node, is_local: bool) -> void:
 	var id := node.get_instance_id()
 	_tracked[id] = {"node": node, "is_local": is_local, "accum": 0.0}
-	node.tree_exited.connect(func(): _tracked.erase(id))
+	node.tree_exited.connect(func():
+		_tracked.erase(id)
+		_weapon_current_id.erase(id)
+		_reload_flags.erase(id)
+		_reload_session.erase(id)
+		_inspect_session.erase(id)
+		_occlusion_cache.erase(id)
+		_ground_surface_cache.erase(id)
+	)
 	_wire_health(node, is_local)
+	_wire_weapon_id_tracking(node, id)
 	if is_local:
 		_wire_local_extras(node)
 	else:
 		_wire_remote_weapon(node)
+
+## `Weapon.current_id_changed` — diffusé à TOUS les pairs (voir sa docstring :
+## "les tiers en ont besoin pour savoir quelle arme afficher"), donc fiable
+## pour n'importe quel joueur (local OU distant), contrairement à `cfg()`/`_inv`
+## (prédiction propriétaire seule, jamais mise à jour pour un corps observé
+## depuis un AUTRE pair). Alimente `_weapon_current_id`, seule source utilisée
+## par `_poll_weapon_foley` pour choisir la table WeaponFoley à programmer.
+func _wire_weapon_id_tracking(node: Node, id: int) -> void:
+	var w := node.get_node_or_null("Weapon")
+	if w and w.has_signal("current_id_changed"):
+		w.current_id_changed.connect(func(wid: int): _weapon_current_id[id] = wid)
 
 ## Vie : câblée sur TOUS les joueurs suivis (pas seulement le local), car
 ## Health.died est déjà diffusé à tous (_sync_health/_notify_death en
@@ -828,20 +994,21 @@ func _wire_local_extras(node: Node) -> void:
 		if w.has_signal("fired"):
 			# GF-11 : tir LOCAL joué EN COUCHES (jamais le mix pré-mixé
 			# `gunshot_<classe>.wav`, réservé aux tirs DISTANTS — voir `_wire_remote_weapon`).
-			w.fired.connect(func(cfg: WeaponConfig, _is_fan: bool): _play_local_gunshot(cfg, node))
-		if w.has_signal("reload_started"):
-			var weapon_id := w.get_instance_id()
-			w.reload_started.connect(func(cfg: WeaponConfig):
-				play_local("reload_out")
-				var reload_time: float = cfg.reload_time if cfg else 1.5
-				# BUG-K02 : le son "reload_in" est différé via _pending_reload_ins
-				# (id d'instance, pas l'arme elle-même) plutôt qu'un
-				# get_tree().create_timer() + lambda qui la capturerait — et
-				# _play_reload_in_if_still_reloading revérifie à l'échéance qu'elle
-				# existe ENCORE et recharge TOUJOURS (sinon : silence, pas un son
-				# fantôme sur une arme changée, déposée, ou un joueur mort/déco).
-				_pending_reload_ins[weapon_id] = maxf(reload_time, 0.05)
+			w.fired.connect(func(cfg: WeaponConfig, is_fan: bool):
+				_play_local_gunshot(cfg, node)
+				# Tâche "son" : "fan the hammer" (RMB tenu sur le revolver) rejoue le
+				# chien à CHAQUE coup en éventail, en plus du tir lui-même — jamais
+				# pour un tir tap ou une arme sans mode fan (`is_fan` est alors
+				# toujours faux, voir Weapon._owner_tick).
+				if is_fan and cfg and cfg.category == WeaponConfig.Category.PISTOL:
+					play_local("rev_hammer")
 			)
+			# Rechargement/inspection du revolver+Ravage : programmés par
+			# `_poll_weapon_foley` (front montant du bit "reloading" de
+			# `anim_state`, répliqué TOUJOURS — voir sa docstring), plus fiable
+			# que `reload_started` (prédiction PROPRIÉTAIRE seule) puisqu'il
+			# fonctionne identiquement pour un joueur DISTANT (voir
+			# MIX_OFFSET_REMOTE_FOLEY_DB) sans dupliquer la logique ici.
 		if w.has_signal("hit_confirmed"):
 			# GF-07 : UNE confirmation par tir et par cible (plombs agrégés,
 			# somme des dégâts) -> UN SEUL son hitmarker par tir, même pour un
@@ -854,7 +1021,21 @@ func _wire_local_extras(node: Node) -> void:
 					play_local("headshot")
 			)
 		if w.has_signal("weapon_changed"):
-			w.weapon_changed.connect(func(_cfg: WeaponConfig): play_local("equip"))
+			# BUG trouvé pendant la vérification du mix (capture 2026-09-27,
+			# tools/audio/audio_capture.gd) : `weapon_changed` est réémis par
+			# `Weapon._emit_local()` à CHAQUE tir/rechargement/synchro serveur
+			# (pas seulement à un vrai changement d'arme), donc "equip" rejouait
+			# à chaque coup de feu -- 23 lectures pour 2 changements d'arme
+			# réels sur une capture de test. Dédoublonné ici sur l'id d'arme
+			# RÉELLEMENT différent du précédent (`_local_last_equip_id`, sentinel
+			# -999 pour que le tout premier appel -- l'arme de spawn -- joue
+			# quand même son "equip").
+			w.weapon_changed.connect(func(cfg: WeaponConfig):
+				var wid := WeaponDatabase.id_of(cfg)
+				if wid != _local_last_equip_id:
+					_local_last_equip_id = wid
+					play_local("equip")
+			)
 		if w.has_signal("dry_fire"):
 			# GF-12 : Weapon n'émet ce signal qu'une fois par appui (front
 			# montant fire_pressed) — voir should_play_dry_fire, pure.
@@ -864,13 +1045,29 @@ func _wire_local_extras(node: Node) -> void:
 		ab.ability_used.connect(func(slot: String, ability_name: String):
 			play_local(ability_sound_name(slot, ability_name))
 		)
+	# Grenades (tâche "son") : pin/throw/bounce/détonation sont joués
+	# DIRECTEMENT par ThrownUtility.gd/UtilityThrower.gd (mêmes fichiers que le
+	# contrat autorise à toucher, voir leur docstring `_play_sfx`) — seul
+	# l'assourdissement du MIX pendant l'éblouissement LOCAL relève de cet
+	# autoload (accès aux bus SFX/Shots, voir `_step_blind_muffle`).
+	var ut := node.get_node_or_null("UtilityThrower")
+	if ut and ut.has_signal("local_blinded"):
+		ut.local_blinded.connect(func(duration_s: float):
+			# "flash_ring" (contrat : "3 s tinnitus") joué UNE fois au déclenchement,
+			# en plus de l'assourdissement continu du MIX (_step_blind_muffle) —
+			# les deux durent tout l'éblouissement + le fondu (FlashMath.RECOVERY_S).
+			play_local("flash_ring")
+			_blind_duration = duration_s
+			_blind_elapsed = 0.0
+		)
 
 ## Tirs des AUTRES joueurs (diffusion serveur -> tous sauf le tireur), en 3D.
 func _wire_remote_weapon(node: Node) -> void:
 	var w := node.get_node_or_null("Weapon")
 	if w and w.has_signal("remote_fired"):
+		var id := node.get_instance_id()
 		w.remote_fired.connect(func(cfg: WeaponConfig, origin: Vector3, _dirs: Array):
-			play_at(weapon_gunshot_name(cfg), origin, _listener_distance(origin))
+			play_at(weapon_gunshot_name(cfg), origin, _listener_distance(origin), 0.0, _occlusion_cache.get(id, false))
 		)
 
 func _listener_distance(pos: Vector3) -> float:
@@ -880,42 +1077,187 @@ func _listener_distance(pos: Vector3) -> float:
 	return (local as Node3D).global_position.distance_to(pos)
 
 # ======================================================================
-#  RECHARGEMENT — son "reload_in" différé (voir _wire_local_extras, BUG-K02)
+#  OCCLUSION + SURFACE AU SOL (tâche "son", 2026-09-27, points 3/7) — un
+#  raycast PAR JOUEUR suivi, throttlé à SPATIAL_POLL_INTERVAL (jamais à
+#  chaque frame comme les autres sondages coûteux de ce fichier, voir
+#  DISCOVERY_INTERVAL/VOLUME_INTERVAL) ; le résultat brut est réduit à une
+#  décision par les fonctions PURES d'AudioOcclusion/SurfaceSound (voir
+#  tests/audio/) — ce fichier reste seul à toucher la physique/l'arbre.
 # ======================================================================
 
-## Avance les rechargements locaux en attente du son différé "reload_in" ;
-## appelé chaque frame comme les autres minuteries manuelles de cet autoload
-## (ducking Feedback, fondu d'ambiance) — jamais un `get_tree().create_timer()`
-## dont le lambda capturerait l'arme (docstring minuteries, tête de fichier) :
-## on ne garde que son id d'instance, résolu seulement à l'échéance.
-func _step_pending_reload_ins(delta: float) -> void:
-	if _pending_reload_ins.is_empty():
+func _poll_spatial_audio(delta: float) -> void:
+	_spatial_poll_left -= delta
+	if _spatial_poll_left > 0.0:
 		return
-	var due: Array = []
-	for weapon_id in _pending_reload_ins:
-		var left: float = _pending_reload_ins[weapon_id] - delta
-		if left > 0.0:
-			_pending_reload_ins[weapon_id] = left
-		else:
-			due.append(weapon_id)
-	for weapon_id in due:
-		_pending_reload_ins.erase(weapon_id)
-		_play_reload_in_if_still_reloading(weapon_id)
+	_spatial_poll_left = SPATIAL_POLL_INTERVAL
+	var local := get_tree().get_first_node_in_group("local_player") as Node3D
+	var listener_head := Vector3.ZERO
+	if local:
+		listener_head = local.head.global_position if ("head" in local and local.head) else local.global_position
+	# PhysicsLayers.WORLD (calque 1) porte AUSSI les joueurs ("monde et
+	# joueurs", voir PhysicsLayers.gd) : sans exclusion, ce raycast toucherait
+	# la capsule de la SOURCE elle-même (juste avant d'atteindre son propre
+	# `global_position`) et celle de tout joueur debout entre les deux,
+	# donnant un "occlus" à chaque fois même à découvert. On exclut donc TOUS
+	# les corps joueurs suivis (jamais le décor) — seule une vraie géométrie
+	# de monde doit occlure (contrat lead).
+	var player_rids: Array = []
+	for pid in _tracked.keys():
+		var pn = _tracked[pid].node
+		if pn and is_instance_valid(pn) and pn.has_method("get_rid"):
+			player_rids.append(pn.get_rid())
+	for id in _tracked.keys():
+		var info: Dictionary = _tracked[id]
+		var p3d := info.node as Node3D
+		if p3d == null or not is_instance_valid(p3d):
+			continue
+		_ground_surface_cache[id] = _classify_ground_surface(p3d, player_rids)
+		if info.is_local or local == null:
+			continue
+		_occlusion_cache[id] = _classify_occlusion(listener_head, p3d, player_rids)
 
-## L'arme qui a demandé "reload_in" existe-t-elle ENCORE et recharge-t-elle
-## TOUJOURS ? Sinon : silence plutôt qu'un son de rechargement fantôme
-## (docs/audit/bugs.md BUG-K02) — arme/joueur détruits entretemps (mort,
-## déconnexion, fin de manche) OU rechargement annulé (ramassage, dépôt,
-## achat, nouvelle manche : voir Inventory.set_loadout/give/replace_current/
-## remove_current, qui remettent toutes `reloading` à faux).
-func _play_reload_in_if_still_reloading(weapon_id: int) -> void:
-	var w := instance_from_id(weapon_id)
-	if w == null or not is_instance_valid(w):
+## Raycast vertical sous les pieds de `p3d` (masque PhysicsLayers.WORLD, même
+## calque que les tirs/le raycast plafond des tirs ; joueurs exclus, voir
+## `_poll_spatial_audio`) -> surface classée (SurfaceSound.surface_of, pure) —
+## "concrete" si rien touché (rayon hors sol, ex. en l'air) ou hors de l'arbre.
+func _classify_ground_surface(p3d: Node3D, exclude_rids: Array) -> String:
+	if not p3d.is_inside_tree():
+		return SurfaceSound.CONCRETE
+	var origin := p3d.global_position + Vector3.UP * 0.1
+	var space := p3d.get_world_3d().direct_space_state
+	var q := PhysicsRayQueryParameters3D.create(origin, origin + Vector3.DOWN * GROUND_SURFACE_RAYCAST_M, PhysicsLayers.WORLD)
+	q.exclude = exclude_rids
+	q.collide_with_areas = false
+	var hit := space.intersect_ray(q)
+	return SurfaceSound.CONCRETE if hit.is_empty() else SurfaceSound.surface_of(hit.collider)
+
+## Raycast auditeur (tête LOCALE) -> `source` (position du joueur DISTANT
+## suivi), joueurs exclus (voir `_poll_spatial_audio`) : seule une vraie
+## géométrie de monde compte comme occlusion.
+func _classify_occlusion(listener_head: Vector3, source: Node3D, exclude_rids: Array) -> bool:
+	if not source.is_inside_tree():
+		return false
+	var space := source.get_world_3d().direct_space_state
+	var q := PhysicsRayQueryParameters3D.create(listener_head, source.global_position, PhysicsLayers.WORLD)
+	q.exclude = exclude_rids
+	q.collide_with_areas = false
+	var hit := space.intersect_ray(q)
+	return AudioOcclusion.is_occluded_from_hit(hit)
+
+# ======================================================================
+#  FOLEY D'ARME (revolver/Ravage, tâche "son" 2026-09-27) — programmé sur le
+#  front montant du bit "reloading" de `anim_state` (répliqué TOUJOURS, voir
+#  la docstring de `_weapon_current_id`/`_reload_flags`) : marche pour le
+#  joueur LOCAL comme pour un DISTANT, contrairement à l'ancien mécanisme
+#  (retiré) qui ne branchait `reload_started` — prédiction PROPRIÉTAIRE
+#  seule — que côté LOCAL (docs/audit/bugs.md BUG-K02 : la même discipline de
+#  "revérifier avant de jouer" est reprise ici via `_reload_session`).
+# ======================================================================
+
+## Sondage du front montant "reloading" pour CHAQUE joueur suivi (local +
+## distants) — programme la table WeaponFoley adaptée (revolver : 5
+## événements de foley dédiés ; toute autre arme : reload_out/reload_in aux
+## fractions de rifle.py `build_reload`, voir WeaponFoley.gd).
+func _poll_weapon_foley(delta: float) -> void:
+	for id in _tracked.keys():
+		var info: Dictionary = _tracked[id]
+		var pc := info.node as PlayerController
+		if pc == null or not is_instance_valid(pc):
+			continue
+		var reloading := CharacterAnimator.unpack_reloading(pc.anim_state)
+		var was: bool = _reload_flags.get(id, false)
+		_reload_flags[id] = reloading
+		if reloading and not was:
+			_start_weapon_foley(id, info.is_local)
+		# Inspection (touche E, revolver seul) : `player.input.inspect_pressed`
+		# n'est un front fiable QUE pour le LOCAL (aucune animation FP tierce
+		# n'est répliquée pour un joueur DISTANT dans ce prototype — FPArmsRig
+		# reste caché pour tout le monde sauf son propriétaire, voir Weapon.gd
+		# `_muzzle_position` — donc rien à faire sonner pour un observateur ici).
+		# Gardé aussi derrière `not reloading` : un E pressé PENDANT un
+		# rechargement est annulé côté visuel (FPArmsMath.should_cancel_inspect)
+		# et ne doit pas programmer un foley fantôme.
+		if info.is_local and not reloading and pc.input and pc.input.inspect_pressed:
+			_start_revolver_inspect_foley(id)
+
+func _start_weapon_foley(id: int, is_local: bool) -> void:
+	var wid := int(_weapon_current_id.get(id, -1))
+	var cfg := WeaponDatabase.get_by_id(wid)
+	if cfg == null:
+		return  # id pas encore connu (aucun `current_id_changed` reçu) : pas de son fantôme.
+	var session := int(_reload_session.get(id, 0)) + 1
+	_reload_session[id] = session
+	var events: Array = WeaponFoley.revolver_reload_events(cfg.reload_time) if cfg.category == WeaponConfig.Category.PISTOL \
+		else WeaponFoley.rifle_reload_events(cfg.reload_time)
+	_schedule_foley(id, is_local, "reload", session, wid, events)
+
+## Foley d'inspection du revolver (WeaponFoley.revolver_inspect_events) —
+## `REVOLVER_INSPECT_DURATION_S` : aucun champ `WeaponConfig` dédié à la durée
+## du geste d'inspection (contrairement à `reload_time`) — valeur recopiée de
+## art/characters/frog_cowboy/anim/pistol.py `INSPECT_S` (2.5 s authored),
+## voir le rendu de tâche pour ce manque signalé.
+const REVOLVER_INSPECT_DURATION_S := 2.5
+
+func _start_revolver_inspect_foley(id: int) -> void:
+	var wid := int(_weapon_current_id.get(id, -1))
+	var cfg := WeaponDatabase.get_by_id(wid)
+	if cfg == null or cfg.category != WeaponConfig.Category.PISTOL:
+		return  # inspection foley : revolver seul (contrat) — jamais le Ravage.
+	var session := int(_inspect_session.get(id, 0)) + 1
+	_inspect_session[id] = session
+	_schedule_foley(id, true, "inspect", session, wid, WeaponFoley.revolver_inspect_events(REVOLVER_INSPECT_DURATION_S))
+
+func _schedule_foley(id: int, is_local: bool, kind: String, session: int, wid: int, events: Array) -> void:
+	for e in events:
+		_pending_foley.append({
+			"player_id": id, "kind": kind, "session": session, "weapon_id": wid,
+			"time_left": float(e["time"]), "sound": String(e["sound"]), "is_local": is_local,
+		})
+
+## Avance/déclenche la file d'événements programmés — appelé chaque frame
+## comme le ducking Feedback/le fondu d'ambiance (voir docstring minuteries,
+## tête de fichier).
+func _step_pending_foley(delta: float) -> void:
+	if _pending_foley.is_empty():
 		return
-	var inv = w.get("_inv")
-	if inv == null or not bool(inv.get("reloading")):
+	var i := _pending_foley.size() - 1
+	while i >= 0:
+		var e: Dictionary = _pending_foley[i]
+		e["time_left"] = float(e["time_left"]) - delta
+		if e["time_left"] <= 0.0:
+			_pending_foley.remove_at(i)
+			_fire_weapon_foley_event(e)
+		else:
+			_pending_foley[i] = e
+		i -= 1
+
+## Rejoue-t-on ENCORE le même rechargement (génération inchangée) et
+## celui-ci est-il TOUJOURS en cours (`anim_state`) ? Sinon : silence plutôt
+## qu'un son fantôme (même discipline que l'ancien BUG-K02, généralisée ici à
+## TOUS les joueurs et à CHAQUE événement d'un rechargement, pas seulement au
+## dernier) — arme changée, joueur mort, ou un AUTRE rechargement a démarré
+## entre-temps sur cette même arme.
+func _fire_weapon_foley_event(e: Dictionary) -> void:
+	var id: int = e["player_id"]
+	var kind := String(e["kind"])
+	var session_dict := _reload_session if kind == "reload" else _inspect_session
+	if int(session_dict.get(id, -1)) != int(e["session"]):
 		return
-	play_local("reload_in")
+	if kind == "reload" and not bool(_reload_flags.get(id, false)):
+		return
+	if int(_weapon_current_id.get(id, -1)) != int(e["weapon_id"]):
+		return  # arme changée depuis la programmation : jamais de son fantôme sur une autre arme en main.
+	var info: Dictionary = _tracked.get(id, {})
+	var pc := info.get("node") as PlayerController
+	if pc == null or not is_instance_valid(pc):
+		return
+	var sound := String(e["sound"])
+	if bool(e["is_local"]):
+		play_local(sound)
+	else:
+		var pos := pc.global_position
+		var occluded: bool = _occlusion_cache.get(id, false)
+		play_at(sound, pos, _listener_distance(pos), MIX_OFFSET_REMOTE_FOLEY_DB, occluded)
 
 # ======================================================================
 #  TIR LOCAL EN COUCHES (GF-11) — transitoire + corps + mécanique + sub
@@ -939,6 +1281,7 @@ func _play_shot_layer(name: String, pool: Array) -> void:
 	p.stream = s
 	p.pitch_scale = pitch_variation(_rng.randf())
 	p.play()
+	_debug_log(name, p.volume_db)
 
 ## Raycast vertical depuis la tête du tireur LOCAL jusqu'au plafond (masque
 ## PhysicsLayers.WORLD, même calque que les tirs) -> queue indoor/outdoor
@@ -970,6 +1313,7 @@ func _play_feedback(name: String) -> void:
 	p.stream = s
 	p.pitch_scale = pitch_variation(_rng.randf())
 	p.play()
+	_debug_log(name, p.volume_db)
 	_shots_duck_elapsed = 0.0
 	_apply_shots_duck(duck_gain_db(0.0))
 
@@ -1023,13 +1367,17 @@ func _poll_footsteps(delta: float) -> void:
 		var sname := footstep_sound_name(stride)
 		if sname == "":
 			continue
+		# Tâche "son" (point 7) : pas sur métal (toit de conteneur, passerelle...)
+		# -- surface classée par raycast sol throttlé, voir `_poll_spatial_audio`.
+		var surface: String = _ground_surface_cache.get(id, SurfaceSound.CONCRETE)
+		sname = SurfaceSound.footstep_sound_for(sname, surface)
 		for i in mini(int(tick.steps), 2):  # évite une rafale de sons sur un gros lag spike
 			if info.is_local:
 				play_local(sname)
 			else:
 				# GF-11 : pas ennemi +3 dB vs allié (repère tactique, jamais sur les pas LOCAUX).
 				var offset_db := footstep_team_volume_offset_db(_local_team(), int(pc.team))
-				play_at(sname, pc.global_position, _listener_distance(pc.global_position), offset_db)
+				play_at(sname, pc.global_position, _listener_distance(pc.global_position), offset_db, _occlusion_cache.get(id, false))
 
 # ======================================================================
 #  ATTERRISSAGE (GF-11, LOCAL uniquement — voir docstring en tête de fichier)
@@ -1214,21 +1562,22 @@ func _stop_last_minute_loop() -> void:
 
 func _apply_volumes() -> void:
 	_set_bus_volume(BUS_MASTER, Settings.volume_master)
-	_set_bus_volume(BUS_MUSIC, Settings.volume_music)
-	_set_bus_volume(BUS_SFX, Settings.volume_sfx)
+	_set_bus_volume(BUS_MUSIC, Settings.volume_music, MIX_OFFSET_MUSIC_DB)
+	_set_bus_volume(BUS_SFX, Settings.volume_sfx, MIX_OFFSET_SFX_DB)
 	# UX-06 : volume UI dédié (avant cette tâche, suivait volume_sfx comme Feedback ci-dessous).
-	_set_bus_volume(BUS_UI, Settings.volume_ui)
-	_set_bus_volume(BUS_FEEDBACK, Settings.volume_sfx)
+	_set_bus_volume(BUS_UI, Settings.volume_ui, MIX_OFFSET_UI_DB)
+	_set_bus_volume(BUS_FEEDBACK, Settings.volume_sfx, MIX_OFFSET_FEEDBACK_DB)
 	_set_bus_volume(BUS_VOICE, Settings.volume_voice)
-	_set_bus_volume(BUS_AMBIENCE, Settings.volume_ambience)
+	_set_bus_volume(BUS_AMBIENCE, Settings.volume_ambience, MIX_OFFSET_AMBIENCE_DB)
 	# BUS_SHOTS n'est PAS mis à jour par _set_bus_volume : le ducking (GF-11)
 	# module son volume_db en continu, donc on ne fait que rafraîchir la base
-	# et laisser _apply_shots_duck réappliquer le ducking en cours par-dessus.
-	_shots_base_db = linear_to_db(clampf(Settings.volume_sfx, 0.0, 1.0))
+	# (+ MIX_OFFSET_SHOTS_DB, tâche "son" : "les tirs doivent dominer") et
+	# laisser _apply_shots_duck réappliquer le ducking en cours par-dessus.
+	_shots_base_db = linear_to_db(clampf(Settings.volume_sfx, 0.0, 1.0)) + MIX_OFFSET_SHOTS_DB
 	_apply_shots_duck(duck_gain_db(_shots_duck_elapsed) if _shots_duck_elapsed >= 0.0 else 0.0)
 	apply_audio_mono()
 
-func _set_bus_volume(bus_name: String, linear: float) -> void:
+func _set_bus_volume(bus_name: String, linear: float, offset_db: float = 0.0) -> void:
 	var idx := AudioServer.get_bus_index(bus_name)
 	if idx >= 0:
-		AudioServer.set_bus_volume_db(idx, linear_to_db(clampf(linear, 0.0, 1.0)))
+		AudioServer.set_bus_volume_db(idx, linear_to_db(clampf(linear, 0.0, 1.0)) + offset_db)

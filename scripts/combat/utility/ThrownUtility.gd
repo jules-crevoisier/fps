@@ -36,6 +36,12 @@ const _FLOOR_NORMAL_MIN_Y := 0.6
 var _detonated: bool = false
 var _mesh_root: Node3D
 
+## Tâche "son" 2026-09-27 (point 5) : secondes écoulées depuis le DERNIER son
+## de rebond joué par CETTE instance (voir GrenadeAudio.can_play_bounce,
+## anti-rafale) -- assez grand au départ pour que le tout premier rebond
+## joue toujours.
+var _since_last_bounce: float = 999.0
+
 ## Instancie et enregistre localement l'objet volant (appelé par
 ## UtilityThrower._broadcast_spawn, reçu sur CHAQUE pair — y compris le
 ## serveur via call_local, exactement comme WorldWeapon.spawn_local).
@@ -63,14 +69,29 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if _detonated:
 		return
+	_since_last_bounce += delta
+	var speed_before := _vel.length()  # vitesse D'IMPACT (avant rebond) pour GrenadeAudio.bounce_volume_db.
 	var space := get_world_3d().direct_space_state if is_inside_tree() else null
 	var res := UtilityIntegrator.step(global_position, _vel, delta, cfg, space, [])
 	global_position = res["position"]
 	_vel = res["velocity"]
-	# SOL seulement (demande utilisateur 2026-09-27 : le fumigène « descend par gravité jusqu'en
-	# bas » et se déploie au premier contact) : un rebond sur un mur ne compte pas.
-	if res["bounced"] and (res.get("normal", Vector3.UP) as Vector3).y > _FLOOR_NORMAL_MIN_Y:
-		_touched_ground = true
+	if res["bounced"]:
+		# Tâche "son" (point 5) : rebond joué sur TOUT rebond (mur ou sol) --
+		# chaque pair simule le MÊME vol déterministe (UtilityIntegrator, voir
+		# docstring de classe), donc chacun détecte ce rebond au MÊME instant et
+		# joue le son localement sans RPC dédié. Anti-rafale (GrenadeAudio.
+		# can_play_bounce) : un objet qui se stabilise en fin de course peut
+		# rebondir plusieurs fois par seconde sans que chaque contact mérite un son.
+		if GrenadeAudio.can_play_bounce(_since_last_bounce):
+			_since_last_bounce = 0.0
+			var scene := get_parent()
+			if scene:
+				_play_sfx(scene, "grenade_bounce", global_position, GrenadeAudio.bounce_volume_db(speed_before))
+		# SOL seulement (demande utilisateur 2026-09-27 : le fumigène « descend
+		# par gravité jusqu'en bas » et se déploie au premier contact) : un
+		# rebond sur un mur ne compte pas pour l'amorce anticipée du fumigène.
+		if (res.get("normal", Vector3.UP) as Vector3).y > _FLOOR_NORMAL_MIN_Y:
+			_touched_ground = true
 	_elapsed += delta
 
 	if not is_authority:
@@ -172,9 +193,18 @@ static func _fallback_mesh() -> Node3D:
 #  auto-libérés (contrat lead : burst toon, encre, débris / flash lumineux /
 #  nuage géré séparément par SmokeCloud.gd).
 # ======================================================================
-const _FRAG_SFX := "wall_slam_1"  # pas d'explosion dédiée dans assets/audio/sfx : impact le plus lourd disponible.
-const _FLASH_SFX := "flash_1"
-const _SMOKE_SFX := "smoke_1"
+## Tâche "son" 2026-09-27 : noms LOGIQUES (jamais un fichier `_<n>.wav` précis
+## -- `Audio._resolve`/`sfx_path` ajoutent déjà le suffixe de variation, voir
+## `_play_sfx` ci-dessous) -- avant cette tâche, ces trois constantes portaient
+## un suffixe "_1" qui ne correspondait à AUCUNE clé du manifest (`_scan_manifest`
+## indexe par nom SANS le "_<n>" final), donc `_resolve` renvoyait toujours
+## `null` : les trois détonations étaient SILENCIEUSES en jeu. `_FRAG_SFX`
+## utilisait de plus `wall_slam_1` (repli d'avant que le lead ne fournisse un
+## vrai son d'explosion, voir assets/audio/sfx/PROVENANCE.md) : remplacé par
+## le son dédié `explosion` (explosion_1/explosion_2, deux variations).
+const _FRAG_SFX := "explosion"
+const _FLASH_SFX := "flash"
+const _SMOKE_SFX := "smoke"
 
 static func _spawn_detonation_vfx(kind: int, pos: Vector3, scene: Node, is_server: bool) -> void:
 	match kind:
@@ -197,12 +227,12 @@ static func _spawn_detonation_vfx(kind: int, pos: Vector3, scene: Node, is_serve
 ## autoload par son nom nu). Recherche par chemin ABSOLU sur `scene` (un vrai
 ## nœud de l'arbre, toujours disponible ici) à la place — sans effet
 ## (silencieux, jamais d'exception) si l'autoload n'existe pas dans CET arbre.
-static func _play_sfx(scene: Node, name: String, pos: Vector3) -> void:
+static func _play_sfx(scene: Node, name: String, pos: Vector3, volume_offset_db: float = 0.0) -> void:
 	if scene == null:
 		return
 	var sfx := scene.get_node_or_null("/root/Sfx")
 	if sfx and sfx.has_method("play_at"):
-		sfx.call("play_at", name, pos)
+		sfx.call("play_at", name, pos, 0.0, volume_offset_db)
 
 ## Sphère flash unshaded (blanc chaud) : agrandit 0 -> `max_radius` sur
 ## `duration`, jamais de fondu alpha (contrat : matériau opaque, elle

@@ -142,6 +142,13 @@ func test_weapon_gunshot_name_sidearm_low_damage_is_pistol() -> void:
 	assert_str(Audio.weapon_gunshot_name(c)).is_equal("gunshot_pistol")
 
 
+## Revolver (catégorie PISTOL) : son de revolver dédié, jamais le repli fusil (bug 2026-09-27).
+func test_weapon_gunshot_name_pistol_category_is_revolver() -> void:
+	var c := WeaponConfig.new()
+	c.category = WeaponConfig.Category.PISTOL
+	assert_str(Audio.weapon_gunshot_name(c)).is_equal("gunshot_revolver")
+
+
 func test_weapon_gunshot_name_sidearm_high_damage_is_magnum() -> void:
 	var c := _cfg(WeaponConfig.Category.SIDEARM, false, 55.0)
 	assert_str(Audio.weapon_gunshot_name(c)).is_equal("gunshot_magnum")

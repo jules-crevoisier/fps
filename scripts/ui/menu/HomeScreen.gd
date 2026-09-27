@@ -355,6 +355,7 @@ func _build_go_panel() -> void:
 	_play_button = MenuWidgets.comic_button("Jouer !", UiTokens.YELLOW, UiTokens.T_3XL)
 	_play_button.add_theme_font_override("font", UiTokens.FONT_DISPLAY)
 	_play_button.custom_minimum_size = Vector2(0, 110)
+	_play_button.set_meta("sfx_click", "ui_confirm")  # tâche "son" : la grosse action -> ui_confirm, pas le clic générique.
 	_play_button.pressed.connect(_on_play_pressed)
 	col.add_child(_play_button)
 	add_child(col)
@@ -465,6 +466,9 @@ func _on_join_pressed() -> void:
 func _on_join_failed() -> void:
 	_join_status.text = "Connexion impossible."
 	_join_status.label_settings.font_color = UiTokens.RED
+	var sfx := get_node_or_null("/root/Sfx")  # tâche "son" : erreur de connexion -> ui_error.
+	if sfx and sfx.has_method("play_ui"):
+		sfx.call("play_ui", "ui_error")
 
 
 func _on_host_pressed() -> void:

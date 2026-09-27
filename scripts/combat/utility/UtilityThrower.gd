@@ -46,6 +46,11 @@ const _BlindIndicator := preload("res://scripts/combat/utility/vfx/BlindIndicato
 ## jamais par le serveur : chaque pair regarde sa propre caméra locale.
 const CAMERA_SHAKE_RADIUS_M := 12.0
 
+## Tâche "son" 2026-09-27 (point 5) : écho 3D du lancer vu par un OBSERVATEUR
+## -- plus discret que la version LOCALE 2D (même esprit que
+## Audio.MIX_OFFSET_REMOTE_FOLEY_DB pour le foley d'arme distant).
+const MIX_REMOTE_GRENADE_DB := -6.0
+
 ## Décalage (m) devant la tête d'où part réellement l'objet lancé — évite que
 ## la sphère de collision de l'intégrateur (UtilityConfig.collision_radius)
 ## ne touche la propre capsule du lanceur dès le premier pas (ShotValidator.
@@ -344,6 +349,12 @@ func _handle_throw_input(delta: float) -> void:
 			_held_short = true
 		else:
 			return
+		# Tâche "son" 2026-09-27 (point 5) : "grenade_pin quand un lancer est
+		# ARMÉ" -- joué LOCAL (2D), PROPRIÉTAIRE seul (`_owner_tick` ne tourne
+		# que là) : aucun observateur distant ne voit ce début de maintien
+		# aujourd'hui (aucun signal réseau dédié, contrairement au lancer réel
+		# `fired`/`remote_fired`), rapporté comme lacune mineure.
+		_play_local_sfx("grenade_pin")
 	else:
 		# Maintien en cours : appuyer sur L'AUTRE bouton bascule court <-> long sans
 		# lancer (retour utilisateur 2026-09-27 : « au cas où c'est loupé la première
@@ -385,6 +396,12 @@ func _predict_and_request(kind: int, cfg: UtilityConfig, held_duration: float, e
 	_inv.consume(kind)
 	charges_changed.emit(_inv.snapshot())
 	fired.emit(kind)
+	# Tâche "son" (point 5) : "grenade_throw au relâchement" -- jamais pour une
+	# frag qui explose EN MAIN (`exploded_in_hand`, aucun geste de lancer,
+	# voir docstring de fonction) -- LOCAL (2D), le lancer RÉEL vu par les
+	# AUTRES pairs (3D, plus discret) est joué dans `_broadcast_spawn`.
+	if not exploded_in_hand:
+		_play_local_sfx("grenade_throw")
 	# Contrat point 6 : "after the throw animation (FP_Throw) ends, auto-switch
 	# back to the last equipped WEAPON slot" — démarre le décompte MAINTENANT
 	# (durée fixe UtilityEquip.RETURN_DELAY_S, voir sa doc), pour le lancer
@@ -429,6 +446,24 @@ func snapshot_charges() -> Array:
 
 func _owner_id() -> int:
 	return str(player.name).to_int() if player else -1
+
+## Son cosmétique LOCAL (2D) -- même repli défensif que ThrownUtility._play_sfx
+## (résolution par chemin ABSOLU sur l'autoload, jamais l'identifiant nu "Sfx" :
+## ce fichier tourne aussi depuis des contextes d'outillage, voir sa docstring).
+func _play_local_sfx(name: String) -> void:
+	if player == null or not player.is_inside_tree():
+		return
+	var sfx := player.get_node_or_null("/root/Sfx")
+	if sfx and sfx.has_method("play_local"):
+		sfx.call("play_local", name)
+
+## Son cosmétique 3D positionnel (écho pour un OBSERVATEUR) -- voir `_play_local_sfx`.
+func _play_local_sfx_at(name: String, pos: Vector3, volume_offset_db: float = 0.0) -> void:
+	if player == null or not player.is_inside_tree():
+		return
+	var sfx := player.get_node_or_null("/root/Sfx")
+	if sfx and sfx.has_method("play_at"):
+		sfx.call("play_at", name, pos, 0.0, volume_offset_db)
 
 # ======================================================================
 #  Aperçu de trajectoire (ruban continu + marqueur d'impact au sol,
@@ -973,6 +1008,11 @@ func server_clear_charges() -> void:
 @rpc("authority", "call_local", "reliable")
 func _broadcast_spawn(uid: int, kind: int, origin: Vector3, vel: Vector3, fuse_left: float, thrower_id: int, thrower_team: int) -> void:
 	remote_fired.emit(kind)
+	# Tâche "son" (point 5) : écho 3D de "grenade_throw" pour les OBSERVATEURS
+	# -- jamais pour le LANCEUR (déjà servi en 2D par `_predict_and_request`,
+	# et cette RPC "call_local" s'exécute aussi sur sa propre machine).
+	if not player.is_multiplayer_authority():
+		_play_local_sfx_at("grenade_throw", origin, MIX_REMOTE_GRENADE_DB)
 	var scene := _attach_root()
 	if scene == null:
 		return

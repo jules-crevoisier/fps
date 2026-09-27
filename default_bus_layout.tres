@@ -1,5 +1,16 @@
 [gd_resource type="AudioBusLayout" format=3 uid="uid://cnbsd6yyu3dd1"]
 
+[sub_resource type="AudioEffectCompressor" id="AudioEffectCompressor_master"]
+threshold = -18.0
+ratio = 2.5
+gain = 2.0
+attack_us = 2000.0
+release_ms = 100.0
+
+[sub_resource type="AudioEffectLimiter" id="AudioEffectLimiter_master"]
+ceiling_db = -1.0
+threshold_db = -2.0
+
 [sub_resource type="AudioEffectLimiter" id="AudioEffectLimiter_sfx"]
 ceiling_db = -0.3
 threshold_db = -3.0
@@ -9,6 +20,10 @@ ceiling_db = -0.3
 threshold_db = -3.0
 
 [resource]
+bus/0/effect/0/effect = SubResource("AudioEffectCompressor_master")
+bus/0/effect/0/enabled = true
+bus/0/effect/1/effect = SubResource("AudioEffectLimiter_master")
+bus/0/effect/1/enabled = true
 bus/1/name = &"Music"
 bus/1/solo = false
 bus/1/mute = false
