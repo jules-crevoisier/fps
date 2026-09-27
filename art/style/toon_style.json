@@ -1,74 +1,171 @@
 {
-  "version": 2,
-  "name": "BD façon Borderlands — textures encrées, contour fin en post-traitement, ombres affûtées",
-  "notes": "SOURCE UNIQUE du rendu, lue par le shader Godot et par le générateur Blender. v2 après recherche (2026-09-26) : Borderlands n'est PAS un cel-shading à bandes plates. Le look = (1) textures peintes avec l'encre DEDANS (traits, hachures dans les creux), (2) contour noir FIN en post-traitement (Sobel profondeur + normales) qui s'estompe au loin, (3) éclairage réel avec ombres affûtées (rampe resserrée, pas de bandes), (4) couleurs très saturées + étalonnage.",
+  "version": 3,
+  "name": "Comics héroïque façon Marvel Rivals — ombres colorées claires, liseré chaud, ciel dégradé, contour fin",
+  "notes": "SOURCE UNIQUE du rendu, lue par le shader Godot et par le générateur Blender. v3 (2026-09-27, retour utilisateur : couleurs et ombres « moches », viser Marvel Rivals). Analyse de captures Marvel Rivals : (1) ombres COLORÉES et claires (bleu-violet), jamais brun-noir, (2) personnages en cel-shading net avec un dégradé peint dans la lumière et un liseré de contre-jour chaud, (3) décor éclairé pour de vrai (ombres portées nettes, occlusion de contact, rebond coloré, brume légère), (4) contour sombre fin, (5) couleurs saturées et lumineuses. Profils : les sections de base valent pour les personnages/armes ; profiles.world surcharge pour le décor.",
   "shading": {
     "model": "sharpened_lambert",
-    "wrap": 0.1,
-    "terminator": 0.45,
-    "sharpness": 0.12,
-    "shadow_value": 0.42,
-    "note": "Diffus = smoothstep(terminator - sharpness/2, terminator + sharpness/2, N·L × ombre portée). sharpness 0.12 = transition courte mais pas un créneau ; shadow_value = luminosité de la zone d'ombre avant teinte."
+    "wrap": 0.15,
+    "terminator": 0.42,
+    "sharpness": 0.08,
+    "shadow_value": 0.6,
+    "lit_gradient": 0.18,
+    "note": "Diffus = smoothstep(terminator ± sharpness/2, N·L wrappé × ombre portée). lit_gradient = assombrissement progressif DANS la lumière vers le terminateur (volume peint). shadow_value = luminosité de l'ombre avant filtre coloré."
   },
   "shadow_tint": {
-    "hue_shift_deg": -8.0,
-    "saturation_mult": 1.25,
-    "note": "Ombres colorées (albédo décalé vers le bleu-violet, plus saturé), jamais grises."
+    "hue_shift_deg": -12.0,
+    "saturation_mult": 1.2,
+    "color": "#9E94EB",
+    "note": "Ombre = albédo décalé vers le bleu-violet × color × shadow_value : froide, claire et saturée, jamais grise ni boueuse."
+  },
+  "terminator_glow": {
+    "enabled": true,
+    "intensity": 0.2,
+    "width": 0.04,
+    "color": "#FF6A3D",
+    "note": "Liseré chaud saturé sur la frontière lumière/ombre (et au bord des ombres portées) : la « chaleur » des rendus peints."
   },
   "rim": {
     "enabled": true,
-    "power": 4.0,
-    "threshold": 0.55,
-    "softness": 0.08,
-    "intensity": 0.25,
-    "color": "#FFE9B8",
+    "power": 3.0,
+    "threshold": 0.62,
+    "softness": 0.06,
+    "intensity": 0.5,
+    "color": "#FFF0D0",
     "lit_side_only": true
   },
   "specular": {
     "enabled": true,
-    "size": 0.18,
-    "softness": 0.12,
-    "intensity": 0.25,
+    "size": 0.04,
+    "softness": 0.02,
+    "intensity": 0.18,
     "color": "#FFFFFF"
   },
   "halftone": {
-    "enabled": false,
-    "cell_px_at_1080p": 7.0,
+    "enabled": true,
+    "cell_px_at_1080p": 9.0,
     "angle_deg": 45.0,
-    "note": "Désactivée : Borderlands n'utilise pas de trame. Gardée en option pour des effets ponctuels (sorts, UI)."
+    "spread": 0.14,
+    "inner_strength": 0.0,
+    "inner_radius": 0.3,
+    "fade_start_m": 30.0,
+    "fade_end_m": 60.0,
+    "note": "Trame de points (brief utilisateur « ombres en trame de points ») : version retenue le 2026-09-27 = discrète, PERSONNAGES seulement (profiles.world la coupe : sur les grands pans plats elle faisait un grillage, rejeté). Points qui grossissent de la lumière vers l'ombre sur une bande étroite (spread), ombre pleine unie (inner_strength 0). Espace écran, cellule en px à 1080p, estompée au loin (fade_*)."
+  },
+  "profiles": {
+    "world": {
+      "shading": {
+        "lit_gradient": 0.1,
+        "sharpness": 0.1
+      },
+      "terminator_glow": {
+        "intensity": 0.18
+      },
+      "rim": {
+        "enabled": false
+      },
+      "specular": {
+        "enabled": false
+      },
+      "halftone": {
+        "enabled": false
+      },
+      "note": "Décor : pas de liseré fresnel ni de reflet (ils illumineraient des faces planes entières), pas de trame (grillage sur les pans plats)."
+    }
   },
   "outline": {
     "method": "post_process_sobel",
-    "sources": ["depth", "normal"],
-    "color": "#0E0A12",
+    "sources": [
+      "depth",
+      "normal"
+    ],
+    "color": "#1B1030",
     "width_px_at_1080p": 1.5,
     "depth_threshold": 0.015,
     "normal_threshold_deg": 30.0,
     "fade_start_m": 25.0,
     "fade_end_m": 70.0,
     "min_width_px": 1.0,
-    "note": "Trait fin, noir, sur silhouettes ET plis. Blender : Line Art aux mêmes seuils (crease = normal_threshold_deg), épaisseur équivalente en pixels."
+    "note": "Trait fin sombre (violet très foncé, pas noir pur) sur silhouettes ET plis. Blender : Line Art aux mêmes seuils."
   },
   "ink_bake": {
     "note": "Encrage DANS la texture (le cœur du style Borderlands), appliqué à l'import d'un modèle (Tripo ou Blender) par art/style/blender/ink_bake.py.",
-    "edge_lines": { "source": "curvature+normal_edges", "width_px_2k": 3, "color": "#0E0A12", "opacity": 0.9, "jitter": 0.3 },
-    "cavity_lines": { "source": "cavity/AO", "threshold": 0.35, "opacity": 0.85 },
-    "hatching": { "source": "AO", "start": 0.55, "end": 0.25, "angle_deg": 45.0, "spacing_px_2k": 9, "cross_below": 0.35, "opacity": 0.6 },
+    "edge_lines": {
+      "source": "curvature+normal_edges",
+      "width_px_2k": 3,
+      "color": "#0E0A12",
+      "opacity": 0.9,
+      "jitter": 0.3
+    },
+    "cavity_lines": {
+      "source": "cavity/AO",
+      "threshold": 0.35,
+      "opacity": 0.85
+    },
+    "hatching": {
+      "source": "AO",
+      "start": 0.55,
+      "end": 0.25,
+      "angle_deg": 45.0,
+      "spacing_px_2k": 9,
+      "cross_below": 0.35,
+      "opacity": 0.6
+    },
     "texture_size": 2048
   },
   "light": {
     "sun_azimuth_deg": 135.0,
-    "sun_elevation_deg": 50.0,
-    "sun_color": "#FFF1DC",
-    "sun_energy": 1.0,
-    "ambient_color": "#5A6FA8",
-    "ambient_strength": 0.35,
+    "sun_elevation_deg": 48.0,
+    "sun_color": "#FFE0B0",
+    "sun_energy": 1.15,
+    "sun_softness_deg": 0.4,
+    "shadow_max_distance_m": 60.0,
+    "ambient_color": "#7F9BD6",
+    "ambient_strength": 0.12,
+    "ambient_sky_contribution": 1.0,
     "shadows": true
   },
+  "sky": {
+    "top": "#2A78E4",
+    "horizon": "#BCE0FF",
+    "curve": 0.12,
+    "ground": "#A8C4E6",
+    "ground_curve": 0.06,
+    "sun_halo_deg": 12.0
+  },
+  "atmosphere": {
+    "fog": true,
+    "fog_color": "#CFE4FF",
+    "fog_density": 0.0015,
+    "aerial_perspective": 0.0
+  },
+  "post": {
+    "tonemap": "linear",
+    "exposure": 1.0,
+    "glow": {
+      "enabled": true,
+      "intensity": 0.4,
+      "strength": 1.0,
+      "bloom": 0.0,
+      "hdr_threshold": 0.95
+    },
+    "ssao": {
+      "enabled": true,
+      "radius": 1.0,
+      "intensity": 1.4,
+      "power": 1.6,
+      "light_affect": 0.25
+    },
+    "ssil": {
+      "enabled": true,
+      "radius": 3.0,
+      "intensity": 0.5
+    }
+  },
   "grading": {
-    "saturation": 1.25,
-    "contrast": 1.12,
-    "note": "Couleurs qui « crient » : saturation poussée, contraste net."
+    "saturation": 1.3,
+    "contrast": 1.1,
+    "brightness": 1.0,
+    "note": "Couleurs vives et lumineuses, contraste net sans écraser les ombres."
   },
   "palette": {
     "ink": "#0E0A12",
@@ -83,13 +180,65 @@
     "violet": "#6C3CE0"
   },
   "parity_scene": {
-    "resolution": [1280, 720],
-    "camera": { "position": [0.0, 1.4, 3.2], "look_at": [0.0, 0.9, 0.0], "fov_v_deg": 45.0 },
+    "resolution": [
+      1280,
+      720
+    ],
+    "camera": {
+      "position": [
+        0.0,
+        1.4,
+        3.2
+      ],
+      "look_at": [
+        0.0,
+        0.9,
+        0.0
+      ],
+      "fov_v_deg": 45.0
+    },
     "objects": [
-      { "type": "sphere", "radius": 0.45, "position": [-1.1, 0.45, 0.0], "albedo": "#E8392E" },
-      { "type": "cube", "size": 0.7, "position": [1.1, 0.35, 0.0], "rotation_y_deg": 30.0, "albedo": "#2E8BFF" },
-      { "type": "model", "path": "res://assets/models/characters/verrou.glb", "position": [0.0, 0.0, 0.0], "rotation_y_deg": 20.0 },
-      { "type": "plane", "size": 8.0, "position": [0.0, 0.0, 0.0], "albedo": "#C98A4B" }
+      {
+        "type": "sphere",
+        "radius": 0.45,
+        "position": [
+          -1.1,
+          0.45,
+          0.0
+        ],
+        "albedo": "#E8392E"
+      },
+      {
+        "type": "cube",
+        "size": 0.7,
+        "position": [
+          1.1,
+          0.35,
+          0.0
+        ],
+        "rotation_y_deg": 30.0,
+        "albedo": "#2E8BFF"
+      },
+      {
+        "type": "model",
+        "path": "res://assets/models/characters/verrou.glb",
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation_y_deg": 20.0
+      },
+      {
+        "type": "plane",
+        "size": 8.0,
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "albedo": "#C98A4B"
+      }
     ],
     "max_mean_abs_diff": 0.06
   },

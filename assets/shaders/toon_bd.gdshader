@@ -12,8 +12,8 @@
 //     gate = `lit_amount` du terminator ci-dessus).
 //   - `specular` : reflet doux fixe (indépendant du glossiness importé -- ce shader
 //     n'a pas de carte de rugosité, `specular.size/softness/intensity` du JSON).
-//   - `halftone` : trame en pointillés en espace écran, présente mais OFF par défaut
-//     (toon_style.json halftone.enabled=false) -- gardée pour des effets ponctuels.
+//   - `halftone` : OMBRES EN TRAME DE POINTS (espace écran) -- dégradé de points entre
+//     lumière et ombre, points plus sombres dans l'ombre pleine (toon_style.json v3).
 // Le CONTOUR (encre) n'est PAS ici : toon_style.json.outline.method =
 // "post_process_sobel" -- géré entièrement par le pass plein écran
 // (assets/shaders/toon_bd_outline.gdshader + scripts/rendering/ToonOutlineQuad.gd),
@@ -45,10 +45,23 @@ uniform float wrap : hint_range(0.0, 1.0) = 0.1;
 uniform float terminator : hint_range(0.0, 1.0) = 0.45;
 uniform float sharpness : hint_range(0.001, 1.0) = 0.12;
 uniform float shadow_value : hint_range(0.0, 1.0) = 0.42;
+// Dégradé peint DANS la zone éclairée (v3 « comics héroïque ») : 0 = aplat, 0.2 = la
+// lumière s'assombrit de 20 % en approchant du terminateur -- du volume sans bandes.
+uniform float lit_gradient : hint_range(0.0, 1.0) = 0.0;
 
 group_uniforms shadow_tint;
 uniform float shadow_hue_shift_deg = -8.0;
 uniform float shadow_saturation_mult : hint_range(0.0, 3.0) = 1.25;
+// Filtre multiplicatif de l'ombre (v3) : bleu-violet froid -> ombres colorées et claires,
+// jamais brun-noir. Blanc = sans effet (comportement v2).
+uniform vec4 shadow_color : source_color = vec4(1.0, 1.0, 1.0, 1.0);
+
+group_uniforms terminator_glow;
+// Liseré chaud et saturé sur la frontière lumière/ombre (effet « peau/sous-surface »
+// des rendus peints) : largeur en unités de N·L, intensité additive (0 = coupé).
+uniform float terminator_glow : hint_range(0.0, 2.0) = 0.0;
+uniform float terminator_glow_width : hint_range(0.001, 0.5) = 0.08;
+uniform vec4 terminator_color : source_color = vec4(1.0, 0.45, 0.25, 1.0);
 
 group_uniforms rim;
 uniform bool rim_enabled = true;
@@ -67,9 +80,22 @@ uniform float specular_intensity : hint_range(0.0, 2.0) = 0.25;
 uniform vec4 specular_tint : source_color = vec4(1.0, 1.0, 1.0, 1.0);
 
 group_uniforms halftone;
+// Ombres en TRAME DE POINTS (brief utilisateur 2026-09-26 « ombres en trame de points »,
+// remis en avant le 2026-09-27) : la frontière lumière/ombre devient un dégradé de points
+// qui grossissent jusqu'à l'aplat, et l'ombre pleine porte des points plus sombres.
 uniform bool halftone_enabled = false;
 uniform float halftone_cell_px = 7.0;
 uniform float halftone_angle_deg = 45.0;
+// Étendue du dégradé de points CÔTÉ LUMIÈRE, en unités de N·L au-delà du terminateur : l'ombre
+// garde sa forme, les points mordent sur la lumière.
+uniform float halftone_spread : hint_range(0.0, 0.6) = 0.2;
+// Points plus sombres dans l'ombre pleine : force (0 = ombre unie) et rayon (0..0.7 d'une cellule).
+uniform float halftone_inner : hint_range(0.0, 1.0) = 0.0;
+uniform float halftone_inner_radius : hint_range(0.0, 0.7) = 0.3;
+// Au loin (m, distance caméra) la trame s'efface vers l'ombre nette : à taille d'écran fixe,
+// les points mangeraient une silhouette lointaine (lisibilité des ennemis).
+uniform float halftone_fade_start_m = 30.0;
+uniform float halftone_fade_end_m = 60.0;
 // Pas de `VIEWPORT_SIZE` builtin dans ce contexte (fragment() d'un shader
 // spatial standard, confirmé par un échec de compilation à l'exécution --
 // contrairement au quad plein écran de toon_bd_outline.gdshader, qui reçoit sa
@@ -113,26 +139,29 @@ vec3 _shadow_tint(vec3 albedo) {
 	return _hsv2rgb(hsv);
 }
 
-// Trame en pointillés plein écran (toon_style.json halftone, OFF par défaut) --
-// cellule en px À 1080p, mise à l'échelle par la hauteur RÉELLE du viewport (même
-// convention que le contour post-process, voir ToonOutlineQuad.gd).
-// `screen_uv` est passé en paramètre (jamais lu directement ici) : les
-// builtins de contexte fragment (SCREEN_UV, INV_PROJECTION_MATRIX...) ne sont
-// PAS visibles depuis une fonction globale séparée dans ce moteur/version
-// (vérifié à l'exécution -- "Unknown identifier" sinon), seulement DANS
-// vertex()/fragment()/light() eux-mêmes. Même contrainte, même parade dans
-// toon_bd_outline.gdshader::_view_pos.
-float _halftone_mask(vec3 albedo, vec2 screen_uv) {
-	float luma = dot(albedo, vec3(0.299, 0.587, 0.114));
-	float cell = max(halftone_cell_px * (viewport_size.y / 1080.0), 1.0);
+// Trame de points en espace ÉCRAN (le point comics classique) -- cellule en px À 1080p,
+// mise à l'échelle par la hauteur réelle du viewport (même convention que le contour
+// post-process, voir ToonOutlineQuad.gd). Renvoie (distance au centre de la cellule en
+// unités de cellule, largeur d'un pixel dans ces unités -- l'anticrénelage analytique,
+// les dérivées n'étant pas fiables dans light()). `frag_px` est passé en paramètre : les
+// builtins de contexte ne sont PAS visibles depuis une fonction globale dans ce moteur
+// (vérifié -- "Unknown identifier"), même parade que toon_bd_outline.gdshader::_view_pos.
+vec2 _halftone_cell(vec2 frag_px) {
+	float cell = max(halftone_cell_px * (viewport_size.y / 1080.0), 2.0);
 	float a = radians(halftone_angle_deg);
-	vec2 px = screen_uv * viewport_size;
-	vec2 rotated = vec2(px.x * cos(a) - px.y * sin(a), px.x * sin(a) + px.y * cos(a));
-	vec2 cell_uv = mod(rotated, cell) / cell - 0.5;
-	float dist = length(cell_uv);
-	float radius = clamp(1.0 - luma, 0.0, 1.0) * 0.7;
-	return 1.0 - smoothstep(radius - 0.05, radius + 0.05, dist);
+	vec2 r = vec2(frag_px.x * cos(a) - frag_px.y * sin(a), frag_px.x * sin(a) + frag_px.y * cos(a));
+	vec2 c = fract(r / cell) - 0.5;
+	return vec2(length(c), 1.0 / cell);
 }
+
+// Couverture d'un point de rayon `radius` (0..0.75 : au-delà de 0.707 le point déborde du
+// coin de sa cellule -> aplat plein).
+float _dot(vec2 cell, float radius) {
+	return 1.0 - smoothstep(radius - cell.y, radius + cell.y, cell.x);
+}
+
+// Distance caméra du pixel, écrite par fragment() pour l'estompe de la trame dans light().
+varying float v_cam_dist;
 
 void vertex() {
 }
@@ -142,10 +171,8 @@ void fragment() {
 	if (use_albedo_texture) {
 		base *= texture(albedo_texture, UV);
 	}
-	if (halftone_enabled) {
-		base.rgb *= mix(0.35, 1.0, _halftone_mask(base.rgb, SCREEN_UV));
-	}
 	ALBEDO = base.rgb;
+	v_cam_dist = length(VERTEX);   // VERTEX (espace vue) n'existe pas dans light()
 	// Jamais d'écriture d'ALPHA : elle bascule le matériau dans la passe transparente,
 	// hors du pré-passage profondeur/normales -- plus de contour post-traitement ni
 	// d'ombres portées (même piège que l'ancien dev_grid « murs transparents »).
@@ -174,6 +201,19 @@ void light() {
 	// moteur/version -- pas de distance à atténuer sur un soleil).
 	float shaded = wrapped * ATTENUATION;
 	float lit_amount = smoothstep(terminator - sharpness * 0.5, terminator + sharpness * 0.5, shaded);
+	// -- ombres en trame de points (toon_style.json halftone) ------------------
+	// La quantité d'ombre, étirée côté lumière sur `halftone_spread`, devient la taille des
+	// points (surface ∝ ombre : rayon ∝ racine) ; dans l'ombre pleine, des points plus
+	// sombres aux mêmes centres gardent la texture « imprimée ».
+	float inner_dots = 0.0;
+	if (halftone_enabled) {
+		vec2 cell = _halftone_cell(FRAGCOORD.xy);
+		float shadow_amt = 1.0 - smoothstep(terminator - sharpness * 0.5, terminator + halftone_spread, shaded);
+		float near = 1.0 - smoothstep(halftone_fade_start_m, halftone_fade_end_m, v_cam_dist);
+		float dotted = 1.0 - _dot(cell, 0.75 * sqrt(shadow_amt)) * smoothstep(0.0, 0.04, shadow_amt);
+		lit_amount = mix(lit_amount, dotted, near);
+		inner_dots = halftone_inner * near * _dot(cell, halftone_inner_radius) * smoothstep(0.75, 1.0, shadow_amt);
+	}
 
 	// Doc Godot 4.7 (spatial shader, light built-ins) : LIGHT_COLOR est déjà
 	// multiplié par PI (« / PI » dans l'exemple Lambert officiel), et le moteur
@@ -181,9 +221,13 @@ void light() {
 	// facteur relatif à l'albédo (1 = plein éclairage) : l'ombre teintée devient
 	// le rapport ombre_teintée / albédo, que le moteur remultiplie par l'albédo.
 	vec3 light_rgb = LIGHT_COLOR / PI;
-	vec3 shadow_col = _shadow_tint(ALBEDO) * clamp(shadow_value, 0.0, 1.0);
+	vec3 shadow_col = _shadow_tint(ALBEDO) * shadow_color.rgb * clamp(shadow_value, 0.0, 1.0);
 	vec3 shadow_ratio = shadow_col / max(ALBEDO, vec3(0.02));
-	vec3 ramp = mix(shadow_ratio, vec3(1.0), lit_amount);
+	float lit_shade = mix(1.0 - lit_gradient, 1.0, smoothstep(terminator, 1.0, wrapped));
+	vec3 ramp = mix(shadow_ratio * (1.0 - inner_dots), vec3(lit_shade), lit_amount);
+	// liseré chaud au terminateur (et au bord des ombres portées, même frontière)
+	float edge = 1.0 - smoothstep(0.0, terminator_glow_width, abs(shaded - terminator));
+	ramp += terminator_color.rgb * edge * terminator_glow;
 	DIFFUSE_LIGHT += ramp * light_rgb;
 
 	// Rim, reflet et flash d'équipe : lumière ajoutée, pas teintée par l'albédo

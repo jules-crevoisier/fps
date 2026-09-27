@@ -39,8 +39,8 @@ _captures/
 *_preview/
 *_turntable/
 
-# Références tierces (Pinterest) : jamais publiées — le dépôt est public
-/.orchestrator/refs/pinterest/
+# Références tierces (Pinterest, captures d'autres jeux…) : jamais publiées — le dépôt est public
+/.orchestrator/refs/
 
 # Sorties d'outils et scripts jetables des agents à la racine
 /.ui_shots_out/

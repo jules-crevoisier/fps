@@ -1,6 +1,6 @@
 ## test_toon_style.gd
 ## Style "BD façon Borderlands" (2026-09-26) : ToonStyle.gd est la SEULE porte
-## d'entrée vers art/style/toon_style.json v2 (source unique de vérité) --
+## d'entrée vers art/style/toon_style.json v3 (source unique de vérité) --
 ## voir la docstring de ToonStyle.gd pour la portée exacte (Verrou/Ravage+gants/
 ## Shipment, jamais le reste du jeu). Les valeurs numériques ci-dessous sont
 ## recopiées du JSON verrouillé (pas depuis ToonStyle.gd) : un test qui relisait
@@ -26,7 +26,7 @@ func _make_texture(color: Color = Color.WHITE) -> ImageTexture:
 
 
 # ============================================================================
-#  JSON chargé (art/style/toon_style.json v2)
+#  JSON chargé (art/style/toon_style.json v3)
 # ============================================================================
 
 func test_style_json_loads_and_is_not_empty() -> void:
@@ -35,12 +35,13 @@ func test_style_json_loads_and_is_not_empty() -> void:
 
 func test_style_json_has_expected_top_level_sections() -> void:
 	var s := ToonStyle.style()
-	for key in ["shading", "shadow_tint", "rim", "specular", "halftone", "outline", "light", "grading", "palette"]:
+	for key in ["shading", "shadow_tint", "terminator_glow", "rim", "specular", "halftone", "profiles", "outline",
+			"light", "sky", "atmosphere", "post", "grading", "palette"]:
 		assert_bool(s.has(key)).append_failure_message("section manquante : %s" % key).is_true()
 
 
-func test_style_json_version_is_2() -> void:
-	assert_int(int(ToonStyle.style().get("version", -1))).is_equal(2)
+func test_style_json_version_is_3() -> void:
+	assert_int(int(ToonStyle.style().get("version", -1))).is_equal(3)
 
 
 # ============================================================================
@@ -69,37 +70,79 @@ func test_texture_is_kept_and_enables_use_albedo_texture() -> void:
 	assert_that(m.get_shader_parameter("albedo_texture")).is_equal(tex)
 
 
-## Valeurs verrouillées par art/style/toon_style.json v2 "shading"/"shadow_tint".
+## Valeurs verrouillées par art/style/toon_style.json v3 (look « Marvel Rivals » validé par
+## l'utilisateur le 2026-09-27) : ombre claire filtrée bleu-violet, dégradé dans la lumière.
 func test_shading_params_reach_the_material() -> void:
 	var m := ToonStyle.toon_material(null, Color.WHITE)
-	assert_float(m.get_shader_parameter("wrap")).is_equal_approx(0.1, 0.0001)
-	assert_float(m.get_shader_parameter("terminator")).is_equal_approx(0.45, 0.0001)
-	assert_float(m.get_shader_parameter("sharpness")).is_equal_approx(0.12, 0.0001)
-	assert_float(m.get_shader_parameter("shadow_value")).is_equal_approx(0.42, 0.0001)
-	assert_float(m.get_shader_parameter("shadow_hue_shift_deg")).is_equal_approx(-8.0, 0.0001)
-	assert_float(m.get_shader_parameter("shadow_saturation_mult")).is_equal_approx(1.25, 0.0001)
+	assert_float(m.get_shader_parameter("wrap")).is_equal_approx(0.15, 0.0001)
+	assert_float(m.get_shader_parameter("terminator")).is_equal_approx(0.42, 0.0001)
+	assert_float(m.get_shader_parameter("sharpness")).is_equal_approx(0.08, 0.0001)
+	assert_float(m.get_shader_parameter("shadow_value")).is_equal_approx(0.6, 0.0001)
+	assert_float(m.get_shader_parameter("lit_gradient")).is_equal_approx(0.18, 0.0001)
+	assert_float(m.get_shader_parameter("shadow_hue_shift_deg")).is_equal_approx(-12.0, 0.0001)
+	assert_float(m.get_shader_parameter("shadow_saturation_mult")).is_equal_approx(1.2, 0.0001)
+	assert_that(m.get_shader_parameter("shadow_color")).is_equal(Color("#9E94EB"))
 
 
-## Valeurs verrouillées par art/style/toon_style.json v2 "rim"/"specular".
+## v3 "rim"/"specular"/"terminator_glow" (profil personnage = sections de base).
 func test_rim_and_specular_params_reach_the_material() -> void:
 	var m := ToonStyle.toon_material(null, Color.WHITE)
 	assert_bool(m.get_shader_parameter("rim_enabled")).is_true()
-	assert_float(m.get_shader_parameter("rim_power")).is_equal_approx(4.0, 0.0001)
-	assert_float(m.get_shader_parameter("rim_threshold")).is_equal_approx(0.55, 0.0001)
-	assert_float(m.get_shader_parameter("rim_intensity")).is_equal_approx(0.25, 0.0001)
-	assert_that(m.get_shader_parameter("rim_tint")).is_equal(Color("#FFE9B8"))
+	assert_float(m.get_shader_parameter("rim_power")).is_equal_approx(3.0, 0.0001)
+	assert_float(m.get_shader_parameter("rim_threshold")).is_equal_approx(0.62, 0.0001)
+	assert_float(m.get_shader_parameter("rim_intensity")).is_equal_approx(0.5, 0.0001)
+	assert_that(m.get_shader_parameter("rim_tint")).is_equal(Color("#FFF0D0"))
 	assert_bool(m.get_shader_parameter("rim_lit_side_only")).is_true()
 	assert_bool(m.get_shader_parameter("specular_enabled")).is_true()
-	assert_float(m.get_shader_parameter("specular_size")).is_equal_approx(0.18, 0.0001)
-	assert_float(m.get_shader_parameter("specular_intensity")).is_equal_approx(0.25, 0.0001)
+	assert_float(m.get_shader_parameter("specular_size")).is_equal_approx(0.04, 0.0001)
+	assert_float(m.get_shader_parameter("specular_intensity")).is_equal_approx(0.18, 0.0001)
+	assert_float(m.get_shader_parameter("terminator_glow")).is_equal_approx(0.2, 0.0001)
 
 
-## toon_style.json v2 "halftone.enabled": false -- désactivé par défaut, code
-## présent mais inerte (voir toon_bd.gdshader `_halftone_mask`/`halftone_enabled`).
-func test_halftone_is_off_by_default() -> void:
+## v3 : trame de points sur les PERSONNAGES (discrète, bande étroite, ombre pleine unie) --
+## choix utilisateur « B » du 2026-09-27 (la trame partout faisait un grillage sur le décor).
+func test_halftone_is_on_for_characters_narrow_and_without_inner_dots() -> void:
 	var m := ToonStyle.toon_material(null, Color.WHITE)
-	assert_bool(m.get_shader_parameter("halftone_enabled")).is_not_equal(true)
-	assert_float(m.get_shader_parameter("halftone_cell_px")).is_equal_approx(7.0, 0.0001)
+	assert_bool(m.get_shader_parameter("halftone_enabled")).is_true()
+	assert_float(m.get_shader_parameter("halftone_cell_px")).is_equal_approx(9.0, 0.0001)
+	assert_float(m.get_shader_parameter("halftone_spread")).is_equal_approx(0.14, 0.0001)
+	assert_float(m.get_shader_parameter("halftone_inner")).is_equal_approx(0.0, 0.0001)
+
+
+## Profil décor : ni liseré, ni reflet, ni trame sur les pans plats -- le reste du style
+## (ombre colorée, terminateur) est partagé avec les personnages.
+func test_world_profile_drops_rim_specular_and_halftone() -> void:
+	var m := ToonStyle.toon_material(null, Color.WHITE, "world")
+	assert_bool(m.get_shader_parameter("rim_enabled")).is_false()
+	assert_bool(m.get_shader_parameter("specular_enabled")).is_false()
+	assert_bool(m.get_shader_parameter("halftone_enabled")).is_false()
+	assert_float(m.get_shader_parameter("lit_gradient")).is_equal_approx(0.1, 0.0001)
+	assert_float(m.get_shader_parameter("shadow_value")).is_equal_approx(0.6, 0.0001)
+	assert_that(m.get_shader_parameter("shadow_color")).is_equal(Color("#9E94EB"))
+
+
+## Matériaux de carte déclarés dans le .tscn (albédo seul) : `apply_world_profile` leur pousse
+## le profil décor sans toucher à l'albédo ; un matériau partagé par deux blocs suffit une fois.
+func test_apply_world_profile_configures_map_materials_and_keeps_albedo() -> void:
+	var shared := ShaderMaterial.new()
+	shared.shader = _TOON_SHADER
+	shared.set_shader_parameter("albedo_color", Color("8c3a2e"))
+	var root: Node3D = auto_free(Node3D.new())
+	for i in 2:
+		var mi := MeshInstance3D.new()
+		mi.mesh = BoxMesh.new()
+		mi.material_override = shared
+		root.add_child(mi)
+	var other := StandardMaterial3D.new()
+	var mi_std := MeshInstance3D.new()
+	mi_std.mesh = BoxMesh.new()
+	mi_std.material_override = other
+	root.add_child(mi_std)
+	ToonStyle.apply_world_profile(root)
+	assert_that(shared.get_shader_parameter("albedo_color")).is_equal(Color("8c3a2e"))
+	assert_bool(shared.get_shader_parameter("rim_enabled")).is_false()
+	assert_float(shared.get_shader_parameter("shadow_value")).is_equal_approx(0.6, 0.0001)
+	assert_that(mi_std.material_override).is_same(other)   # un matériau non toon n'est jamais touché
 
 
 ## `assert_that(...).is_not_equal(...)` compare par CONTENU pour un Object en
@@ -182,22 +225,38 @@ func test_apply_to_does_not_crash_on_null_or_meshless_nodes() -> void:
 
 
 # ============================================================================
-#  Environnement / soleil (art/style/toon_style.json v2 "light"/"grading")
+#  Environnement / soleil (art/style/toon_style.json v3 "light"/"grading")
 # ============================================================================
 
 func test_environment_uses_grading_saturation_and_contrast_from_json() -> void:
 	var env := ToonStyle.environment()
 	assert_bool(env.adjustment_enabled).is_true()
-	assert_float(env.adjustment_saturation).is_equal_approx(1.25, 0.0001)
-	assert_float(env.adjustment_contrast).is_equal_approx(1.12, 0.0001)
+	assert_float(env.adjustment_saturation).is_equal_approx(1.3, 0.0001)
+	assert_float(env.adjustment_contrast).is_equal_approx(1.1, 0.0001)
+
+
+## v3 : ciel dégradé qui sert aussi de lumière d'ambiance, tonemap linéaire, halo, SSAO + SSIL.
+func test_environment_has_gradient_sky_as_background_and_ambient() -> void:
+	var env := ToonStyle.environment()
+	assert_int(env.background_mode).is_equal(Environment.BG_SKY)
+	assert_that(env.sky).is_not_null()
+	assert_bool(env.sky.sky_material is ProceduralSkyMaterial).is_true()
+	var sky_mat := env.sky.sky_material as ProceduralSkyMaterial
+	assert_that(sky_mat.sky_top_color).is_equal(Color("#2A78E4"))
+	assert_int(env.ambient_light_source).is_equal(Environment.AMBIENT_SOURCE_SKY)
+	assert_int(env.tonemap_mode).is_equal(Environment.TONE_MAPPER_LINEAR)
+	assert_bool(env.glow_enabled).is_true()
+	assert_bool(env.ssao_enabled).is_true()
+	assert_bool(env.ssil_enabled).is_true()
 
 
 func test_apply_sun_sets_color_and_energy_from_json() -> void:
 	var sun: DirectionalLight3D = auto_free(DirectionalLight3D.new())
 	ToonStyle.apply_sun(sun)
-	assert_that(sun.light_color).is_equal(Color("#FFF1DC"))
-	assert_float(sun.light_energy).is_equal_approx(1.0, 0.0001)
+	assert_that(sun.light_color).is_equal(Color("#FFE0B0"))
+	assert_float(sun.light_energy).is_equal_approx(1.15, 0.0001)
 	assert_bool(sun.shadow_enabled).is_true()
+	assert_float(sun.directional_shadow_max_distance).is_equal_approx(60.0, 0.0001)
 
 
 func test_setup_environment_configures_both_world_environment_and_sun() -> void:
@@ -205,7 +264,7 @@ func test_setup_environment_configures_both_world_environment_and_sun() -> void:
 	var sun: DirectionalLight3D = auto_free(DirectionalLight3D.new())
 	ToonStyle.setup_environment(we, sun)
 	assert_that(we.environment).is_not_null()
-	assert_float(sun.light_energy).is_equal_approx(1.0, 0.0001)
+	assert_float(sun.light_energy).is_equal_approx(1.15, 0.0001)
 
 
 func test_setup_environment_tolerates_a_missing_sun() -> void:
@@ -215,12 +274,12 @@ func test_setup_environment_tolerates_a_missing_sun() -> void:
 
 
 # ============================================================================
-#  Contour post-traitement (art/style/toon_style.json v2 "outline")
+#  Contour post-traitement (art/style/toon_style.json v3 "outline")
 # ============================================================================
 
 func test_outline_params_match_json() -> void:
 	var p := ToonStyle.outline_params()
-	assert_that(p["outline_color"]).is_equal(Color("#0E0A12"))
+	assert_that(p["outline_color"]).is_equal(Color("#1B1030"))
 	assert_float(p["width_px_at_1080p"]).is_equal_approx(1.5, 0.0001)
 	assert_float(p["min_width_px"]).is_equal_approx(1.0, 0.0001)
 	assert_float(p["depth_threshold"]).is_equal_approx(0.015, 0.0001)
@@ -237,7 +296,7 @@ func test_add_outline_pass_attaches_a_quad_to_the_camera() -> void:
 	assert_that(quad.get_parent()).is_equal(camera)
 	var mat := quad.material_override as ShaderMaterial
 	assert_that(mat.shader).is_equal(_OUTLINE_SHADER)
-	assert_that(mat.get_shader_parameter("outline_color")).is_equal(Color("#0E0A12"))
+	assert_that(mat.get_shader_parameter("outline_color")).is_equal(Color("#1B1030"))
 
 
 func test_add_outline_pass_is_idempotent() -> void:

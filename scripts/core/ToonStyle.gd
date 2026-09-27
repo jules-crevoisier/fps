@@ -68,10 +68,20 @@ static func _hex(value: String, fallback: Color = Color.WHITE) -> Color:
 		return fallback
 	return Color(value)
 
-static func _section(name: StringName) -> Dictionary:
+## Section du JSON, surchargée par `profiles.<profile>.<name>` quand un profil est donné (v3 :
+## « character » = valeurs de base, « world » = décor -- pas de liseré ni de reflet sur des
+## faces planes, où un fresnel illuminerait des pans entiers).
+static func _section(name: StringName, profile: String = "") -> Dictionary:
 	var s := style()
 	var v = s.get(name, {})
-	return v if v is Dictionary else {}
+	var out: Dictionary = (v as Dictionary).duplicate() if v is Dictionary else {}
+	if profile != "":
+		var profiles = s.get("profiles", {})
+		var prof = profiles.get(profile, {}) if profiles is Dictionary else {}
+		var over = prof.get(name, {}) if prof is Dictionary else {}
+		if over is Dictionary:
+			out.merge(over, true)
+	return out
 
 # ---------------------------------------------------------------------------
 #  Matériau (toon_bd.gdshader) -- ingrédients 3/4 (éclairage réel + rim/spéculaire).
@@ -81,25 +91,38 @@ static func _section(name: StringName) -> Dictionary:
 ## retexturée) -- `color` reste une TEINTE multiplicative (blanc = neutre), jamais
 ## un remplacement de la texture. Sans texture, `color` est l'albédo plein (cas
 ## Shipment : blocs de couleur plate, voir `apply_to`).
-static func toon_material(albedo_tex: Texture2D, color: Color = Color.WHITE) -> ShaderMaterial:
+static func toon_material(albedo_tex: Texture2D, color: Color = Color.WHITE, profile: String = "character") -> ShaderMaterial:
 	var m := ShaderMaterial.new()
 	m.shader = SHADER
 	m.set_shader_parameter("albedo_color", color)
 	if albedo_tex != null:
 		m.set_shader_parameter("albedo_texture", albedo_tex)
 		m.set_shader_parameter("use_albedo_texture", true)
+	configure(m, profile)
+	return m
 
-	var shading := _section(&"shading")
+## Pousse tout le style du JSON (profil `profile`) sur un matériau toon_bd existant -- albédo et
+## texture jamais touchés. Sert aussi aux matériaux posés dans les scènes de carte (voir
+## `apply_world_profile`), qui sans cela garderaient les défauts du shader.
+static func configure(m: ShaderMaterial, profile: String = "character") -> void:
+	var shading := _section(&"shading", profile)
 	m.set_shader_parameter("wrap", shading.get("wrap", 0.1))
 	m.set_shader_parameter("terminator", shading.get("terminator", 0.45))
 	m.set_shader_parameter("sharpness", shading.get("sharpness", 0.12))
 	m.set_shader_parameter("shadow_value", shading.get("shadow_value", 0.42))
+	m.set_shader_parameter("lit_gradient", shading.get("lit_gradient", 0.0))
 
-	var tint := _section(&"shadow_tint")
+	var tint := _section(&"shadow_tint", profile)
 	m.set_shader_parameter("shadow_hue_shift_deg", tint.get("hue_shift_deg", -18.0))
 	m.set_shader_parameter("shadow_saturation_mult", tint.get("saturation_mult", 1.25))
+	m.set_shader_parameter("shadow_color", _hex(tint.get("color", "#FFFFFF")))
 
-	var rim := _section(&"rim")
+	var glow := _section(&"terminator_glow", profile)
+	m.set_shader_parameter("terminator_glow", glow.get("intensity", 0.0) if glow.get("enabled", false) else 0.0)
+	m.set_shader_parameter("terminator_glow_width", glow.get("width", 0.08))
+	m.set_shader_parameter("terminator_color", _hex(glow.get("color", "#FF7340")))
+
+	var rim := _section(&"rim", profile)
 	m.set_shader_parameter("rim_enabled", rim.get("enabled", true))
 	m.set_shader_parameter("rim_power", rim.get("power", 4.0))
 	m.set_shader_parameter("rim_threshold", rim.get("threshold", 0.55))
@@ -108,17 +131,22 @@ static func toon_material(albedo_tex: Texture2D, color: Color = Color.WHITE) -> 
 	m.set_shader_parameter("rim_tint", _hex(rim.get("color", "#FFE9B8")))
 	m.set_shader_parameter("rim_lit_side_only", rim.get("lit_side_only", true))
 
-	var spec := _section(&"specular")
+	var spec := _section(&"specular", profile)
 	m.set_shader_parameter("specular_enabled", spec.get("enabled", true))
 	m.set_shader_parameter("specular_size", spec.get("size", 0.18))
 	m.set_shader_parameter("specular_softness", spec.get("softness", 0.12))
 	m.set_shader_parameter("specular_intensity", spec.get("intensity", 0.25))
 	m.set_shader_parameter("specular_tint", _hex(spec.get("color", "#FFFFFF")))
 
-	var half := _section(&"halftone")
+	var half := _section(&"halftone", profile)
 	m.set_shader_parameter("halftone_enabled", half.get("enabled", false))
 	m.set_shader_parameter("halftone_cell_px", half.get("cell_px_at_1080p", 7.0))
 	m.set_shader_parameter("halftone_angle_deg", half.get("angle_deg", 45.0))
+	m.set_shader_parameter("halftone_spread", half.get("spread", 0.2))
+	m.set_shader_parameter("halftone_inner", half.get("inner_strength", 0.0))
+	m.set_shader_parameter("halftone_inner_radius", half.get("inner_radius", 0.3))
+	m.set_shader_parameter("halftone_fade_start_m", half.get("fade_start_m", 30.0))
+	m.set_shader_parameter("halftone_fade_end_m", half.get("fade_end_m", 60.0))
 	# Pas de `VIEWPORT_SIZE` dans ce contexte de fragment (voir toon_bd.gdshader) --
 	# posé une fois ici (jamais mis à jour au redimensionnement, sans conséquence :
 	# la trame est désactivée par défaut, jamais le contour post-process lui-même,
@@ -126,7 +154,29 @@ static func toon_material(albedo_tex: Texture2D, color: Color = Color.WHITE) -> 
 	var window := DisplayServer.window_get_size()
 	if window.x > 0 and window.y > 0:
 		m.set_shader_parameter("viewport_size", Vector2(window))
-	return m
+
+## Profil « world » sur chaque matériau toon_bd du sous-arbre (matériaux de carte déclarés dans
+## le .tscn, souvent partagés entre plusieurs blocs : chacun n'est configuré qu'une fois).
+static func apply_world_profile(root: Node) -> void:
+	var seen := {}
+	_world_walk(root, seen)
+
+static func _world_walk(node: Node, seen: Dictionary) -> void:
+	if node == null:
+		return
+	if node is MeshInstance3D:
+		var mi := node as MeshInstance3D
+		var mats: Array[Material] = [mi.material_override]
+		if mi.mesh != null:
+			for i in mi.mesh.get_surface_count():
+				mats.append(mi.get_surface_override_material(i))
+				mats.append(mi.mesh.surface_get_material(i))
+		for mat in mats:
+			if mat is ShaderMaterial and (mat as ShaderMaterial).shader == SHADER and not seen.has(mat):
+				seen[mat] = true
+				configure(mat as ShaderMaterial, "world")
+	for child in node.get_children():
+		_world_walk(child, seen)
 
 ## Texture + teinte déjà posées sur `material` (StandardMaterial3D importé d'un
 ## glTF peint, ou ShaderMaterial legacy -- dev_grid/ink_toon/ink_ground, qui
@@ -179,32 +229,74 @@ static func _swap_mesh_materials(mi: MeshInstance3D) -> void:
 #  Environnement + soleil -- ingrédients 3/4 (éclairage réel) et 4/4 (étalonnage).
 # ---------------------------------------------------------------------------
 
-## Environment autonome (testable sans arbre de scène) : ciel plat (JSON n'a pas
-## de shader de ciel dédié -- v2 se concentre sur matériaux+contour, contrairement
-## à l'ancien ink_sky v3), ambiance couleur, étalonnage saturation/contraste du
-## JSON (`grading`) via `adjustment_*` -- volontairement PAS le tonemap Filmic
-## (désaturerait les hautes lumières, contredirait "couleurs qui crient").
+## Environment autonome (testable sans arbre de scène) -- v3 « comics héroïque » :
+##  - ciel DÉGRADÉ (zénith saturé -> horizon clair) qui sert aussi de lumière d'ambiance :
+##    faces tournées vers le haut bleutées, vers le bas teintées sol -- l'ombre garde du volume ;
+##  - brume légère couleur horizon (profondeur, lisibilité des plans) ;
+##  - occlusion de contact (SSAO, aussi un peu sous la lumière directe) + rebond coloré (SSIL) ;
+##  - halo doux sur ce qui dépasse le blanc (reflets, liserés, effets) ;
+##  - tonemap du JSON (LINÉAIRE par défaut : l'albédo peint reste la couleur affichée).
 static func environment() -> Environment:
 	var light := _section(&"light")
 	var grading := _section(&"grading")
-	var palette := _section(&"palette")
+	var sky_s := _section(&"sky")
+	var atmo := _section(&"atmosphere")
+	var post := _section(&"post")
 	var env := Environment.new()
-	env.background_mode = Environment.BG_COLOR
-	env.background_color = _hex(palette.get("sky_blue", "#6FB6FF"))
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = _hex(light.get("ambient_color", "#5A6FA8"))
-	env.ambient_light_energy = light.get("ambient_strength", 0.35)
-	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
-	env.tonemap_exposure = 1.0
+
+	var sky_mat := ProceduralSkyMaterial.new()
+	var horizon := _hex(sky_s.get("horizon", "#BCE0FF"))
+	sky_mat.sky_top_color = _hex(sky_s.get("top", "#2A78E4"))
+	sky_mat.sky_horizon_color = horizon
+	sky_mat.sky_curve = sky_s.get("curve", 0.12)
+	sky_mat.ground_horizon_color = horizon
+	sky_mat.ground_bottom_color = _hex(sky_s.get("ground", "#6B5B52"))
+	sky_mat.ground_curve = sky_s.get("ground_curve", 0.06)
+	sky_mat.sun_angle_max = sky_s.get("sun_halo_deg", 12.0)
+	var sky := Sky.new()
+	sky.sky_material = sky_mat
+	env.background_mode = Environment.BG_SKY
+	env.sky = sky
+
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
+	env.ambient_light_color = _hex(light.get("ambient_color", "#7F9BD6"))
+	env.ambient_light_sky_contribution = light.get("ambient_sky_contribution", 1.0)
+	env.ambient_light_energy = light.get("ambient_strength", 0.3)
+	env.reflected_light_source = Environment.REFLECTION_SOURCE_DISABLED
+
+	var tonemaps := {"linear": Environment.TONE_MAPPER_LINEAR, "filmic": Environment.TONE_MAPPER_FILMIC,
+		"aces": Environment.TONE_MAPPER_ACES, "agx": Environment.TONE_MAPPER_AGX}
+	env.tonemap_mode = tonemaps.get(str(post.get("tonemap", "linear")), Environment.TONE_MAPPER_LINEAR)
+	env.tonemap_exposure = post.get("exposure", 1.0)
 	env.adjustment_enabled = true
 	env.adjustment_saturation = grading.get("saturation", 1.25)
 	env.adjustment_contrast = grading.get("contrast", 1.12)
-	env.adjustment_brightness = 1.0
-	env.glow_enabled = false
-	env.ssao_enabled = true
-	env.ssao_radius = 0.8
-	env.ssao_intensity = 1.0
-	env.ssao_power = 1.5
+	env.adjustment_brightness = grading.get("brightness", 1.0)
+
+	env.fog_enabled = atmo.get("fog", false)
+	env.fog_light_color = _hex(atmo.get("fog_color", "#CFE4FF"))
+	env.fog_density = atmo.get("fog_density", 0.006)
+	env.fog_aerial_perspective = atmo.get("aerial_perspective", 0.2)
+	env.fog_sky_affect = 0.0
+
+	var glow: Dictionary = post.get("glow", {})
+	env.glow_enabled = glow.get("enabled", false)
+	env.glow_intensity = glow.get("intensity", 0.4)
+	env.glow_strength = glow.get("strength", 1.0)
+	env.glow_bloom = glow.get("bloom", 0.0)
+	env.glow_hdr_threshold = glow.get("hdr_threshold", 0.95)
+	env.glow_blend_mode = Environment.GLOW_BLEND_MODE_SOFTLIGHT
+
+	var ssao: Dictionary = post.get("ssao", {})
+	env.ssao_enabled = ssao.get("enabled", true)
+	env.ssao_radius = ssao.get("radius", 0.8)
+	env.ssao_intensity = ssao.get("intensity", 1.0)
+	env.ssao_power = ssao.get("power", 1.5)
+	env.ssao_light_affect = ssao.get("light_affect", 0.0)
+	var ssil: Dictionary = post.get("ssil", {})
+	env.ssil_enabled = ssil.get("enabled", false)
+	env.ssil_radius = ssil.get("radius", 3.0)
+	env.ssil_intensity = ssil.get("intensity", 0.7)
 	return env
 
 ## Direction du soleil depuis azimut/élévation (même convention que
@@ -226,6 +318,11 @@ static func apply_sun(sun: DirectionalLight3D) -> void:
 	sun.light_color = _hex(light.get("sun_color", "#FFF1DC"))
 	sun.light_energy = light.get("sun_energy", 1.2)
 	sun.shadow_enabled = light.get("shadows", true)
+	# Ombres de carte : portée resserrée (Shipment ~40 m) = cascades plus fines ; pénombre
+	# légère, re-affûtée par la rampe du shader (bord net mais sans escalier).
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+	sun.directional_shadow_max_distance = light.get("shadow_max_distance_m", 100.0)
+	sun.light_angular_distance = light.get("sun_softness_deg", 0.0)
 	var dir := _sun_direction(light.get("sun_elevation_deg", 50.0), light.get("sun_azimuth_deg", 135.0))
 	# `Vector3.ZERO`, jamais `sun.global_position` (LevelLook._apply_key_light,
 	# même moteur/version, même doc) : `node_added` peut appeler ceci AVANT que
@@ -241,6 +338,7 @@ static func apply_sun(sun: DirectionalLight3D) -> void:
 static func setup_environment(world_env: WorldEnvironment, sun: DirectionalLight3D) -> void:
 	if world_env != null:
 		world_env.environment = environment()
+		apply_world_profile(world_env.get_parent())
 	apply_sun(sun)
 
 # ---------------------------------------------------------------------------
