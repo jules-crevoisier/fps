@@ -509,6 +509,22 @@ static func state_allows_footsteps(state_name: String) -> bool:
 ## +ENEMY_FOOTSTEP_BOOST_DB s'il est ennemi, 0 s'il est allié (repère tactique,
 ## GF-11 — jamais appliqué aux pas LOCAUX). Équipe locale ou distante inconnue
 ## (< 0, ex. pas encore assignée par le serveur) : neutre (0 dB), on ne devine pas.
+## Pas d'un joueur DISTANT (retour utilisateur 2026-09-27 : « un bruit qui se répète » = le
+## tapotement continu des bots qui marchent). Règle façon CS, cohérente avec la minicarte
+## (MinimapHUD.heard : la marche est silencieuse) : la MARCHE (et l'accroupi) ne s'entend que de
+## près (<= REMOTE_WALK_MAX_M) et bas (REMOTE_WALK_DB) ; les coéquipiers sont baissés de
+## ALLY_FOOTSTEP_DB pour ne pas masquer les ennemis. Renvoie -INF = ne pas jouer. Fonction PURE.
+const REMOTE_WALK_MAX_M := 6.0
+const REMOTE_WALK_DB := -12.0
+const ALLY_FOOTSTEP_DB := -4.0
+
+static func remote_footstep_offset_db(is_walk: bool, is_enemy: bool, distance: float) -> float:
+	if is_walk and distance > REMOTE_WALK_MAX_M:
+		return -INF
+	var db := (REMOTE_WALK_DB if is_walk else 0.0)
+	db += ENEMY_FOOTSTEP_BOOST_DB if is_enemy else ALLY_FOOTSTEP_DB
+	return db
+
 static func footstep_team_volume_offset_db(local_team: int, other_team: int) -> float:
 	if local_team < 0 or other_team < 0:
 		return 0.0
@@ -1375,9 +1391,14 @@ func _poll_footsteps(delta: float) -> void:
 			if info.is_local:
 				play_local(sname)
 			else:
-				# GF-11 : pas ennemi +3 dB vs allié (repère tactique, jamais sur les pas LOCAUX).
-				var offset_db := footstep_team_volume_offset_db(_local_team(), int(pc.team))
-				play_at(sname, pc.global_position, _listener_distance(pc.global_position), offset_db, _occlusion_cache.get(id, false))
+				# Marche discrète et coéquipiers en retrait (voir remote_footstep_offset_db).
+				var lt := _local_team()
+				var is_enemy := lt >= 0 and int(pc.team) >= 0 and int(pc.team) != lt
+				var dist := _listener_distance(pc.global_position)
+				var offset_db := remote_footstep_offset_db(not sname.contains("sprint"), is_enemy, dist)
+				if is_inf(offset_db):
+					continue
+				play_at(sname, pc.global_position, dist, offset_db, _occlusion_cache.get(id, false))
 
 # ======================================================================
 #  ATTERRISSAGE (GF-11, LOCAL uniquement — voir docstring en tête de fichier)

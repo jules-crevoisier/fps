@@ -544,20 +544,40 @@ def build_impacts():
 
 # ------------------------------------------------------------------ interface
 def build_ui():
-    pick = {
-        "ui_hover": [("tick_001.ogg", -26), ("tick_004.ogg", -26)],
-        "ui_click": [("select_002.ogg", -14), ("select_005.ogg", -14)],
-        "ui_back": [("back_002.ogg", -15)],
-        "ui_buy": [("confirmation_001.ogg", -12)],
-        "ui_toggle": [("switch_002.ogg", -16), ("switch_005.ogg", -16)],
-        "ui_tab": [("scroll_002.ogg", -17), ("scroll_004.ogg", -17)],
-        "ui_confirm": [("confirmation_002.ogg", -11)],
-        "ui_error": [("error_004.ogg", -14)],
-    }
-    for name, files in pick.items():
-        for k, (f, lvl) in enumerate(files):
-            p = os.path.join(UIS, f)
-            save(name, k + 1, peak_norm(trim_silence(load(p)), lvl), [p])
+    """Sons de menu, thème « planche de BD » (retour utilisateur 2026-09-27 : les clics numériques
+    Kenney Interface étaient « horribles ») : papier, carton, pages -- doux, courts, jamais criards.
+    Le survol est presque inaudible (on survole sans arrêt)."""
+    def rpg(n):
+        return os.path.join(RPG, n)
+
+    def paper(path, max_s, lp_hz, hp_hz, lvl, pitch_r=1.0):
+        x = trim_silence(load(path))[: int(SR * max_s)]
+        x = pitch(x, pitch_r) if pitch_r != 1.0 else x
+        return peak_norm(fade(hp(lp(x, lp_hz), hp_hz), 0.5, min(40.0, max_s * 400)), lvl)
+
+    # survol : effleurement de papier, très court et très bas
+    for k, (f, r) in enumerate((("bookFlip1.ogg", 1.4), ("bookFlip3.ogg", 1.5))):
+        save("ui_hover", k + 1, paper(rpg(f), 0.06, 6000, 800, -32, r), [rpg(f)])
+    # clic : carte posée sur la table (mat, pas numérique)
+    for k, f in enumerate(("bookPlace1.ogg", "bookPlace2.ogg")):
+        save("ui_click", k + 1, paper(rpg(f), 0.14, 7000, 180, -15, 1.15), [rpg(f)])
+    # onglet : page qu'on tourne (le salon est une planche de BD)
+    for k, f in enumerate(("bookFlip1.ogg", "bookFlip2.ogg")):
+        save("ui_tab", k + 1, paper(rpg(f), 0.28, 8000, 250, -17), [rpg(f)])
+    save("ui_back", 1, paper(rpg("bookClose.ogg"), 0.22, 6000, 150, -16), [rpg("bookClose.ogg")])
+    # interrupteur : petit clic doux (métal feutré)
+    for k in range(2):
+        save("ui_toggle", k + 1, paper(rpg("metalClick.ogg"), 0.08, 4500, 600, -20, 1.1 + 0.1 * k), [rpg("metalClick.ogg")])
+    # JOUER / confirmer : « pop » BD = claque mate + page qui claque + pincement aigu
+    punch = os.path.join(IMP, "impactPunch_medium_001.ogg")
+    pluck = os.path.join(UIS, "pluck_002.ogg")
+    conf = mix((lp(trim_silence(load(punch)), 2500), -2, 0), (paper(rpg("bookPlace2.ogg"), 0.14, 7000, 180, -6), 0, 0),
+               (hp(pitch(trim_silence(load(pluck)), 1.2), 900), -8, 25))
+    save("ui_confirm", 1, peak_norm(fade(conf, 0.5, 80), -11), [punch, rpg("bookPlace2.ogg"), pluck])
+    save("ui_buy", 1, peak_norm(fade(conf, 0.5, 80), -12), [punch, rpg("bookPlace2.ogg"), pluck])
+    # erreur : deux petits coups sourds (jamais un buzzer)
+    e = mix((paper(rpg("bookPlace3.ogg"), 0.1, 3000, 120, 0, 0.8), 0, 0), (paper(rpg("bookPlace3.ogg"), 0.1, 3000, 120, 0, 0.75), -2, 110))
+    save("ui_error", 1, peak_norm(e, -16), [rpg("bookPlace3.ogg")])
 
 
 GROUPS = {"gun": build_guns, "revolver": build_revolver_foley, "foley": build_foley, "move": build_movement,

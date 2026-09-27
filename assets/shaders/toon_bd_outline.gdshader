@@ -66,6 +66,13 @@ void fragment() {
 	vec3 n_c = normalize(texture(normal_roughness_texture, SCREEN_UV).xyz * 2.0 - 1.0);
 
 	float cos_threshold = cos(radians(normal_threshold_deg));
+	// Seuil de profondeur ADAPTÉ À L'INCIDENCE (bug utilisateur 2026-09-27 : « une partie du sol
+	// devient toute noire ») : sur une surface vue en rasant (sol au loin), deux pixels voisins
+	// diffèrent beaucoup en profondeur sans qu'il y ait de bord -- à hauteur d'yeux, dès ~14 m le
+	// sol entier dépassait le seuil et se remplissait d'encre. Le seuil est divisé par |N·V|
+	// (normales du tampon = espace vue) : un vrai bord (saut de profondeur franc) reste détecté.
+	float n_dot_v = max(abs(dot(n_c, normalize(-vp_c))), 0.06);
+	float depth_thr = depth_threshold / n_dot_v;
 	float edge = 0.0;
 	vec2 offsets[4] = vec2[](vec2(1.0, 0.0), vec2(-1.0, 0.0), vec2(0.0, 1.0), vec2(0.0, -1.0));
 	for (int i = 0; i < 4; i++) {
@@ -76,7 +83,7 @@ void fragment() {
 		// serait soit invisible au loin (précision de profondeur), soit trop
 		// sensible de près (toute la géométrie courbe "grenaille").
 		float rel_diff = abs(vp_c.z - vp2.z) / max(abs(vp_c.z), 0.05);
-		if (rel_diff > depth_threshold) {
+		if (rel_diff > depth_thr) {
 			edge = 1.0;
 		}
 		vec3 n2 = normalize(texture(normal_roughness_texture, uv2).xyz * 2.0 - 1.0);

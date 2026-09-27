@@ -178,17 +178,17 @@ Construits par `tools/audio/build_sfx.py` (2026-09-27) depuis des sources **CC0*
 | tail_indoor_2.wav | synthèse (réponse impulsionnelle) |
 | tail_outdoor_1.wav | synthèse (réponse impulsionnelle) |
 | tail_outdoor_2.wav | synthèse (réponse impulsionnelle) |
-| ui_back_1.wav | kenney_interface-sounds/Audio/back_002.ogg |
-| ui_buy_1.wav | kenney_interface-sounds/Audio/confirmation_001.ogg |
-| ui_click_1.wav | kenney_interface-sounds/Audio/select_002.ogg |
-| ui_click_2.wav | kenney_interface-sounds/Audio/select_005.ogg |
-| ui_confirm_1.wav | kenney_interface-sounds/Audio/confirmation_002.ogg |
-| ui_error_1.wav | kenney_interface-sounds/Audio/error_004.ogg |
-| ui_hover_1.wav | kenney_interface-sounds/Audio/tick_001.ogg |
-| ui_hover_2.wav | kenney_interface-sounds/Audio/tick_004.ogg |
-| ui_tab_1.wav | kenney_interface-sounds/Audio/scroll_002.ogg |
-| ui_tab_2.wav | kenney_interface-sounds/Audio/scroll_004.ogg |
-| ui_toggle_1.wav | kenney_interface-sounds/Audio/switch_002.ogg |
-| ui_toggle_2.wav | kenney_interface-sounds/Audio/switch_005.ogg |
+| ui_back_1.wav | kenney_rpg-audio/Audio/bookClose.ogg |
+| ui_buy_1.wav | kenney_impact-sounds/Audio/impactPunch_medium_001.ogg; kenney_interface-sounds/Audio/pluck_002.ogg; kenney_rpg-audio/Audio/bookPlace2.ogg |
+| ui_click_1.wav | kenney_rpg-audio/Audio/bookPlace1.ogg |
+| ui_click_2.wav | kenney_rpg-audio/Audio/bookPlace2.ogg |
+| ui_confirm_1.wav | kenney_impact-sounds/Audio/impactPunch_medium_001.ogg; kenney_interface-sounds/Audio/pluck_002.ogg; kenney_rpg-audio/Audio/bookPlace2.ogg |
+| ui_error_1.wav | kenney_rpg-audio/Audio/bookPlace3.ogg |
+| ui_hover_1.wav | kenney_rpg-audio/Audio/bookFlip1.ogg |
+| ui_hover_2.wav | kenney_rpg-audio/Audio/bookFlip3.ogg |
+| ui_tab_1.wav | kenney_rpg-audio/Audio/bookFlip1.ogg |
+| ui_tab_2.wav | kenney_rpg-audio/Audio/bookFlip2.ogg |
+| ui_toggle_1.wav | kenney_rpg-audio/Audio/metalClick.ogg |
+| ui_toggle_2.wav | kenney_rpg-audio/Audio/metalClick.ogg |
 | wall_slam_1.wav | kenney_impact-sounds/Audio/impactMetal_heavy_000.ogg; kenney_impact-sounds/Audio/impactSoft_heavy_002.ogg |
 | wall_slam_2.wav | kenney_impact-sounds/Audio/impactMetal_heavy_002.ogg; kenney_impact-sounds/Audio/impactSoft_heavy_003.ogg |

@@ -327,3 +327,26 @@ func test_match_result_sting_empty_while_undecided() -> void:
 
 func test_match_result_sting_empty_without_local_player() -> void:
 	assert_str(Audio.match_result_sting(0, -1)).is_equal("")
+
+
+# ---------------------------------------------------------------------------
+#  Pas des AUTRES joueurs (retour utilisateur 2026-09-27 : tapotement continu des bots qui marchent)
+# ---------------------------------------------------------------------------
+
+func test_remote_walking_is_silent_beyond_a_few_meters() -> void:
+	assert_bool(is_inf(Audio.remote_footstep_offset_db(true, true, Audio.REMOTE_WALK_MAX_M + 1.0))).is_true()
+
+
+func test_remote_walking_is_quiet_up_close() -> void:
+	var db := Audio.remote_footstep_offset_db(true, true, 3.0)
+	assert_float(db).is_less(0.0)
+	assert_bool(is_inf(db)).is_false()
+
+
+func test_enemy_sprint_stays_audible_and_boosted_far_away() -> void:
+	assert_float(Audio.remote_footstep_offset_db(false, true, 25.0)).is_equal_approx(Audio.ENEMY_FOOTSTEP_BOOST_DB, 0.001)
+
+
+func test_ally_footsteps_sit_below_enemy_footsteps() -> void:
+	assert_float(Audio.remote_footstep_offset_db(false, false, 10.0)).is_less(Audio.remote_footstep_offset_db(false, true, 10.0))
+
