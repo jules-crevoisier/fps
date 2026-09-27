@@ -96,6 +96,37 @@ func test_aim_held_tracks_action_pressed() -> void:
 	assert_bool(_input.aim_held).is_true()
 
 
+## Tâche "revolver" (2026-09-27, pivot "Valorant Classic") : `alt_fire_held`
+## est le maintien BRUT de la MÊME action "aim", jamais filtré par l'arme
+## équipée (contrairement à `aim_held` — voir `weapon_aims_on_right_click`,
+## qui retombe sur VRAI ici puisque `player` reste nul, aucune arme à
+## consulter : les deux champs suivent donc RMB de façon identique dans ce
+## cas dégénéré, la divergence n'apparaissant qu'avec une arme réelle
+## `AltFireMode.FAN`, voir tests/combat/test_revolver_fan_fire.gd).
+func test_alt_fire_held_tracks_the_same_raw_action_as_aim() -> void:
+	Input.action_press("aim")
+	_input.gather_from_devices()
+	assert_bool(_input.alt_fire_held).is_true()
+	Input.action_release("aim")
+	_input.gather_from_devices()
+	assert_bool(_input.alt_fire_held).is_false()
+
+
+## LMB (fire) ne doit JAMAIS déclencher aim_held/alt_fire_held (bug rapporté
+## "le clic gauche vise" -- tâche "revolver", 2026-09-27) : contrôle de
+## régression générique, indépendant de toute arme.
+func test_fire_never_sets_aim_held_or_alt_fire_held() -> void:
+	Input.action_press("fire")
+	_input.gather_from_devices()
+	assert_bool(_input.aim_held).append_failure_message(
+		"LMB ne doit jamais déclencher aim_held (bug rapporté \"le clic gauche vise\")"
+	).is_false()
+	assert_bool(_input.alt_fire_held).append_failure_message(
+		"LMB ne doit jamais déclencher alt_fire_held non plus"
+	).is_false()
+	Input.action_release("fire")
+
+
 func test_crouch_held_tracks_action_pressed_and_walking_is_the_default() -> void:
 	# Contrat 2026-09-26 : on MARCHE par défaut, le sprint est une bascule (touche "sprint").
 	Input.action_press("crouch")
@@ -144,6 +175,7 @@ func test_clear_resets_every_field() -> void:
 	assert_bool(_input.fire_held).is_false()
 	assert_bool(_input.fire_pressed).is_false()
 	assert_bool(_input.aim_held).is_false()
+	assert_bool(_input.alt_fire_held).is_false()
 	assert_int(_input.weapon_slot_pressed).is_equal(-1)
 	assert_int(_input.grenade_slot_pressed).is_equal(-1)
 	assert_float(_input.move.x).is_equal_approx(0.0, 0.0001)

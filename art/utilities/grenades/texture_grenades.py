@@ -28,6 +28,7 @@ from mathutils import Matrix, Vector
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 sys.path.insert(0, os.path.join(ROOT, "tools", "blender", "lib"))
 from uv_mask import pad_edges  # noqa: E402
+from uv_paint import box_blur, rasterize, smoothstep, zone_edges  # noqa: E402
 
 RES = 1024
 SRC = os.path.join(ROOT, "assets", "incoming", "tripo")
@@ -148,65 +149,6 @@ def loose_parts(me):
     return part, stats
 
 
-def rasterize(me, part):
-    """Position 3D et partie de chaque texel couvert (-1 = hors îles UV).
-    Deux passes : l'intérieur exact des triangles l'emporte sur la marge conservatrice."""
-    me.calc_loop_triangles()
-    uv = np.empty(len(me.loops) * 2, np.float32)
-    me.uv_layers.active.data.foreach_get("uv", uv)
-    uv = uv.reshape(-1, 2) * RES
-    co = np.empty(len(me.vertices) * 3, np.float32)
-    me.vertices.foreach_get("co", co)
-    co = co.reshape(-1, 3)
-    pos = np.zeros((RES, RES, 3), np.float32)
-    pid = np.full((RES, RES), -1, np.int32)
-    exact = np.zeros((RES, RES), bool)
-    for t in me.loop_triangles:
-        p = uv[list(t.loops)]
-        a, b, c = p
-        area = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
-        if abs(area) < 1e-9:
-            continue
-        x0, y0 = np.maximum(np.floor(p.min(0) - 1).astype(int), 0)
-        x1 = min(int(np.ceil(p[:, 0].max() + 1)), RES - 1)
-        y1 = min(int(np.ceil(p[:, 1].max() + 1)), RES - 1)
-        if x1 < x0 or y1 < y0:
-            continue
-        xs, ys = np.meshgrid(np.arange(x0, x1 + 1) + 0.5, np.arange(y0, y1 + 1) + 0.5)
-        w = []
-        dist = []
-        for e0, e1, opp in ((b, c, a), (c, a, b), (a, b, c)):
-            cross = (e1[0] - e0[0]) * (ys - e0[1]) - (e1[1] - e0[1]) * (xs - e0[0])
-            w.append(cross / area)
-            dist.append(cross * np.sign(area) / max(np.hypot(*(e1 - e0)), 1e-9))
-        w = np.stack(w, -1)
-        inside = np.all(np.stack(dist) >= 0.0, 0)
-        near = np.all(np.stack(dist) >= -0.75, 0)
-        wc = np.clip(w, 0.0, None)
-        wc /= np.maximum(wc.sum(-1, keepdims=True), 1e-9)
-        P = wc @ co[list(t.vertices)]
-        sl = (slice(y0, y1 + 1), slice(x0, x1 + 1))
-        write = inside | (near & ~exact[sl])
-        pos[sl][write] = P[write]
-        pid[sl][write] = part[t.polygon_index]
-        exact[sl] |= inside
-    return pos, pid
-
-
-# -- image ----------------------------------------------------------------------------------
-def _box(a, r=1):
-    out = np.zeros_like(a)
-    for dy in range(-r, r + 1):
-        for dx in range(-r, r + 1):
-            out += np.roll(a, (dy, dx), axis=(0, 1))
-    return out / float((2 * r + 1) ** 2)
-
-
-def _smooth(e0, e1, x):
-    u = np.clip((x - e0) / (e1 - e0), 0.0, 1.0)
-    return u * u * (3.0 - 2.0 * u)
-
-
 def normal_divergence(img, cover):
     """Divergence de la normale (espace tangent glTF, +Y = haut de l'image) ramenée à RES."""
     w, h = img.size
@@ -217,7 +159,7 @@ def normal_divergence(img, cover):
     if f > 1:
         px = px.reshape(RES, f, RES, f, 2).mean((1, 3))
     px = pad_edges(px, cover, iterations=4)
-    px = _box(px, 1)
+    px = box_blur(px, 1)
     dnx = (np.roll(px[..., 0], -1, 1) - np.roll(px[..., 0], 1, 1)) * 0.5
     dny = (np.roll(px[..., 1], -1, 0) - np.roll(px[..., 1], 1, 0)) * 0.5
     return dnx + dny
@@ -226,7 +168,7 @@ def normal_divergence(img, cover):
 def paint(name, obj, rule, band):
     me = obj.data
     part, stats = loose_parts(me)
-    pos, pid = rasterize(me, part)
+    pos, pid, _ = rasterize(me, RES, part)
     cover = pid >= 0
     zones = sorted(PAL)
     zone_of_part = np.array([zones.index(rule(s)) for s in stats], np.int32)
@@ -255,13 +197,10 @@ def paint(name, obj, rule, band):
         q = np.percentile(np.abs(d), [50, 90, 97, 99])
         print(f"DIV {name} |div| p50={q[0]:.4f} p90={q[1]:.4f} p97={q[2]:.4f} p99={q[3]:.4f}")
         t = q[2]
-        ink = _smooth(0.35 * t, 0.9 * t, -div)
-        shine = _smooth(0.5 * t, 1.4 * t, div)
+        ink = smoothstep(0.35 * t, 0.9 * t, -div)
+        shine = smoothstep(0.5 * t, 1.4 * t, div)
     # liseré aux changements de zone (dans une même île)
-    edge = np.zeros((RES, RES), bool)
-    for dy, dx in ((0, 1), (0, -1), (1, 0), (-1, 0)):
-        nz = np.roll(zid, (dy, dx), axis=(0, 1))
-        edge |= cover & (nz >= 0) & (nz != zid)
+    edge = zone_edges(zid, cover)
     ink = np.maximum(ink, edge.astype(np.float32))
     ink[~cover] = 0.0
     shine[~cover] = 0.0

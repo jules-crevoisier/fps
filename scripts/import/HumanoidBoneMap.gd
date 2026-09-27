@@ -177,4 +177,5 @@ const FROG_RIFLE_CLIPS := [
 const FROG_LOOPING_CLIPS := [
 	"Idle", "Walk", "Jog_Fwd", "Sprint", "Crouch_Idle", "Crouch_Fwd", "Jump",
 	"Rifle_Idle", "Rifle_Aim_Down", "Rifle_Aim_Neutral", "Rifle_Aim_Up",
+	"Pistol_Idle", "Pistol_Aim_Down", "Pistol_Aim_Neutral", "Pistol_Aim_Up",
 ]

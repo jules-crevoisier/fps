@@ -37,12 +37,26 @@ const _HAND_BONE := "DEF-hand.R"
 ## repli sur `_HAND_BONE`/`_GRIP_OFFSETS` (BoneAttachment3D créé en code, comme
 ## avant) pour tout agent qui n'a pas encore ce nœud (les 5 autres glb Tripo).
 const _WEAPON_SOCKET_NAME := "WeaponSocket"
+## Os d'attache DÉDIÉ du Revolver en 3P (tâche "revolver", 2026-09-27, contrat
+## lead : "the lead adds a 'PistolGrip' bone" sur frog_cowboy.glb) — même
+## principe que "WeaponGrip" côté bras FP (FPArmsRig.gd) : transform locale
+## IDENTITÉ + contre-échelle (`counter_scale_for`), un BoneAttachment3D créé EN
+## CODE (pas un nœud "WeaponSocket" posé dans le .tscn) car cet os n'existe QUE
+## sur le squelette Frog Cowboy, jamais garanti par un nœud de scène partagé
+## par les 6 personnages. Repli silencieux sur `_weapon_socket`/`_bone_attach`
+## (comportement inchangé) tant que l'os n'existe pas encore (`_pistol_grip_idx
+## < 0`) — même discipline que `_has_throw_clips`/`FPArmsRig.use_weapon_clip_set`.
+const _PISTOL_GRIP_BONE := "PistolGrip"
 
 var player: PlayerController
 var weapon: Weapon
 var _character_body: CharacterBody
 var _bone_attach: BoneAttachment3D
 var _weapon_socket: Node3D
+## BoneAttachment3D DÉDIÉ sur "PistolGrip" (tâche "revolver") — créé une seule
+## fois dès que le squelette expose cet os (voir `_on_body_ready`), jamais
+## recréé. `null` tant que l'os n'existe pas (repli sur le chemin historique).
+var _pistol_grip_attach: BoneAttachment3D
 var _model: Node3D
 var _muzzle: Node3D
 var _muzzle_mesh: MeshInstance3D
@@ -83,13 +97,23 @@ func _ready() -> void:
 ## (`_HAND_BONE`) pour un agent qui n'a pas encore ce nœud.
 func _on_body_ready() -> void:
 	_weapon_socket = _character_body.find_child(_WEAPON_SOCKET_NAME, true, false) as Node3D
+	var skeleton := _character_body.get_skeleton()
 	if _weapon_socket == null:
-		var skeleton := _character_body.get_skeleton()
 		if skeleton == null:
 			return
 		_bone_attach = BoneAttachment3D.new()
 		_bone_attach.bone_name = _HAND_BONE
 		skeleton.add_child(_bone_attach)
+	# Tâche "revolver" (2026-09-27) : os DÉDIÉ "PistolGrip" pour le Revolver en
+	# 3P — INDÉPENDANT de "WeaponSocket"/`_bone_attach` (qui restent le point
+	# d'attache générique de toute autre arme, voir `_reparent_model_to_hand`).
+	# Repli silencieux (`_pistol_grip_attach` reste nul) si le squelette
+	# n'expose pas encore cet os — même discipline que
+	# FPArmsRig.use_weapon_clip_set.
+	if skeleton and skeleton.find_bone(_PISTOL_GRIP_BONE) >= 0:
+		_pistol_grip_attach = BoneAttachment3D.new()
+		_pistol_grip_attach.bone_name = _PISTOL_GRIP_BONE
+		skeleton.add_child(_pistol_grip_attach)
 	if _model:
 		_reparent_model_to_hand()
 
@@ -136,6 +160,16 @@ func _on_current_id_changed(id: int) -> void:
 func _reparent_model_to_hand(weapon_id: int = -1) -> void:
 	if _model.get_parent():
 		_model.get_parent().remove_child(_model)
+	var cfg_for_grip: WeaponConfig = WeaponDatabase.get_by_id(weapon_id) if weapon_id >= 0 else (weapon.cfg() if weapon else null)
+	# Tâche "revolver" : catégorie PISTOL -> os DÉDIÉ "PistolGrip" quand le
+	# squelette l'expose (transform IDENTITÉ + contre-échelle, même principe
+	# que "WeaponSocket" ci-dessous) -- repli silencieux sur WeaponSocket/
+	# `_bone_attach` (comportement inchangé) tant que l'os n'est pas livré.
+	if cfg_for_grip and cfg_for_grip.category == WeaponConfig.Category.PISTOL and _pistol_grip_attach:
+		_pistol_grip_attach.add_child(_model)
+		_model.transform = Transform3D.IDENTITY
+		_apply_scale_correction(_model)
+		return
 	if _weapon_socket:
 		# Point d'attache venant du PERSONNAGE (scenes/characters/<agent>.tscn,
 		# transform de "WeaponSocket" réglable par l'utilisateur dans l'éditeur --
@@ -147,8 +181,7 @@ func _reparent_model_to_hand(weapon_id: int = -1) -> void:
 		_apply_scale_correction(_model)
 		return
 	_bone_attach.add_child(_model)
-	var cfg: WeaponConfig = WeaponDatabase.get_by_id(weapon_id) if weapon_id >= 0 else (weapon.cfg() if weapon else null)
-	var grip: Dictionary = _GRIP_OFFSETS.get(cfg.category, _DEFAULT_GRIP) if cfg else _DEFAULT_GRIP
+	var grip: Dictionary = _GRIP_OFFSETS.get(cfg_for_grip.category, _DEFAULT_GRIP) if cfg_for_grip else _DEFAULT_GRIP
 	var pos: Vector3 = grip["pos"]
 	var rot_deg: Vector3 = grip["rot_deg"]
 	_model.transform = Transform3D(Basis.from_euler(Vector3(deg_to_rad(rot_deg.x), deg_to_rad(rot_deg.y), deg_to_rad(rot_deg.z))), pos)

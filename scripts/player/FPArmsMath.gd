@@ -78,20 +78,26 @@ static func weapon_counter_scale(rig_scale: float) -> Vector3:
 static func ads_blend_amount(ads_t: float) -> float:
 	return clampf(1.0 - ads_t, 0.0, 1.0)
 
-## Vitesse de lecture (`parameters/ReloadSpeed/scale`) du clip FP_Reload pour
-## qu'il dure `reload_time` secondes de l'arme en main — contrat tâche : "speed
-## 2.5 / weapon reload_time" (2.5 = durée de référence de l'asset, cf. l'asset
-## contract "FP_Reload (2.5 s, = ravage.tres reload_time)"), MÊME principe que
-## CharacterAnimator.reload_clip_speed (corps tiers, RELOAD_CLIP_BASE_DURATION_S
-## / reload_time) mais indépendant (fichiers disjoints). Repli défensif à 1.0
-## (vitesse native) si `reload_time` est invalide (≤ 0) — jamais de division
+## Vitesse de lecture (`parameters/ReloadSpeed/scale`) du clip de rechargement
+## ACTIF pour qu'il dure `reload_time` secondes de l'arme en main — contrat
+## tâche originale : "speed 2.5 / weapon reload_time" (2.5 = durée de référence
+## DE L'ASSET FP_Reload, cf. l'asset contract "FP_Reload (2.5 s, = ravage.tres
+## reload_time)"). Tâche "revolver" (2026-09-27) : `clip_length` accepte
+## désormais la durée AUTHORED RÉELLE du clip de rechargement ACTIF
+## (FPArmsRig.trigger_reload la mesure via `clip_length()`, jamais supposée —
+## FP_Reload et FPP_Reload n'ont pas forcément la même durée), avec
+## `RELOAD_CLIP_REFERENCE_DURATION_S` comme valeur par défaut pour tout
+## appelant qui ne précise rien (comportement STRICTEMENT inchangé). MÊME
+## principe que CharacterAnimator.reload_clip_speed (corps tiers) mais
+## indépendant (fichiers disjoints). Repli défensif à 1.0 (vitesse native) si
+## `reload_time` OU `clip_length` sont invalides (≤ 0) — jamais de division
 ## par zéro.
 const RELOAD_CLIP_REFERENCE_DURATION_S := 2.5
 
-static func reload_speed_for(reload_time: float) -> float:
-	if reload_time <= 0.0:
+static func reload_speed_for(reload_time: float, clip_length: float = RELOAD_CLIP_REFERENCE_DURATION_S) -> float:
+	if reload_time <= 0.0 or clip_length <= 0.0:
 		return 1.0
-	return RELOAD_CLIP_REFERENCE_DURATION_S / reload_time
+	return clip_length / reload_time
 
 ## Le geste d'inspection (touche "inspect", FP_Inspect) doit être interrompu
 ## dès que le joueur tire, vise ou recharge (acceptance tâche : "cancelled by

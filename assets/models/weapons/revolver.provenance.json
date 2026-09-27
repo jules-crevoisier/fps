@@ -1,0 +1,13 @@
+{
+  "tool": "Tripo Studio — image de concept Nano Banana 2 (concept C choisi par l'utilisateur), image -> 3D H3.1 avec « Générer par parties » (Détaillé, 51 pièces), triangles, AUCUNE texture Tripo",
+  "concept_image_tool": "Nano Banana 2 (générateur d'images de Tripo Studio)",
+  "tripo_task_id": "e6609bbb-793c-44bb-a372-15d538520eb7",
+  "tripo_task_url": "https://studio.tripo3d.ai/fr/workspace/segmentation/e6609bbb-793c-44bb-a372-15d538520eb7",
+  "source_glb": "assets/incoming/tripo/revolver.glb",
+  "prompt": "Stylized video game weapon concept: compact frontier revolver with a short 3-inch octagonal barrel, six-shot cylinder showing brass cartridge rims, curved walnut grip with a small green lily-pad inlay, chunky hammer, frog-cowboy flavor. Hand-painted texture with bold black ink linework, cel-shaded comic book look, flat saturated gunmetal, walnut and brass colors, chunky readable silhouette, exaggerated proportions, three-quarter view from the right side, full weapon visible, centered, plain white background, no hands, no text, no logo",
+  "prompt_source": "tapé par le lead (Claude) dans Tripo Studio, mode image",
+  "date": "2026-09-27",
+  "post_processing": "art/weapons/revolver/build_revolver.py : pièces regroupées par rôle, squelette (Root/Crane/Cylinder/Hammer/Trigger), UV Blender, texture peinte par script (palette du projet, encre de courbure), échelle réelle 26 cm",
+  "licence": "Sorties Tripo Studio générées avec le compte de l'auteur ; usage soumis aux conditions Tripo AI du plan du compte (preuve hors dépôt).",
+  "notes": "Forme seule venant de l'IA ; couleurs entièrement celles du projet (consigne utilisateur 2026-09-27 : pas de texture Tripo)."
+}

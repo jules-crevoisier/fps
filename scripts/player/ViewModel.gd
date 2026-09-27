@@ -359,6 +359,13 @@ var _current_id: int = Inventory.EMPTY
 var _model: Node3D
 var _muzzle: Node3D
 var _muzzle_mesh: MeshInstance3D
+## AnimationPlayer EMBARQUÉ dans le modèle 3D de l'arme courante (tâche
+## "revolver", 2026-09-27 : le Revolver anime ses propres pièces — chien,
+## barillet, sous-garde — via des clips Rev_* dans SON PROPRE glb, séparés du
+## rig de bras). `null` pour une arme sans AnimationPlayer embarqué (ex. le
+## Ravage) — `_play_weapon_model_clip` est alors un no-op silencieux, jamais un
+## plantage. Résolu à chaque changement d'arme dans `_refresh_model`.
+var _weapon_model_anim: AnimationPlayer
 ## Les deux gants, chargés UNE FOIS (voir `_load_gloves`) et reparentés sous
 ## l'arme courante à chaque changement (`_attach_gloves`) — jamais recréés,
 ## contrairement à `_model` qui est détruit/reconstruit par arme.
@@ -676,8 +683,15 @@ func _process_arms(aiming: bool, reloading: bool, bob: Vector3, fov_scale: float
 	var block_inspect := FPArmsMath.should_cancel_inspect(firing, aiming, reloading) or nade_equipped
 	if block_inspect:
 		_arms.cancel_inspect()
+		# Tâche "revolver" : le clip Rev_Inspect (l'arme tourne sur elle-même
+		# autour de l'index, contrat lead) suit la MÊME annulation que le geste
+		# de bras -- jamais laissé finir seul une fois le tir/la visée/le
+		# rechargement en cours. `_stop_weapon_model_clip` : no-op silencieux
+		# pour toute arme sans Rev_Inspect (ex. le Ravage).
+		_stop_weapon_model_clip("Rev_Inspect")
 	elif player.input and player.input.inspect_pressed:
 		_arms.trigger_inspect()
+		_play_weapon_model_clip("Rev_Inspect")
 
 	# Contrat point 4 : pose "prêt à lancer" tant qu'une grenade est ÉQUIPÉE
 	# (plus seulement pendant l'appui sur "fire", contrairement à l'ancien
@@ -705,16 +719,32 @@ func _fov_scale() -> float:
 	var actual_fov: float = cam.fov if cam else TARGET_FOV_DEG
 	return tan(deg_to_rad(actual_fov) * 0.5) / tan(deg_to_rad(TARGET_FOV_DEG) * 0.5)
 
-func _on_fired(cfg: WeaponConfig) -> void:
+## `is_fan` (tâche "revolver", 2026-09-27) : ce tir est-il un tir FAN ("fan the
+## hammer" — voir Weapon.fired/FanFireClock.gd) plutôt qu'un tir TAP précis.
+func _on_fired(cfg: WeaponConfig, is_fan: bool = false) -> void:
 	if cfg == null:
 		return
 	_anim.kick_recoil(Vector3(0, deg_to_rad(cfg.recoil_vertical) * 6.0, 0))
 	_anim.trigger_muzzle_flash()
 	if _using_arms:
-		# Pas de clip FP_Fire : il remplaçait la pose (visée comprise) par un tir « à la hanche »
-		# et faisait sauter l'arme. Le recul procédural (`kick_recoil`, via `align_to_camera`)
-		# s'ajoute à la pose courante, en visée comme à la hanche.
+		# Pas de clip FP_Fire pour le RAVAGE : il remplaçait la pose (visée
+		# comprise) par un tir « à la hanche » et faisait sauter l'arme (voir
+		# historique de cette décision). Le Revolver, lui, a ses propres clips
+		# dédiés FPP_Fire/FPP_Fan (contrat lead) — SEULEMENT déclenchés quand
+		# CLIP_SET_REVOLVER est actif, jamais pour le Ravage (comportement
+		# inchangé). Le recul procédural (`kick_recoil`, via `align_to_camera`)
+		# s'ajoute à la pose courante dans les deux cas, visée comme hanche.
+		if _arms.is_using_revolver_clip_set():
+			if is_fan:
+				_arms.trigger_fan()
+			else:
+				_arms.trigger_fire()
 		_arms.cancel_inspect()
+	# Anime les pièces DE L'ARME elle-même (chien/barillet du Revolver, voir
+	# Rev_Fire/Rev_Fan) — SUR LE MÊME appel que les one-shots des bras
+	# ci-dessus, donc à la même frame ("same start frame", contrat lead). No-op
+	# silencieux pour une arme sans clip de ce nom (ex. le Ravage).
+	_play_weapon_model_clip("Rev_Fan" if is_fan else "Rev_Fire")
 
 ## Tâche "utilitaires" : geste de lancer (≈0,4 s, FP_Throw) — déclenché à
 ## chaque lancer PRÉDIT localement (UtilityThrower.fired, propriétaire
@@ -766,6 +796,7 @@ func _on_reload_started(cfg: WeaponConfig) -> void:
 		if _using_arms:
 			_arms.trigger_reload(cfg.reload_time)
 			_arms.cancel_inspect()
+		_play_weapon_model_reload("Rev_Reload", cfg.reload_time)
 
 func _on_weapon_changed(_cfg: WeaponConfig) -> void:
 	# `weapon_changed` est aussi émis à CHAQUE tir (Weapon._emit_local, avec ammo_changed) :
@@ -777,6 +808,7 @@ func _on_weapon_changed(_cfg: WeaponConfig) -> void:
 	_refresh_model()
 	if _using_arms:
 		_arms.trigger_draw()
+	_play_weapon_model_clip("Rev_Draw")
 
 ## (Re)charge le modèle 3D correspondant à l'arme courante, la place pour le
 ## cadrage FPS classique (`_place_weapon`), y rattache les deux gants
@@ -800,12 +832,21 @@ func _refresh_model() -> void:
 		return
 	_model = scene.instantiate() as Node3D
 	if _using_arms:
+		# Tâche "revolver" (2026-09-27) : bascule le jeu de clips/l'os d'attache
+		# AVANT `attach_weapon` (voir sa doc — l'os d'attache doit déjà être le
+		# bon quand l'arme est reparentée). Catégorie PISTOL = Revolver = os
+		# "PistolGrip"/clips FPP_* ; toute autre catégorie (dont le Ravage,
+		# RIFLE) garde "WeaponGrip"/FP_* — repli automatique et silencieux si
+		# les clips FPP_*/l'os ne sont pas encore livrés (voir
+		# FPArmsRig.use_weapon_clip_set).
+		var cfg := WeaponDatabase.get_by_id(id)
+		_arms.use_weapon_clip_set(cfg != null and cfg.category == WeaponConfig.Category.PISTOL)
 		# Bras FP : l'arme s'attache directement sous la BoneAttachment3D
-		# "WeaponGrip" du rig (transform identité + contre-échelle, voir
-		# FPArmsRig.attach_weapon) -- PAS enfant de CE nœud, contrairement au
-		# chemin gants ci-dessous : aucun `add_child(_model)` ici, aucun lacet/
-		# échelle/décalage PAR ARME (`_place_weapon`, `_attach_gloves`), ces
-		# hacks n'existant que pour compenser l'ancien système de gants
+		# "WeaponGrip"/"PistolGrip" du rig (transform identité + contre-échelle,
+		# voir FPArmsRig.attach_weapon) -- PAS enfant de CE nœud, contrairement
+		# au chemin gants ci-dessous : aucun `add_child(_model)` ici, aucun
+		# lacet/échelle/décalage PAR ARME (`_place_weapon`, `_attach_gloves`),
+		# ces hacks n'existant que pour compenser l'ancien système de gants
 		# flottants sans vraie main.
 		_arms.attach_weapon(_model)
 	else:
@@ -815,6 +856,52 @@ func _refresh_model() -> void:
 	_apply_cartoon_materials(_model)
 	_muzzle = _model.find_child("Muzzle", true, false) as Node3D
 	_spawn_muzzle_flash()
+	# Tâche "revolver" : AnimationPlayer EMBARQUÉ dans CE modèle d'arme (chien/
+	# barillet du Revolver, clips Rev_* — voir `_play_weapon_model_clip`) --
+	# `null` pour une arme sans animation de pièces (ex. le Ravage), jamais un
+	# plantage.
+	_weapon_model_anim = _model.find_child("AnimationPlayer", true, false) as AnimationPlayer
+
+## Joue `name` sur l'AnimationPlayer EMBARQUÉ dans le modèle d'arme courant
+## (tâche "revolver" 2026-09-27 : Rev_Fire/Rev_Fan/Rev_Reload/Rev_Draw/
+## Rev_Inspect animent les pièces DU REVOLVER lui-même — chien, barillet,
+## sous-garde — séparément du rig de bras). No-op silencieux si l'arme
+## courante n'a pas d'AnimationPlayer embarqué (`_weapon_model_anim` nul, ex.
+## le Ravage) ou n'a pas CE clip précis (contrat : "if a clip is missing, skip
+## it silently"). `stop()` avant `play()` : un tir fan répété doit toujours
+## repartir de l'image 0 (jamais un simple "déjà en cours, ignoré").
+func _play_weapon_model_clip(clip_name: String) -> void:
+	if _weapon_model_anim and _weapon_model_anim.has_animation(clip_name):
+		_weapon_model_anim.stop()
+		_weapon_model_anim.play(clip_name)
+
+## Comme `_play_weapon_model_clip`, mais met le clip de rechargement de l'arme
+## À L'ÉCHELLE TEMPORELLE de `reload_time` (WeaponConfig.reload_time) au lieu
+## de le jouer à sa vitesse native — même principe que
+## `FPArmsMath.reload_speed_for`/`FPArmsRig.trigger_reload` (durée AUTHORED
+## réelle du clip, JAMAIS supposée égale à `reload_time` : Rev_Reload anime
+## désormais aussi les os "Casings"/"Loader", contrat lead — la durée authored
+## peut changer à chaque réexport). `AnimationPlayer.play(name, custom_blend,
+## custom_speed)` porte directement l'échelle de vitesse, sans TimeScale
+## dédié (pas un AnimationTree ici, juste un AnimationPlayer). No-op
+## silencieux si le clip est absent (ex. le Ravage, contrat "skip it
+## silently").
+func _play_weapon_model_reload(clip_name: String, reload_time: float) -> void:
+	if _weapon_model_anim == null or not _weapon_model_anim.has_animation(clip_name):
+		return
+	var native_len := _weapon_model_anim.get_animation(clip_name).length
+	var speed := FPArmsMath.reload_speed_for(reload_time, native_len) if native_len > 0.0 else 1.0
+	_weapon_model_anim.stop()
+	_weapon_model_anim.play(clip_name, -1, speed)
+
+## Interrompt `clip_name` sur l'AnimationPlayer embarqué -- SEULEMENT si c'est
+## bien LUI qui joue actuellement (`current_animation`/`is_playing`) : appelée
+## chaque frame tant que l'inspection est bloquée (firing/aiming/reloading,
+## voir `_process_arms`), donc ne doit JAMAIS couper un Rev_Fire/Rev_Fan/
+## Rev_Reload/Rev_Draw en cours qui jouerait au même moment.
+func _stop_weapon_model_clip(clip_name: String) -> void:
+	if _weapon_model_anim and _weapon_model_anim.is_playing() and _weapon_model_anim.current_animation == clip_name:
+		_weapon_model_anim.stop()
 
 ## Pose l'arme en enfant direct de ce nœud : lacet fixe (`_MODEL_YAW_DEG`,
 ## cadrage FPS classique — voir sa doc) + échelle/décalage PAR ARME

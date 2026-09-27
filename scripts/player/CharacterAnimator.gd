@@ -318,9 +318,27 @@ static func rig_profile_for(model_name: String) -> Dictionary:
 ## Rifle_* when the character has them for the current weapon category, fall
 ## back to Pistol_* otherwise") — fonction PURE, le sondage `has_animation`
 ## reste au niveau de l'appelant (`_build_tree`), qui a déjà l'AnimationPlayer
-## sous la main.
+## sous la main. C'est le préfixe PRIMAIRE (figé par PERSONNAGE, jamais
+## réévalué en cours de partie) — voir `upper_body_clip_prefix_for_weapon`
+## ci-dessous pour la bascule DYNAMIQUE par arme équipée (tâche "revolver",
+## 2026-09-27).
 static func upper_body_clip_prefix(has_rifle_clips: bool) -> String:
 	return "Rifle_" if has_rifle_clips else "Pistol_"
+
+## Préfixe RÉELLEMENT utilisé pour la couche haut-du-corps, selon l'arme
+## ÉQUIPÉE (tâche "revolver", 2026-09-27, design verrouillé utilisateur :
+## "the upper-body layer uses Pistol_* instead of Rifle_*" quand un pair a le
+## Revolver en main) : bascule sur "Pistol_" quand `weapon_category ==
+## WeaponConfig.Category.PISTOL` ET que le personnage expose RÉELLEMENT les
+## clips Pistol_* (`has_pistol_clips` — ex. frog_cowboy, une fois le lead
+## livré) ; repli SILENCIEUX sur `primary_prefix` sinon (Rifle_ pour un
+## personnage qui les a, contrat inchangé sinon) — même discipline que
+## `FPArmsRig.use_weapon_clip_set` : jamais un plantage si les clips Pistol_*
+## ne sont pas encore livrés, jamais un 3e préfixe inventé.
+static func upper_body_clip_prefix_for_weapon(primary_prefix: String, weapon_category: int, has_pistol_clips: bool) -> String:
+	if weapon_category == WeaponConfig.Category.PISTOL and has_pistol_clips:
+		return "Pistol_"
+	return primary_prefix
 
 # ------------------------------------------------------------------
 #  API PURE — testée directement (tests/player/test_character_animator.gd),
@@ -589,8 +607,28 @@ var _current_locomotion: int = -1
 var _was_reloading: bool = false
 var _lean: float = 0.0   ## Inclinaison procédurale (slide/dive OU profil), lissée.
 var _profile: AgentAnimProfile   ## Personnalité d'animation de l'agent (§4.6, ART-15).
-var _two_handed := false  ## Clips `Rifle_*` choisis dans `_build_tree` (arme à deux mains).
+var _two_handed := false  ## Clips `Rifle_*` ACTIFS (arme à deux mains) — voir `_apply_upper_body_clip_prefix`.
 var _reload_clip_len := RELOAD_CLIP_BASE_DURATION_S  ## Durée réelle du clip de rechargement du personnage.
+## Préfixe PRIMAIRE par PERSONNAGE (Rifle_ si `ap.has_animation("Rifle_Idle")`,
+## sinon Pistol_ — voir `upper_body_clip_prefix`), figé UNE FOIS dans
+## `_build_tree`. Tâche "revolver" (2026-09-27) : `_active_clip_prefix` peut
+## s'en écarter TEMPORAIREMENT (Pistol_ pendant que le Revolver est équipé,
+## voir `_sync_clip_prefix_to_weapon`) sans jamais changer `_primary_prefix`
+## lui-même (repli une fois l'arme principale reprise).
+var _primary_prefix: String = "Pistol_"
+## Préfixe RÉELLEMENT pointé par les nœuds de l'arbre de blend en ce moment —
+## voir `_apply_upper_body_clip_prefix` (jamais modifié directement ailleurs).
+var _active_clip_prefix: String = "Pistol_"
+## Vrai si l'AnimationPlayer du personnage expose "Pistol_Idle" (contrat lead,
+## tâche "revolver" : frog_cowboy en reçoit une COPIE dédiée en plus de
+## Rifle_*) — calculé UNE FOIS dans `_build_tree`, pilote le repli silencieux
+## de `upper_body_clip_prefix_for_weapon`.
+var _has_pistol_clips: bool = false
+## Catégorie (WeaponConfig.Category) de la DERNIÈRE arme connue via
+## `_on_current_weapon_changed` -- -1 tant qu'aucun signal n'est encore arrivé
+## (spawn). Rejoué par `_sync_clip_prefix_to_weapon` une fois `_built` (l'arbre
+## de blend doit exister avant qu'on puisse le re-pointer).
+var _pending_weapon_category: int = -1
 var _rig: Dictionary = {}   ## Profil de rig résolu (voir `rig_profile_for`) — os tête/recul, filtre haut-du-corps, préfixe de piste.
 var _personality_time: float = 0.0   ## Horloge du rebond/balancement, mise à l'échelle par la cadence.
 var _body_squash_elapsed: float = -1.0   ## < 0 : pas de squash en cours (voir `_drive_body_squash`).
@@ -660,6 +698,11 @@ func _on_model_ready() -> void:
 	_profile = _resolve_profile()
 	_build_tree()
 	_built = true
+	# Tâche "revolver" (2026-09-27) : un `current_id_changed` (voir
+	# `_on_current_weapon_changed`) a pu arriver AVANT que l'arbre n'existe
+	# (connecté dans `_ready`, bien avant ce `_on_model_ready` asynchrone) --
+	# rejoue la synchro maintenant que le graphe peut être re-pointé.
+	_sync_clip_prefix_to_weapon()
 
 ## Résout le profil d'animation (§4.6) de l'agent JOUÉ par ce corps — même
 ## repli que CharacterBody._ready()/AbilityController._resolve_agent :
@@ -717,7 +760,11 @@ func _drive_upper_body(locomotion: int, pitch: float, reloading: bool) -> void:
 		set("parameters/ReloadShot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_FIRE)
 	_was_reloading = reloading
 
-func _on_fired(_cfg: WeaponConfig) -> void:
+## `_is_fan` (tâche "revolver", 2026-09-27) : le 3P n'a qu'UN SEUL clip de tir
+## (`Pistol_Shoot`/`Rifle_Shoot` — pas de "Pistol_Fan" dédié, contrat lead) —
+## reçu mais ignoré ici, seul FPArmsRig (vue FPS, deux clips FPP_Fire/FPP_Fan)
+## en tient compte.
+func _on_fired(_cfg: WeaponConfig, _is_fan: bool = false) -> void:
 	_trigger_shoot()
 
 func _on_remote_fired(_cfg: WeaponConfig, _origin: Vector3, _dirs: Array) -> void:
@@ -750,6 +797,53 @@ func _on_utility_thrown(_kind: int) -> void:
 func _on_current_weapon_changed(id: int) -> void:
 	var cfg := WeaponDatabase.get_by_id(id)
 	_reload_time = cfg.reload_time if cfg else _DEFAULT_RELOAD_TIME_S
+	# Tâche "revolver" (2026-09-27) : bascule Pistol_*/Rifle_* selon l'arme
+	# RÉELLEMENT équipée par ce pair (voir `_sync_clip_prefix_to_weapon`) --
+	# `_pending_weapon_category` est mémorisée même si l'arbre de blend n'existe
+	# pas ENCORE (`_built` faux, signal reçu avant `_on_model_ready`) ; rejouée
+	# alors une fois l'arbre construit (voir `_on_model_ready`).
+	_pending_weapon_category = cfg.category if cfg else -1
+	if _built:
+		_sync_clip_prefix_to_weapon()
+
+## Calcule le préfixe voulu pour l'arme COURANTE (`_pending_weapon_category`)
+## et re-pointe l'arbre de blend si besoin (voir `_apply_upper_body_clip_prefix`,
+## no-op si déjà sur ce préfixe).
+func _sync_clip_prefix_to_weapon() -> void:
+	var prefix := upper_body_clip_prefix_for_weapon(_primary_prefix, _pending_weapon_category, _has_pistol_clips)
+	_apply_upper_body_clip_prefix(prefix)
+
+## Re-pointe (jamais ne reconstruit) chaque `AnimationNodeAnimation` de la
+## couche haut-du-corps sur `prefix` — la topologie du graphe (`_build_tree`,
+## construite UNE FOIS) reste identique pour tout personnage/arme, seuls les
+## NOMS de clip diffèrent (même principe que FPArmsRig.use_weapon_clip_set).
+## No-op si déjà sur `prefix` (évite de re-mesurer `_reload_clip_len`/re-pointer
+## les nœuds à chaque frame — l'appelant peut rappeler cette fonction souvent).
+func _apply_upper_body_clip_prefix(prefix: String) -> void:
+	if prefix == _active_clip_prefix or not _built:
+		return
+	_active_clip_prefix = prefix
+	_two_handed = prefix == "Rifle_"
+	var bt := tree_root as AnimationNodeBlendTree
+	if bt == null:
+		return
+	var aim_pose := bt.get_node("AimPose") as AnimationNodeBlendSpace1D
+	if aim_pose:
+		_point_clip_anim(aim_pose.get_blend_point_node(0), "%sAim_Down" % prefix)
+		_point_clip_anim(aim_pose.get_blend_point_node(1), "%sAim_Neutral" % prefix)
+		_point_clip_anim(aim_pose.get_blend_point_node(2), "%sAim_Up" % prefix)
+	_point_clip_anim(bt.get_node("IdleBreath"), "%sIdle" % prefix)
+	_point_clip_anim(bt.get_node("ShootClip"), "%sShoot" % prefix)
+	_point_clip_anim(bt.get_node("ReloadClip"), "%sReload" % prefix)
+	_point_clip_anim(bt.get_node("ThrowClip"), "%sThrow" % prefix)
+	var ap := _character_body.get_anim_player() if _character_body else null
+	var reload_anim := "%sReload" % prefix
+	_reload_clip_len = ap.get_animation(reload_anim).length if (ap and ap.has_animation(reload_anim)) else RELOAD_CLIP_BASE_DURATION_S
+
+func _point_clip_anim(node: AnimationNode, clip_name: String) -> void:
+	var a := node as AnimationNodeAnimation
+	if a:
+		a.animation = clip_name
 
 ## GF-10 : lance le recul additif du haut du corps (voir `_drive_flinch`) à
 ## chaque dégât confirmé encaissé par ce corps — `headshot` ne change QUE la
@@ -890,7 +984,15 @@ func _build_tree() -> void:
 	# selon ce que CE personnage expose réellement (frog livré avec des clips
 	# Rifle_*, les 5 autres agents Tripo n'ont que l'ancienne bibliothèque
 	# Pistol_* rebaked) -- jamais les deux mélangés pour un même personnage.
-	var _clip_prefix := upper_body_clip_prefix(ap.has_animation("Rifle_Idle"))
+	_primary_prefix = upper_body_clip_prefix(ap.has_animation("Rifle_Idle"))
+	# Tâche "revolver" (2026-09-27) : frog_cowboy reçoit désormais AUSSI une
+	# copie dédiée Pistol_* (contrat lead) — `_has_pistol_clips` pilote la
+	# bascule DYNAMIQUE par arme équipée (`_sync_clip_prefix_to_weapon`),
+	# jamais lue au moment de choisir `_primary_prefix` ci-dessus (qui reste
+	# la préférence PAR PERSONNAGE, inchangée).
+	_has_pistol_clips = ap.has_animation("Pistol_Idle")
+	_active_clip_prefix = _primary_prefix
+	var _clip_prefix := _active_clip_prefix
 	_two_handed = _clip_prefix == "Rifle_"
 	var reload_anim := "%sReload" % _clip_prefix
 	if ap.has_animation(reload_anim):

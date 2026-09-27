@@ -277,8 +277,14 @@ const AMMO_DETOUR_RADIUS_M := 12.0
 
 ## Nom (WeaponConfig.weapon_name) de l'arme de repli quand l'arme en main est
 ## à sec (§2.7 "il passe au pistolet") — jamais déduit d'une catégorie/d'un id,
-## nommé explicitement comme PRECISION_WEAPON_NAMES ci-dessus.
-const PISTOL_WEAPON_NAME := "Pistolet"
+## nommé explicitement comme PRECISION_WEAPON_NAMES ci-dessus. "Revolver"
+## depuis la tâche "revolver" (2026-09-27) : c'est désormais la VRAIE arme
+## secondaire du loadout (WeaponDatabase.default_loadout_ids, slot 2), plus un
+## nom hérité d'un roster d'armes supprimé lors de la remise à zéro du projet
+## (aucune arme "Pistolet" n'existe dans le catalogue actuel — cette constante
+## restait donc inerte, `_pistol_slot` (BotBrain.gd) ne trouvant jamais de
+## correspondance, jusqu'à ce changement).
+const PISTOL_WEAPON_NAME := "Revolver"
 
 ## Le bot doit-il recharger DE LUI-MÊME l'arme en main (§2.7) ? Seulement
 ## HORS combat (jamais sous le feu), avec une réserve à consommer, un chargeur

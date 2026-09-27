@@ -44,6 +44,17 @@ func reset() -> void:
 	_t = _interval
 	_buffered_s = -1.0
 
+## Repasse l'horloge à "vide" (AUCUN crédit, aucun clic mémorisé) : contrairement
+## à `reset()` (prochain tir IMMÉDIAT), le prochain tir n'arrivera qu'après un
+## `interval` COMPLET de gâchette tenue. Tâche "revolver" (2026-09-27,
+## FanFireClock.gd) : amorce la cadence "fan the hammer" sans tirer un coup
+## supplémentaire au tick même où le mode fan s'active (le tir qui vient de
+## partir était déjà le tir TAP) — sans ça, `reset()` ferait tirer un second
+## coup quasi immédiatement après le premier (horloge "prête").
+func start_empty() -> void:
+	_t = 0.0
+	_buffered_s = -1.0
+
 ## Avance l'horloge de `delta` secondes ; renvoie le nombre de tirs autorisés
 ## sur ce tick (0 ou 1 aux cadences ≤ 60/s, la boucle généralise au-delà).
 ## `trigger` reçu pendant le cooldown arme le buffer d'entrée (voir docstring

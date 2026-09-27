@@ -287,7 +287,18 @@ func test_left_glove_overlaps_each_painted_weapon_once_anchored_near_foregrip() 
 		var weapon_aabb := _mesh_aabb(model)
 		var foregrip := model.find_child("Foregrip", true, false) as Node3D
 		var muzzle := model.find_child("Muzzle", true, false) as Node3D
-		assert_object(foregrip).is_not_null()
+		if foregrip == null:
+			# Tâche "revolver" (2026-09-27) : une arme à UNE main (ex. le
+			# Revolver, WeaponConfig.Category.PISTOL) n'a pas de point de
+			# soutien main gauche -- "Foregrip" est un concept d'arme à DEUX
+			# mains (rifle/SMG), jamais posé sur le glb du revolver (contrat
+			# lead : bones Root/Crane/Cylinder/Hammer/Trigger/Casings/Loader
+			# uniquement). Ces armes n'utilisent de toute façon PAS ce chemin
+			# de gants flottants en jeu (FPArmsRig, "PistolGrip") : rien à
+			# vérifier ici pour elles, contrairement aux armes à deux mains
+			# (Ravage) qui gardent leur assertion stricte ci-dessous.
+			model.free()
+			continue
 		var anchor: Vector3 = foregrip.position
 		if muzzle:
 			anchor = anchor.lerp(muzzle.position, FOREGRIP_FORWARD_T)

@@ -68,6 +68,23 @@ func test_update_weapon_slots_shows_the_weapon_name() -> void:
 	assert_str(label.text).is_equal("RAVAGE")
 
 
+## Tâche "revolver" (2026-09-27) : row 2 affiche désormais le NOM de l'arme
+## secondaire réelle du loadout (WeaponDatabase.default_loadout_ids, slot 2)
+## au lieu du "—" grisé historique (aucune arme secondaire n'existait avant
+## cette tâche) — verrouille le libellé EXACT attendu, GameHUD._update_
+## inventory_hud passant `WeaponConfig.weapon_name.to_upper()`.
+func test_update_weapon_slots_shows_revolver_in_row_2() -> void:
+	var hud := _hud()
+	hud.update_weapon_slots(["RAVAGE", "REVOLVER"])
+	var row1: Dictionary = hud._rows[1]
+	var label: Label = row1["text_label"]
+	assert_str(label.text).is_equal("REVOLVER")
+	var root: Control = row1["root"]
+	assert_float(root.modulate.a).append_failure_message(
+		"un slot d'arme REMPLI ne doit jamais être assombri"
+	).is_equal_approx(1.0, 0.001)
+
+
 func test_update_weapon_slots_shows_em_dash_for_empty_slot() -> void:
 	var hud := _hud()
 	hud.update_weapon_slots(["RAVAGE", ""])

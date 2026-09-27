@@ -199,6 +199,44 @@ class Rig:
                 if PREFIX + n in self.arm.pose.bones:
                     self.local_rot(n, self._thumb_axis(side, n), thumb_deg * (0.6 if i == 1 else 1.0))
 
+    def hand_orient(self, side, fingers_dir, palm_dir):
+        """Oriente la main par des directions lisibles (espace armature) : `fingers_dir` =
+        vers où pointent les doigts tendus, `palm_dir` = vers où regarde la paume.
+        Axes Mixamo mesurés : Y = doigts, X = côté pouce, paume = +Z (droite) / -Z (gauche)."""
+        y = Vector(fingers_dir).normalized()
+        palm = Vector(palm_dir)
+        palm = (palm - y * palm.dot(y)).normalized()
+        z = palm if side == "Right" else -palm
+        self.orient(f"{side}Hand", y, y.cross(z))
+
+    def fingers(self, side, spec):
+        """Pose des doigts, articulation par articulation (degrés, + = replier vers la paume).
+        spec : {"Index": (a1, a2, a3), "Middle": ..., "Ring": ..., "Pinky": ...,
+                "Thumb": (a1, a2, a3), "ThumbOpp": deg (pouce amené devant la paume),
+                "Spread": deg (écarte les doigts)}. Doigts absents : droits."""
+        sign = 1.0 if side == "Right" else -1.0
+        spread = spec.get("Spread", 0.0)
+        for k, f in enumerate(FINGERS):
+            angles = spec.get(f, (0.0, 0.0, 0.0))
+            for i, a in zip((1, 2, 3), angles):
+                n = f"{side}Hand{f}{i}"
+                if PREFIX + n not in self.arm.pose.bones:
+                    continue
+                if i == 1 and spread:
+                    self.local_rot(n, AX_Z, sign * spread * (1.5 - k) / 1.5)
+                if i == 1 and spec.get(f + "Spread"):
+                    self.local_rot(n, AX_Z, spec[f + "Spread"])
+                self.local_rot(n, AX_X, sign * a)
+        thumb = spec.get("Thumb", (0.0, 0.0, 0.0))
+        opp = spec.get("ThumbOpp", 0.0)
+        for i, a in zip((1, 2, 3), thumb):
+            n = f"{side}HandThumb{i}"
+            if PREFIX + n not in self.arm.pose.bones:
+                continue
+            if i == 1 and opp:
+                self.local_rot(n, AX_Y, sign * opp)
+            self.local_rot(n, self._thumb_axis(side, n), a)
+
     def _thumb_axis(self, side, name):
         """Axe local qui replie ce segment de pouce vers la paume (base du majeur).
         Les os du pouce Mixamo n'ont pas l'orientation des autres doigts : l'axe X

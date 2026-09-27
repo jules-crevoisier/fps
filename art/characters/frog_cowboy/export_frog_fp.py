@@ -19,6 +19,8 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
 sys.path.insert(0, str(HERE / "anim"))
 from fp import FP_EYE, add_fp_camera, build_fp  # noqa: E402
+from fp_pistol import build_fp_pistol  # noqa: E402
+from pistol import add_pistol_grip  # noqa: E402
 from rifle import add_grenade_grip, add_weapon_grip  # noqa: E402
 from rigkit import Rig  # noqa: E402
 
@@ -28,6 +30,9 @@ ARM_GROUPS = ("Arm", "ForeArm", "Hand")  # + doigts (…Hand<Doigt>N)
 
 argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 preview_dir = argv[argv.index("--preview") + 1] if "--preview" in argv else ""
+# --only PREFIXE : aperçu limité aux clips qui commencent par PREFIXE (ex. FPP_), pour itérer vite.
+preview_only = argv[argv.index("--only") + 1] if "--only" in argv else ""
+preview_frames = int(argv[argv.index("--frames") + 1]) if "--frames" in argv else 6
 
 skinned = [o for o in bpy.data.objects if o.type == "MESH" and o.parent and o.parent.type == "ARMATURE"]
 mesh = max(skinned, key=lambda o: len(o.data.polygons))
@@ -62,9 +67,10 @@ if ALBEDO.exists():
 
 add_weapon_grip(arm)
 add_grenade_grip(arm)
+add_pistol_grip(arm)
 add_fp_camera(arm)
 rig = Rig(arm)
-clips = build_fp(rig)
+clips = build_fp(rig) + build_fp_pistol(rig)
 rig.reset()
 arm.animation_data.action = None
 
@@ -89,6 +95,7 @@ if preview_dir:
     gun.parent_type = "BONE"
     gun.parent_bone = "WeaponGrip"
     gun.location = (0.0, -arm.data.bones["WeaponGrip"].length, 0.0)
+    gun.rotation_mode = "XYZ"  # l'importeur glTF peut poser des quaternions : l'Euler serait ignoré
     gun.rotation_euler = (-math.pi / 2.0, 0.0, 0.0)  # os : Y = haut de l'arme
     gun.scale = (1.0 / 1.8,) * 3
     # Vraie frag dans la paume gauche (os GrenadeGrip), pour juger la prise en main :
@@ -100,10 +107,27 @@ if preview_dir:
     nade.parent_type = "BONE"
     nade.parent_bone = "GrenadeGrip"
     nade.location = (0.0, -arm.data.bones["GrenadeGrip"].length, 0.0)
+    nade.rotation_mode = "XYZ"
     nade.rotation_euler = (-math.pi / 2.0, 0.0, 0.0)  # os : Y = haut de la grenade
     nade.scale = (1.0 / 1.8,) * 3
+    # Revolver (armature + maillage skinné) sur PistolGrip, visible pour les clips FPP_*.
+    before = set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=str(ROOT / "assets/models/weapons/revolver.glb"))
+    rev_new = [o for o in bpy.data.objects if o not in before]
+    rev = next(o for o in rev_new if o.type == "ARMATURE")
+    rev_mesh = next(o for o in rev_new if o.type == "MESH" and o.parent is rev)
+    for o in rev_new:
+        if o.type == "EMPTY" or (o.type == "MESH" and o.parent is None):
+            o.hide_render = True
+    rev.parent = arm
+    rev.parent_type = "BONE"
+    rev.parent_bone = "PistolGrip"
+    rev.location = (0.0, -arm.data.bones["PistolGrip"].length, 0.0)
+    rev.rotation_mode = "XYZ"
+    rev.rotation_euler = (-math.pi / 2.0, 0.0, 0.0)
+    rev.scale = (1.0 / 1.8,) * 3
     for o in bpy.data.objects:
-        if o.type in ("CAMERA", "LIGHT") or (o.type == "MESH" and o not in (mesh, gun, nade)):
+        if o.type in ("CAMERA", "LIGHT") or (o.type == "MESH" and o not in (mesh, gun, nade, rev_mesh)):
             o.hide_render = True
     scene = bpy.context.scene
     scene.render.engine = "BLENDER_WORKBENCH"
@@ -131,10 +155,22 @@ if preview_dir:
 
     shot()
     for name in clips:
+        if preview_only and not name.startswith(preview_only):
+            continue
         act = bpy.data.actions[name]
         arm.animation_data.action = act
+        pistol_clip = name.startswith("FPP_")
+        gun.hide_render = pistol_clip
+        nade.hide_render = pistol_clip
+        rev_mesh.hide_render = not pistol_clip
+        # pièces du revolver synchronisées (Rev_Reload avec FPP_Reload, etc.)
+        def rev_action(clip):   # l'importeur glTF peut suffixer le nom des actions
+            return next((a for a in bpy.data.actions if a.name.startswith(clip)), None)
+        if rev.animation_data is None:
+            rev.animation_data_create()
+        rev.animation_data.action = (rev_action("Rev_" + name[4:]) if pistol_clip else None) or rev_action("Rev_Idle")
         f0, f1 = act.frame_range
-        k = 1 if f1 - f0 < 2 else 6
+        k = 1 if f1 - f0 < 2 else preview_frames
         tiles = []
         for i in range(k):
             scene.frame_set(int(round(f0 + (f1 - f0) * i / max(1, k - 1))))

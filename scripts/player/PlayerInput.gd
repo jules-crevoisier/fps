@@ -40,7 +40,25 @@ var walk_held: bool = false
 var dive_pressed: bool = false
 var fire_pressed: bool = false
 var fire_held: bool = false
+## Visée (ADS) RÉSOLUE — tient compte à la fois du réglage bascule/maintien
+## (Settings.hold_to_aim, voir `resolve_hold_or_toggle`) ET, depuis la tâche
+## "revolver" (2026-09-27, pivot "Valorant Classic") de l'arme ÉQUIPÉE : `false`
+## quel que soit RMB pour une arme `WeaponConfig.AltFireMode.FAN` (le Revolver
+## — "RMB must never zoom, never blend ADS, never slow movement"), voir
+## `weapon_aims_on_right_click`. C'est le SEUL point de filtrage : chaque
+## lecteur existant (PlayerCamera.gd, PlayerController.gd, Sprint.gd/Walk.gd,
+## GameHUD.gd, ViewModel.gd) hérite automatiquement de la bonne règle sans
+## être modifié. Les BOTS ne passent jamais par `gather_from_devices` (voir
+## `_physics_process`) : ce filtre ne s'applique donc qu'à un HUMAIN local,
+## conforme au contrat "bots: unchanged".
 var aim_held: bool = false
+## Maintien BRUT de l'action "aim" (RMB) — INDÉPENDANT du réglage bascule/
+## maintien ET de l'arme équipée (contrairement à `aim_held` ci-dessus).
+## Tâche "revolver" : le fan-fire d'une arme `AltFireMode.FAN` est TOUJOURS un
+## maintien littéral (jamais une bascule, même si Settings.hold_to_aim est en
+## mode bascule pour l'ADS classique) — Weapon.gd lit CE champ pour le fan,
+## jamais `aim_held`.
+var alt_fire_held: bool = false
 var reload_pressed: bool = false
 ## Front montant de l'action "inspect" (tâche "frog fp arms", touche E --
 ## voir project.godot : F était déjà pris par "pickup", cf. WorldWeapon.gd)
@@ -121,6 +139,7 @@ func clear() -> void:
 	fire_pressed = false
 	fire_held = false
 	aim_held = false
+	alt_fire_held = false
 	reload_pressed = false
 	inspect_pressed = false
 	pickup_pressed = false
@@ -154,9 +173,16 @@ func gather_from_devices() -> void:
 	fire_pressed = Input.is_action_just_pressed("fire")
 	fire_held = Input.is_action_pressed("fire")
 	var aim_pressed := Input.is_action_just_pressed("aim")
+	var aim_button_held := Input.is_action_pressed("aim")
 	_aim_toggle_active = resolve_hold_or_toggle(
-		aim_pressed, Input.is_action_pressed("aim"), Settings.hold_to_aim, _aim_toggle_active)
-	aim_held = _aim_toggle_active
+		aim_pressed, aim_button_held, Settings.hold_to_aim, _aim_toggle_active)
+	# Tâche "revolver" (2026-09-27, pivot "Valorant Classic") : filtre par
+	# l'arme équipée ICI, à LA SOURCE (voir la doc de `aim_held` plus haut) —
+	# `alt_fire_held` reste le maintien BRUT, jamais filtré (Weapon.gd s'en
+	# sert pour le fan, qui doit rester déclenchable MÊME quand `aim_held`
+	# est retombé à faux pour cette arme).
+	aim_held = _aim_toggle_active and weapon_aims_on_right_click()
+	alt_fire_held = aim_button_held
 	reload_pressed = Input.is_action_just_pressed("reload")
 	# Sprint à BASCULE (demande 2026-09-26) : on MARCHE par défaut ; un appui sur "sprint"
 	# lance la course, qui continue seule jusqu'à un arrêt (voir `resolve_sprint_toggle`).
@@ -175,6 +201,26 @@ func gather_from_devices() -> void:
 		Input.is_action_just_pressed("weapon_5"))
 	weapon_next_pressed = Input.is_action_just_pressed("weapon_next")
 	weapon_prev_pressed = Input.is_action_just_pressed("weapon_prev")
+
+## Vrai si RMB doit viser (ADS) compte tenu de l'ÉTAT DE JEU actuel — tâche
+## "revolver" (2026-09-27) : faux pour une arme `WeaponConfig.AltFireMode.FAN`
+## (le Revolver), sauf si une GRENADE est équipée (`UtilityThrower.
+## is_utility_equipped()`) — dans ce cas `Weapon.cfg()` renvoie encore la
+## DERNIÈRE arme en réserve (les grenades ne vivent pas dans `Weapon._inv`,
+## voir sa docstring), donc RMB doit garder son sens HISTORIQUE (visée
+## normale / lancer court de grenade, UtilityThrower.gd) plutôt que d'hériter
+## à tort du réglage de cette arme en réserve. Repli sur VRAI (comportement
+## historique, ADS normal) si le joueur/l'arme sont introuvables — jamais un
+## silence inexpliqué sur l'ADS d'une arme ordinaire.
+func weapon_aims_on_right_click() -> bool:
+	if player == null:
+		return true
+	var utility := player.get_node_or_null("UtilityThrower") as UtilityThrower
+	if utility and utility.is_utility_equipped():
+		return true
+	var weapon := player.get_node_or_null("Weapon") as Weapon
+	var cfg := weapon.cfg() if weapon else null
+	return cfg.aims_on_right_click() if cfg else true
 
 ## --- Parties pures (testées directement, sans passer par le singleton Input) ---
 

@@ -147,7 +147,7 @@ func _on_local_blinded(duration: float) -> void:
 
 ## Bloom du réticule (GF-09) : un tir prédit localement (`Weapon.fired`,
 ## propriétaire uniquement) déclenche le fondu — voir Crosshair.notify_shot.
-func _on_weapon_fired(_cfg: WeaponConfig) -> void:
+func _on_weapon_fired(_cfg: WeaponConfig, _is_fan: bool = false) -> void:
 	if _crosshair:
 		_crosshair.notify_shot()
 

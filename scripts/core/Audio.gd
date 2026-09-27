@@ -828,7 +828,7 @@ func _wire_local_extras(node: Node) -> void:
 		if w.has_signal("fired"):
 			# GF-11 : tir LOCAL joué EN COUCHES (jamais le mix pré-mixé
 			# `gunshot_<classe>.wav`, réservé aux tirs DISTANTS — voir `_wire_remote_weapon`).
-			w.fired.connect(func(cfg: WeaponConfig): _play_local_gunshot(cfg, node))
+			w.fired.connect(func(cfg: WeaponConfig, _is_fan: bool): _play_local_gunshot(cfg, node))
 		if w.has_signal("reload_started"):
 			var weapon_id := w.get_instance_id()
 			w.reload_started.connect(func(cfg: WeaponConfig):

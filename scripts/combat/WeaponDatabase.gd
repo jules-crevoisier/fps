@@ -1,13 +1,18 @@
 ## WeaponDatabase.gd
-## Catalogue des armes du jeu (classe statique). Prototype à une seule arme
-## (décision 2026-09-26) : le Ravage est la SEULE entrée — tout joueur/bot
-## spawn avec elle, aucune vente/achat/ramassage d'une autre arme n'est
-## possible puisqu'aucune autre n'existe plus dans ce catalogue.
+## Catalogue des armes du jeu (classe statique). Depuis la tâche "revolver"
+## (2026-09-27) : DEUX entrées — le Ravage (slot 1, id 0) et le Revolver
+## (slot 2, id 1), tout joueur/bot spawn avec les deux (voir
+## `default_loadout_ids`). Aucune vente/achat/ramassage d'une TROISIÈME arme
+## n'est possible puisqu'aucune autre n'existe dans ce catalogue.
 class_name WeaponDatabase
 extends RefCounted
 
+## Append-only : l'ID d'une arme est son index ici (voir `get_by_id`/`id_of`).
+## Ne JAMAIS réordonner une entrée existante (casserait tout état déjà
+## répliqué/sauvegardé qui référence un id).
 const PATHS := [
 	"res://resources/weapons/ravage.tres",
+	"res://resources/weapons/revolver.tres",
 ]
 
 static var _cache: Array = []
@@ -39,12 +44,17 @@ static func id_of(c: WeaponConfig) -> int:
 		return -1
 	return all().find(c)
 
-## IDs du loadout de départ — le Ravage seul (prototype à une arme).
+## IDs du loadout de départ — le Ravage (slot 1) ET le Revolver (slot 2),
+## tâche "revolver" 2026-09-27 : chaque joueur/bot spawn avec les deux (voir
+## Inventory.set_loadout, qui remplit les slots dans l'ordre de ce tableau).
+## Une entrée manquante (.tres introuvable/invalide) est simplement omise —
+## jamais de plantage, le slot correspondant reste vide côté Inventory.
 static func default_loadout_ids() -> Array[int]:
 	var ids: Array[int] = []
-	var w := get_by_name("Ravage")
-	if w:
-		ids.append(id_of(w))
+	for name in ["Ravage", "Revolver"]:
+		var w := get_by_name(name)
+		if w:
+			ids.append(id_of(w))
 	return ids
 
 static func type_name(t: int) -> String:
@@ -63,4 +73,5 @@ static func category_name(c: int) -> String:
 		WeaponConfig.Category.SNIPER: return "Sniper"
 		WeaponConfig.Category.HEAVY: return "Lourde"
 		WeaponConfig.Category.MELEE: return "Mêlée"
+		WeaponConfig.Category.PISTOL: return "Pistolet"
 	return "?"

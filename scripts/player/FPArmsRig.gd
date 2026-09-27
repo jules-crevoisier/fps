@@ -43,6 +43,11 @@ extends Node3D
 
 const DEFAULT_PATH := "res://assets/models/characters/frog_cowboy_fp.glb"
 const WEAPON_GRIP_BONE := "WeaponGrip"
+## Os d'attache du Revolver (tâche "revolver" 2026-09-27, contrat lead : "the
+## lead adds a bone 'PistolGrip' (child of the right hand)") — même transform
+## locale IDENTITÉ + contre-échelle que "WeaponGrip" (voir `attach_weapon`),
+## jamais un second mécanisme.
+const PISTOL_GRIP_BONE := "PistolGrip"
 const FP_CAMERA_BONE := "FPCamera"
 const WEAPON_ATTACHMENT_NAME := "WeaponGripAttachment"
 ## Tâche "utilitaires" (contrat lead) : os enfant de la main GAUCHE (celle qui
@@ -62,6 +67,34 @@ const HELD_GRENADE_FP_SCALE := 1.5
 const HELD_GRENADE_PALM_OFFSET := Vector3(0.0, 0.012, 0.0)
 
 const _CLIPS := ["FP_Idle", "FP_ADS", "FP_ADS_In", "FP_Fire", "FP_Reload", "FP_Draw", "FP_Sprint", "FP_Inspect"]
+
+## Jeu de clips par ARME (tâche "revolver" 2026-09-27, design verrouillé
+## utilisateur) — clé LOGIQUE (utilisée par `_build_tree`, indépendante du nom
+## réel du clip) -> nom du clip dans `_anim_player` + os d'attache. RAVAGE
+## (historique, os "WeaponGrip") reste le jeu PAR DÉFAUT (arme de départ,
+## slot 1) ; REVOLVER (os "PistolGrip") n'est utilisé QUE si les DEUX
+## conditions tiennent : les 7 clips FPP_* existent ET l'os "PistolGrip"
+## existe (voir `_has_revolver_clip_set`/`use_weapon_clip_set`) — sinon repli
+## silencieux sur RAVAGE (attache WeaponGrip, clips FP_*), exactement comme
+## `_has_throw_clips` pour le lancer d'utilitaire. "fan" vide ("") côté RAVAGE :
+## le Ravage n'a pas de fan_fire_rate (WeaponConfig), `trigger_fan` ci-dessous
+## n'est donc jamais appelée pour lui (voir Weapon.gd/ViewModel.gd) — la clé
+## existe quand même pour que `_apply_clip_set` ait un nom à assigner au nœud
+## "FanClip" (jamais lu tant qu'il n'est pas déclenché).
+const CLIP_SET_RAVAGE := {
+	"idle": "FP_Idle", "ads_in": "FP_ADS_In", "fire": "FP_Fire", "fan": "FP_Fire",
+	"reload": "FP_Reload", "draw": "FP_Draw", "inspect": "FP_Inspect",
+	"grip_bone": WEAPON_GRIP_BONE,
+}
+const CLIP_SET_REVOLVER := {
+	"idle": "FPP_Idle", "ads_in": "FPP_ADS_In", "fire": "FPP_Fire", "fan": "FPP_Fan",
+	"reload": "FPP_Reload", "draw": "FPP_Draw", "inspect": "FPP_Inspect",
+	"grip_bone": PISTOL_GRIP_BONE,
+}
+## Les 7 clips requis pour bascule vers CLIP_SET_REVOLVER (voir sa doc) — même
+## discipline que `_CLIPS`/`_THROW_CLIPS` : vérifiés ENSEMBLE, jamais l'un sans
+## les autres.
+const _REVOLVER_CLIPS := ["FPP_Idle", "FPP_ADS_In", "FPP_Fire", "FPP_Fan", "FPP_Reload", "FPP_Draw", "FPP_Inspect"]
 ## Lancer d'utilitaire (frag/flash/smoke, tâche "utilitaires") — DÉLIBÉRÉMENT
 ## absents de `_CLIPS` ci-dessus (jamais un critère d'échec de `load()`, voir
 ## sa docstring) : le lead livre ces deux clips EN PARALLÈLE de cette tâche,
@@ -102,6 +135,16 @@ var _ads_in_length: float = 1.0
 ## docstring) — pilote le câblage optionnel du lancer dans `_build_tree` et le
 ## no-op défensif de `set_throw_ready`/`trigger_throw`.
 var _has_throw_clips: bool = false
+## Jeu de clips ACTIF (voir CLIP_SET_RAVAGE/CLIP_SET_REVOLVER) — RAVAGE par
+## défaut (arme de départ, slot 1). Changé par `use_weapon_clip_set`, jamais
+## directement.
+var _active_clip_set: Dictionary = CLIP_SET_RAVAGE
+## Vrai seulement si les 7 clips FPP_* ET l'os "PistolGrip" sont TOUS présents
+## (voir `_REVOLVER_CLIPS`/`PISTOL_GRIP_BONE`) — calculé UNE FOIS dans `load()`,
+## jamais réévalué ensuite (le glb ne change pas en cours de partie). Pilote le
+## repli silencieux de `use_weapon_clip_set` sur CLIP_SET_RAVAGE tant que le
+## lead n'a pas encore livré ces clips/cet os.
+var _has_revolver_clip_set: bool = false
 
 func is_loaded() -> bool:
 	return _loaded
@@ -146,6 +189,16 @@ func load(path: String = DEFAULT_PATH) -> bool:
 			instance.queue_free()
 			return false
 	_fp_camera_rest = _skeleton.get_bone_global_rest(_fp_camera_bone_idx)
+	# Tâche "revolver" (2026-09-27) : jeu de clips secondaire OPTIONNEL, jamais
+	# un critère d'échec de `load()` (même tolérance que `_has_throw_clips`) —
+	# vérifié ENSEMBLE (les 7 clips ET l'os "PistolGrip"), jamais partiellement.
+	_has_revolver_clip_set = _skeleton.find_bone(PISTOL_GRIP_BONE) >= 0
+	if _has_revolver_clip_set:
+		for clip in _REVOLVER_CLIPS:
+			if not _anim_player.has_animation(clip):
+				_has_revolver_clip_set = false
+				break
+	_active_clip_set = CLIP_SET_RAVAGE
 	_model_root = instance
 	add_child(_model_root)
 	ToonStyle.apply_to(_model_root)
@@ -157,8 +210,23 @@ func load(path: String = DEFAULT_PATH) -> bool:
 	_loaded = true
 	return true
 
-## Clips en boucle (l'import glTF les laisse en lecture unique : la respiration figeait).
-const _LOOPING := ["FP_Idle", "FP_Sprint"]
+## Clips en boucle (l'import glTF les laisse en lecture unique : la respiration
+## figeait) — "FPP_Idle" (contrat lead, tâche "revolver" 2026-09-27) au même
+## titre que "FP_Idle"/"FP_Sprint", même repli silencieux si absent (`_set_loops`
+## ignore un nom que `_anim_player` n'a pas).
+const _LOOPING := ["FP_Idle", "FP_Sprint", "FPP_Idle"]
+
+## Vrai si le jeu de clips REVOLVER (FPP_*/"PistolGrip") est disponible sur le
+## glb chargé — exposé pour ViewModel.gd/les tests (voir `use_weapon_clip_set`).
+func has_revolver_clip_set() -> bool:
+	return _has_revolver_clip_set
+
+## Nom de clip actuellement pointé pour la clé logique `key` ("idle"/"ads_in"/
+## "fire"/"fan"/"reload"/"draw"/"inspect"/"grip_bone") — exposé pour les tests
+## (tests/player/test_fp_arms_rig_revolver.gd), sans dupliquer la connaissance
+## du graphe de blend côté test. "" si `key` est inconnue.
+func active_clip_name(key: String) -> String:
+	return _active_clip_set.get(key, "")
 
 func _set_loops() -> void:
 	for n in _LOOPING:
@@ -199,12 +267,14 @@ func align_to_camera(camera: Camera3D, proc_offset: Transform3D, fov_scale: floa
 	var effective_scale: float = FPArmsMath.RIG_SCALE * maxf(fov_scale, 0.0001)
 	global_transform = FPArmsMath.align_rig_transform(_fp_camera_rest, virtual_camera, effective_scale)
 
-## Pose (une seule fois, idempotent) une BoneAttachment3D sur "WeaponGrip" et
-## y attache `model` avec une transform locale IDENTITÉ + la contre-échelle
-## nécessaire (voir la docstring de classe). Détache l'arme PRÉCÉDENTE sans la
-## libérer (`remove_child`, pas `queue_free` -- ViewModel._refresh_model garde
-## la responsabilité du cycle de vie de `_model`, exactement comme pour
-## l'ancien chemin gants/`_place_weapon`).
+## Pose (une seule fois, idempotent) une BoneAttachment3D sur l'os d'attache du
+## jeu de clips ACTIF ("WeaponGrip" ou "PistolGrip", voir `_active_clip_set`/
+## `use_weapon_clip_set` -- tâche "revolver" 2026-09-27) et y attache `model`
+## avec une transform locale IDENTITÉ + la contre-échelle nécessaire (voir la
+## docstring de classe). Détache l'arme PRÉCÉDENTE sans la libérer
+## (`remove_child`, pas `queue_free` -- ViewModel._refresh_model garde la
+## responsabilité du cycle de vie de `_model`, exactement comme pour l'ancien
+## chemin gants/`_place_weapon`).
 ##
 ## Suppose `align_to_camera` déjà appelé AU MOINS UNE FOIS (c'est CE nœud, pas
 ## un enfant à échelle fixe, qui porte RIG_SCALE dans la magnitude de sa propre
@@ -230,13 +300,29 @@ func attach_weapon(model: Node3D) -> void:
 	model.scale = FPArmsMath.weapon_counter_scale(FPArmsMath.RIG_SCALE)
 
 func _ensure_weapon_attachment() -> BoneAttachment3D:
+	var grip_bone: String = _active_clip_set["grip_bone"]
 	if _weapon_attachment != null:
+		# Tâche "revolver" : ré-affecte le MÊME nœud si l'os d'attache a changé
+		# depuis la dernière fois (bascule Ravage <-> Revolver) -- jamais un
+		# second BoneAttachment3D, `BoneAttachment3D.bone_name` peut être
+		# réassigné à chaud.
+		if _weapon_attachment.bone_name != grip_bone:
+			_weapon_attachment.bone_name = grip_bone
 		return _weapon_attachment
 	_weapon_attachment = BoneAttachment3D.new()
 	_weapon_attachment.name = WEAPON_ATTACHMENT_NAME
 	_skeleton.add_child(_weapon_attachment)
-	_weapon_attachment.bone_name = WEAPON_GRIP_BONE
+	_weapon_attachment.bone_name = grip_bone
 	return _weapon_attachment
+
+## Vrai si le jeu de clips ACTIF est CLIP_SET_REVOLVER (FPP_*/"PistolGrip") —
+## ViewModel.gd s'en sert pour savoir s'il doit déclencher `trigger_fire`/
+## `trigger_fan` (le Ravage, historiquement, NE joue AUCUN clip de tir sur les
+## bras -- FP_Fire remplaçait la pose de visée et faisait sauter l'arme, voir
+## ViewModel._on_fired -- seul le Revolver, avec ses clips FPP_Fire/FPP_Fan
+## dédiés, doit les déclencher).
+func is_using_revolver_clip_set() -> bool:
+	return _active_clip_set == CLIP_SET_REVOLVER
 
 ## Vrai si le glb chargé expose déjà l'os "GrenadeGrip" (voir sa docstring) —
 ## UtilityThrower/ViewModel.gd s'en servent pour savoir s'ils doivent tenter
@@ -289,11 +375,14 @@ func _build_tree() -> void:
 	# Hanche <-> visée : mélanger deux poses IK éloignées faisait lâcher l'arme, et des poses
 	# intermédiaires donnaient un rendu saccadé. On se place dans FP_ADS_In (figé, TimeScale 0)
 	# à l'instant voulu : chaque état intermédiaire est une vraie pose, mains sur l'arme.
+	# Tâche "revolver" (2026-09-27) : les noms de clip viennent de `_active_clip_set`
+	# (RAVAGE par défaut à la construction, voir `load()`) — `use_weapon_clip_set`
+	# RE-POINTE ces mêmes nœuds ensuite (jamais un second arbre reconstruit).
 	var idle := AnimationNodeAnimation.new()
-	idle.animation = "FP_Idle"
+	idle.animation = _active_clip_set["idle"]
 	bt.add_node("Idle", idle)
 	var ads_in := AnimationNodeAnimation.new()
-	ads_in.animation = _ADS_IN
+	ads_in.animation = _active_clip_set["ads_in"]
 	bt.add_node("ADSIn", ads_in)
 	var ads_freeze := AnimationNodeTimeScale.new()
 	bt.add_node("ADSFreeze", ads_freeze)
@@ -319,7 +408,7 @@ func _build_tree() -> void:
 	bt.connect_node("SprintBlend", 1, "SprintClip")
 
 	var fire := AnimationNodeAnimation.new()
-	fire.animation = "FP_Fire"
+	fire.animation = _active_clip_set["fire"]
 	bt.add_node("FireClip", fire)
 	var fire_shot := AnimationNodeOneShot.new()
 	fire_shot.fadein_time = _FIRE_FADE_IN
@@ -328,8 +417,25 @@ func _build_tree() -> void:
 	bt.connect_node("FireShot", 0, "SprintBlend")
 	bt.connect_node("FireShot", 1, "FireClip")
 
+	# Tir FAN ("fan the hammer", tâche "revolver" 2026-09-27) — nœud TOUJOURS
+	# câblé (même pour le Ravage, qui n'a pas de clip fan) : `trigger_fan`
+	# n'est de toute façon jamais appelée pour une arme sans `fan_fire_rate`
+	# (voir Weapon.gd/ViewModel.gd), donc ce one-shot ne se déclenche jamais
+	# pour elle — pas besoin d'un second arbre conditionnel comme le lancer
+	# d'utilitaire (`_has_throw_clips`) : `_active_clip_set["fan"]` vaut
+	# "FP_Fire" pour le Ravage (jamais lu, voir la doc de CLIP_SET_RAVAGE).
+	var fan := AnimationNodeAnimation.new()
+	fan.animation = _active_clip_set["fan"]
+	bt.add_node("FanClip", fan)
+	var fan_shot := AnimationNodeOneShot.new()
+	fan_shot.fadein_time = _FIRE_FADE_IN
+	fan_shot.fadeout_time = _FIRE_FADE_OUT
+	bt.add_node("FanShot", fan_shot)
+	bt.connect_node("FanShot", 0, "FireShot")
+	bt.connect_node("FanShot", 1, "FanClip")
+
 	var reload := AnimationNodeAnimation.new()
-	reload.animation = "FP_Reload"
+	reload.animation = _active_clip_set["reload"]
 	bt.add_node("ReloadClip", reload)
 	var reload_speed := AnimationNodeTimeScale.new()
 	bt.add_node("ReloadSpeed", reload_speed)
@@ -338,11 +444,11 @@ func _build_tree() -> void:
 	reload_shot.fadein_time = _RELOAD_FADE_IN
 	reload_shot.fadeout_time = _RELOAD_FADE_OUT
 	bt.add_node("ReloadShot", reload_shot)
-	bt.connect_node("ReloadShot", 0, "FireShot")
+	bt.connect_node("ReloadShot", 0, "FanShot")
 	bt.connect_node("ReloadShot", 1, "ReloadSpeed")
 
 	var draw := AnimationNodeAnimation.new()
-	draw.animation = "FP_Draw"
+	draw.animation = _active_clip_set["draw"]
 	bt.add_node("DrawClip", draw)
 	var draw_shot := AnimationNodeOneShot.new()
 	draw_shot.fadein_time = _DRAW_FADE_IN
@@ -352,7 +458,7 @@ func _build_tree() -> void:
 	bt.connect_node("DrawShot", 1, "DrawClip")
 
 	var inspect := AnimationNodeAnimation.new()
-	inspect.animation = "FP_Inspect"
+	inspect.animation = _active_clip_set["inspect"]
 	bt.add_node("InspectClip", inspect)
 	var inspect_shot := AnimationNodeOneShot.new()
 	inspect_shot.fadein_time = _INSPECT_FADE_IN
@@ -399,6 +505,50 @@ func _build_tree() -> void:
 func get_tree_param(path: String) -> Variant:
 	return _tree.get(path) if _tree else null
 
+## Bascule vers le jeu de clips REVOLVER (FPP_*/"PistolGrip") si `want_revolver`
+## est vrai ET que `_has_revolver_clip_set` (voir `load()`) — repli SILENCIEUX
+## sur CLIP_SET_RAVAGE sinon (WeaponGrip/FP_*), même discipline que
+## `_has_throw_clips`/`set_throw_ready` : le lead peut livrer les clips FPP_*/
+## l'os "PistolGrip" progressivement, jamais un plantage entre-temps.
+## No-op si déjà sur le jeu demandé (évite de re-pointer les nœuds/relire
+## `clip_length` à chaque frame — l'appelant, ViewModel._refresh_model, rappelle
+## cette fonction à CHAQUE changement d'arme, pas seulement quand le jeu
+## change réellement). À appeler AVANT `attach_weapon` : l'os d'attache doit
+## déjà être le bon quand l'arme est reparentée (voir `_ensure_weapon_attachment`).
+func use_weapon_clip_set(want_revolver: bool) -> void:
+	var target: Dictionary = CLIP_SET_REVOLVER if (want_revolver and _has_revolver_clip_set) else CLIP_SET_RAVAGE
+	if target == _active_clip_set:
+		return
+	_active_clip_set = target
+	_apply_active_clip_names()
+
+## Re-pointe (jamais ne reconstruit) chaque `AnimationNodeAnimation` du
+## graphe de blend sur le nom de clip du jeu `_active_clip_set` COURANT — la
+## topologie du graphe (`_build_tree`, construite UNE FOIS) reste identique
+## pour toute arme FP, seuls les NOMS de clip diffèrent (contrat de tâche :
+## "a per-weapon clip-name map, and a rebuilt or re-pointed AnimationTree").
+func _apply_active_clip_names() -> void:
+	if _tree == null:
+		return
+	var bt := _tree.tree_root as AnimationNodeBlendTree
+	if bt == null:
+		return
+	_point_clip(bt, "Idle", "idle")
+	_point_clip(bt, "ADSIn", "ads_in")
+	_point_clip(bt, "FireClip", "fire")
+	_point_clip(bt, "FanClip", "fan")
+	_point_clip(bt, "ReloadClip", "reload")
+	_point_clip(bt, "DrawClip", "draw")
+	_point_clip(bt, "InspectClip", "inspect")
+	var ads_in_name: String = _active_clip_set["ads_in"]
+	if _anim_player and _anim_player.has_animation(ads_in_name):
+		_ads_in_length = _anim_player.get_animation(ads_in_name).length
+
+func _point_clip(bt: AnimationNodeBlendTree, node_name: String, clip_set_key: String) -> void:
+	var node := bt.get_node(node_name) as AnimationNodeAnimation
+	if node:
+		node.animation = _active_clip_set[clip_set_key]
+
 ## `amount` est DÉJÀ la valeur de blend voulue (0 = FP_Idle, 1 = FP_ADS) --
 ## l'appelant (ViewModel._process) la dérive de `_ads_t` via
 ## `FPArmsMath.ads_blend_amount`, jamais recalculée ici (séparation maths
@@ -417,10 +567,27 @@ func trigger_fire() -> void:
 	if _tree:
 		_tree.set("parameters/FireShot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_FIRE)
 
+## Tir FAN ("fan the hammer", tâche "revolver" 2026-09-27) — l'appelant
+## (ViewModel.gd) ne la rappelle QUE pour une arme `fan_fire_rate > 0`
+## (Weapon.gd), donc en pratique seulement quand CLIP_SET_REVOLVER est déjà
+## actif ; la garde ci-dessous reste défensive (jamais de tir fan déclenché
+## sur le jeu de clips Ravage, qui n'a pas de clip dédié).
+func trigger_fan() -> void:
+	if _tree and _active_clip_set == CLIP_SET_REVOLVER:
+		_tree.set("parameters/FanShot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_FIRE)
+
+## `reload_time` (WeaponConfig.reload_time) réparti sur la durée AUTHORED
+## réelle du clip de rechargement ACTIF (`_active_clip_set["reload"]`, mesurée
+## via `clip_length` -- jamais une référence unique en dur qui suppose un seul
+## clip possible, contrairement à avant la tâche "revolver" : FP_Reload et
+## FPP_Reload n'ont pas forcément la même durée authored).
 func trigger_reload(reload_time: float) -> void:
 	if _tree == null:
 		return
-	_tree.set("parameters/ReloadSpeed/scale", FPArmsMath.reload_speed_for(reload_time))
+	var clip_len := clip_length(_active_clip_set["reload"])
+	if clip_len <= 0.0:
+		clip_len = FPArmsMath.RELOAD_CLIP_REFERENCE_DURATION_S
+	_tree.set("parameters/ReloadSpeed/scale", FPArmsMath.reload_speed_for(reload_time, clip_len))
 	_tree.set("parameters/ReloadShot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_FIRE)
 
 func trigger_draw() -> void:

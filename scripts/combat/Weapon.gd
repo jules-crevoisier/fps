@@ -18,8 +18,15 @@ extends Node
 signal ammo_changed(ammo: int, reserve: int)
 signal weapon_changed(cfg: WeaponConfig)
 ## Émis côté PROPRIÉTAIRE uniquement (prédiction locale) — pour le ViewModel
-## (recul, flash au canon) : voir scripts/player/ViewModel.gd.
-signal fired(cfg: WeaponConfig)
+## (recul, flash au canon) : voir scripts/player/ViewModel.gd. `is_fan`
+## (tâche "revolver", 2026-09-27) : ce tir est-il un tir FAN ("fan the
+## hammer", cadence/dispersion/recul majorés — voir FanFireClock.gd) plutôt
+## qu'un tir TAP précis — `false` pour toute arme sans `fan_fire_rate`
+## (comportement inchangé, ex. le Ravage). Un HANDLER existant à un seul
+## paramètre (`_cfg: WeaponConfig`, ex. CharacterAnimator._on_fired) reste
+## valide tel quel : Godot ignore les arguments émis en trop pour un callable
+## qui en accepte moins.
+signal fired(cfg: WeaponConfig, is_fan: bool)
 signal reload_started(cfg: WeaponConfig)
 ## Émis côté PROPRIÉTAIRE uniquement (prédiction locale) — clic à vide : la
 ## gâchette est actionnée (front montant `fire_pressed`, UNE fois par appui,
@@ -67,6 +74,15 @@ var third_person_weapon: ThirdPersonWeapon
 # ---- Prédiction locale (propriétaire uniquement) ----
 var _inv: Inventory
 var _fire_clock: FireClock
+## Horloge à deux cadences (tap/fan the hammer, tâche "revolver" 2026-09-27) —
+## instanciée UNIQUEMENT pour l'arme courante quand `WeaponConfig.fan_fire_rate
+## > 0.0` (voir `_owner_tick`) ; `null` sinon (`_fire_clock` seul suffit,
+## comportement STRICTEMENT inchangé pour toute arme sans mode fan, ex. le
+## Ravage). Recréée à chaque CHANGEMENT d'arme fan (`_fan_clock_weapon_id`) —
+## jamais recyclée d'une arme à l'autre (l'état "en train de fanner" n'a pas de
+## sens en changeant d'arme).
+var _fan_clock: FanFireClock
+var _fan_clock_weapon_id: int = Inventory.EMPTY
 var _switch_cooldown: float = 0.0
 ## Sensation d'arme (R3-IN#4, WeaponFeel.gd) : index du tir courant dans le
 ## spray (motif de recul fixe puis aléatoire), et temps écoulé depuis la fin
@@ -83,7 +99,11 @@ var _since_dive: float = INF
 
 # ---- Autorité serveur (une instance par joueur, vit sur ce nœud) ----
 var _server_inv: Inventory
-var _server_limiters: Dictionary = {}   # weapon_id -> RateLimiter
+var _server_limiters: Dictionary = {}   # weapon_id -> RateLimiter (LMB/tap)
+## Limiteur DÉDIÉ à la cadence FAN (RMB) — tâche "revolver" : séparé de
+## `_server_limiters` (voir `_fan_limiter_for`), jamais partagé, puisque les
+## deux déclencheurs d'une même arme fan ont des cadences différentes.
+var _server_fan_limiters: Dictionary = {}   # weapon_id -> RateLimiter
 var _pending_shots: Array = []          # [sender_id, origin, dirs, WeaponConfig]
 var rejected_shots: int = 0
 ## Horloge de SIMULATION serveur (cumul du delta physique de CE nœud, jamais
@@ -281,21 +301,65 @@ func _owner_tick(delta: float) -> void:
 	# survenue" de `fire_delay_left`, voir sa docstring) — seul le plongeon
 	# peut encore bloquer le tir.
 	var move_blocked := c != null and WeaponFeel.fire_delay_left(c, INF, _since_dive) > 0.0
-	var trigger := false
-	if can_act and c != null and not _inv.reloading and _switch_cooldown <= 0.0 and not move_blocked and not nade_equipped:
-		trigger = player.input.fire_held if c.automatic else player.input.fire_pressed
-	if not trigger:
-		_spray_shot_index = 0  # relâché => le prochain tir reprend le motif au début.
+	# Tâche "revolver" (révisé 2026-09-27 après playtest, pivot "Valorant
+	# Classic" — design verrouillé utilisateur) : DEUX déclencheurs
+	# INDÉPENDANTS pour une arme `WeaponConfig.has_fan_fire()` (le Revolver) :
+	#  - LMB (`tap_trigger`) = tir précis, EXACTEMENT le chemin `automatic ?
+	#    fire_held : fire_pressed` d'avant cette tâche — "Holding LMB does NOT
+	#    fan anymore" : aucune bascule spéciale, comportement identique au
+	#    Ravage (arme sans mode fan) du point de vue de LMB seul.
+	#  - RMB (`fan_trigger`) = `player.input.alt_fire_held` (maintien BRUT,
+	#    JAMAIS `aim_held` : le clic droit d'une arme fan ne vise jamais, voir
+	#    PlayerInput.weapon_aims_on_right_click, qui a DÉJÀ mis `aim_held` à
+	#    faux pour cette arme — ce champ resterait de toute façon inadapté ici).
+	# Toute arme SANS mode fan (le Ravage) n'a que `tap_trigger`, `fan_trigger`
+	# reste toujours faux : comportement STRICTEMENT inchangé pour elle.
+	var is_fan_weapon := c != null and c.has_fan_fire()
+	var can_trigger := can_act and c != null and not _inv.reloading and _switch_cooldown <= 0.0 and not move_blocked and not nade_equipped
+	var tap_trigger := false
+	var fan_trigger := false
+	if can_trigger:
+		tap_trigger = player.input.fire_held if c.automatic else player.input.fire_pressed
+		if is_fan_weapon:
+			fan_trigger = player.input.alt_fire_held
+	if not (tap_trigger or fan_trigger):
+		_spray_shot_index = 0  # relâchés => le prochain tir reprend le motif au début.
 
 	# GF-12 : un fire_pressed reçu pendant le cooldown est mémorisé 120 ms par
 	# FireClock (voir sa docstring) et tire dès que l'intervalle est écoulé —
 	# corrige les clics "perdus" en fin de cooldown (docs/research/01_game_feel.md
 	# #13). `can_fire()` bloque déjà l'entrée du buffer sur chargeur vide.
-	var shots := _fire_clock.tick(delta, trigger and _inv.can_fire())
+	# Tâche "revolver" : une arme fan utilise `_fan_clock` (deux déclencheurs
+	# à cadence PARTAGÉE — voir FanFireClock.gd) à la place de l'horloge simple
+	# partagée `_fire_clock` ; `_fire_clock.set_rate` (re-synchronisée à CHAQUE
+	# tick sur `WeaponConfig.fire_rate` de l'arme COURANTE) corrige au passage
+	# un défaut latent du prototype à une seule arme : cette horloge restait
+	# câblée à 10,0 tirs/s en dur (`_ready()`), sans jamais suivre l'arme
+	# réellement équipée — invisible tant que seul le Ravage (fire_rate 10.0)
+	# existait, mais aurait laissé n'importe quelle arme plus lente tirer trop
+	# vite en tapotant (le serveur, lui, validait déjà correctement par arme,
+	# voir `_limiter_for`).
+	var tap_shots := 0
+	var fan_shots := 0
 	if c != null:
-		for i in shots:
-			_fire_local(c)
-		if trigger and not _inv.reloading and not _inv.can_fire() and _inv.current_id() != Inventory.EMPTY:
+		var gate := _inv.can_fire()
+		if is_fan_weapon:
+			_ensure_fan_clock(c)
+			var res := _fan_clock.tick(delta, tap_trigger and gate, fan_trigger and gate)
+			tap_shots = int(res["tap"])
+			fan_shots = int(res["fan"])
+		else:
+			_fire_clock.set_rate(c.fire_rate)
+			tap_shots = _fire_clock.tick(delta, tap_trigger and gate)
+	else:
+		_fire_clock.tick(delta, false)  # garde l'horloge "prête", jamais de crédit banqué à vide.
+	if c != null:
+		for i in tap_shots:
+			_fire_local(c, false)
+		for i in fan_shots:
+			_fire_local(c, true)
+		var any_trigger := tap_trigger or fan_trigger
+		if any_trigger and not _inv.reloading and not _inv.can_fire() and _inv.current_id() != Inventory.EMPTY:
 			if _inv.reserve[_inv.current] > 0:
 				_start_reload_predicted()
 			elif Audio.should_play_dry_fire(player.input.fire_pressed, _inv.mag[_inv.current], _inv.reserve[_inv.current]):
@@ -310,6 +374,17 @@ func _owner_tick(delta: float) -> void:
 				# l'autre slot est vide ou déjà courant (`Inventory.equip` refuse).
 				if _inv.slots.size() > 1:
 					_try_equip((_inv.current + 1) % _inv.slots.size())
+
+## Fabrique/rafraîchit `_fan_clock` pour l'arme `c` (tâche "revolver") —
+## recréée à chaque CHANGEMENT d'arme (`_fan_clock_weapon_id`, jamais recyclée
+## d'une arme à l'autre : l'état "en train de fanner" n'a pas de sens en
+## changeant d'arme). N'est appelée que pour une arme `is_fan_weapon`
+## (`c.has_fan_fire()`, voir `_owner_tick`).
+func _ensure_fan_clock(c: WeaponConfig) -> void:
+	var id := WeaponDatabase.id_of(c)
+	if _fan_clock == null or _fan_clock_weapon_id != id:
+		_fan_clock = FanFireClock.new(c.fire_rate, c.fan_fire_rate)
+		_fan_clock_weapon_id = id
 
 ## Le joueur peut-il agir (tirer/recharger/ramasser) maintenant ? Le gating
 ## "souris capturée" (menu ouvert) vit désormais dans PlayerInput — déjà
@@ -368,10 +443,22 @@ func _start_reload_predicted() -> void:
 		reload_started.emit(WeaponDatabase.get_by_id(_inv.current_id()))
 	_do_request_reload()
 
-func _fire_local(c: WeaponConfig) -> void:
+## `is_fan` (tâche "revolver", 2026-09-27) : ce tir est-il un tir FAN ("fan the
+## hammer", voir FanFireClock.gd/`_owner_tick`) — `false` par défaut (tout
+## appelant qui ne précise rien, et TOUJOURS pour une arme sans
+## `fan_fire_rate`, ex. le Ravage : comportement STRICTEMENT inchangé pour
+## elles). Ne change JAMAIS les dégâts (`c.damage`/`damage_min`/`falloff_*`,
+## lus identiquement des deux côtés par le serveur dans `_resolve_ray`, qui ne
+## reçoit d'ailleurs jamais `is_fan` — seule l'origine/la direction du tir
+## voyagent sur le réseau) : design verrouillé utilisateur "SAME damage per
+## bullet". Seuls la dispersion (`fan_spread_add_hip`/`_aim`, additive) et le
+## recul VERTICAL (`fan_recoil_mult`, voir `WeaponFeel.recoil_for_shot`) sont
+## majorés — cosmétique/prédiction PROPRIÉTAIRE, jamais revalidés par le
+## serveur (comme le reste de la dispersion/du recul, voir WeaponFeel.gd).
+func _fire_local(c: WeaponConfig, is_fan: bool = false) -> void:
 	_inv.consume_round()
 	_emit_local()
-	fired.emit(c)
+	fired.emit(c, is_fan)
 
 	# Trauma de tir caméra (GF-29/GF-08, docs/research/01_game_feel.md §2.1/§3) :
 	# `is_local_human()`, PAS `is_multiplayer_authority()` seule — un bot
@@ -417,6 +504,12 @@ func _fire_local(c: WeaponConfig) -> void:
 	var move_spread := WeaponFeel.move_spread_deg(c, player.horizontal_speed(), player.config.sprint_speed, sliding)
 	var air_spread := c.air_spread_add if airborne else 0.0
 	var base_deg := c.spread_aim if aiming else c.spread_hip
+	# Tâche "revolver" : dispersion ADDITIONNELLE d'un tir FAN (jamais
+	# remplacée, voir WeaponConfig.fan_spread_add_hip/_aim) — toujours 0 pour
+	# une arme sans mode fan (`is_fan` y est alors toujours faux, voir
+	# `_owner_tick`), donc aucun effet sur le Ravage.
+	if is_fan:
+		base_deg += c.fan_spread_add_aim if aiming else c.fan_spread_add_hip
 	# Dispersion additionnelle pendant le Stun (GF-29/MV-03, MovementConfig.
 	# stun_fire_spread_add = 3° par défaut) : le stun de chute adouci ne fige
 	# plus le tir (voir `_can_act` ci-dessus), il le rend seulement moins précis.
@@ -440,14 +533,18 @@ func _fire_local(c: WeaponConfig) -> void:
 
 	# Recul (vrai recoil : déplace la visée, récupère ensuite) — motif fixe
 	# (recoil_pattern/pattern_shots) puis aléatoire au-delà (WeaponFeel).
-	var kick := WeaponFeel.recoil_for_shot(c, _spray_shot_index)
+	# Tâche "revolver" : `fan_recoil_mult` (>= 1.0) majore UNIQUEMENT la
+	# composante VERTICALE d'un tir FAN (voir `WeaponFeel.recoil_for_shot`,
+	# `recoil_mult` — jamais la déviation horizontale aléatoire) ; 1.0 (aucun
+	# effet) pour un tir tap ou toute arme sans mode fan.
+	var kick := WeaponFeel.recoil_for_shot(c, _spray_shot_index, null, c.fan_recoil_mult if is_fan else 1.0)
 	_spray_shot_index += 1
 	var rmult := c.recoil_aim_mult if aiming else 1.0
 	var rp := deg_to_rad(kick.y) * rmult
 	var ry := deg_to_rad(kick.x) * rmult
 	player.add_recoil(rp, ry, c.recoil_recovery)
 
-	_do_request_fire(origin, dirs, WeaponDatabase.id_of(c))
+	_do_request_fire(origin, dirs, WeaponDatabase.id_of(c), is_fan)
 
 ## Lâche l'arme courante (touche G).
 func _request_drop() -> void:
@@ -479,15 +576,20 @@ func request_world_pickup(uid: int) -> void:
 #  SERVEUR, pas celui du bot) et `_server_*` rejetterait la requête
 #  (sender_id != _owner_id()).
 # ======================================================================
-func _do_request_fire(origin: Vector3, dirs: Array, weapon_id: int) -> void:
+## `is_alt_fire` (tâche "revolver", 2026-09-27) : ce tir a-t-il été déclenché
+## par RMB (fan) plutôt que LMB (tap) — voir `_fire_local`/FanFireClock.gd.
+## Le serveur en a besoin pour valider la cadence à la bonne borne (voir
+## `_server_fire` : "the fan rate must be accepted only for weapons that have
+## it AND when the request is flagged alt-fire").
+func _do_request_fire(origin: Vector3, dirs: Array, weapon_id: int, is_alt_fire: bool = false) -> void:
 	if multiplayer.is_server():
-		_server_fire(_owner_id(), origin, dirs, weapon_id)
+		_server_fire(_owner_id(), origin, dirs, weapon_id, is_alt_fire)
 	else:
-		request_fire.rpc_id(1, origin, dirs, weapon_id)
+		request_fire.rpc_id(1, origin, dirs, weapon_id, is_alt_fire)
 
 @rpc("any_peer", "call_remote", "reliable")
-func request_fire(origin: Vector3, dirs: Array, weapon_id: int) -> void:
-	_server_fire(multiplayer.get_remote_sender_id(), origin, dirs, weapon_id)
+func request_fire(origin: Vector3, dirs: Array, weapon_id: int, is_alt_fire: bool = false) -> void:
+	_server_fire(multiplayer.get_remote_sender_id(), origin, dirs, weapon_id, is_alt_fire)
 
 func _do_request_pickup(uid: int) -> void:
 	if multiplayer.is_server():
@@ -541,7 +643,7 @@ func _server_tick(delta: float) -> void:
 	if not _pending_shots.is_empty():
 		_resolve_pending_shots()
 
-func _server_fire(sender_id: int, origin: Vector3, dirs: Array, weapon_id: int) -> void:
+func _server_fire(sender_id: int, origin: Vector3, dirs: Array, weapon_id: int, is_alt_fire: bool = false) -> void:
 	if not multiplayer.is_server() or sender_id != _owner_id():
 		return
 	if _round_locked():
@@ -587,7 +689,21 @@ func _server_fire(sender_id: int, origin: Vector3, dirs: Array, weapon_id: int) 
 	# exposait la fenêtre de course. `_server_clock` élimine la dépendance au
 	# temps réel SANS affaiblir l'anti-triche (le serveur cadence lui-même sa
 	# propre horloge, immunisée à toute manipulation du client).
-	if not _limiter_for(weapon_id, c.fire_rate).try_take(_server_clock):
+	# Tâche "revolver" (révisé 2026-09-27, pivot "Valorant Classic") : "the
+	# server validates the rate: fan-rate shots are accepted only when the
+	# request is flagged alt-fire AND the weapon has FAN" — DEUX limiteurs
+	# INDÉPENDANTS par arme (`_limiter_for`/`_fan_limiter_for`), jamais un
+	# seul plafond partagé : un client qui prétend `is_alt_fire = true` sur
+	# une arme SANS `has_fan_fire()` (ex. le Ravage) reste plafonné à
+	# `fire_rate` (vérité SERVEUR — `c.alt_fire_mode`/`c.fan_fire_rate`,
+	# jamais déduite d'une déclaration client), donc n'obtient jamais la
+	# cadence fan. Les dégâts restent IDENTIQUES quel que soit le rythme
+	# (voir `_resolve_ray`, qui ne lit que `c.damage`/`falloff_*`) : ce
+	# plafond ne protège que contre une cadence globale absurde, jamais un
+	# avantage de dégâts.
+	var use_fan_limiter := is_alt_fire and c.has_fan_fire()
+	var limiter := _fan_limiter_for(weapon_id, c.fan_fire_rate) if use_fan_limiter else _limiter_for(weapon_id, c.fire_rate)
+	if not limiter.try_take(_server_clock):
 		_reject_shot()
 		return
 	# Vue serveur de la tête : position répliquée + hauteur debout (l'accroupi
@@ -630,6 +746,16 @@ func _limiter_for(weapon_id: int, fire_rate: float) -> RateLimiter:
 	if not _server_limiters.has(weapon_id):
 		_server_limiters[weapon_id] = RateLimiter.new(fire_rate, 2.0)
 	return _server_limiters[weapon_id]
+
+## Limiteur DÉDIÉ à la cadence FAN (RMB), séparé de `_limiter_for` (LMB) —
+## tâche "revolver" : ces deux déclencheurs ont des cadences différentes pour
+## la MÊME arme (`fire_rate` vs `fan_fire_rate`), donc deux seaux à jetons
+## distincts, chacun avec son propre burst=2.0 (même convention que
+## `_limiter_for`).
+func _fan_limiter_for(weapon_id: int, fan_fire_rate: float) -> RateLimiter:
+	if not _server_fan_limiters.has(weapon_id):
+		_server_fan_limiters[weapon_id] = RateLimiter.new(fan_fire_rate, 2.0)
+	return _server_fan_limiters[weapon_id]
 
 ## Diffuse le FX d'un tir ACCEPTÉ à tous les pairs SAUF le tireur (signal
 ## `remote_fired`, unreliable_ordered — juste du cosmétique, une perte

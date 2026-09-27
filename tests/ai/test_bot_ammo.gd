@@ -33,7 +33,9 @@ func test_ammo_detour_radius_is_12_meters() -> void:
 
 
 func test_pistol_weapon_name_is_named_explicitly() -> void:
-	assert_str(BotCombatStyle.PISTOL_WEAPON_NAME).is_equal("Pistolet")
+	# Depuis la tâche "revolver" (2026-09-27) : le Revolver EST l'arme
+	# secondaire réelle du loadout (slot 2, WeaponDatabase.default_loadout_ids).
+	assert_str(BotCombatStyle.PISTOL_WEAPON_NAME).is_equal("Revolver")
 
 # ======================================================================
 #  should_self_reload — recharge hors combat sous 40 %.
@@ -82,8 +84,8 @@ func test_should_switch_to_pistol_when_dry_and_pistol_available() -> void:
 
 
 func test_should_switch_to_pistol_false_when_already_on_pistol() -> void:
-	# Le pistolet lui-même à sec : rien d'autre à faire (pas de 3e arme).
-	assert_bool(BotCombatStyle.should_switch_to_pistol("Pistolet", 0, 0, true)).is_false()
+	# Le revolver lui-même à sec : rien d'autre à faire (pas de 3e arme).
+	assert_bool(BotCombatStyle.should_switch_to_pistol("Revolver", 0, 0, true)).is_false()
 
 
 func test_should_switch_to_pistol_false_with_ammo_left_in_magazine() -> void:

@@ -6,8 +6,11 @@ extends Resource
 
 ## Type de tir.
 enum Type { HITSCAN, SHOTGUN, SNIPER }
-## Catégorie (pour la boutique / le catalogue).
-enum Category { SIDEARM, SMG, RIFLE, SHOTGUN, SNIPER, HEAVY, MELEE }
+## Catégorie (pour la boutique / le catalogue). PISTOL ajoutée en fin de liste
+## (tâche "revolver", 2026-09-27) : jamais réordonnée avant MELEE, pour ne pas
+## décaler les valeurs entières déjà écrites dans resources/weapons/*.tres
+## (`category = 2` pour le Ravage doit rester RIFLE).
+enum Category { SIDEARM, SMG, RIFLE, SHOTGUN, SNIPER, HEAVY, MELEE, PISTOL }
 
 @export var weapon_name: String = "Rifle"
 @export var weapon_type: Type = Type.HITSCAN
@@ -81,6 +84,57 @@ enum Category { SIDEARM, SMG, RIFLE, SHOTGUN, SNIPER, HEAVY, MELEE }
 @export_group("Lunette / Scope")
 ## Affiche une lunette (overlay) en visée — pour les snipers.
 @export var scoped: bool = false
+
+## Comportement du clic DROIT (RMB) — pivot "Valorant Classic" (design
+## verrouillé utilisateur, 2026-09-27, révisé après playtest) :
+##  - NONE (défaut) : RMB vise (ADS classique — zoom, blend FPP_ADS_In,
+##    ralentissement au déplacement) — comportement HISTORIQUE inchangé pour
+##    toute arme existante (ex. le Ravage).
+##  - FAN : RMB déclenche le tir "fan the hammer" (voir `fan_fire_rate` ci-
+##    dessous) — RMB ne vise JAMAIS pour cette arme (aucun zoom, aucun blend
+##    ADS, aucun ralentissement — voir PlayerInput.weapon_aims_on_right_click,
+##    seul point de lecture de ce champ : chaque consommateur d'`aim_held`
+##    hérite automatiquement de la bonne règle sans être modifié un par un).
+## Générique par conception ("so future weapons can reuse it") : un futur type
+## de clic droit ajouterait une 3e valeur ici, jamais un bool dédié de plus.
+enum AltFireMode { NONE, FAN }
+@export_group("Clic droit (RMB)")
+@export var alt_fire_mode: AltFireMode = AltFireMode.NONE
+
+@export_group("Fan the hammer (tâche revolver, révisé 2026-09-27)")
+## Cadence (balles/seconde) du tir "fan the hammer" — déclenché par RMB TENU
+## (`alt_fire_mode == FAN`), jamais par LMB (voir Weapon.gd/FanFireClock.gd) :
+## "Holding LMB does NOT fan anymore; it fires nothing more until release."
+## `0.0` (défaut) désactive complètement le mode fan même si `alt_fire_mode`
+## valait FAN par erreur — l'arme se comporte alors comme une arme normale
+## (RMB ne fait rien de spécial, `automatic`/`fire_rate` seuls bornent LMB).
+@export var fan_fire_rate: float = 0.0
+## Dispersion (deg) AJOUTÉE (jamais remplacée) à `spread_hip` pendant un tir
+## fan. En pratique TOUJOURS la branche hanche : une arme `alt_fire_mode ==
+## FAN` ne vise jamais (voir la doc d'`alt_fire_mode`), `fan_spread_add_aim`
+## ci-dessous ne s'applique donc à aucune arme du jeu actuel — gardé pour
+## qu'une arme FUTURE puisse un jour combiner ADS (via une 3e voie) et fan.
+@export var fan_spread_add_hip: float = 0.0
+## Dispersion (deg) AJOUTÉE à `spread_aim` pendant un tir fan (visée/ADS) —
+## voir la note ci-dessus (inutilisée tant qu'aucune arme ne vise ET ne fanne).
+@export var fan_spread_add_aim: float = 0.0
+## Multiplicateur du recul VERTICAL pendant un tir fan (>= 1.0 : le fan
+## secoue plus que le tap) — même convention que `WeaponFeel.recoil_for_shot`
+## (`recoil_mult`, ne touche jamais la déviation horizontale aléatoire).
+@export var fan_recoil_mult: float = 1.0
+
+## Vrai si RMB doit se comporter comme une visée (ADS) pour CETTE arme — voir
+## la doc d'`alt_fire_mode`. Fonction PURE (aucun accès à l'arbre de scène),
+## seul point de vérité lu par PlayerInput.weapon_aims_on_right_click.
+func aims_on_right_click() -> bool:
+	return alt_fire_mode == AltFireMode.NONE
+
+## Vrai si RMB doit fanner pour CETTE arme (`alt_fire_mode == FAN` ET une
+## cadence fan réellement configurée > 0 — un `fan_fire_rate` resté à 0 par
+## erreur désactive le mode sans qu'il faille aussi remettre `alt_fire_mode` à
+## NONE). Seul point de vérité lu par Weapon.gd (client ET serveur).
+func has_fan_fire() -> bool:
+	return alt_fire_mode == AltFireMode.FAN and fan_fire_rate > 0.0
 
 @export_group("Recul (motif fixe)")
 ## Motif de recul FIXE pour les premiers tirs (façon Valorant) : chaque élément
