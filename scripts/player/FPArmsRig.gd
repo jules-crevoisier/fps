@@ -284,7 +284,95 @@ func align_to_camera(camera: Camera3D, proc_offset: Transform3D, fov_scale: floa
 ## frame avant tout rendu, donc toujours avant que l'arme ne soit visible à
 ## l'écran, même si `attach_weapon` est appelé plus tôt dans la même frame
 ## (ex. juste après `load()`).
-func attach_weapon(model: Node3D) -> void:
+## Ajustement de cadrage PAR ARME (tâche "cadrage FP quatre armes", 2026-09-28) appliqué PAR-DESSUS
+## la contre-échelle RIG_SCALE (voir `attach_weapon`) — clé = id `WeaponDatabase.PATHS`, même
+## principe que `ViewModel._WEAPON_SCALE_BY_ID`/`_WEAPON_NUDGE_BY_ID` pour l'ancien chemin gants,
+## mais ICI côté rig plutôt que dans la géométrie exportée (voir le contrat de tâche : "prefer a
+## per-weapon data table on the Godot side... over re-baking geometry").
+##
+## Contexte mesuré (captures `tools/rigging/action_weapons_capture.gd` ->
+## reports/checkpoints/2026-09-28_weapons_v3/, JSON `fp_framing.json`) : à transform identité (repli
+## `_DEFAULT_GRIP_*` ci-dessous), Ravage (id 0, HORS PÉRIMÈTRE, jamais retouché) cadre correctement
+## (silhouette ancrée bas-droite, carré central libre, couverture hanche ≈12,3 %) tandis que les 4
+## armes peintes (ids 2-5, géométrie art/weapons/<id>/build_<id>.py) débordaient chacune d'une façon
+## différente : Fracas vue presque dans l'axe du canon (silhouette en biais, canon quasi aligné sur
+## l'axe caméra plutôt que présenté de profil), Verdict presque entièrement sous le cadre visible,
+## lunette de l'Aiguille dominant le centre. Cause commune à ces trois : `painted_weapon.py::auto_lift`
+## cale seulement la HAUTEUR (Z) du canon sur celle de Ravage (`TARGET_MUZZLE_Z`) — ni la profondeur/
+## le décalage latéral du canon ni l'inclinaison propre de chaque silhouette (gabarit/proportions
+## Tripo différents de Ravage) ne sont corrigés par ce seul calage.
+##
+## Rafale (id 2) : cas À PART, corrigé AVANT le cadrage — la 1re mesure de repère source
+## (`FRONT_SIGN`, voir art/weapons/rafale/build_rafale.py) était fausse (avant SOURCE = +X au lieu de
+## -X, la crosse fil ayant une section aussi fine que le garde-main ajouré à cette silhouette,
+## heuristique "plus fin = canon" ambiguë), donc TOUTE la silhouette rendait à l'envers en jeu (canon
+## vers la caméra, crosse vers l'écran — playtest utilisateur, 2026-09-28). Une fois `FRONT_SIGN`
+## recorrigé (glb régénéré, vérifié par rendu colorié par région -- le viseur "réflexe" repéré au 1er
+## passage était en fait le frein de bouche/la bouche du canon lui-même, pas une lunette mal placée),
+## voir tests/combat/test_weapon_muzzle_orientation.gd (verrou anti-régression sur les 6 armes).
+##
+## 2e passage (consigne du lead après relecture des captures v3 -- "the gun pitches DOWN"/"pitched UP
+## like a bazooka") : la mesure `axis_angle_deg`/`muzzle_screen` ci-dessous (voir la doc de
+## `_measure_and_save_mask` dans action_weapons_capture.gd) a servi de GUIDE CHIFFRÉ plutôt qu'un seul
+## coup d'œil -- Rafale (canon plongeant, angle -118° contre -104° pour Ravage) a demandé un ROULIS
+## (le tangage seul restait quasi sans effet sur l'angle projeté à l'écran, ~0,04°/°, alors que le
+## roulis répond à ~0,17-0,24°/° en régime modéré) PLUTÔT qu'un tangage, et Fracas (canon trop haut,
+## "bazooka") s'est réglé par une position revue (le tangage/lacet d'origine restait correct, l'angle
+## était déjà dans la tolérance ±8° -- seul le POINT de canon à l'écran dérivait). Rafale a montré une
+## forte NON-LINÉARITÉ/instabilité à roulis élevé (-71,5° ramenait l'angle pile dans la tolérance mais
+## faisait dériver le point de canon de 0,20 -- repère "poignée" très proche de la caméra, la
+## perspective y amplifie toute translation) : réglé avec un roulis modéré (régime quasi-linéaire) +
+## un léger recul en Z pour stabiliser la sensibilité position/écran.
+##
+## `pos` : mètres MONDE (échelle du modèle .glb, PAS encore divisés par RIG_SCALE — voir
+## `FPArmsMath.weapon_grip_offset`, appelé par `attach_weapon`) dans le repère de la caméra (axes
+## IDENTIQUES à "WeaponGrip" au repos, transform locale identité — voir la docstring de classe) :
+## +X droite, +Y haut, +Z vers la caméra/-Z vers l'écran.
+## `rot_deg` : rotation LOCALE (Vector3 en DEGRÉS, ordre Basis.from_euler par défaut -- x=tangage/
+## pitch, y=lacet/yaw, z=roulis/roll) appliquée à l'arme elle-même, jamais mise à l'échelle par
+## RIG_SCALE (une rotation ne porte pas de magnitude).
+## `scale_mult` : multiplicateur UNIFORME par-dessus `weapon_counter_scale` (1.0 = neutre, taille
+## réelle du modèle — voir la doc de tête de `to_game_matrix`).
+const _GRIP_POS_BY_ID := {
+	2: Vector3(0.02, -0.02, -0.07),   # Rafale — pose identité (même repère que Ravage), un peu plus loin de la caméra.
+	3: Vector3(0.0, -0.02, -0.04),    # Fracas — pose identité ; allongé (voir l'échelle) pour tenir la diagonale de Ravage.
+	4: Vector3(0.02, 0.08, -0.05),     # Verdict — canon un peu trop proche du carré central à 0.12.
+	5: Vector3(0.02, -0.03, 0.0),      # Aiguille
+}
+const _DEFAULT_GRIP_POS := Vector3.ZERO
+const _GRIP_ROTATION_DEG_BY_ID := {
+	# Vide depuis le 2026-09-28 : les quatre modèles sont exportés dans le MÊME repère que Ravage
+	# (-Z avant, +Y haut, Muzzle à y≈0,24 — voir tools/rigging/inspect_weapon_geometry.gd), la
+	# pose identité suffit. Les rotations essayées (roulis Rafale, tangage Fracas) satisfaisaient
+	# la mesure d'angle écran mais inclinaient l'arme de côté ou la faisaient pointer au ciel.
+}
+const _DEFAULT_GRIP_ROTATION_DEG := Vector3.ZERO
+const _GRIP_SCALE_MULT_BY_ID := {
+	2: 0.85,   # Rafale — trapue (0,10 m de large contre 0,07 pour Ravage) : réduite
+	3: 1.3,    # Fracas — 0,58 m exporté -> ~0,75 m à l'écran, comme un vrai fusil à pompe court
+	4: 0.85,   # Verdict
+	5: 1.05,   # Aiguille
+}
+const _DEFAULT_GRIP_SCALE_MULT := 1.0
+
+## Décalage de cadrage (mètres monde, voir la doc de `_GRIP_POS_BY_ID`) pour l'arme `weapon_id` —
+## repli identité (`Vector3.ZERO`) pour toute arme absente de la table (Ravage/Revolver, ids 0/1,
+## HORS PÉRIMÈTRE ; `weapon_id` négatif, ex. appelant historique sans id, voir `attach_weapon`).
+## Fonction PURE (aucun accès à l'arbre de scène) — testée directement.
+static func grip_offset_for(weapon_id: int) -> Vector3:
+	return _GRIP_POS_BY_ID.get(weapon_id, _DEFAULT_GRIP_POS)
+
+static func grip_rotation_deg_for(weapon_id: int) -> Vector3:
+	return _GRIP_ROTATION_DEG_BY_ID.get(weapon_id, _DEFAULT_GRIP_ROTATION_DEG)
+
+static func grip_scale_mult_for(weapon_id: int) -> float:
+	return _GRIP_SCALE_MULT_BY_ID.get(weapon_id, _DEFAULT_GRIP_SCALE_MULT)
+
+## `weapon_id` (défaut -1, "aucun réglage" -- voir `grip_offset_for`/`grip_rotation_deg_for`/
+## `grip_scale_mult_for`) : id `WeaponDatabase.PATHS` de `model`, transmis par ViewModel._refresh_model
+## (seul appelant en jeu) -- les appels de test (`rig.attach_weapon(weapon)`, sans id) gardent donc
+## EXACTEMENT le comportement identité d'avant cette tâche.
+func attach_weapon(model: Node3D, weapon_id: int = -1) -> void:
 	if model == null:
 		return
 	var attach := _ensure_weapon_attachment()
@@ -297,7 +385,11 @@ func attach_weapon(model: Node3D) -> void:
 		attach.add_child(model)
 	model.owner = null
 	model.transform = Transform3D.IDENTITY
-	model.scale = FPArmsMath.weapon_counter_scale(FPArmsMath.RIG_SCALE)
+	var scale_mult := grip_scale_mult_for(weapon_id)
+	model.scale = FPArmsMath.weapon_counter_scale(FPArmsMath.RIG_SCALE) * scale_mult
+	var rot_deg := grip_rotation_deg_for(weapon_id)
+	model.rotation = Vector3(deg_to_rad(rot_deg.x), deg_to_rad(rot_deg.y), deg_to_rad(rot_deg.z))
+	model.position = FPArmsMath.weapon_grip_offset(grip_offset_for(weapon_id), FPArmsMath.RIG_SCALE)
 
 func _ensure_weapon_attachment() -> BoneAttachment3D:
 	var grip_bone: String = _active_clip_set["grip_bone"]

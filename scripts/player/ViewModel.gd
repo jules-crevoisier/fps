@@ -919,7 +919,7 @@ func _refresh_model() -> void:
 		# lacet/échelle/décalage PAR ARME (`_place_weapon`, `_attach_gloves`),
 		# ces hacks n'existant que pour compenser l'ancien système de gants
 		# flottants sans vraie main.
-		_arms.attach_weapon(_model)
+		_arms.attach_weapon(_model, id)
 	else:
 		add_child(_model)
 		_place_weapon(id)

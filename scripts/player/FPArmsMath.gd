@@ -70,6 +70,18 @@ static func weapon_counter_scale(rig_scale: float) -> Vector3:
 		return Vector3.ONE
 	return Vector3.ONE / rig_scale
 
+## Convertit un décalage de cadrage PAR ARME exprimé en MÈTRES MONDE (mêmes unités que le modèle
+## .glb -- voir FPArmsRig._GRIP_POS_BY_ID) en position LOCALE à poser sur l'arme sous la
+## BoneAttachment3D "WeaponGrip"/"PistolGrip" -- ce nœud hérite `rig_scale` de toute la hiérarchie
+## du rig (même raison que `weapon_counter_scale` : la magnitude de `rig_root.global_transform.basis`
+## porte RIG_SCALE*fov_scale, voir sa docstring), donc un décalage MONDE de `d` mètres doit être
+## divisé par `rig_scale` pour produire le même déplacement une fois composé par le parent. Même
+## garantie défensive que `weapon_counter_scale` : jamais de division par zéro/valeur infinie.
+static func weapon_grip_offset(world_offset: Vector3, rig_scale: float) -> Vector3:
+	if absf(rig_scale) < 0.0001:
+		return world_offset
+	return world_offset / rig_scale
+
 ## Position (0..1) du blend Idle->ADS (AnimationNodeBlend2 "IdleAds", voir
 ## FPArmsRig._build_tree) à partir de `ads_t` — même convention que
 ## ViewModel._ads_t (1 = hanche/repos, 0 = pleinement visé) : 0 sur le blend

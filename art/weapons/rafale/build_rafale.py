@@ -15,7 +15,8 @@ futur modèle Rafale sépare vraiment les deux volumes.
 
 Source : assets/incoming/tripo/rafale.glb (Tripo Studio, 59 pièces "tripo_part_N", SANS texture,
 tâche "quatre armes v2" 2026-09-28 -- voir assets/models/weapons/rafale.provenance.json). Repère
-SOURCE mesuré par sondage : avant = +X (canon), haut = +Z.
+SOURCE : avant = -X (canon), haut = +Z -- RECORRIGÉ 2026-09-28 (playtest utilisateur, voir FRONT_SIGN
+ci-dessous) : la 1re mesure ("avant = +X") était fausse, l'arme rendait canon-vers-la-caméra en jeu.
 
     "C:\\Program Files\\Blender Foundation\\Blender 5.2\\blender.exe" -b --factory-startup --python art/weapons/rafale/build_rafale.py
 """
@@ -34,7 +35,16 @@ import painted_weapon as pw  # noqa: E402
 SRC = os.path.join(ROOT, "assets", "incoming", "tripo", "rafale.glb")
 OUT_GLB = os.path.join(ROOT, "assets", "models", "weapons", "rafale.glb")
 LENGTH_M = 0.60  # concept "~0,60 m" (contrat lead) -- SMG compacte
-FRONT_SIGN = +1.0  # avant SOURCE = +X (mesuré)
+## CORRIGÉ (2026-09-28, playtest utilisateur : « le Rafale est complètement à l'envers », canon
+## vers la caméra, crosse vers l'écran) -- la mesure initiale (+1.0, avant SOURCE = +X) prenait le
+## bloc "canon/garde-main ajouré" (zone_of, c.x > 0.18) pour l'avant, mais la crosse fil (nombreux
+## brins fins, c.x < -0.24) a une section PLUS FINE que le garde-main ajouré à cette silhouette
+## précise (constaté par sondage -- outil probe_orientation, ratio de section ambigu ~1.2x -- une
+## crosse fil n'est PAS le bloc massif que l'heuristique "plus fin = canon" suppose en général,
+## contrairement à Fracas/Verdict/Aiguille dont la crosse est un bloc de bois/métal net) : seul un
+## rendu en jeu (fp_shots) tranche sans ambiguïté ici. -X est bien le canon (confirmé par capture
+## après ce correctif).
+FRONT_SIGN = -1.0  # avant SOURCE = -X (corrigé -- était +X par erreur)
 
 PAL = {
     "ink": "#0E0C08",
@@ -48,9 +58,9 @@ ZONES = [z for z in sorted(PAL) if z != "ink"]
 def zone_of(s: dict) -> str:
     c = s["c"]
     if c.x < -0.24:
-        return "gunmetal"  # crosse fil (nombreux brins) + bloc de fixation
+        return "gunmetal"  # canon/garde-main ajouré (RECORRIGÉ -- « avant » est -X, pas +X)
     if c.x > 0.18:
-        return "gunmetal"  # canon/garde-main ajouré
+        return "gunmetal"  # crosse fil (nombreux brins) + bloc de fixation
     if c.z > 0.38:
         return "gunmetal"  # hausse/rail dessus
     if abs(c.y) > 0.035 and 0.18 < c.z < 0.36:
@@ -75,9 +85,13 @@ def build():
 
     grip = Vector((stats[mag_name]["c"].x, 0.0, 0.17))
 
-    shroud_name = max((n for n in stats if stats[n]["c"].x > 0.18), key=lambda n: stats[n]["faces"])
-    muzzle_src = Vector((stats[shroud_name]["mx"].x, stats[shroud_name]["c"].y, stats[shroud_name]["c"].z))
-    foregrip_src = Vector((0.30, 0.0, stats[shroud_name]["c"].z))
+    # RECORRIGÉ (2026-09-28, playtest utilisateur -- voir la doc de tête/FRONT_SIGN) : « avant » est
+    # -X, pas +X -- le canon/garde-main ajouré est donc la pièce marquante côté x < -0.24 (ex-
+    # « crosse fil » mal étiquetée), sa pointe la plus avancée étant son minimum X (pas son maximum,
+    # inversé par rapport à l'ancienne lecture +X).
+    shroud_name = max((n for n in stats if stats[n]["c"].x < -0.24), key=lambda n: stats[n]["faces"])
+    muzzle_src = Vector((stats[shroud_name]["mn"].x, stats[shroud_name]["c"].y, stats[shroud_name]["c"].z))
+    foregrip_src = Vector((-0.30, 0.0, stats[shroud_name]["c"].z))
 
     span = max(stats[n]["mx"].x for n in stats) - min(stats[n]["mn"].x for n in stats)
     scale = LENGTH_M / span

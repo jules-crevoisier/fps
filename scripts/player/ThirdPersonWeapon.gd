@@ -35,6 +35,31 @@ const _GRIP_OFFSETS := {
 	WeaponConfig.Category.MELEE: {"pos": Vector3(0.02, -0.02, 0.03), "rot_deg": Vector3(0, 90, 0)},
 }
 const _DEFAULT_GRIP := {"pos": Vector3(0.0, -0.04, 0.0), "rot_deg": Vector3(0, 90, 0)}
+
+## Décalage de prise PAR ARME (id `WeaponDatabase.PATHS`, tâche "cadrage FP quatre armes" 2026-09-28,
+## suite -- consigne du lead après le 1er passage : « Fracas/Verdict ne se tiennent pas en main
+## comme Ravage ») : réglage LE PLUS SPÉCIFIQUE, consulté EN PREMIER par `_grip_for` -- `_GRIP_OFFSETS`
+## (PAR CATÉGORIE, ci-dessus) reste le repli quand une arme n'a pas d'entrée ici (comportement
+## HISTORIQUE inchangé pour Ravage/Revolver/Aiguille/Rafale, dont la prise 3P n'a pas été jugée à
+## revoir -- captures reports/checkpoints/2026-09-28_weapons_v3/*_3p.png). S'applique aussi bien
+## quand l'agent expose "WeaponSocket" (Verrou/frog_cowboy.tscn -- identité SEULE jusqu'ici, quelle
+## que soit l'arme, voir `_reparent_model_to_hand`) que sur le repli `_bone_attach` générique.
+const _GRIP_OFFSETS_BY_ID := {
+	3: {"pos": Vector3(0.0, -0.05, -0.06), "rot_deg": Vector3(0.0, 90.0, 0.0)},   # Fracas
+	4: {"pos": Vector3(0.0, -0.05, -0.02), "rot_deg": Vector3(0.0, 90.0, 0.0)},   # Verdict
+}
+
+## Transform de prise pour l'arme `weapon_id` -- `_GRIP_OFFSETS_BY_ID` (PAR ARME) EN PREMIER,
+## `fallback` (calculé par l'appelant : identité pour "WeaponSocket", `_GRIP_OFFSETS`/catégorie pour
+## `_bone_attach`) sinon. Fonction PURE (aucun accès à l'arbre de scène) -- testée directement.
+static func grip_transform_for(weapon_id: int, fallback: Transform3D) -> Transform3D:
+	if not _GRIP_OFFSETS_BY_ID.has(weapon_id):
+		return fallback
+	var grip: Dictionary = _GRIP_OFFSETS_BY_ID[weapon_id]
+	var pos: Vector3 = grip["pos"]
+	var rot_deg: Vector3 = grip["rot_deg"]
+	return Transform3D(Basis.from_euler(Vector3(deg_to_rad(rot_deg.x), deg_to_rad(rot_deg.y), deg_to_rad(rot_deg.z))), pos)
+
 const _HAND_BONE := "DEF-hand.R"
 ## Nom du nœud que scenes/characters/<agent>.tscn peut exposer (BoneAttachment3D
 ## sur "RightHand" -> Node3D "WeaponSocket", ex. frog_cowboy.tscn) : le point
@@ -170,6 +195,11 @@ func _reparent_model_to_hand(weapon_id: int = -1) -> void:
 	if _model.get_parent():
 		_model.get_parent().remove_child(_model)
 	var cfg_for_grip: WeaponConfig = WeaponDatabase.get_by_id(weapon_id) if weapon_id >= 0 else (weapon.cfg() if weapon else null)
+	# Id résolu pour `grip_transform_for` -- `weapon_id` déjà connu (chemin normal, depuis
+	# `_on_current_id_changed`) sinon retrouvé depuis `cfg_for_grip` (rappel depuis `_on_body_ready`,
+	# voir la doc de tête de cette fonction). `-1` si ni l'un ni l'autre (aucune entrée PAR ARME
+	# possible -- `grip_transform_for` retombe alors toujours sur `fallback`).
+	var resolved_id: int = weapon_id if weapon_id >= 0 else (WeaponDatabase.id_of(cfg_for_grip) if cfg_for_grip else -1)
 	# Tâche "revolver" : catégorie PISTOL -> os DÉDIÉ "PistolGrip" quand le
 	# squelette l'expose (transform IDENTITÉ + contre-échelle, même principe
 	# que "WeaponSocket" ci-dessous) -- repli silencieux sur WeaponSocket/
@@ -183,17 +213,18 @@ func _reparent_model_to_hand(weapon_id: int = -1) -> void:
 		# Point d'attache venant du PERSONNAGE (scenes/characters/<agent>.tscn,
 		# transform de "WeaponSocket" réglable par l'utilisateur dans l'éditeur --
 		# requirement "the attach point coming from the character, not hard-coded") :
-		# identité locale, aucun décalage par catégorie d'arme ici, contrairement au
-		# repli _bone_attach ci-dessous.
+		# identité locale par défaut (comportement historique, ex. Ravage/Revolver), sauf
+		# décalage PAR ARME dédié (`_GRIP_OFFSETS_BY_ID`, voir sa doc -- Fracas/Verdict).
 		_weapon_socket.add_child(_model)
-		_model.transform = Transform3D.IDENTITY
+		_model.transform = grip_transform_for(resolved_id, Transform3D.IDENTITY)
 		_apply_scale_correction(_model)
 		return
 	_bone_attach.add_child(_model)
 	var grip: Dictionary = _GRIP_OFFSETS.get(cfg_for_grip.category, _DEFAULT_GRIP) if cfg_for_grip else _DEFAULT_GRIP
 	var pos: Vector3 = grip["pos"]
 	var rot_deg: Vector3 = grip["rot_deg"]
-	_model.transform = Transform3D(Basis.from_euler(Vector3(deg_to_rad(rot_deg.x), deg_to_rad(rot_deg.y), deg_to_rad(rot_deg.z))), pos)
+	var default_transform := Transform3D(Basis.from_euler(Vector3(deg_to_rad(rot_deg.x), deg_to_rad(rot_deg.y), deg_to_rad(rot_deg.z))), pos)
+	_model.transform = grip_transform_for(resolved_id, default_transform)
 	_apply_scale_correction(_model)
 
 ## Contrepoids de l'échelle du CORPS (CharacterBody._scale_to_target_height,

@@ -133,6 +133,92 @@ func test_attach_weapon_is_idempotent_and_reuses_the_same_attachment() -> void:
 	assert_bool(is_instance_valid(weapon_a)).is_true()  # le repère détache mais ne libère pas l'ancienne arme (ViewModel._model gère sa propre durée de vie).
 
 
+# ---------------------------------------------------------------- cadrage FP par arme (tâche "cadrage FP quatre armes")
+## Ravage/Revolver (ids 0/1) HORS PÉRIMÈTRE de cette tâche (jamais retouchés, la référence de cadrage
+## qui fonctionne déjà avec une transform IDENTITÉ) -- tout id sans entrée dans les tables (y compris
+## un id négatif, ex. les appels de test ci-dessus/`rig.attach_weapon(weapon)` sans 3e argument) doit
+## rester neutre. Verrou de calibration pour les 4 armes réglées (2, 3, 4, 5) : voir
+## reports/checkpoints/2026-09-28_weapons_v3/fp_framing.json pour les mesures qui ont produit ces
+## valeurs -- à mettre à jour dans le MÊME changement si ces constantes sont re-réglées.
+func test_grip_offset_is_identity_for_weapons_outside_this_tasks_scope() -> void:
+	for id in [-1, 0, 1, 6, 99]:
+		assert_vector(FPArmsRig.grip_offset_for(id)).append_failure_message(
+			"id %d devrait rester à l'identité (Vector3.ZERO)" % id
+		).is_equal_approx(Vector3.ZERO, Vector3.ONE * 0.0001)
+
+
+func test_grip_rotation_is_identity_for_weapons_outside_this_tasks_scope() -> void:
+	# Rafale (id 2) et Fracas (id 3) ont chacun une rotation dédiée (roulis/tangage, voir
+	# test_grip_table_pins_the_measured_calibration_for_the_four_tuned_weapons) -- exclus d'ici.
+	for id in [-1, 0, 1, 4, 5, 6]:
+		assert_vector(FPArmsRig.grip_rotation_deg_for(id)).append_failure_message(
+			"id %d devrait rester à l'identité (Vector3.ZERO)" % id
+		).is_equal_approx(Vector3.ZERO, Vector3.ONE * 0.0001)
+
+
+func test_grip_scale_mult_is_neutral_for_weapons_outside_this_tasks_scope() -> void:
+	for id in [-1, 0, 1, 6]:   # Rafale (2) a désormais son échelle propre, épinglée plus bas
+		assert_float(FPArmsRig.grip_scale_mult_for(id)).append_failure_message(
+			"id %d devrait rester à l'échelle neutre (1.0)" % id
+		).is_equal_approx(1.0, 0.0001)
+
+
+func test_grip_table_pins_the_measured_calibration_for_the_four_tuned_weapons() -> void:
+	assert_vector(FPArmsRig.grip_offset_for(2)).append_failure_message("Rafale").is_equal_approx(
+		Vector3(0.02, -0.02, -0.07), Vector3.ONE * 0.0001)
+	assert_vector(FPArmsRig.grip_offset_for(3)).append_failure_message("Fracas").is_equal_approx(
+		Vector3(0.0, -0.02, -0.04), Vector3.ONE * 0.0001)
+	assert_vector(FPArmsRig.grip_offset_for(4)).append_failure_message("Verdict").is_equal_approx(
+		Vector3(0.02, 0.08, -0.05), Vector3.ONE * 0.0001)
+	assert_vector(FPArmsRig.grip_offset_for(5)).append_failure_message("Aiguille").is_equal_approx(
+		Vector3(0.02, -0.03, 0.0), Vector3.ONE * 0.0001)
+
+	# Revue visuelle du lead (2026-09-28) : même repère que Ravage => aucune rotation.
+	for id in [2, 3, 4, 5]:
+		assert_vector(FPArmsRig.grip_rotation_deg_for(id)).append_failure_message(str(id)).is_equal(Vector3.ZERO)
+
+	assert_float(FPArmsRig.grip_scale_mult_for(2)).append_failure_message("Rafale").is_equal_approx(0.85, 0.0001)
+	assert_float(FPArmsRig.grip_scale_mult_for(3)).append_failure_message("Fracas").is_equal_approx(1.3, 0.0001)
+	assert_float(FPArmsRig.grip_scale_mult_for(4)).append_failure_message("Verdict").is_equal_approx(0.85, 0.0001)
+	assert_float(FPArmsRig.grip_scale_mult_for(5)).append_failure_message("Aiguille").is_equal_approx(1.05, 0.0001)
+
+
+## `attach_weapon` transmet bien `weapon_id` à `grip_offset_for`/`grip_rotation_deg_for`/
+## `grip_scale_mult_for` -- intégration (pas juste les fonctions pures ci-dessus) : le Fracas (id 3)
+## porte à la fois un décalage ET une rotation non nuls, un bon cas pour vérifier que LES DEUX sont
+## bien appliqués sur le nœud réellement attaché (pas seulement lisibles depuis les fonctions pures).
+func test_attach_weapon_applies_the_per_weapon_grip_offset_and_rotation() -> void:
+	var rig := _loaded_rig()
+	var cam: Camera3D = auto_free(Camera3D.new())
+	add_child(cam)
+	rig.align_to_camera(cam, Transform3D.IDENTITY, 1.0)
+	var weapon: Node3D = auto_free(Node3D.new())
+	rig.attach_weapon(weapon, 3)  # Fracas.
+
+	var expected_local_pos := FPArmsMath.weapon_grip_offset(FPArmsRig.grip_offset_for(3), FPArmsMath.RIG_SCALE)
+	assert_vector(weapon.position).is_equal_approx(expected_local_pos, Vector3.ONE * 0.0001)
+
+	var rot_deg := FPArmsRig.grip_rotation_deg_for(3)
+	var expected_rot := Vector3(deg_to_rad(rot_deg.x), deg_to_rad(rot_deg.y), deg_to_rad(rot_deg.z))
+	assert_vector(weapon.rotation).is_equal_approx(expected_rot, Vector3.ONE * 0.0001)
+
+
+## Un id SANS réglage (Ravage/Revolver, ids 0/1) garde EXACTEMENT le comportement identité mesuré par
+## `test_weapon_attaches_under_weapon_grip_with_global_scale_about_one` ci-dessus, même en passant
+## l'id explicitement (pas seulement le repli -1 par défaut) -- non-régression sur la référence de
+## cadrage jamais retouchée par cette tâche.
+func test_attach_weapon_stays_at_identity_for_ravage_and_revolver_ids() -> void:
+	var rig := _loaded_rig()
+	var cam: Camera3D = auto_free(Camera3D.new())
+	add_child(cam)
+	rig.align_to_camera(cam, Transform3D.IDENTITY, 1.0)
+	for id in [0, 1]:
+		var weapon: Node3D = auto_free(Node3D.new())
+		rig.attach_weapon(weapon, id)
+		assert_vector(weapon.position).append_failure_message("id %d" % id).is_equal_approx(Vector3.ZERO, Vector3.ONE * 0.0001)
+		assert_vector(weapon.rotation).append_failure_message("id %d" % id).is_equal_approx(Vector3.ZERO, Vector3.ONE * 0.0001)
+
+
 # ---------------------------------------------------------------- sélection de clip / paramètres
 func test_set_ads_amount_drives_the_idle_ads_blend_parameter() -> void:
 	var rig := _loaded_rig()

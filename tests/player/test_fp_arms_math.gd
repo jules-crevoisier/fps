@@ -78,6 +78,23 @@ func test_weapon_counter_scale_is_defensive_against_a_zero_rig_scale() -> void:
 	assert_bool(is_finite(s.x) and is_finite(s.y) and is_finite(s.z)).is_true()
 
 
+# ---------------------------------------------------------------- weapon_grip_offset
+func test_weapon_grip_offset_divides_by_rig_scale() -> void:
+	var v := FPArmsMath.weapon_grip_offset(Vector3(0.09, -0.18, 0.36), 1.8)
+	assert_vector(v).is_equal_approx(Vector3(0.05, -0.1, 0.2), Vector3.ONE * 0.0001)
+
+
+func test_weapon_grip_offset_is_identity_at_rig_scale_one() -> void:
+	var v := FPArmsMath.weapon_grip_offset(Vector3(0.1, 0.2, 0.3), 1.0)
+	assert_vector(v).is_equal_approx(Vector3(0.1, 0.2, 0.3), Vector3.ONE * 0.0001)
+
+
+func test_weapon_grip_offset_is_defensive_against_a_zero_rig_scale() -> void:
+	var v := FPArmsMath.weapon_grip_offset(Vector3(1.0, 2.0, 3.0), 0.0)
+	assert_vector(v).is_equal_approx(Vector3(1.0, 2.0, 3.0), Vector3.ONE * 0.0001)
+	assert_bool(v.is_finite()).is_true()
+
+
 # ---------------------------------------------------------------- ads_blend_amount
 func test_ads_blend_amount_is_zero_at_hip_ads_t_one() -> void:
 	assert_float(FPArmsMath.ads_blend_amount(1.0)).is_equal_approx(0.0, 0.0001)
