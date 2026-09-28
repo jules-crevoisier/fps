@@ -5,13 +5,36 @@ make_action_weapons.py/WeaponActionAnim.gd) -- TRANSLATE seulement (cas "Magazin
 ViewModel._update_action_part : réutilise le dip de rechargement générique, amplifié), donc son
 origine n'a pas besoin d'être un pivot mécanique exact.
 
-Le chargeur n'est PAS un volume séparé sur ce modèle : la segmentation Tripo a fusionné poignée et
-chargeur en UN SEUL bloc vertical (silhouette « chargeur dans la poignée », comme certaines
-mitraillettes compactes réelles) -- aucune coupure nette au profil (sondé par script, tâche) pour
-séparer proprement l'un de l'autre sans trancher à travers un volume lisse. Décision : TOUT le bloc
-devient le nœud "Magazine" (tout le bloc poignée+chargeur plonge légèrement au rechargement) plutôt
-que de forcer une coupe arbitraire -- accepté comme simplification stylisée, à revoir seulement si un
-futur modèle Rafale sépare vraiment les deux volumes.
+CORRIGÉ (2026-09-28, playtest utilisateur : « la main ne tient pas la crosse du Rafale, l'arme
+flotte en bas à droite ») -- la lecture précédente de ce script était FAUSSE : poignée et chargeur ne
+sont PAS fusionnés sur ce modèle (silhouette Kriss Vector -- chargeur nettement AVANCÉ devant la
+poignée, garde-détente entre les deux, voir le sondage par rendu ID par pièce, tâche). Le filtre qui
+cherchait le "bloc poignée+chargeur" (0.0<=c.x<=0.20, faces>500, mn.z minimal) trouvait en réalité
+LA POIGNÉE SEULE ("tripo_part_3" dans la génération source, jamais un index codé en dur ici -- voir
+`grip_name` ci-dessous, MÊME filtre, juste renommé) : elle devenait donc, à tort, le nœud "Magazine"
+qui TRANSLATE au rechargement (`ViewModel._update_action_part`, cas "Magazine") -- la poignée
+entière plongeait donc légèrement à chaque rechargement, et surtout l'origine de TOUTE l'arme
+(calculée depuis `grip`, voir `to_game_matrix`) utilisait une hauteur Z devinée à l'œil (0.17, ni le
+bas ni le haut réel de la poignée) plutôt qu'un point mesuré sur la poignée -- d'où une arme qui ne
+« tombe » pas correctement dans la main posée par FPArmsRig (os "WeaponGrip", transform locale
+IDENTITÉ, voir sa docstring de classe).
+
+Fix : `grip_name` (MÊME filtre position/taille qu'avant, juste renommé -- il isole déjà correctement
+LA POIGNÉE, pas le chargeur) reste dans `body_parts` (statique, plus de dip au rechargement) ; un
+NOUVEAU filtre trouve le VRAI chargeur (`mag_name` : parmi les pièces significatives -- faces>500 --
+situées à x <= 0.02 SOURCE, c-a-d à hauteur du récepteur ou en avant -- jamais aussi loin en arrière
+que la poignée, x=0.081 -- celle qui descend le plus bas, mn.z minimal ; sélectionne "tripo_part_5"
+sur cette génération, un bloc net et distinct, faces=815) et devient SEUL le nœud "Magazine". L'origine
+de l'arme (`grip`, passé à `to_game_matrix`) prend désormais le CENTRE (x,y) de la poignée mais son
+HAUT réel (`mx.z`, mesuré -- pas deviné) : « le haut de la poignée », même convention que le Ravage
+(origine posée sur la poignée, jamais en l'air ni sous le maillage).
+
+2e correctif (relecture des captures par le lead, même tâche) : la crosse fil droite dépassait vers
+le haut-droit de l'écran (l'arme est courte, TARGET_MUZZLE_Z cale le canon près de la caméra, donc la
+crosse ÉTENDUE finissait devant l'objectif plutôt qu'à l'épaule). Le concept prévoyait une crosse
+REPLIABLE -- voir `stock_name`/`fold` dans `build()` : repliée à 180° autour d'une charnière VERTICALE
+mesurée sur son propre bord d'attache, elle vient se loger contre le flanc droit de la carcasse, sous
+le viseur (une rotation pure autour de Z ne change jamais la hauteur).
 
 Source : assets/incoming/tripo/rafale.glb (Tripo Studio, 59 pièces "tripo_part_N", SANS texture,
 tâche "quatre armes v2" 2026-09-28 -- voir assets/models/weapons/rafale.provenance.json). Repère
@@ -20,11 +43,12 @@ ci-dessous) : la 1re mesure ("avant = +X") était fausse, l'arme rendait canon-v
 
     "C:\\Program Files\\Blender Foundation\\Blender 5.2\\blender.exe" -b --factory-startup --python art/weapons/rafale/build_rafale.py
 """
+import math
 import os
 import sys
 
 import bpy
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
@@ -76,14 +100,28 @@ def build():
     parts = [o for o in bpy.context.scene.objects if o.type == "MESH"]
     stats = {o.name: pw.part_stats(o) for o in parts}
 
-    # Poignée+chargeur fusionnés : la pièce qui descend le plus bas (mn.z minimal) parmi les blocs
-    # significatifs proches du centre du corps (x entre le récepteur et l'avant du canon).
-    mag_name = min((n for n in stats if 0.0 <= stats[n]["c"].x <= 0.20 and stats[n]["faces"] > 500),
+    # Poignée (voir la doc de tête -- ex-"mag_name", MÊME filtre, juste renommé) : la pièce qui
+    # descend le plus bas (mn.z minimal) parmi les blocs significatifs proches du centre du corps
+    # (x entre le récepteur et l'avant du canon) -- isole déjà correctement LA POIGNÉE SEULE sur ce
+    # modèle (elle est la seule pièce >500 faces dans cette fourchette de x).
+    grip_name = min((n for n in stats if 0.0 <= stats[n]["c"].x <= 0.20 and stats[n]["faces"] > 500),
+                    key=lambda n: stats[n]["mn"].z)
+    assert grip_name, "poignée introuvable"
+    print("RAFALE_GRIP", grip_name, stats[grip_name]["c"], stats[grip_name]["size"])
+
+    # Chargeur (voir la doc de tête) : parmi les pièces significatives situées à hauteur du récepteur
+    # ou en avant (x <= 0.02, donc STRICTEMENT devant la poignée, x=0.081 pour `grip_name` ci-dessus),
+    # celle qui descend le plus bas -- un bloc net et distinct de la poignée (silhouette Kriss Vector,
+    # chargeur avancé devant la garde-détente).
+    mag_name = min((n for n in stats if stats[n]["c"].x <= 0.02 and stats[n]["faces"] > 500),
                    key=lambda n: stats[n]["mn"].z)
-    assert mag_name, "poignée/chargeur introuvable"
+    assert mag_name and mag_name != grip_name, "chargeur introuvable (ou confondu avec la poignée)"
     print("RAFALE_MAGAZINE", mag_name, stats[mag_name]["c"], stats[mag_name]["size"])
 
-    grip = Vector((stats[mag_name]["c"].x, 0.0, 0.17))
+    # Origine de l'arme = HAUT de la poignée (mx.z, MESURÉ -- plus une hauteur devinée à l'œil), même
+    # convention que le Ravage (voir la doc de tête) : le point que la main de FPArmsRig referme
+    # dessus, jamais un point en l'air ni sous le maillage.
+    grip = Vector((stats[grip_name]["c"].x, 0.0, stats[grip_name]["mx"].z))
 
     # RECORRIGÉ (2026-09-28, playtest utilisateur -- voir la doc de tête/FRONT_SIGN) : « avant » est
     # -X, pas +X -- le canon/garde-main ajouré est donc la pièce marquante côté x < -0.24 (ex-
@@ -102,12 +140,65 @@ def build():
     lift = pw.auto_lift(FRONT_SIGN, scale, grip, muzzle_src)
     to_game = pw.to_game_matrix(FRONT_SIGN, scale, grip, lift=lift)
 
+    # Repliage de la crosse fil (consigne du lead après relecture des captures, 2026-09-28 : « the
+    # gun is short so the straight stock ends in front of the camera instead of at the shoulder --
+    # show it FOLDED »). AVANT le calcul span/scale/grip/muzzle_src ci-dessus n'utilise QUE
+    # `shroud_name`/`grip_name`/`mag_name` -- jamais la crosse -- donc repliée APRÈS ce calcul, le
+    # cadrage (poignée/canon) déjà réglé (voir la doc de tête, 3e passage) n'est PAS affecté ; seule
+    # la silhouette de la crosse change. Isolée comme ses PROPRES objets Blender (pas de nœud "Stock"
+    # séparé dans l'export -- rien ne l'anime en jeu, contrairement au "Magazine" -- juste un moyen
+    # de pivoter SES sommets sans entraîner le reste de la carcasse) : repère SOURCE (avant to_game).
+    # `stock_names` : PLUSIEURS pièces (pas une seule) -- sondage complet (toutes les pièces à
+    # c.x > 0.10) montre que la segmentation Tripo a coupé l'ensemble crosse+patte de fixation en
+    # QUATRE morceaux distincts (le grand fil "tripo_part_2", c.x=0.344, ET trois petites pièces de
+    # bride/fixation groupées c.x=0.145-0.176, MÊME hauteur ~z=0.31-0.32 que le bord d'attache du
+    # fil) plutôt qu'un seul bloc -- un premier repliage qui ne pivotait QUE le grand fil (filtre
+    # zone_of, c.x > 0.18) laissait ces trois petites pièces immobiles, toujours tendues vers
+    # l'arrière (constaté par capture -- un fin arceau dépassait encore en haut à droite). Le filtre
+    # c.x > 0.10 (couvre les quatre) exclut bien tripo_part_52 (c.x=0.112 mais c.z=0.057, un tout
+    # autre détail bas près de la poignée) grâce au plancher c.z > 0.20 (toutes les pièces de
+    # crosse/bride sont hautes, z >= 0.25 -- voir le sondage).
+    stock_names = [n for n in stats if stats[n]["c"].x > 0.10 and stats[n]["c"].z > 0.20]
+    assert stock_names, "crosse fil (+ bride) introuvable"
+    stock_objs = [bpy.data.objects[n] for n in stock_names]
+    stock_verts = [o.matrix_world @ v.co for o in stock_objs for v in o.data.vertices]
+    # Charnière VERTICALE (axe Z, "haut" repère SOURCE) : bord AVANT de l'ensemble crosse+bride
+    # (mn.x sur TOUTES les pièces ci-dessus -- attache carcasse, jamais le bord arrière ni le
+    # centre), hauteur MESURÉE sur les sommets de CE bord (moyenne, marge 1 cm) -- pas devinée :
+    # c'est là que la patte d'attache existe réellement (mesuré ~z=0.30-0.32, net au-dessus du
+    # chargeur/de la poignée). Décalage latéral Y choisi (le point d'attache mesuré tombe quasi sur
+    # l'axe, y≈0 -- cette génération Tripo ne code aucun côté) pour dégager la poignée/le chargeur
+    # (demi-largeurs mesurées ~0.03-0.035) tout en restant dans la demi-largeur de la carcasse
+    # (~0.065) -- flanc DROIT (consigne du lead), voir la vérification visuelle (capture) qui a
+    # confirmé le signe.
+    hinge_x = min(v.x for v in stock_verts)
+    near_hinge = [v for v in stock_verts if v.x <= hinge_x + 0.01]
+    hinge_z = sum(v.z for v in near_hinge) / len(near_hinge)
+    STOCK_HINGE_Y = 0.055
+    hinge = Vector((hinge_x, STOCK_HINGE_Y, hinge_z))
+    # 180° autour de Z SEULEMENT : une rotation pure autour de l'axe "haut" ne change JAMAIS Z, donc
+    # la crosse repliée reste à la même fourchette de hauteur (z=0,147-0,358) qu'à l'origine --
+    # largement sous le viseur réflexe (z≈0,456, pièce distincte) sans code séparé pour "sous la
+    # ligne de mire". Se replie donc bien VERS L'AVANT (mx.x -> proche de -mx.x, dans la zone
+    # récepteur/poignée) et se loge contre le flanc (décalage Y ci-dessus) plutôt que de rester dans
+    # l'axe du canon. LES QUATRE pièces pivotent RIGIDEMENT ENSEMBLE (même `hinge`, même angle) pour
+    # ne pas rouvrir un écart entre le fil et sa bride de fixation.
+    fold = (Matrix.Translation(hinge) @ Matrix.Rotation(math.radians(180.0), 4, "Z")
+            @ Matrix.Translation(-hinge))
+    for stock_obj in stock_objs:
+        stock_obj.data.transform(stock_obj.matrix_world)
+        stock_obj.matrix_world = Matrix.Identity(4)
+        stock_obj.data.transform(fold)
+    print("RAFALE_STOCK_FOLD", stock_names, "hinge", tuple(round(x, 4) for x in hinge))
+
     mag_obj = None
     body_parts = []
     for o in parts:
-        # Le chargeur (pièce MOBILE) reste "gunmetal" (contrat : "magazine ... gunmetal"), jamais la
-        # classification générique -- sa position (près du centre, bas) chevauche la fourchette des
-        # inserts poignée/flancs (cobalt) qui ne s'applique qu'aux pièces STATIQUES de Body.
+        # Le chargeur (pièce MOBILE, "Magazine") reste "gunmetal" (contrat : "magazine ... gunmetal"),
+        # jamais la classification générique -- sa position (près du centre, bas) chevauche la
+        # fourchette des inserts poignée/flancs (cobalt) qui ne s'applique qu'aux pièces STATIQUES de
+        # Body. La poignée (`grip_name`), elle, reste dans `body_parts` (statique -- voir la doc de
+        # tête) et suit la classification générique `zone_of` comme le reste du corps.
         zi = ZONES.index("gunmetal") if o.name == mag_name else ZONES.index(zone_of(stats[o.name]))
         pw.bake_zone_src(o, zi)
         if o.name == mag_name:
@@ -136,8 +227,8 @@ def build():
     for o in (body, mag_obj, muzzle, foregrip):
         o.parent = root
 
-    pw.paint_vertex_colors(body.data, ZONES, PAL)
-    pw.paint_vertex_colors(mag_obj.data, ZONES, PAL)
+    pw.paint_vertex_colors(body.data, ZONES, PAL, curvature_scale=2.2)   # grands pans nets (retour lead 2026-09-28)
+    pw.paint_vertex_colors(mag_obj.data, ZONES, PAL, curvature_scale=2.2)
     body.data.materials.clear()
     body.data.materials.append(pw.make_vertex_color_material("Rafale"))
     mag_obj.data.materials.clear()

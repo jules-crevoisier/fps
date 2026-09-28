@@ -333,8 +333,25 @@ func align_to_camera(camera: Camera3D, proc_offset: Transform3D, fov_scale: floa
 ## RIG_SCALE (une rotation ne porte pas de magnitude).
 ## `scale_mult` : multiplicateur UNIFORME par-dessus `weapon_counter_scale` (1.0 = neutre, taille
 ## réelle du modèle — voir la doc de tête de `to_game_matrix`).
+##
+## 3e passage, Rafale SEULE (playtest utilisateur, 2026-09-28 : « la main ne tient pas la crosse du
+## Rafale, l'arme flotte en bas à droite ») -- le réglage `pos.y=-0.02` du 2e passage satisfaisait déjà
+## le gate axis_angle/muzzle_screen (silhouette/cadrage général, voir plus haut) mais ne disait RIEN du
+## point de grippage : `grip_screen` (repère écran de l'ORIGINE de l'arme, voir
+## action_weapons_capture.gd::_measure_and_save_mask) tombe hors-cadre pour TOUTES les armes (même
+## Ravage, ≈1.4 -- normal, l'avant-bras plonge sous la caméra) donc inutile comme cible directe ; seul
+## un ALLER-RETOUR VISUEL (captures hanche successives, la main devient visible/invisible selon
+## qu'elle est occultée PAR le maillage de l'arme ou non) a permis de repérer que le maillage entier
+## flottait ~0,12-0,3 trop BAS (main invisible car cachée DERRIÈRE le corps de l'arme, pas parce
+## qu'elle tenait la poignée) -- voir aussi art/weapons/rafale/build_rafale.py (poignée/chargeur
+## SÉPARÉS côté Blender dans le même changement, la poignée ex-"Magazine" ne plonge plus au
+## rechargement, mais ce split seul ne change PAS le cadrage : `painted_weapon.py::auto_lift` cale la
+## hauteur SEULEMENT sur le canon, voir sa doc -- la hauteur de la poignée source n'a aucun effet net
+## sur la position finale). `pos.y` remonté à +0.10 (delta +0.12 depuis -0.02) : la main referme
+## visiblement sur la poignée jaune en hanche ET en visée, gate toujours vert (angle_delta 0.3°,
+## muzzle_delta 0.05).
 const _GRIP_POS_BY_ID := {
-	2: Vector3(0.02, -0.02, -0.07),   # Rafale — pose identité (même repère que Ravage), un peu plus loin de la caméra.
+	2: Vector3(0.02, 0.10, -0.07),   # Rafale — remonté (voir la note 3e passage) pour que la main referme sur la poignée.
 	3: Vector3(0.0, -0.02, -0.04),    # Fracas — pose identité ; allongé (voir l'échelle) pour tenir la diagonale de Ravage.
 	4: Vector3(0.02, 0.08, -0.05),     # Verdict — canon un peu trop proche du carré central à 0.12.
 	5: Vector3(0.02, -0.03, 0.0),      # Aiguille

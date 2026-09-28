@@ -99,9 +99,10 @@ func test_aiguille_is_a_bolt_sniper_with_contract_stats() -> void:
 	assert_bool(c.reload_per_round).append_failure_message(
 		"reload 2.6 s (WHOLE MAG) -- pas un rechargement par cartouche"
 	).is_false()
-	assert_float(c.cycle_time).is_equal_approx(1.2, 0.001)
+	# Demande utilisateur 2026-09-28 (quickscope) : culasse 1,2 -> 1,0 s, mise en joue 0,28 -> 0,22 s.
+	assert_float(c.cycle_time).is_equal_approx(1.0, 0.001)
 	assert_float(c.aim_fov).is_equal_approx(25.0, 0.001)
-	assert_float(c.ads_time).is_equal_approx(0.28, 0.001)
+	assert_float(c.ads_time).is_equal_approx(0.22, 0.001)
 	assert_float(c.spread_hip).is_equal_approx(6.0, 0.001)
 	# "scoped spread 0 once ADS completes" -- spread_aim nul.
 	assert_float(c.spread_aim).is_equal_approx(0.0, 0.0001)

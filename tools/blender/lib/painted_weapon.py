@@ -105,12 +105,27 @@ def bake_zone_src(o, zone_index: int) -> None:
     sa.data.foreach_set("vector", co)
 
 
-def paint_vertex_colors(me, zones: list, palette: dict, grain_zones: tuple = ()) -> None:
+def paint_vertex_colors(me, zones: list, palette: dict, grain_zones: tuple = (),
+                        curvature_scale: float = 1.0) -> None:
     """Peint le maillage `me` (attributs "zone"/"src" déjà posés, voir `bake_zone_src`) en COULEURS
     DE SOMMET (attribut de couleur "Color", domaine CORNER, comme `toonkit.bake_vertex_ao` -- même
     recette que build_revolver.py::paint : encre dans les creux, éclat sur les arêtes, liseré aux
     changements de zone, dégradé "haut plus clair", veinage optionnel -- calculée par SOMMET plutôt
     que par TEXEL d'atlas.
+
+    `curvature_scale` (1.0 = comportement HISTORIQUE inchangé, tel que calibré sur le Revolver/
+    Ravage/Rafale/Fracas/Verdict) : multiplie les deux seuils `smoothstep` encre/éclat ci-dessous --
+    UNIQUEMENT un facteur de SENSIBILITÉ, jamais une refonte de la recette. Un maillage Tripo brut
+    dont la surface n'est jamais parfaitement plane (micro-facettes involontaires même sur un grand
+    panneau destiné à rester uni -- constaté sur l'Aiguille, retour utilisateur « bruit de peinture
+    de sommet par endroits ») produit une concavité `vertex_concavity` non nulle PARTOUT, y compris
+    sur ces panneaux : les 90e/97e centiles adaptatifs (`q` ci-dessous) s'ajustent déjà à l'échelle du
+    bruit propre à CE maillage, mais restent construits pour qu'une FRACTION des sommets (~qq %,
+    largement au-delà du 97e centile) franchisse le seuil -- sur un maillage cabossé par endroits,
+    cette fraction retombe en TACHES plutôt que sur les vraies arêtes/creux. Un `curvature_scale` > 1
+    relève ces deux seuils (moins de sommets franchissent), sans changer la recette ni son
+    calibrage par défaut pour les autres armes peintes (Revolver/Rafale/Fracas/Verdict, toutes à
+    `curvature_scale` implicite = 1.0).
 
     Remplace un premier essai en texture peinte (UV smart_project -> rasterisation, voir
     tools/blender/lib/uv_paint.py) : sur ces maillages (~18-19k triangles, des dizaines de pièces
@@ -173,8 +188,9 @@ def paint_vertex_colors(me, zones: list, palette: dict, grain_zones: tuple = ())
     lv_edge = edge_vert[loop_vert]
 
     q = np.percentile(np.abs(conc), [90, 97]) if len(conc) else np.array([0.02, 0.05])
-    ink = smoothstep(0.55 * q[1], 1.15 * q[1], lv_conc)
-    shine = smoothstep(0.6 * q[1], 1.4 * q[1], -lv_conc)
+    q1 = q[1] * curvature_scale
+    ink = smoothstep(0.55 * q1, 1.15 * q1, lv_conc)
+    shine = smoothstep(0.6 * q1, 1.4 * q1, -lv_conc)
     ink = np.maximum(ink, lv_edge.astype(np.float32))
     col = col + (1.0 - col) * (0.3 * shine)[:, None]
     ink_rgb = hex_to_linear(palette.get("ink", "#0E0A12"))

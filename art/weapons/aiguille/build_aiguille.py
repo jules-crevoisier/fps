@@ -36,11 +36,16 @@ OUT_GLB = os.path.join(ROOT, "assets", "models", "weapons", "aiguille.glb")
 LENGTH_M = 0.72
 FRONT_SIGN = +1.0  # avant SOURCE = +X (mesuré)
 
+## REPEINT (2026-09-28, retour utilisateur : « gris-bleu terne, bruit de peinture de sommet par
+## endroits ») -- nouvelle palette (concept choisi par l'utilisateur) : crosse+carcasse en cobalt,
+## repose-pouce/plaque de couche/détente/capuchons de lunette en jaune signal (accents), tube/bagues
+## de lunette/canon/frein de bouche/bipied/verrou/chargeur en gunmetal SOMBRE (#34313F, pas le
+## #6E7580 clair d'avant -- consigne "DARK gunmetal (not light grey)").
 PAL = {
     "ink": "#0C1420",
-    "cobalt": "#2E8BFF",     # crosse (repose-pouce)
-    "yellow": "#FFCE1F",     # plaque de couche
-    "gunmetal": "#6E7580",   # récepteur/canon/frein de bouche/lunette/bipied/verrou/chargeur
+    "cobalt": "#2E8BFF",     # crosse + carcasse (châssis bullpup monobloc)
+    "yellow": "#FFCE1F",     # repose-pouce, plaque de couche, détente, capuchons de lunette
+    "gunmetal": "#34313F",   # tube/bagues lunette, canon, frein de bouche, bipied, verrou, chargeur
 }
 ZONES = [z for z in sorted(PAL) if z != "ink"]
 
@@ -51,8 +56,64 @@ def zone_of(s: dict) -> str:
     if c.x < -0.45:
         return "yellow"  # plaque de couche, tout au bout de la crosse
     if c.x < -0.10 and size.x > 0.15:
-        return "cobalt"  # crosse (repose-pouce) -- gros bloc arrière
-    return "gunmetal"  # récepteur/canon/lunette/bipied/verrou/chargeur/sous-garde
+        return "cobalt"  # crosse -- gros bloc arrière
+    if -0.18 <= c.x <= 0.10 and 0.08 < c.z <= 0.19 and size.y <= 0.09:
+        # Carcasse/châssis + habillage visible du récepteur (bande position/hauteur, PAS un seul
+        # gros bloc : sondage par rendu -- tripo_part_0, LE bloc monobloc qui court sur près de la
+        # moitié de la longueur de l'arme, s'est avéré ENTIÈREMENT masqué par les petites pièces de
+        # boîtier/rail qui l'habillent -- le peindre seul ne changeait rien à l'écran). Bande
+        # bornée par : la hauteur de la crosse elle-même (0.08, au-dessus du chargeur qui descend
+        # plus bas) jusqu'au bas du groupe lunette (0.19, voir son propre seuil plus bas) ; la
+        # poignée de culasse (asymétrique, size.y > 0.09) est explicitement exclue -- seul filtre
+        # POSITION/TAILLE qui la distingue ici, jamais son nom "tripo_part_13" codé en dur (déjà
+        # trouvé par `bolt_name` ci-dessus, colorée gunmetal comme le contrat "verrou").
+        return "cobalt"  # carcasse/châssis
+    return "gunmetal"  # canon/frein de bouche/tube+bagues lunette/bipied/verrou/chargeur/sous-garde
+
+
+def _small_accent_parts(stats: dict) -> dict:
+    """Pièces D'ACCENT (jaune signal) trouvées par heuristique position/taille -- jamais un index de
+    pièce codé en dur (la segmentation Tripo change de granularité d'une génération à l'autre, même
+    discipline que `zone_of`) : le repose-pouce (petit bloc distinct posé sur le dessus-avant de la
+    crosse), le groupe détente (petit amas distinct juste devant la crosse, sous la carcasse) et les
+    deux capuchons de lunette (les pièces aux DEUX extrémités X du groupe lunette, capuchons
+    articulés/protections d'objectif -- voir le sondage par rendu ID isolé, tâche "repeinture
+    Aiguille"). Retourne {nom_pièce: "yellow"} -- fusionné par l'appelant dans les zones normales de
+    `zone_of` (mêmes pièces gunmetal par défaut sinon)."""
+    out: dict = {}
+
+    stock_name = next((n for n in stats if stats[n]["c"].x < -0.10 and stats[n]["size"].x > 0.15), None)
+    if stock_name:
+        s_mn, s_mx = stats[stock_name]["mn"], stats[stock_name]["mx"]
+        candidates = [n for n in stats if n != stock_name
+                      and s_mn.x <= stats[n]["c"].x <= s_mx.x
+                      # Fenêtre Z bornée par le HAUT de la crosse elle-même (`s_mx.z`) : exclut les
+                      # pièces de la LUNETTE (hauteur bien plus grande, x chevauchant celui de la
+                      # crosse sur ce bullpup -- constaté : tripo_part_15, un des deux capuchons de
+                      # lunette, satisfait sinon aussi ce filtre et l'emporte sur le VRAI repose-pouce
+                      # au tri par nombre de faces).
+                      and s_mn.z + 0.6 * (s_mx.z - s_mn.z) < stats[n]["c"].z <= s_mx.z
+                      and stats[n]["faces"] < 500
+                      and stats[n]["size"].y > 0.03]
+        if candidates:
+            out[max(candidates, key=lambda n: stats[n]["faces"])] = "yellow"  # repose-pouce
+
+    trigger_names = [n for n in stats if -0.18 <= stats[n]["c"].x <= -0.13
+                     and stats[n]["c"].z < 0.15 and stats[n]["size"].y < 0.03]
+    for n in trigger_names:
+        out[n] = "yellow"  # détente (petit amas devant la crosse -- garde comprise)
+
+    # faces > 150 : écarte les petites pièces de garniture (vis/bagues fines, ex. tripo_part_40,
+    # 61 faces) qui dépassent parfois légèrement plus en X que le VRAI capuchon (un bloc bien plus
+    # détaillé, > 250 faces sur cette génération) -- sans ce filtre, min()/max() ci-dessous
+    # retombent sur la garniture plutôt que sur le capuchon.
+    scope_names = [n for n in stats if stats[n]["c"].z > 0.19 and stats[n]["c"].x < 0.15
+                   and stats[n]["faces"] > 150]
+    if scope_names:
+        out[min(scope_names, key=lambda n: stats[n]["c"].x)] = "yellow"  # capuchon arrière
+        out[max(scope_names, key=lambda n: stats[n]["c"].x)] = "yellow"  # capuchon avant/objectif
+
+    return out
 
 
 def build():
@@ -80,10 +141,16 @@ def build():
     lift = pw.auto_lift(FRONT_SIGN, scale, grip, muzzle_src)
     to_game = pw.to_game_matrix(FRONT_SIGN, scale, grip, lift=lift)
 
+    # Accents jaune signal (repose-pouce/détente/capuchons de lunette -- voir la doc de
+    # `_small_accent_parts`) : calculés UNE FOIS sur toutes les pièces sources, fusionnés dans la
+    # classification normale ci-dessous (repli sur `zone_of` pour toute pièce absente de ce dict).
+    accents = _small_accent_parts(stats)
+    print("AIGUILLE_ACCENTS", accents)
+
     bolt_obj = None
     body_parts = []
     for o in parts:
-        zi = ZONES.index(zone_of(stats[o.name]))
+        zi = ZONES.index(accents.get(o.name) or zone_of(stats[o.name]))
         pw.bake_zone_src(o, zi)
         if o.name == bolt_name:
             bolt_obj = o
@@ -111,8 +178,13 @@ def build():
     for o in (body, bolt_obj, muzzle, foregrip):
         o.parent = root
 
-    pw.paint_vertex_colors(body.data, ZONES, PAL)
-    pw.paint_vertex_colors(bolt_obj.data, ZONES, PAL)
+    # `curvature_scale` relevé (voir sa doc dans painted_weapon.py) : le maillage Tripo brut de
+    # l'Aiguille n'est jamais parfaitement plan même sur les grands panneaux (carcasse/flancs de
+    # crosse), l'encre de courbure par défaut y retombait en TACHES plutôt que sur les vraies
+    # arêtes/creux (retour utilisateur, tâche "repeinture Aiguille") -- Rafale/Fracas/Verdict/
+    # Revolver restent au calibrage par défaut (1.0), inchangés.
+    pw.paint_vertex_colors(body.data, ZONES, PAL, curvature_scale=2.2)
+    pw.paint_vertex_colors(bolt_obj.data, ZONES, PAL, curvature_scale=2.2)
     body.data.materials.clear()
     body.data.materials.append(pw.make_vertex_color_material("Aiguille"))
     bolt_obj.data.materials.clear()
