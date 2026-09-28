@@ -68,6 +68,8 @@ LENGTH_M = 0.60  # concept "~0,60 m" (contrat lead) -- SMG compacte
 ## contrairement à Fracas/Verdict/Aiguille dont la crosse est un bloc de bois/métal net) : seul un
 ## rendu en jeu (fp_shots) tranche sans ambiguïté ici. -X est bien le canon (confirmé par capture
 ## après ce correctif).
+## Crosse fil repliée contre le flanc (True) ou dépliée vers l'épaule (False, choix utilisateur 2026-09-28).
+STOCK_FOLDED = False
 FRONT_SIGN = -1.0  # avant SOURCE = -X (corrigé -- était +X par erreur)
 
 PAL = {
@@ -183,7 +185,11 @@ def build():
     # récepteur/poignée) et se loge contre le flanc (décalage Y ci-dessus) plutôt que de rester dans
     # l'axe du canon. LES QUATRE pièces pivotent RIGIDEMENT ENSEMBLE (même `hinge`, même angle) pour
     # ne pas rouvrir un écart entre le fil et sa bride de fixation.
-    fold = (Matrix.Translation(hinge) @ Matrix.Rotation(math.radians(180.0), 4, "Z")
+    # Retour de test 2026-09-28 : crosse repliée = « l'arme a l'air coupée ». Dépliée depuis que la
+    # poignée est posée à la place de celle de Ravage (la crosse part alors vers l'épaule, hors
+    # écran) ; STOCK_FOLDED garde le repliage disponible.
+    fold_deg = 180.0 if STOCK_FOLDED else 0.0
+    fold = (Matrix.Translation(hinge) @ Matrix.Rotation(math.radians(fold_deg), 4, "Z")
             @ Matrix.Translation(-hinge))
     for stock_obj in stock_objs:
         stock_obj.data.transform(stock_obj.matrix_world)
