@@ -153,6 +153,46 @@ func test_try_step_up_climbs_a_030m_step_moving_only_y_never_touching_velocity()
 	).is_equal(velocity_before)
 
 
+## Rampe continue (boîte inclinée de `angle_deg` autour de Z, monte vers +x) dont la surface
+## passe exactement par `o` — Canyon Express : corniches à 14°.
+func _ramp_scene(o: Vector3, angle_deg: float) -> void:
+	var body := StaticBody3D.new()
+	body.collision_layer = PhysicsLayers.WORLD
+	body.collision_mask = 0
+	var col := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = Vector3(20, 1, 4)
+	col.shape = shape
+	body.add_child(col)
+	var a := deg_to_rad(angle_deg)
+	body.rotation.z = a
+	body.position = o - Vector3(-0.5 * sin(a), 0.5 * cos(a), 0.0)
+	add_child(body)
+	auto_free(body)
+
+
+## Retour de test 2026-09-28 (« on s'enfonce sur les rampes ») : une pente praticable n'est PAS
+## une marche. Avant correction, try_step_up « montait » ~0,1 m à chaque tick sur une rampe à
+## 14° et le lissage de caméra accumulait jusqu'à -0,92 m de tête pendant toute la montée.
+func test_try_step_up_ignores_a_walkable_14deg_ramp() -> void:
+	var o := _offset()
+	_ramp_scene(o, 14.0)
+	var body := _simple_body(o + Vector3(0.0, 0.05, 0.0))
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	body.velocity = Vector3(0, -5, 0)   # la capsule touche la pente plus haut que ses pieds
+	body.move_and_slide()
+	assert_bool(body.is_on_floor()).append_failure_message(
+		"préalable du test : le corps doit démarrer posé sur la rampe"
+	).is_true()
+	var y_before := body.global_position.y
+	var dy := StairStep.try_step_up(body, Vector3(0.1, 0.0, 0.0), 0.4, 0.4)
+	assert_float(dy).append_failure_message(
+		"une rampe praticable (14°) ne doit déclencher aucune marche, delta Y = %.3f" % dy
+	).is_equal_approx(0.0, 0.001)
+	assert_float(body.global_position.y).is_equal_approx(y_before, 0.001)
+
+
 func test_try_step_up_blocks_on_a_050m_step_too_high() -> void:
 	var o := _offset()
 	_step_up_scene(o, 0.5)

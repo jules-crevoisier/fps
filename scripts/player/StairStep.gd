@@ -110,6 +110,13 @@ static func try_step_up(body: CharacterBody3D, horizontal_motion: Vector3,
 	if not _sweep(body, origin, horizontal_motion, m, result):
 		return 0.0
 	var probe := origin.translated(result.get_travel())
+	# 1 bis) contact praticable (rampe, ou arête assez basse pour que la capsule roule dessus) : ce
+	#    n'est pas une marche, le move_and_slide() du tick la gravit seul. Sans ce garde-fou, une
+	#    rampe à 14° « montait » ~0,2 m à chaque tick et le lissage de caméra (`_head_step_offset`)
+	#    enfonçait la vue de ~0,9 m pendant toute la montée (retour de test Canyon Express,
+	#    2026-09-28). Une vraie marche (>= ~0,15 m) touche la capsule à plus de floor_max_angle.
+	if result.get_collision_normal().angle_to(Vector3.UP) <= body.floor_max_angle:
+		return 0.0
 
 	# 2) lève GÉNÉREUSEMENT au-delà de max_step_up (+ rayon de capsule + marge
 	#    de sécurité), PAS juste jusqu'à max_step_up : un obstacle dont le
