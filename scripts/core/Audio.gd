@@ -637,8 +637,18 @@ static func duck_gain_db(elapsed: float, duration: float = SHOTS_DUCK_DURATION_S
 ## `_V1_MAP_IDS` (données v1 encore présentes en assets, mais Layouts.gd
 ## lui-même est supprimé, nettoyage du prototype 2026-09-26) donc testé AVANT
 ## le repli générique ci-dessous.
+##
+## Canyon Express (2026-09-28, MapCatalog.gd) : train à l'arrêt sur un pont
+## au-dessus d'un canyon -> pas de boucle dédiée non plus, aucun nouveau
+## fichier audio (contrat de tâche) -- emprunte parmi les six boucles v1
+## existantes (`_V1_MAP_IDS` ci-dessous) celle la plus proche en ambiance :
+## port_ferraille (quais/eau), val_poussiere (vallée désertique), saint_ombre,
+## col_du_vautour (col de montagne), la_fosse, le_belvedere (promontoire) --
+## val_poussiere est la seule à évoquer un vent sec de plein air désertique
+## (le canyon n'a ni eau ni intérieur), retenue ici.
 const _AMBIENCE_ALIASES := {
 	"shipment": "ambience_port_ferraille",
+	"canyon_express": "ambience_val_poussiere",
 }
 
 ## Six maps v1 "dessinées à la main" (ex-`Layouts.MAP_IDS` — le fichier

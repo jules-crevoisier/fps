@@ -161,13 +161,17 @@ static func _sun_direction(elevation_deg: float, azimuth_deg: float = _SUN_AZIMU
 
 func _apply_key_light(light: DirectionalLight3D) -> void:
 	var map_id := MatchConfig.map_id
-	# Shipment (2026-09-26, style BD) : `_style` ci-dessous a DEJA configure ce
-	# soleil via ToonStyle.setup_environment (meme WorldEnvironment.node_added,
-	# meme frame -- voir sa doc) des que son WorldEnvironment frere est entre dans
+	# Cartes "toon" (Shipment, puis Canyon Express -- MapCatalog.gd "look",
+	# 2026-09-28) : `_style` ci-dessous a DEJA configure ce soleil via
+	# ToonStyle.setup_environment (meme WorldEnvironment.node_added, meme
+	# frame -- voir sa doc) des que son WorldEnvironment frere est entre dans
 	# l'arbre. Ne pas l'ecraser ici avec la config Cartoon/ink_toon de l'ancien
 	# pipeline (toon_style.json est une source de verite separee de
-	# docs/style/tokens.json, voir ToonStyle.gd "Portee").
-	if map_id == "shipment":
+	# docs/style/tokens.json, voir ToonStyle.gd "Portee"). Catalogue plutôt
+	# qu'un `map_id == "shipment"` en dur : généralise SANS changer le
+	# comportement de Shipment (même id, même clé "look" == "toon" -- voir
+	# MapCatalog._full_list()).
+	if MapCatalog.look_for(map_id) == "toon":
 		return
 	var palette := Cartoon.map_palette(map_id)
 	light.shadow_enabled = true
@@ -191,14 +195,15 @@ func _apply_key_light(light: DirectionalLight3D) -> void:
 	light.look_at_from_position(Vector3.ZERO, _sun_direction(elevation_deg, _sun_azimuth_deg(map_id)), Vector3.UP)
 
 func _style(we: WorldEnvironment) -> void:
-	# Shipment (2026-09-26, style BD "il faut tirer vraiment sur Borderlands") :
+	# Cartes "toon" (2026-09-26, style BD "il faut tirer vraiment sur
+	# Borderlands" ; généralisé au catalogue 2026-09-28 pour Canyon Express) :
 	# environnement/soleil entierement pilotes par ToonStyle.gd depuis
 	# art/style/toon_style.json, jamais par Cartoon.map_palette/build_environment
 	# ci-dessous (contrat de tache : "Shipment... set its DirectionalLight/
-	# WorldEnvironment from the JSON"). Les AUTRES cartes (aucune aujourd'hui,
-	# Wasteland ayant ete retiree -- voir MapSetup.gd) garderaient l'ancien
-	# pipeline ci-dessous si elles revenaient.
-	if MatchConfig.map_id == "shipment":
+	# WorldEnvironment from the JSON"). Les cartes SANS "look" == "toon" dans
+	# MapCatalog.gd (aucune aujourd'hui, Wasteland ayant ete retiree -- voir
+	# MapSetup.gd) garderaient l'ancien pipeline ci-dessous si elles revenaient.
+	if MapCatalog.look_for(MatchConfig.map_id) == "toon":
 		var sun: DirectionalLight3D = null
 		var parent := we.get_parent()
 		if parent:

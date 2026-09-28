@@ -144,3 +144,45 @@ func test_key_light_matches_style_bible_shadow_table() -> void:
 	assert_bool(light.shadow_enabled).is_true()
 	look.free()
 	light.free()
+
+
+# ------------------------------------------- gating par catalogue (Canyon Express, 2026-09-28)
+
+## Généralisation de "map_id == shipment" -> "MapCatalog.look_for(map_id) ==
+## toon" (brief lead, plomberie Canyon Express) : N'IMPORTE QUELLE carte du
+## catalogue déclarée "look": "toon" (Shipment ET Canyon Express aujourd'hui,
+## voir MapCatalog.gd) doit se comporter EXACTEMENT comme Shipment ici --
+## retour anticipé, ToonStyle.gd gère seul ce soleil (jamais la config
+## Cartoon/ink_toon ci-dessous, qui poserait shadow_enabled=true).
+func test_key_light_skips_ink_toon_setup_for_any_catalog_toon_look_map() -> void:
+	assert_str(MapCatalog.look_for("canyon_express")).is_equal("toon")
+	var look := LevelLook.new()
+	var light := DirectionalLight3D.new()
+	var previous := MatchConfig.map_id
+	MatchConfig.map_id = "canyon_express"
+	look._apply_key_light(light)
+	MatchConfig.map_id = previous
+	# DirectionalLight3D.shadow_enabled par défaut à false (jamais touché ici
+	# si le retour anticipé a bien eu lieu -- l'ancien pipeline le passerait
+	# à true, voir le test ci-dessus).
+	assert_bool(light.shadow_enabled).is_false()
+	look.free()
+	light.free()
+
+
+## Une carte SANS "look": "toon" dans le catalogue (id inconnu du catalogue,
+## comme les six cartes v1 legacy encore utilisées par Audio.gd) continue de
+## traverser l'ancien pipeline Cartoon/ink_toon -- comportement historique
+## inchangé par cette généralisation.
+func test_key_light_still_uses_ink_toon_setup_for_a_non_catalog_map_id() -> void:
+	assert_str(MapCatalog.look_for("port_ferraille")).is_equal("")
+	var look := LevelLook.new()
+	var light := DirectionalLight3D.new()
+	var previous := MatchConfig.map_id
+	MatchConfig.map_id = "port_ferraille"
+	look._apply_key_light(light)
+	MatchConfig.map_id = previous
+	assert_bool(light.shadow_enabled).is_true()
+	assert_float(light.directional_shadow_max_distance).is_equal_approx(120.0, 0.001)
+	look.free()
+	light.free()

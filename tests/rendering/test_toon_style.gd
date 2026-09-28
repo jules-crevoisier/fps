@@ -224,6 +224,35 @@ func test_apply_to_does_not_crash_on_null_or_meshless_nodes() -> void:
 	ToonStyle.apply_to(empty_mi)  # mesh == null : ne doit jamais planter.
 
 
+## `profile` (v3, Canyon Express/ImportedMapGeometry.gd) : par défaut
+## "character" -- comportement INCHANGÉ pour tout appelant existant qui ne le
+## précise pas (aucun test ci-dessus ne le précise, tous restent verts).
+func test_apply_to_defaults_to_character_profile() -> void:
+	var mi: MeshInstance3D = auto_free(MeshInstance3D.new())
+	mi.mesh = BoxMesh.new()
+	mi.material_override = ShaderMaterial.new()
+	(mi.material_override as ShaderMaterial).shader = preload("res://assets/shaders/dev_grid.gdshader")
+	ToonStyle.apply_to(mi)
+	var applied := mi.material_override as ShaderMaterial
+	assert_bool(applied.get_shader_parameter("rim_enabled")).is_true()  # profil "character" par défaut.
+
+
+## Forwardé jusqu'à `toon_material` : un appelant qui précise "world" (décor
+## importé, ImportedMapGeometry.gd) reçoit le même profil décor que
+## `apply_world_profile`/`toon_material(.., "world")` -- pas de liseré/reflet.
+func test_apply_to_forwards_an_explicit_profile() -> void:
+	var mi: MeshInstance3D = auto_free(MeshInstance3D.new())
+	mi.mesh = BoxMesh.new()
+	mi.material_override = ShaderMaterial.new()
+	(mi.material_override as ShaderMaterial).shader = preload("res://assets/shaders/dev_grid.gdshader")
+	ToonStyle.apply_to(mi, "world")
+	var applied := mi.material_override as ShaderMaterial
+	assert_that(applied.shader).is_equal(_TOON_SHADER)
+	assert_bool(applied.get_shader_parameter("rim_enabled")).is_false()
+	assert_bool(applied.get_shader_parameter("specular_enabled")).is_false()
+	assert_bool(applied.get_shader_parameter("halftone_enabled")).is_false()
+
+
 # ============================================================================
 #  Environnement / soleil (art/style/toon_style.json v3 "light"/"grading")
 # ============================================================================

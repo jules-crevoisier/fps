@@ -1,0 +1,558 @@
+{
+  "id": "canyon_express",
+  "name": "Canyon Express",
+  "version": 2,
+  "notes": "Carte 2 (concept choisi par l'utilisateur le 2026-09-27). Pièce maîtresse : un train à l'arrêt sur un pont à chevalets au-dessus d'un canyon. Trois NIVEAUX : rebords (y=0, apparitions devant les tunnels), train + pont (y=0 à 1, au centre), fond du canyon (y=-5). Trois TRAVERSÉES nord<->sud : passerelle (ouest), pont + train (centre : deux wagons couverts traversants, wagons plats en couverture), le fond du canyon (quatre rampes, deux à l'ouest, deux à l'est : on n'est jamais coincé en bas). v2 (2026-09-28) : falaises du canyon RAIDES (79°, plus de pente marchable), rampes = corniches de 5 m le long des falaises, apparitions en deux groupes abrités, bloqueurs de lignes de vue. RÈGLES : FPS rapide, ne jamais accrocher ; bâtiments pleins ; BD colorée ; rampes <= 16° ; passages >= 4 m ; interstices fermés ou >= 2 m ; décor fin au-dessus de 2,4 m ; aucun poteau fin dans un passage. Axes Godot : x ouest(-)->est(+), y haut, z nord(-)->sud(+). Équipe 1 au nord (tunnel A), équipe 0 au sud (tunnel B).",
+  "bounds": {
+    "half": 36.0,
+    "playable_half": 34.0
+  },
+  "levels": {
+    "rim": 0.0,
+    "canyon_floor": -5.0
+  },
+  "canyon": {
+    "z_rim": 9.0,
+    "z_floor": 8.0,
+    "floor_y": -5.0,
+    "note": "falaise raide de |z|=9 (y=0) à |z|=8 (y=-5) ; fond plat |z|<=8 ; fermé aux deux bouts (x=±34) par un éboulis"
+  },
+  "ramps": [
+    {
+      "name": "RampeNO",
+      "side": "north",
+      "landing": [
+        -34.0,
+        -31.0
+      ],
+      "x_top": -31.0,
+      "x_bottom": -11.0
+    },
+    {
+      "name": "RampeSO",
+      "side": "south",
+      "landing": [
+        -34.0,
+        -31.0
+      ],
+      "x_top": -31.0,
+      "x_bottom": -11.0
+    },
+    {
+      "name": "RampeNE",
+      "side": "north",
+      "landing": [
+        8.0,
+        11.0
+      ],
+      "x_top": 11.0,
+      "x_bottom": 31.0
+    },
+    {
+      "name": "RampeSE",
+      "side": "south",
+      "landing": [
+        8.0,
+        11.0
+      ],
+      "x_top": 11.0,
+      "x_bottom": 31.0
+    }
+  ],
+  "ramp_band": {
+    "z_outer": 9.0,
+    "z_inner": 4.0,
+    "note": "corniche le long de la falaise, 5 m de large (|z| de 4 à 9), 5 m de dénivelé sur 20 m = 14°"
+  },
+  "bridge": {
+    "x": [
+      -6.0,
+      6.0
+    ],
+    "z": [
+      -10.0,
+      10.0
+    ],
+    "deck_y": 0.0,
+    "deck_thickness": 0.8,
+    "parapet_h": 1.0,
+    "parapet_z": [
+      -9.0,
+      9.0
+    ],
+    "piers": {
+      "x": [
+        -5.0,
+        5.0
+      ],
+      "z": [
+        -2.5,
+        2.5
+      ],
+      "size": 1.0,
+      "note": "piles dans le fond du canyon ; croisillons décoratifs seulement au-dessus de y=-2.6"
+    },
+    "note_v2": "élargi à 12 m : 3,8 m libres entre la loco (roues comprises, |x|<=1,8) et le parapet"
+  },
+  "footbridge": {
+    "x": -15.0,
+    "width": 3.5,
+    "z": [
+      -10.0,
+      10.0
+    ],
+    "y": 0.0,
+    "rail_h": 1.0,
+    "note": "passerelle en planches ; garde-corps en corde = collision PLAYER_CLIP (bloque les joueurs, pas les balles) ; 3,7 m sous le tablier au-dessus des rampes ouest"
+  },
+  "rail": {
+    "x": 0.0,
+    "z": [
+      -40.0,
+      40.0
+    ],
+    "gauge": 1.44
+  },
+  "train": [
+    {
+      "kind": "caboose",
+      "z": [
+        -25.0,
+        -19.5
+      ],
+      "h": 3.4,
+      "color": "#B5402F"
+    },
+    {
+      "kind": "gap",
+      "z": [
+        -19.5,
+        -17.0
+      ]
+    },
+    {
+      "kind": "boxcar",
+      "z": [
+        -17.0,
+        -10.5
+      ],
+      "h": 3.6,
+      "floor_y": 0.35,
+      "color": "#E0A526",
+      "door": [
+        -15.0,
+        -12.5
+      ],
+      "lettering": [
+        "MARÉCAGE",
+        "& FILS"
+      ],
+      "note": "wagon couvert TRAVERSANT, plancher à 0,35 m (marche auto <= 0,4) + petites rampes aux portes"
+    },
+    {
+      "kind": "coupler",
+      "z": [
+        -10.5,
+        -9.5
+      ],
+      "h": 1.0
+    },
+    {
+      "kind": "flatcar",
+      "z": [
+        -9.5,
+        -4.5
+      ],
+      "h": 1.0,
+      "load": "crates",
+      "color": "#6B4A32"
+    },
+    {
+      "kind": "coupler",
+      "z": [
+        -4.5,
+        -4.0
+      ],
+      "h": 1.0
+    },
+    {
+      "kind": "locomotive",
+      "z": [
+        -4.0,
+        4.5
+      ],
+      "h": 3.8,
+      "color": "#2A2436",
+      "trim": "#C8342A",
+      "brass": "#D9A93A"
+    },
+    {
+      "kind": "tender",
+      "z": [
+        4.5,
+        8.5
+      ],
+      "h": 2.8,
+      "color": "#2A2436"
+    },
+    {
+      "kind": "gap",
+      "z": [
+        8.5,
+        11.0
+      ]
+    },
+    {
+      "kind": "boxcar",
+      "z": [
+        11.0,
+        17.5
+      ],
+      "h": 3.6,
+      "floor_y": 0.35,
+      "color": "#2F8C8A",
+      "door": [
+        13.0,
+        15.5
+      ],
+      "lettering": [
+        "CANYON",
+        "EXPRESS"
+      ]
+    },
+    {
+      "kind": "coupler",
+      "z": [
+        17.5,
+        18.5
+      ],
+      "h": 1.0
+    },
+    {
+      "kind": "flatcar",
+      "z": [
+        18.5,
+        23.5
+      ],
+      "h": 1.0,
+      "load": "logs",
+      "color": "#6B4A32"
+    }
+  ],
+  "tunnels": [
+    {
+      "name": "TunnelA",
+      "z": -34.0,
+      "width": 7.0,
+      "height": 5.5,
+      "depth": 5.0
+    },
+    {
+      "name": "TunnelB",
+      "z": 34.0,
+      "width": 7.0,
+      "height": 5.5,
+      "depth": 5.0
+    }
+  ],
+  "spawns": {
+    "team1": {
+      "z": [
+        -32.0,
+        -27.5
+      ],
+      "x_groups": [
+        [
+          -13.0,
+          -7.0
+        ],
+        [
+          7.0,
+          13.0
+        ]
+      ],
+      "per_group": 4
+    },
+    "team0": {
+      "z": [
+        27.5,
+        32.0
+      ],
+      "x_groups": [
+        [
+          -13.0,
+          -7.0
+        ],
+        [
+          7.0,
+          13.0
+        ]
+      ],
+      "per_group": 4
+    }
+  },
+  "blocks": [
+    {
+      "name": "CHÂTEAU D'EAU",
+      "kind": "water_tower",
+      "x": [
+        -24.2,
+        -19.8
+      ],
+      "z": [
+        -20.2,
+        -15.8
+      ],
+      "h": 3.2,
+      "tank_r": 3.0,
+      "color": "#8B5A3C"
+    },
+    {
+      "name": "GARE",
+      "kind": "station",
+      "x": [
+        -26.0,
+        -20.0
+      ],
+      "z": [
+        15.0,
+        21.0
+      ],
+      "h": 4.2,
+      "awning_y": 2.9,
+      "color": "#C9A06A"
+    },
+    {
+      "name": "Cheminée N",
+      "kind": "hoodoo",
+      "x": [
+        16.0,
+        20.0
+      ],
+      "z": [
+        -22.0,
+        -18.0
+      ],
+      "h": 7.5,
+      "color": "#B8532F"
+    },
+    {
+      "name": "Cheminée S",
+      "kind": "hoodoo",
+      "x": [
+        16.0,
+        20.0
+      ],
+      "z": [
+        18.0,
+        22.0
+      ],
+      "h": 7.5,
+      "color": "#B8532F"
+    },
+    {
+      "name": "Roc NE",
+      "kind": "rock",
+      "x": [
+        26.0,
+        30.0
+      ],
+      "z": [
+        -17.0,
+        -14.0
+      ],
+      "h": 2.2,
+      "color": "#C0643A"
+    },
+    {
+      "name": "Roc SE",
+      "kind": "rock",
+      "x": [
+        26.0,
+        30.0
+      ],
+      "z": [
+        14.0,
+        17.0
+      ],
+      "h": 2.2,
+      "color": "#C0643A"
+    },
+    {
+      "name": "Roc N",
+      "kind": "rock",
+      "x": [
+        7.0,
+        13.0
+      ],
+      "z": [
+        -25.0,
+        -22.5
+      ],
+      "h": 2.2,
+      "color": "#C0643A",
+      "note": "abrite le groupe d'apparition est"
+    },
+    {
+      "name": "Roc S",
+      "kind": "rock",
+      "x": [
+        7.0,
+        13.0
+      ],
+      "z": [
+        22.5,
+        25.0
+      ],
+      "h": 2.2,
+      "color": "#C0643A"
+    },
+    {
+      "name": "Caisses N",
+      "kind": "crates",
+      "x": [
+        -13.0,
+        -7.0
+      ],
+      "z": [
+        -25.0,
+        -22.5
+      ],
+      "h": 2.4,
+      "color": "#9C6B3E",
+      "note": "abrite le groupe d'apparition ouest"
+    },
+    {
+      "name": "Caisses S",
+      "kind": "crates",
+      "x": [
+        -13.0,
+        -7.0
+      ],
+      "z": [
+        22.5,
+        25.0
+      ],
+      "h": 2.4,
+      "color": "#9C6B3E"
+    },
+    {
+      "name": "Caisses pont NO",
+      "kind": "crates",
+      "x": [
+        -10.0,
+        -7.0
+      ],
+      "z": [
+        -13.5,
+        -11.0
+      ],
+      "h": 1.3,
+      "color": "#9C6B3E"
+    },
+    {
+      "name": "Caisses pont SO",
+      "kind": "crates",
+      "x": [
+        -10.0,
+        -7.0
+      ],
+      "z": [
+        11.0,
+        13.5
+      ],
+      "h": 1.3,
+      "color": "#9C6B3E"
+    },
+    {
+      "name": "Tonneaux pont NE",
+      "kind": "barrels",
+      "x": [
+        7.0,
+        10.0
+      ],
+      "z": [
+        -13.5,
+        -11.0
+      ],
+      "h": 1.2,
+      "color": "#8B5A3C"
+    },
+    {
+      "name": "Tonneaux pont SE",
+      "kind": "barrels",
+      "x": [
+        7.0,
+        10.0
+      ],
+      "z": [
+        11.0,
+        13.5
+      ],
+      "h": 1.2,
+      "color": "#8B5A3C"
+    },
+    {
+      "name": "Rocher canyon E",
+      "kind": "boulder",
+      "x": [
+        15.0,
+        18.0
+      ],
+      "z": [
+        -1.5,
+        1.5
+      ],
+      "h": 2.2,
+      "y": -5.0,
+      "color": "#A85A38"
+    },
+    {
+      "name": "Wagonnet renversé",
+      "kind": "ore_cart",
+      "x": [
+        24.0,
+        27.0
+      ],
+      "z": [
+        -1.2,
+        1.8
+      ],
+      "h": 1.6,
+      "y": -5.0,
+      "color": "#6E6A78"
+    },
+    {
+      "name": "Éboulis O",
+      "kind": "boulder",
+      "x": [
+        -27.0,
+        -23.0
+      ],
+      "z": [
+        -1.5,
+        1.5
+      ],
+      "h": 2.0,
+      "y": -5.0,
+      "color": "#A85A38"
+    }
+  ],
+  "palette": {
+    "rim": "#E2A864",
+    "rim_dirt": "#D0914E",
+    "canyon_floor": "#C98A55",
+    "creek": "#A86A44",
+    "strata": [
+      "#B8532F",
+      "#E9B872",
+      "#D97B3E",
+      "#B8532F",
+      "#9E4428"
+    ],
+    "rail": "#4A3F4E",
+    "sleeper": "#6B4A32",
+    "bridge_wood": "#7A5236"
+  },
+  "sightline_max_m": 45.0
+}

@@ -17,6 +17,10 @@ const _REVOLVER_SCENE := "res://assets/models/weapons/revolver.glb"
 
 var _selected_preset_id: String = MatchModeCatalog.TDM
 var _mode_cards: Dictionary = {}
+## Sélecteur de carte (2026-09-28, Canyon Express) : ticket sélectionné par id
+## MapCatalog -- voir `_init_selected_map`/`_build_map_picker_row`.
+var _selected_map_id: String = ""
+var _map_tickets: Dictionary = {}
 var _bots_switch: Button
 var _join_panel: Control
 var _join_backdrop: ColorRect
@@ -35,6 +39,7 @@ func _ready() -> void:
 
 
 func _build() -> void:
+	_init_selected_map()
 	add_child(MenuWidgets.sunburst_background(
 		Color("3C9BFF"), Color("2E8BFF"), Color("1D5FD6"),
 		true, Vector2(1230, 510), 590.0))
@@ -269,7 +274,7 @@ func _on_mode_selected(preset_id: String) -> void:
 	else:
 		_hide_join_panel()
 		var params := MatchModeCatalog.params_for(preset_id)
-		MatchLauncher.configure_local(params["mode_id"], params["team_size"], MatchConfig.bots_enabled, params["bot_difficulty"])
+		MatchLauncher.configure_local(params["mode_id"], params["team_size"], MatchConfig.bots_enabled, params["bot_difficulty"], _selected_map_id)
 	_refresh_mode_cards()
 
 
@@ -343,6 +348,8 @@ func _build_go_panel() -> void:
 	col.add_theme_constant_override("separation", UiTokens.S3)
 	col.alignment = BoxContainer.ALIGNMENT_END
 
+	_build_map_picker_row(col)
+
 	var bots_row := HBoxContainer.new()
 	bots_row.alignment = BoxContainer.ALIGNMENT_END
 	bots_row.add_theme_constant_override("separation", UiTokens.S2)
@@ -373,7 +380,65 @@ func _on_play_pressed() -> void:
 	var params := MatchModeCatalog.params_for(_selected_preset_id)
 	if params.is_empty():
 		return
-	await MatchLauncher.start_local(get_tree(), params["mode_id"], params["team_size"], MatchConfig.bots_enabled, params["bot_difficulty"])
+	await MatchLauncher.start_local(get_tree(), params["mode_id"], params["team_size"], MatchConfig.bots_enabled, params["bot_difficulty"], _selected_map_id)
+
+
+# ------------------------------------------------------------ sélecteur de carte (Canyon Express, 2026-09-28)
+
+## Carte de départ : la dernière choisie (MatchConfig.map_id, persistée par
+## MatchConfig.save_last) si elle est encore réellement jouable aujourd'hui
+## (scène présente), sinon la carte par défaut du catalogue pour le mode
+## courant (MapCatalog.default_for -> Shipment tant que Canyon Express n'a
+## pas de scène).
+func _init_selected_map() -> void:
+	var candidate := MatchConfig.map_id
+	if candidate == "" or not MapCatalog.catalog_has_scene(candidate):
+		candidate = str(MapCatalog.default_for(MatchConfig.mode_id).get("id", "shipment"))
+	_selected_map_id = candidate
+
+
+## Ticket comic par carte RÉELLEMENT jouable (MapCatalog.selectable, scène
+## présente) -- Canyon Express n'apparaît ici que le jour où sa scène existe,
+## sans aucun changement de code (voir MapCatalog.gd, doc de tête). Posé au-
+## dessus de « Compléter avec des bots »/« Jouer ! » dans la même colonne
+## (celle-ci grandit vers le haut : premier enfant ajouté = rangée du haut).
+func _build_map_picker_row(col: VBoxContainer) -> void:
+	var maps := MapCatalog.selectable()
+	if maps.is_empty():
+		return
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_END
+	row.add_theme_constant_override("separation", UiTokens.S2)
+	row.add_child(UiTokens.make_label("Carte", UiTokens.label(UiTokens.T_S, UiTokens.PAPER)))
+	for entry in maps:
+		row.add_child(_build_map_ticket(entry))
+	col.add_child(row)
+	_refresh_map_tickets()
+
+
+func _build_map_ticket(entry: Dictionary) -> Button:
+	var id := str(entry["id"])
+	var btn := MenuWidgets.comic_button("%s. %s" % [entry["number"], entry["name"]], UiTokens.PAPER, UiTokens.T_S)
+	# >= 44px (cible tactile/souris) -- comic_button seul (pad par défaut)
+	# dépasse déjà 44px, ce minimum le garantit explicitement.
+	btn.custom_minimum_size = Vector2(0, 56)
+	btn.focus_mode = Control.FOCUS_ALL
+	btn.pressed.connect(_on_map_selected.bind(id))
+	_map_tickets[id] = btn
+	return btn
+
+
+func _refresh_map_tickets() -> void:
+	for id in _map_tickets:
+		var btn: Button = _map_tickets[id]
+		MenuWidgets.apply_plate_states(btn, UiTokens.YELLOW if id == _selected_map_id else UiTokens.PAPER)
+
+
+func _on_map_selected(map_id: String) -> void:
+	_selected_map_id = map_id
+	MatchConfig.map_id = map_id
+	MatchConfig.save_last()
+	_refresh_map_tickets()
 
 
 # ------------------------------------------------------------ panneau « Rejoindre / héberger »

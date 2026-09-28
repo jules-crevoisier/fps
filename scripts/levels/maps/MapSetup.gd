@@ -56,6 +56,13 @@ var _callouts: Array = []
 func _enter_tree() -> void:
 	if nav_region != null:
 		return  # déjà construit (garde-fou anti double appel)
+	# Géométrie de carte IMPORTÉE (glTF Blender, Canyon Express -- voir
+	# ImportedMapGeometry.gd) : calques physiques/méta "surface" des proxys
+	# `COL_*` posés AVANT le bake ci-dessous (Recast parse
+	# PARSED_GEOMETRY_STATIC_COLLIDERS, donc leurs calques doivent déjà être
+	# définitifs). Shipment (aucun nœud `COL_*`/`imported_art`) traverse ceci
+	# sans aucun effet -- comportement inchangé.
+	ImportedMapGeometry.prepare(get_parent())
 	nav_region = _find_nav_region()
 	if nav_region != null:
 		_bake_navigation(nav_region)

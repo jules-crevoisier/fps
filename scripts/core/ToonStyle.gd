@@ -203,18 +203,24 @@ static func _extract_albedo(material: Material) -> Dictionary:
 ## `material_override` (géométrie procédurale, ex. les blocs de shipment.tscn) et
 ## matériau par surface (`mesh.surface_get_material`/`surface_override_material`,
 ## ex. un glTF Tripo comme verrou.glb/ravage.glb).
-static func apply_to(node: Node) -> void:
+##
+## `profile` (v3, "character" par défaut -- comportement INCHANGÉ pour tous
+## les appelants existants, aucun ne le précise) : forwardé tel quel à
+## `toon_material`/`configure` -- "world" pour du décor plat (ImportedMapGeometry.gd,
+## carte importée depuis Blender : pas de liseré/reflet sur des pans plats,
+## voir la doc de `_section`).
+static func apply_to(node: Node, profile: String = "character") -> void:
 	if node == null:
 		return
 	if node is MeshInstance3D:
-		_swap_mesh_materials(node as MeshInstance3D)
+		_swap_mesh_materials(node as MeshInstance3D, profile)
 	for child in node.get_children():
-		apply_to(child)
+		apply_to(child, profile)
 
-static func _swap_mesh_materials(mi: MeshInstance3D) -> void:
+static func _swap_mesh_materials(mi: MeshInstance3D, profile: String = "character") -> void:
 	if mi.material_override != null:
 		var info := _extract_albedo(mi.material_override)
-		mi.material_override = toon_material(info["texture"], info["color"])
+		mi.material_override = toon_material(info["texture"], info["color"], profile)
 		return
 	if mi.mesh == null:
 		return
@@ -223,7 +229,7 @@ static func _swap_mesh_materials(mi: MeshInstance3D) -> void:
 		if src == null:
 			src = mi.mesh.surface_get_material(i)
 		var info := _extract_albedo(src)
-		mi.set_surface_override_material(i, toon_material(info["texture"], info["color"]))
+		mi.set_surface_override_material(i, toon_material(info["texture"], info["color"], profile))
 
 # ---------------------------------------------------------------------------
 #  Environnement + soleil -- ingrédients 3/4 (éclairage réel) et 4/4 (étalonnage).

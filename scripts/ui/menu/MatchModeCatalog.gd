@@ -17,8 +17,8 @@ const JOIN_HOST := "join_host"
 ## Ordre d'affichage = ordre de la maquette. `num`/`name`/`sub` sont la copie
 ## FR réelle de home.html, jamais un texte de substitution.
 const PRESETS: Array[Dictionary] = [
-	{"id": TDM, "num": "4", "name": "Match à mort par équipe", "sub": "4 contre 4 · Shipment · 50 éliminations"},
-	{"id": DUEL, "num": "1", "name": "Duel", "sub": "1 contre 1 · Shipment · 10 minutes"},
+	{"id": TDM, "num": "4", "name": "Match à mort par équipe", "sub": "4 contre 4 · 50 éliminations"},
+	{"id": DUEL, "num": "1", "name": "Duel", "sub": "1 contre 1 · 10 minutes"},
 	{"id": TRAINING, "num": "B", "name": "Entraînement", "sub": "Contre des bots, sans classement"},
 	{"id": JOIN_HOST, "num": "IP", "name": "Rejoindre / héberger", "sub": "Partie privée entre amis"},
 ]

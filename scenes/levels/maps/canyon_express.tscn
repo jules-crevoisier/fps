@@ -1,0 +1,122 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/networking/GameWorld.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="2_packedscene"]
+[ext_resource type="Script" path="res://scripts/levels/maps/MapSetup.gd" id="3_script"]
+[ext_resource type="Script" path="res://scripts/ui/GameHUD.gd" id="4_script"]
+[ext_resource type="PackedScene" path="res://assets/maps/canyon_express/canyon_express.glb" id="5_glb"]
+
+[node name="CanyonExpress" type="Node3D"]
+script = ExtResource("1_script")
+player_scene = ExtResource("2_packedscene")
+respawn_delay = 3.0
+spawn_points_root = NodePath("SpawnPoints")
+allow_bot_fill = true
+agent_select = true
+buy_enabled = true
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+shadow_enabled = true
+
+[node name="NavRegion" type="NavigationRegion3D" parent="."]
+groups = ["nav_region"]
+
+[node name="Art" parent="NavRegion" instance=ExtResource("5_glb")]
+metadata/imported_art = true
+
+[node name="MapSetup" type="Node3D" parent="."]
+script = ExtResource("3_script")
+map_id = "canyon_express"
+
+[node name="SpawnPoints" type="Node3D" parent="."]
+
+[node name="N1" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(-0.932568, 0, 0.360994, 0, 1, 0, -0.360994, 0, -0.932568, -12, 0, -31)
+groups = ["spawn_team_1", "spawn_tdm"]
+metadata/team = 1
+
+[node name="N2" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(-0.968277, 0, 0.249878, 0, 1, 0, -0.249878, 0, -0.968277, -8, 0, -31)
+groups = ["spawn_team_1", "spawn_tdm"]
+metadata/team = 1
+
+[node name="N3" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(-0.921635, 0, 0.388057, 0, 1, 0, -0.388057, 0, -0.921635, -12, 0, -28.5)
+groups = ["spawn_team_1", "spawn_tdm"]
+metadata/team = 1
+
+[node name="N4" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(-0.962788, 0, 0.270256, 0, 1, 0, -0.270256, 0, -0.962788, -8, 0, -28.5)
+groups = ["spawn_team_1", "spawn_tdm"]
+metadata/team = 1
+
+[node name="N5" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(-0.968277, 0, -0.249878, 0, 1, 0, 0.249878, 0, -0.968277, 8, 0, -31)
+groups = ["spawn_team_1", "spawn_tdm"]
+metadata/team = 1
+
+[node name="N6" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(-0.932568, 0, -0.360994, 0, 1, 0, 0.360994, 0, -0.932568, 12, 0, -31)
+groups = ["spawn_team_1", "spawn_tdm"]
+metadata/team = 1
+
+[node name="N7" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(-0.962788, 0, -0.270256, 0, 1, 0, 0.270256, 0, -0.962788, 8, 0, -28.5)
+groups = ["spawn_team_1", "spawn_tdm"]
+metadata/team = 1
+
+[node name="N8" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(-0.921635, 0, -0.388057, 0, 1, 0, 0.388057, 0, -0.921635, 12, 0, -28.5)
+groups = ["spawn_team_1", "spawn_tdm"]
+metadata/team = 1
+
+[node name="S1" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(0.921635, 0, 0.388057, 0, 1, 0, -0.388057, 0, 0.921635, -12, 0, 28.5)
+groups = ["spawn_team_0", "spawn_tdm"]
+metadata/team = 0
+
+[node name="S2" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(0.962788, 0, 0.270256, 0, 1, 0, -0.270256, 0, 0.962788, -8, 0, 28.5)
+groups = ["spawn_team_0", "spawn_tdm"]
+metadata/team = 0
+
+[node name="S3" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(0.932568, 0, 0.360994, 0, 1, 0, -0.360994, 0, 0.932568, -12, 0, 31)
+groups = ["spawn_team_0", "spawn_tdm"]
+metadata/team = 0
+
+[node name="S4" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(0.968277, 0, 0.249878, 0, 1, 0, -0.249878, 0, 0.968277, -8, 0, 31)
+groups = ["spawn_team_0", "spawn_tdm"]
+metadata/team = 0
+
+[node name="S5" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(0.962788, 0, -0.270256, 0, 1, 0, 0.270256, 0, 0.962788, 8, 0, 28.5)
+groups = ["spawn_team_0", "spawn_tdm"]
+metadata/team = 0
+
+[node name="S6" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(0.921635, 0, -0.388057, 0, 1, 0, 0.388057, 0, 0.921635, 12, 0, 28.5)
+groups = ["spawn_team_0", "spawn_tdm"]
+metadata/team = 0
+
+[node name="S7" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(0.968277, 0, -0.249878, 0, 1, 0, 0.249878, 0, 0.968277, 8, 0, 31)
+groups = ["spawn_team_0", "spawn_tdm"]
+metadata/team = 0
+
+[node name="S8" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(0.932568, 0, -0.360994, 0, 1, 0, 0.360994, 0, 0.932568, 12, 0, 31)
+groups = ["spawn_team_0", "spawn_tdm"]
+metadata/team = 0
+
+[node name="Players" type="Node3D" parent="."]
+
+[node name="PlayerSpawner" type="MultiplayerSpawner" parent="."]
+_spawnable_scenes = PackedStringArray("res://scenes/player/player.tscn")
+spawn_path = NodePath("../Players")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+script = ExtResource("4_script")

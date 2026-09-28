@@ -11,7 +11,11 @@
 ##   - changements de direction du regard par minute à l'arrêt ;
 ##   - durée de tenue moyenne (immobile, entre deux changements de cible) ;
 ##   - distance parcourue par minute ;
-##   - changements de but (`TDMMode._bot_goal_cache`) par minute.
+##   - changements de but (`TDMMode._bot_goal_cache`) par minute ;
+##   - nombre d'ÉPISODES de blocage (`BotBrain._stuck`, scripts/ai/BotStuck.gd :
+##     une transition IDLE/COOLDOWN -> WIGGLE = un épisode, pas chaque tick où
+##     le bot reste en WIGGLE — carte Canyon Express, 2026-09-28, pour repérer
+##     un endroit où le nav mesh/la géométrie coince un bot en boucle).
 ##
 ## Même famille que tools/style/capture_shipment.gd (SceneTree, `_process`
 ## pour laisser le moteur tourner avant d'agir) et tools/bake_bot_spots.gd
@@ -178,6 +182,7 @@ func _new_stats(pos: Vector3) -> Dictionary:
 		"last_look_kind_was_idle": false, "idle_stationary_s": 0.0,
 		"distance_m": 0.0, "last_pos": pos,
 		"goal_changes": 0, "last_goal": Vector3.INF,
+		"stuck_events": 0, "last_stuck_phase": BotStuck.Phase.IDLE,
 	}
 
 
@@ -294,15 +299,28 @@ func _sample_bot(bot_id: int, player: Node, brain: Node, delta: float) -> void:
 				stats.goal_changes += 1
 			stats.last_goal = goal
 
+	# Épisodes de blocage (BotStuck.gd, LECTURE SEULE -- voir la docstring de
+	# tête) : `brain._stuck` a DÉJÀ tourné ce tick (BotBrain, priorité -150,
+	# avant ce sample) -- lire `_phase` ici lit donc l'état POST-transition du
+	# tick courant, comme tools/bot_bench.gd. Un ÉPISODE = une entrée dans
+	# Phase.WIGGLE depuis autre chose (jamais chaque tick passé en WIGGLE,
+	# sinon un seul blocage de 0,3 s compterait ~18 fois à 60 fps).
+	var stuck = brain.get("_stuck")
+	if stuck != null:
+		var phase := int(stuck.get("_phase"))
+		if phase == BotStuck.Phase.WIGGLE and int(stats.last_stuck_phase) != BotStuck.Phase.WIGGLE:
+			stats.stuck_events += 1
+		stats.last_stuck_phase = phase
+
 	_stats[bot_id] = stats
 
 
 func _report() -> void:
 	var minutes := _duration_s / 60.0
 	var lines: Array = []
-	var header := "%-6s %8s %8s %8s %14s %14s %14s %16s %14s %12s %12s" % [
+	var header := "%-6s %8s %8s %8s %14s %14s %14s %16s %14s %12s %12s %10s" % [
 		"bot", "sprint%", "walk%", "still%", "gaze_gap_deg", "gaze_out_deg", "gaze_cbt_deg",
-		"look_chg/min", "hold_s", "dist_m/min", "goal_chg/min"]
+		"look_chg/min", "hold_s", "dist_m/min", "goal_chg/min", "stuck_n"]
 	lines.append(header)
 	lines.append("-".repeat(header.length()))
 	var summary: Dictionary = {"label": _label, "map": _map_id, "duration_s": _duration_s, "bots": {}}
@@ -321,15 +339,16 @@ func _report() -> void:
 		var hold_s := (float(s.idle_stationary_s) / float(s.look_changes)) if int(s.look_changes) > 0 else float(s.idle_stationary_s)
 		var dist_per_min := float(s.distance_m) / minutes
 		var goal_chg_per_min := float(s.goal_changes) / minutes
-		lines.append("%-6d %8.1f %8.1f %8.1f %14.1f %14.1f %14.1f %16.2f %14.2f %12.1f %12.2f" % [
+		var stuck_events := int(s.stuck_events)
+		lines.append("%-6d %8.1f %8.1f %8.1f %14.1f %14.1f %14.1f %16.2f %14.2f %12.1f %12.2f %10d" % [
 			bot_id, sprint_pct, walk_pct, still_pct, mean_gap, mean_gap_out, mean_gap_combat,
-			look_chg_per_min, hold_s, dist_per_min, goal_chg_per_min])
+			look_chg_per_min, hold_s, dist_per_min, goal_chg_per_min, stuck_events])
 		summary.bots[bot_id] = {
 			"sprint_pct": sprint_pct, "walk_pct": walk_pct, "stationary_pct": still_pct,
 			"mean_gaze_gap_deg": mean_gap, "mean_gaze_gap_roam_deg": mean_gap_out,
 			"mean_gaze_gap_alert_deg": mean_gap_combat, "look_changes_per_min": look_chg_per_min,
 			"hold_duration_s": hold_s, "distance_per_min_m": dist_per_min,
-			"goal_changes_per_min": goal_chg_per_min,
+			"goal_changes_per_min": goal_chg_per_min, "stuck_events": stuck_events,
 		}
 	var table := "\n".join(lines)
 	print("BOT_PROBE_TABLE label=%s\n%s" % [_label, table])
