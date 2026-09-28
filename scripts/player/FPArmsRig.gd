@@ -351,7 +351,7 @@ func align_to_camera(camera: Camera3D, proc_offset: Transform3D, fov_scale: floa
 ## visiblement sur la poignée jaune en hanche ET en visée, gate toujours vert (angle_delta 0.3°,
 ## muzzle_delta 0.05).
 const _GRIP_POS_BY_ID := {
-	2: Vector3(0.02, 0.10, -0.07),   # Rafale — remonté (voir la note 3e passage) pour que la main referme sur la poignée.
+	2: Vector3(0.0, 0.051, 0.021),   # Rafale — poignée pistolet posée là où est celle de Ravage (mesure de profil, lead 2026-09-28 : centre de poignée à 7/116 mm de l'origine contre 27/150 mm pour Ravage ; décalage = Ravage - 0,85 x Rafale).
 	3: Vector3(0.0, -0.02, -0.04),    # Fracas — pose identité ; allongé (voir l'échelle) pour tenir la diagonale de Ravage.
 	4: Vector3(0.02, 0.08, -0.05),     # Verdict — canon un peu trop proche du carré central à 0.12.
 	5: Vector3(0.02, -0.03, 0.0),      # Aiguille

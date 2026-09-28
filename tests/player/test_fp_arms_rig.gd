@@ -167,7 +167,7 @@ func test_grip_table_pins_the_measured_calibration_for_the_four_tuned_weapons() 
 	# Rafale : re-réglé (playtest utilisateur, 2026-09-28 -- « la main ne tient pas la crosse ») --
 	# voir la note "3e passage, Rafale SEULE" dans FPArmsRig.gd/_GRIP_POS_BY_ID pour la mesure.
 	assert_vector(FPArmsRig.grip_offset_for(2)).append_failure_message("Rafale").is_equal_approx(
-		Vector3(0.02, 0.10, -0.07), Vector3.ONE * 0.0001)
+		Vector3(0.0, 0.051, 0.021), Vector3.ONE * 0.0001)
 	assert_vector(FPArmsRig.grip_offset_for(3)).append_failure_message("Fracas").is_equal_approx(
 		Vector3(0.0, -0.02, -0.04), Vector3.ONE * 0.0001)
 	assert_vector(FPArmsRig.grip_offset_for(4)).append_failure_message("Verdict").is_equal_approx(

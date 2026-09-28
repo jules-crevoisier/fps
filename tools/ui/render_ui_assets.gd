@@ -114,9 +114,7 @@ class Driver extends Node:
 				for i in mi.mesh.get_surface_count():
 					var std := mi.mesh.surface_get_material(i) as StandardMaterial3D
 					if std:
-						var dup := std.duplicate() as StandardMaterial3D
-						dup.vertex_color_use_as_albedo = true
-						mi.set_surface_override_material(i, dup)
+						mi.set_surface_override_material(i, ViewModel.vertex_color_material(std))
 		else:
 			ToonStyle.apply_to(model)
 		if s.has("clip"):

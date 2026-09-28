@@ -295,9 +295,7 @@ func _apply_cartoon_materials(model: Node3D) -> void:
 			if name.ends_with("_vcolor"):
 				var vstd := mat as StandardMaterial3D
 				if vstd:
-					var vdup := vstd.duplicate() as StandardMaterial3D
-					vdup.vertex_color_use_as_albedo = true
-					mesh.set_surface_override_material(i, vdup)
+					mesh.set_surface_override_material(i, ViewModel.vertex_color_material(vstd))
 				continue
 			# Placeholders "quatre armes" (2026-09-28, tools/blender/
 			# make_action_weapons.py) : même marqueur/raison que ViewModel.gd

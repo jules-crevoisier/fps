@@ -1326,6 +1326,17 @@ const _PAINTED_MATERIAL_MARKER := "_painted"
 ## tools/blender/lib/painted_weapon.py::VERTEX_COLOR_MATERIAL_MARKER (même chaîne, source unique).
 const _VERTEX_COLOR_MATERIAL_MARKER := "_vcolor"
 
+## Copie du matériau importé d'une arme peinte en couleurs de sommet (Rafale/Fracas/Verdict/
+## Aiguille) : couleurs de sommet comme albédo ET rendu des DEUX côtés — les maillages Tripo sont
+## des coques ouvertes aux faces orientées dans les deux sens (retour de test 2026-09-28 : « la
+## moitié de l'arme est ouverte »). Godot retourne la normale des faces vues de dos quand le
+## culling est coupé : l'éclairage reste juste. Partagé avec ThirdPersonWeapon.gd.
+static func vertex_color_material(src: StandardMaterial3D) -> StandardMaterial3D:
+	var m := src.duplicate() as StandardMaterial3D
+	m.vertex_color_use_as_albedo = true
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	return m
+
 ## Marqueur du matériau baked des placeholders "quatre armes" (2026-09-28,
 ## tools/blender/make_action_weapons.py) — voir la branche dédiée de
 ## `_apply_cartoon_materials` juste au-dessus : chaque pièce garde SA couleur
@@ -1387,9 +1398,7 @@ func _apply_cartoon_materials(model: Node3D) -> void:
 				# next_pass par matériau ici.
 				var vstd := mat as StandardMaterial3D
 				if vstd:
-					var vdup := vstd.duplicate() as StandardMaterial3D
-					vdup.vertex_color_use_as_albedo = true
-					mesh.set_surface_override_material(i, vdup)
+					mesh.set_surface_override_material(i, vertex_color_material(vstd))
 				continue
 			if name.ends_with(_ACTION_WEAPON_PAINT_MARKER):
 				# Placeholders "quatre armes" (2026-09-28, tools/blender/
