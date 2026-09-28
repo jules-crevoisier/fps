@@ -19,6 +19,28 @@ const FIRE_RATE_BAR_MAX := 10.0
 ## l'envers pour le joueur (plus de barres = arme MOINS précise).
 const SPREAD_BAR_MAX_DEG := 4.0
 
+## Jauge « Portée » (contrat lead 2026-09-28, armurerie "primary-weapon
+## picker") — lit `cfg.falloff_end` (distance où les dégâts atteignent leur
+## plancher, déjà utilisée par `format_damage` ci-dessous) plutôt que
+## `max_range` (200 m fixe sur toutes les armes hitscan actuelles, donc muet)
+## : la distance de chute reflète la portée UTILE réelle de l'arme.
+const RANGE_BAR_MAX_M := 100.0
+
+## Jauge « Mobilité » — PROXY de maniabilité tant qu'aucun champ dédié
+## ("poids"/vitesse au déplacement arme en main) n'existe dans WeaponConfig
+## (voir sa doc de tête) : `ads_time` (durée de transition de visée, déjà
+## chargée) sert de repère -- une arme qui se lève/vise plus vite se manie
+## mieux. Repère large (0,5 s) au-delà du max plausible (0,2 s sur les deux
+## armes actuelles, identique aux deux -> jauge neutre à mi-hauteur tant
+## qu'aucune arme ne les différencie) plutôt qu'une borne resserrée qui
+## saturerait dès qu'un futur sniper (ads_time plus lent) arrive.
+const MOBILITY_ADS_TIME_MAX_S := 0.5
+
+## Libellé qualitatif (contrat : "4 simple stat bars") pour la jauge Mobilité
+## — un nombre brut de secondes de transition de visée ne parle à personne,
+## contrairement aux mètres de `format_range`/le "/s" de `format_fire_rate`.
+const _MOBILITY_LABELS := ["Très lourde", "Lourde", "Standard", "Agile", "Très agile"]
+
 static func _fmt(v: float, decimals: int = 1) -> String:
 	return SettingsFormat.format_number(v, decimals)
 
@@ -60,6 +82,23 @@ static func fire_rate_bars(cfg: WeaponConfig) -> int:
 
 static func precision_bars(cfg: WeaponConfig) -> int:
 	return clampi(10 - int(round(cfg.spread_hip / SPREAD_BAR_MAX_DEG * 10.0)), 0, 10)
+
+## {value, note} — "55 m" (distance de chute des dégâts, voir `RANGE_BAR_MAX_M`).
+static func format_range(cfg: WeaponConfig) -> Dictionary:
+	return {"value": "%s m" % _fmt(cfg.falloff_end, 0), "note": ""}
+
+static func range_bars(cfg: WeaponConfig) -> int:
+	return clampi(int(round(cfg.falloff_end / RANGE_BAR_MAX_M * 10.0)), 0, 10)
+
+## {value, note} — libellé qualitatif ("Standard"/"Agile"...), voir
+## `MOBILITY_ADS_TIME_MAX_S`/`_MOBILITY_LABELS`.
+static func format_mobility(cfg: WeaponConfig) -> Dictionary:
+	var bucket := clampi(mobility_bars(cfg) / 2, 0, _MOBILITY_LABELS.size() - 1)
+	return {"value": _MOBILITY_LABELS[bucket], "note": ""}
+
+static func mobility_bars(cfg: WeaponConfig) -> int:
+	var ratio := clampf(cfg.ads_time / MOBILITY_ADS_TIME_MAX_S, 0.0, 1.0)
+	return clampi(int(round((1.0 - ratio) * 10.0)), 0, 10)
 
 ## Indices clavier/souris affichés sous la scène (armory.html ".modes") — dérivés
 ## de WeaponConfig.has_fan_fire()/aims_on_right_click(), jamais une paire de

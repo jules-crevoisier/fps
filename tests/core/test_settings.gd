@@ -321,6 +321,35 @@ func test_migrate_layout_qwerty_becomes_auto() -> void:
 	assert_str(Settings.migrate_layout("qwerty")).is_equal("auto")
 
 
+# ============================================================ LOADOUT (contrat lead 2026-09-28)
+
+func test_default_selected_primary_is_ravage() -> void:
+	assert_str(Settings.selected_primary).is_equal("Ravage")
+
+
+func test_clamp_selected_primary_accepts_known_primaries() -> void:
+	for v in Loadout.PRIMARY_NAMES:
+		assert_str(Settings.clamp_selected_primary(v)).is_equal(v)
+
+
+func test_clamp_selected_primary_unknown_value_resets_to_ravage() -> void:
+	assert_str(Settings.clamp_selected_primary("Revolver")).is_equal("Ravage")
+	assert_str(Settings.clamp_selected_primary("Nom Inconnu")).is_equal("Ravage")
+	assert_str(Settings.clamp_selected_primary("")).is_equal("Ravage")
+
+
+func test_selected_primary_round_trips_through_save_and_load() -> void:
+	var before := _snapshot()
+	Settings.selected_primary = "Rafale"
+	Settings.save_all()
+
+	var cfg := ConfigFile.new()
+	assert_int(cfg.load(Settings.PATH)).is_equal(OK)
+	assert_str(str(cfg.get_value("loadout", "selected_primary"))).is_equal("Rafale")
+
+	_restore(before)
+
+
 func test_migrate_layout_keeps_an_explicit_azerty_choice() -> void:
 	assert_str(Settings.migrate_layout("azerty")).is_equal("azerty")
 
@@ -728,6 +757,7 @@ func _snapshot() -> Dictionary:
 		"volume_ambience": Settings.volume_ambience,
 		"audio_mono": Settings.audio_mono,
 		"show_perf_overlay": Settings.show_perf_overlay,
+		"selected_primary": Settings.selected_primary,
 	}
 
 
@@ -765,6 +795,7 @@ func _restore(s: Dictionary) -> void:
 	Settings.volume_ambience = s.volume_ambience
 	Settings.audio_mono = s.audio_mono
 	Settings.show_perf_overlay = s.show_perf_overlay
+	Settings.selected_primary = s.selected_primary
 	Settings.apply_window_mode()
 	Settings.apply_render_scale()
 	Settings.apply_vsync()

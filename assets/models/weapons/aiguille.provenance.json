@@ -1,0 +1,10 @@
+{
+  "tool": "Tripo Studio — image de concept Nano Banana 2 (concept choisi par l'utilisateur), image -> 3D H3.1 avec « Générer par parties » (Détaillé, 44 pièces), triangles, AUCUNE texture Tripo, 20k tris",
+  "concept_image_tool": "Nano Banana 2 (générateur d'images de Tripo Studio)",
+  "tripo_task_id": "bdfd3c9c-4e2f-45a7-b1f7-4ebe4fa88273",
+  "source_glb": "assets/incoming/tripo/aiguille.glb",
+  "date": "2026-09-28",
+  "post_processing": "art/weapons/aiguille/build_aiguille.py : pièces regroupées par rôle (cobalt/jaune signal/gunmetal), poignée de culasse déjà séparée côté Tripo, recentrée sur son propre volume en nœud \"Bolt\" (contrat tools/blender/make_action_weapons.py), UV Blender, texture peinte par script, échelle réelle ~1,20 m",
+  "licence": "Sorties Tripo Studio générées avec le compte de l'auteur ; usage soumis aux conditions Tripo AI du plan du compte (preuve hors dépôt).",
+  "notes": "Forme seule venant de l'IA ; couleurs entièrement celles du projet (consigne utilisateur : pas de texture Tripo, pas de nom de fabricant). Remplace le placeholder procédural de tools/blender/make_action_weapons.py (2026-09-28)."
+}

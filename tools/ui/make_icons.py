@@ -56,7 +56,9 @@ def sticker(name, height=160, stroke=6):
     print("autocollant", name, img.size)
 
 
-for n, h in (("revolver", 120), ("ravage", 110), ("frag", 120), ("flash", 120), ("smoke", 120)):
+for n, h in (("revolver", 120), ("ravage", 110), ("frag", 120), ("flash", 120), ("smoke", 120),
+             # Tâche "quatre armes v2" (2026-09-28) : les 4 nouvelles armes peintes.
+             ("rafale", 110), ("fracas", 110), ("verdict", 110), ("aiguille", 110)):
     silhouette(n, h)
     sticker(n, h * 2)
 

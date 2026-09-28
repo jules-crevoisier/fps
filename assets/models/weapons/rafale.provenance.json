@@ -1,0 +1,10 @@
+{
+  "tool": "Tripo Studio — image de concept Nano Banana 2 (concept choisi par l'utilisateur), image -> 3D H3.1 avec « Générer par parties » (Détaillé, 59 pièces), triangles, AUCUNE texture Tripo, 20k tris",
+  "concept_image_tool": "Nano Banana 2 (générateur d'images de Tripo Studio)",
+  "tripo_task_id": "f94bf152-cb9e-4abb-a6ff-63a2f72900c0",
+  "source_glb": "assets/incoming/tripo/rafale.glb",
+  "date": "2026-09-28",
+  "post_processing": "art/weapons/rafale/build_rafale.py : pièces regroupées par rôle (jaune signal/cobalt/gunmetal), poignée+chargeur fusionnés détachés en nœud \"Magazine\" séparé (contrat tools/blender/make_action_weapons.py), UV Blender, texture peinte par script (palette du projet, encre de courbure), échelle réelle ~0,60 m",
+  "licence": "Sorties Tripo Studio générées avec le compte de l'auteur ; usage soumis aux conditions Tripo AI du plan du compte (preuve hors dépôt).",
+  "notes": "Forme seule venant de l'IA ; couleurs entièrement celles du projet (consigne utilisateur : pas de texture Tripo, pas de nom de fabricant). Remplace le placeholder procédural de tools/blender/make_action_weapons.py (2026-09-28)."
+}

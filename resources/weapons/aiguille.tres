@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="WeaponConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/WeaponConfig.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+weapon_name = "Aiguille"
+weapon_type = 2
+category = 4
+cost = 4200
+damage = 80.0
+damage_min = 80.0
+falloff_start = 200.0
+falloff_end = 200.0
+headshot_mult = 2.0
+max_range = 200.0
+fire_rate = 0.833
+automatic = false
+spread_hip = 6.0
+spread_aim = 0.0
+mag_size = 5
+reserve_ammo = 20
+arena_reserve_ammo = 40
+reload_time = 2.6
+aim_fov = 25.0
+aim_speed = 12.0
+pellets = 1
+pellet_spread = 0.0
+recoil_vertical = 2.2
+recoil_horizontal = 0.3
+recoil_recovery = 5.0
+recoil_aim_mult = 0.5
+scoped = true
+move_spread_add = 6.0
+air_spread_add = 8.0
+slide_to_fire = 0.38
+dive_to_fire = 0.46
+ads_time = 0.28
+cycle_time = 1.2

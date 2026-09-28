@@ -256,6 +256,27 @@ func _apply_cartoon_materials(model: Node3D) -> void:
 				var tex := Cartoon.texture_from_imported_material(mat)
 				mesh.set_surface_override_material(i, Cartoon.painted_texture_prop(tex))
 				continue
+			# Rafale/Fracas/Verdict/Aiguille (tâche "quatre armes v2", 2026-09-28 --
+			# tools/blender/lib/painted_weapon.py::paint_vertex_colors/VERTEX_COLOR_MATERIAL_MARKER) :
+			# même raison que ViewModel.gd -- un StandardMaterial3D importé ne lit PAS ses propres
+			# couleurs de sommet (COLOR_0) tant qu'on ne pose pas ce drapeau soi-même. Comme le
+			# Revolver (aucune branche ici non plus), pas de next_pass dédié en 3e personne.
+			if name.ends_with("_vcolor"):
+				var vstd := mat as StandardMaterial3D
+				if vstd:
+					var vdup := vstd.duplicate() as StandardMaterial3D
+					vdup.vertex_color_use_as_albedo = true
+					mesh.set_surface_override_material(i, vdup)
+				continue
+			# Placeholders "quatre armes" (2026-09-28, tools/blender/
+			# make_action_weapons.py) : même marqueur/raison que ViewModel.gd
+			# -- chaque pièce garde SA couleur baked, jamais la palette
+			# générique ci-dessous.
+			if name.ends_with("_paint"):
+				var src := mat as BaseMaterial3D
+				var paint_color: Color = src.albedo_color if src else Color(0.5, 0.5, 0.5)
+				mesh.set_surface_override_material(i, Cartoon.character(paint_color))
+				continue
 			for slot in palette.keys():
 				if name.ends_with("_%s" % slot):
 					mesh.set_surface_override_material(i, Cartoon.character(palette[slot]))

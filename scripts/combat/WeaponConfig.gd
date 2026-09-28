@@ -68,8 +68,15 @@ enum Category { SIDEARM, SMG, RIFLE, SHOTGUN, SNIPER, HEAVY, MELEE, PISTOL }
 @export_group("Shotgun")
 ## Nombre de plombs par tir (1 = arme normale).
 @export var pellets: int = 1
-## Dispersion des plombs (deg) — utilisée si pellets > 1.
+## Dispersion des plombs (deg) — utilisée si pellets > 1 (cône à la HANCHE).
 @export var pellet_spread: float = 4.0
+## Dispersion des plombs (deg) EN VISÉE (ADS) — tâche "quatre armes"
+## (2026-09-28, Fracas) : un fusil à pompe vise aussi plus serré qu'à la
+## hanche. `-1.0` (défaut) = pas de valeur dédiée, retombe sur `pellet_spread`
+## pour la hanche ET la visée (comportement HISTORIQUE inchangé — aucune arme
+## du catalogue n'utilisait `pellets > 1` en jeu avant cette tâche). Seul point
+## de lecture : `WeaponFeel.pellet_cone_deg`.
+@export var pellet_spread_aim: float = -1.0
 
 @export_group("Recul (recoil)")
 ## Montée verticale par tir (deg). Le recul s'accumule pendant le spray.
@@ -173,3 +180,33 @@ func has_fan_fire() -> bool:
 ## Durée (s) de la transition de visée (ADS) — l'arme se centre en ce temps ;
 ## distinct de `aim_speed` qui règle l'interpolation caméra/FOV.
 @export var ads_time: float = 0.2
+
+@export_group("Cycle d'action (pompe/levier/verrou)")
+## Délai (s) OBLIGATOIRE après un tir avant de pouvoir tirer OU recharger à
+## nouveau (tâche "quatre armes", 2026-09-28 : pompe/levier/verrou) — voir
+## Inventory.cycle_left/consume_round. `0.0` (défaut) désactive complètement
+## ce mécanisme : comportement HISTORIQUE inchangé pour toute arme existante
+## (Ravage/Revolver), seuls `fire_rate`/`automatic` bornent alors la cadence.
+## "Not interruptible except by weapon switch" (contrat, arme à pompe) : rien
+## (tir, rechargement) ne peut s'exécuter tant que ce délai n'est pas écoulé,
+## sauf changer d'arme (`Weapon._try_equip` -> `Inventory.equip`, qui remet ce
+## délai à zéro pour l'arme quittée — voir aussi `set_loadout`/`give`/
+## `replace_current`/`remove_current`, mêmes raisons).
+@export var cycle_time: float = 0.0
+
+@export_group("Rechargement par cartouche (pompe/levier)")
+## Rechargement PAR CARTOUCHE/BALLE plutôt qu'en un seul bloc (pompe/levier,
+## tâche "quatre armes") : une seule munition ajoutée au chargeur à la fois,
+## IMMÉDIATEMENT utilisable (voir Inventory._tick_per_round) — contrairement
+## au rechargement en bloc (`reload_time` ci-dessus, comportement HISTORIQUE
+## inchangé, ex. Ravage/Revolver/tout sniper qui recharge le chargeur entier
+## d'un coup). Faux par défaut (aucun effet, `reload_time` seul régit alors le
+## rechargement).
+@export var reload_per_round: bool = false
+## Délai (s) avant que la PREMIÈRE cartouche/balle ne soit insérée (début du
+## geste : pompe tirée en arrière, culasse ouverte...) — ignoré si
+## `reload_per_round` est faux.
+@export var reload_start_time: float = 0.3
+## Délai (s) entre deux cartouches/balles insérées — ignoré si
+## `reload_per_round` est faux.
+@export var reload_round_time: float = 0.45

@@ -10,6 +10,13 @@ func test_stem_for_known_weapons() -> void:
 	assert_str(WeaponIcon.stem_for("Revolver Cowboy")).is_equal("revolver")
 
 
+func test_stem_for_the_four_new_primaries() -> void:
+	assert_str(WeaponIcon.stem_for("Rafale")).is_equal("rafale")
+	assert_str(WeaponIcon.stem_for("FRACAS")).is_equal("fracas")
+	assert_str(WeaponIcon.stem_for("Verdict")).is_equal("verdict")
+	assert_str(WeaponIcon.stem_for("Aiguille")).is_equal("aiguille")
+
+
 func test_stem_for_unknown_weapon_is_empty() -> void:
 	assert_str(WeaponIcon.stem_for("PETIT GUN")).is_equal("")
 

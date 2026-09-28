@@ -516,7 +516,7 @@ func _gamepad_look(delta: float) -> void:
 		return
 	if Settings.invert_y:
 		ry = -ry
-	var sens := effective_look_sensitivity(Settings.gamepad_sensitivity, input.aim_held, Settings.ads_sensitivity_multiplier)
+	var sens := effective_look_sensitivity(Settings.gamepad_sensitivity, input.aim_held, Settings.ads_sensitivity_multiplier) * _scope_sensitivity_scale()
 	rotate_y(-rx * sens * delta)
 	head.rotate_x(-ry * sens * delta)
 	head.rotation.x = clamp(head.rotation.x, deg_to_rad(-89), deg_to_rad(89))
@@ -597,7 +597,7 @@ func _read_input() -> void:
 		_roll_buffer_timer = lerpf(config.land_roll_window, config.land_roll_window_max, f)
 
 func _look(relative: Vector2) -> void:
-	var sens := effective_look_sensitivity(Settings.mouse_sensitivity, input.aim_held, Settings.ads_sensitivity_multiplier)
+	var sens := effective_look_sensitivity(Settings.mouse_sensitivity, input.aim_held, Settings.ads_sensitivity_multiplier) * _scope_sensitivity_scale()
 	rotate_y(-relative.x * sens)
 	head.rotate_x(-relative.y * sens)
 	head.rotation.x = clamp(head.rotation.x, deg_to_rad(-89), deg_to_rad(89))
@@ -611,6 +611,24 @@ func _look(relative: Vector2) -> void:
 ## directement dans tests/core/test_settings.gd.
 static func effective_look_sensitivity(base_sensitivity: float, aim_held: bool, ads_multiplier: float) -> float:
 	return base_sensitivity * ads_multiplier if aim_held else base_sensitivity
+
+## Multiplicateur de sensibilité ADDITIONNEL pour une VRAIE lunette (tâche
+## "quatre armes", 2026-09-28, `WeaponConfig.scoped` — ex. l'Aiguille) :
+## multiplie `effective_look_sensitivity` PAR-DESSUS (jamais à sa place, voir
+## `_look`/`_gamepad_look`) — 1.0 (neutre) pour toute arme SANS lunette ou tant
+## que `aim_held` est faux, comportement inchangé pour elles (Ravage/Revolver/
+## Rafale/Fracas/Verdict). Calcul PUR délégué à `WeaponFeel.scoped_sensitivity_scale`
+## (testé isolément) — cette enveloppe se contente de résoudre l'arme courante
+## et le FOV de base, aucun accès scène côté calcul lui-même.
+func _scope_sensitivity_scale() -> float:
+	if not input.aim_held:
+		return 1.0
+	var w := get_node_or_null("Weapon") as Weapon
+	var c := w.cfg() if w else null
+	if c == null or not c.scoped:
+		return 1.0
+	var base_vfov := Settings.hfov_to_vfov(Settings.fov, Settings.REF_ASPECT_16_9)
+	return WeaponFeel.scoped_sensitivity_scale(c.aim_fov, base_vfov)
 
 ## Lacet (rotation.y) qui fait regarder le point `pos` vers le centre de la
 ## carte (origine du monde, cartes centrées sur l'origine). L'avant d'un

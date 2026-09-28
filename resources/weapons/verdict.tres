@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="WeaponConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/WeaponConfig.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+weapon_name = "Verdict"
+weapon_type = 0
+category = 2
+cost = 2400
+damage = 50.0
+damage_min = 38.0
+falloff_start = 30.0
+falloff_end = 60.0
+headshot_mult = 2.0
+max_range = 200.0
+fire_rate = 2.222
+automatic = false
+spread_hip = 1.0
+spread_aim = 0.05
+mag_size = 8
+reserve_ammo = 32
+arena_reserve_ammo = 64
+reload_time = 3.5
+aim_fov = 50.0
+aim_speed = 12.0
+pellets = 1
+pellet_spread = 0.0
+recoil_vertical = 1.2
+recoil_horizontal = 0.4
+recoil_recovery = 6.0
+recoil_aim_mult = 0.6
+scoped = false
+move_spread_add = 1.0
+air_spread_add = 2.0
+slide_to_fire = 0.38
+dive_to_fire = 0.46
+ads_time = 0.2
+cycle_time = 0.45
+reload_per_round = true
+reload_start_time = 0.3
+reload_round_time = 0.4

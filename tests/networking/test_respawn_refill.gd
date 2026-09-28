@@ -132,6 +132,36 @@ func _is_fully_drained(weapon: Weapon) -> bool:
 	return true
 
 
+## Chargeur/réserve PLEINS pour le loadout ACTUELLEMENT équipé (contrat lead
+## 2026-09-28, "LOADOUT SELECTION" point 6 : un bot retire une NOUVELLE
+## primaire au sort à CHAQUE respawn — voir GameWorld._on_player_died) : les 3
+## tests ci-dessous comparaient jusqu'ici `mag`/`reserve` post-respawn à un
+## instantané pris avant la mort, ce qui supposait implicitement que le
+## loadout ne CHANGE jamais de respawn en respawn — vrai avant cette tâche
+## (seul `server_refill_ammo` était appelé), plus après (le bot peut très bien
+## se retrouver avec Fracas/Verdict/Aiguille au lieu du Ravage qu'il avait
+## avant de mourir). On recalcule donc la cible "plein" depuis le loadout
+## RÉEL après respawn plutôt que depuis un instantané figé sur l'ancienne
+## arme — ça reste EXACTEMENT la garantie GF-20 d'origine ("jamais un
+## chargeur/une réserve entamés au spawn"), juste indépendante de QUELLE arme
+## est en main. `weapon._ammo_rule()` est privée par convention seulement
+## (GDScript n'a pas de vraie visibilité) — déjà lue directement sur
+## `_server_inv` par le reste de ce fichier.
+func _expected_full_mag_and_reserve(weapon: Weapon) -> Dictionary:
+	var rule: String = weapon._ammo_rule()
+	var mag: Array = []
+	var reserve: Array = []
+	for id in weapon._server_inv.slots:
+		if id == Inventory.EMPTY:
+			mag.append(0)
+			reserve.append(0)
+			continue
+		var c := WeaponDatabase.get_by_id(id)
+		mag.append(c.mag_size if c else 0)
+		reserve.append(Inventory.reserve_for(c, rule))
+	return {"mag": mag, "reserve": reserve}
+
+
 # ======================================================================
 #  1. Arène (aucun mode explicite = entraînement/scène sans GameMode) :
 #     un joueur mort à 0/0 réapparaît avec son loadout plein.
@@ -141,8 +171,6 @@ func test_respawn_with_no_mode_refills_empty_weapon_to_full_loadout() -> void:
 	var world := _new_world()
 	var player := _bot_player(world, 9101, _offset())
 	var weapon := _weapon_of(player)
-	var full_mag: Array = weapon._server_inv.mag.duplicate()
-	var full_reserve: Array = weapon._server_inv.reserve.duplicate()
 
 	_drain_ammo(weapon)
 	assert_bool(_is_fully_drained(weapon)).append_failure_message(
@@ -152,12 +180,18 @@ func test_respawn_with_no_mode_refills_empty_weapon_to_full_loadout() -> void:
 	world._on_player_died(0, player)
 	await await_millis(int(world.respawn_delay * 1000.0) + 150)
 
+	# Le loadout RÉEL après respawn (voir doc de `_expected_full_mag_and_reserve` :
+	# un bot retire une NOUVELLE primaire au sort à chaque respawn depuis la
+	# tâche "LOADOUT SELECTION", donc jamais forcément la même arme qu'avant
+	# la mort) — la garantie GF-20 ("jamais à sec au spawn") tient pour
+	# N'IMPORTE QUELLE arme qui se retrouve équipée.
+	var expected := _expected_full_mag_and_reserve(weapon)
 	assert_array(weapon._server_inv.mag).append_failure_message(
-		"le chargeur doit revenir au maximum de chaque arme possédée après le respawn"
-	).is_equal(full_mag)
+		"le chargeur doit revenir au maximum de l'arme équipée après le respawn"
+	).is_equal(expected.mag)
 	assert_array(weapon._server_inv.reserve).append_failure_message(
-		"la réserve doit revenir au maximum de chaque arme possédée après le respawn (GF-20 : plus de sec après 2-3 vies)"
-	).is_equal(full_reserve)
+		"la réserve doit revenir au maximum de l'arme équipée après le respawn (GF-20 : plus de sec après 2-3 vies)"
+	).is_equal(expected.reserve)
 
 
 # ======================================================================
@@ -168,19 +202,20 @@ func test_three_consecutive_lives_never_spawn_with_an_empty_magazine() -> void:
 	var world := _new_world()
 	var player := _bot_player(world, 9102, _offset())
 	var weapon := _weapon_of(player)
-	var full_mag: Array = weapon._server_inv.mag.duplicate()
-	var full_reserve: Array = weapon._server_inv.reserve.duplicate()
 
 	for life in 3:
 		_drain_ammo(weapon)
 		world._on_player_died(0, player)
 		await await_millis(int(world.respawn_delay * 1000.0) + 150)
+		# Loadout RÉEL de CETTE vie (peut changer d'une vie à l'autre depuis la
+		# tâche "LOADOUT SELECTION", voir doc de `_expected_full_mag_and_reserve`).
+		var expected := _expected_full_mag_and_reserve(weapon)
 		assert_array(weapon._server_inv.mag).append_failure_message(
 			"vie %d/3 : chargeur vide au spawn (GF-20 non tenu sur une série de morts)" % (life + 1)
-		).is_equal(full_mag)
+		).is_equal(expected.mag)
 		assert_array(weapon._server_inv.reserve).append_failure_message(
 			"vie %d/3 : réserve vide au spawn" % (life + 1)
-		).is_equal(full_reserve)
+		).is_equal(expected.reserve)
 
 
 # ======================================================================
@@ -197,15 +232,14 @@ func test_respawn_in_tdm_like_mode_refills_ammo() -> void:
 	auto_free(mode)
 	var player := _bot_player(world, 9103, _offset())
 	var weapon := _weapon_of(player)
-	var full_mag: Array = weapon._server_inv.mag.duplicate()
-	var full_reserve: Array = weapon._server_inv.reserve.duplicate()
 
 	_drain_ammo(weapon)
 	world._on_player_died(0, player)
 	await await_millis(int(world.respawn_delay * 1000.0) + 150)
 
-	assert_array(weapon._server_inv.mag).is_equal(full_mag)
-	assert_array(weapon._server_inv.reserve).is_equal(full_reserve)
+	var expected := _expected_full_mag_and_reserve(weapon)
+	assert_array(weapon._server_inv.mag).is_equal(expected.mag)
+	assert_array(weapon._server_inv.reserve).is_equal(expected.reserve)
 
 
 # ======================================================================

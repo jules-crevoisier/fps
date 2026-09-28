@@ -53,6 +53,30 @@ signal ping_received(sender_id: int, sender_name: String, kind: String, pos: Vec
 ## id du peer -> { name, team, kills, deaths, is_bot }
 var player_info: Dictionary = {}
 
+## ---- LOADOUT SELECTION (contrat lead 2026-09-28) --------------------------
+## id (joueur HUMAIN ou bot) -> id WeaponDatabase de la primaire CHOISIE —
+## appliquée au PROCHAIN spawn/respawn seulement, jamais mi-vie (voir
+## `_spawn_player`/`_on_player_died`). Pour un humain : posée à sa demande de
+## spawn (résolue depuis `Settings.selected_primary` côté client, voir
+## `_spawn_local`/`_request_spawn`) puis mise à jour par `request_primary_weapon`
+## (Armurerie/écran de mort, RPC `_server_request_primary`). Les BOTS n'y
+## figurent JAMAIS : leur primaire est retirée au sort à CHAQUE spawn/respawn
+## (`Loadout.random_primary`, "re-rolled on respawn", voir `_bot_primary_rng`
+## ci-dessous) — une entrée mémorisée figerait leur choix au lieu de le
+## retirer.
+var _chosen_primary_id: Dictionary = {}
+## RNG dédié au tirage de la primaire des bots — séparé de `randi()`/`_rng`
+## d'un autre système (aucun autre RNG partagé dans ce fichier) pour rester
+## testable en isolation (Loadout.random_primary prend son RNG en paramètre).
+var _bot_primary_rng := RandomNumberGenerator.new()
+## id d'expéditeur -> Array[float] (horodatages Unix de ses derniers choix de
+## primaire ENVOYÉS, encore dans la fenêtre glissante) — anti-spam RPC, MÊME
+## patron que `_ping_history`/`prune_ping_timestamps`/`can_send_ping` plus bas
+## (fonctions pures génériques, réutilisées telles quelles).
+var _primary_choice_history: Dictionary = {}
+const PRIMARY_CHOICE_WINDOW_S := 5.0
+const PRIMARY_CHOICE_MAX_PER_WINDOW := 5
+
 ## Instrument PARTAGÉ (une entrée par victime) qui suit les dégâts encaissés
 ## pour déterminer les ASSISTANCES à la mort (AGT-01/AGT-02, voir la doc de
 ## AssistTracker.gd) : alimenté à CHAQUE dégât serveur par `_on_player_damaged`
@@ -153,6 +177,7 @@ var _frame_stats := FrameStats.new()
 func _ready() -> void:
 	set_multiplayer_authority(1)  # serveur autoritaire sur les stats/killfeed
 	add_to_group("match")
+	_bot_primary_rng.randomize()
 	# Télémétrie (FUN-05) : un journal JSONL local PAR PROCESS (menu + tous
 	# les matchs joués pendant cette session) — appel idempotent : un second
 	# chargement de niveau dans le même process ne réouvre rien.
@@ -222,24 +247,82 @@ func _spawn_local() -> void:
 	if multiplayer.is_server():
 		# L'hôte utilise directement sa propre sélection (pas de RPC à soi-même).
 		var id := multiplayer.get_unique_id()
+		# LOADOUT SELECTION (contrat lead 2026-09-28) : la primaire persistée
+		# (Settings.selected_primary, défaut "Ravage") sert au TOUT PREMIER
+		# spawn de cette vie de process — posée AVANT `_spawn_player` (lu par
+		# lui, voir sa doc). `primary_id_for_name` retombe déjà sur Ravage pour
+		# un nom pas encore chargé/inconnu, jamais besoin de revalider ici.
+		_chosen_primary_id[id] = Loadout.primary_id_for_name(Settings.selected_primary)
 		_spawn_player(id, resolve_final_agent_index(id, AgentDatabase.selected_index))
 		_leave_agent_select_after_spawn(id)
 	else:
 		# Client : demande son spawn une fois SA map chargée (évite la course où
 		# le serveur ferait spawn avant que le spawner du client existe), avec
-		# l'agent choisi à l'écran de sélection.
-		_request_spawn.rpc_id(1, AgentDatabase.selected_index)
+		# l'agent choisi à l'écran de sélection ET sa primaire persistée
+		# (Settings.selected_primary) — le NOM est résolu en id ICI (client) à
+		# titre indicatif seulement : le serveur ne lui fait jamais confiance
+		# tel quel (voir `_request_spawn`, même discipline qu'`agent_index`).
+		_request_spawn.rpc_id(1, AgentDatabase.selected_index, Loadout.primary_id_for_name(Settings.selected_primary))
 
 ## Le client (sa scène prête) demande au serveur de le faire spawn avec
 ## l'agent qu'il a choisi. `agent_index` n'est jamais fait confiance tel
 ## quel : résolu par `resolve_final_agent_index` (verrouillage validé pendant
 ## la sélection d'équipe si présent, sinon bornage classique — voir sa doc).
+## `primary_id` (LOADOUT SELECTION, contrat lead 2026-09-28) : idem, jamais
+## fait confiance tel quel — un id INVALIDE (client modifié, ou défaut -1 d'un
+## appelant qui n'en fournit pas) retombe sur le Ravage via
+## `Loadout.is_valid_primary_id`/`Loadout.default_primary_id()`, jamais un id
+## forgé propagé à `Inventory.set_loadout`.
 @rpc("any_peer", "reliable")
-func _request_spawn(agent_index: int) -> void:
+func _request_spawn(agent_index: int, primary_id: int = -1) -> void:
 	if multiplayer.is_server():
 		var sender_id := multiplayer.get_remote_sender_id()
+		_chosen_primary_id[sender_id] = primary_id if Loadout.is_valid_primary_id(primary_id) else Loadout.default_primary_id()
 		_spawn_player(sender_id, resolve_final_agent_index(sender_id, agent_index))
 		_leave_agent_select_after_spawn(sender_id)
+
+# ======================================================================
+#  LOADOUT SELECTION (contrat lead 2026-09-28) — un client (Armurerie AVANT
+#  de rejoindre, voir Settings.selected_primary/`_spawn_local`/`_request_spawn`
+#  ci-dessus ; écran de mort EN PARTIE, voir DeathScreen.gd) demande à changer
+#  sa primaire via ce point d'entrée public — hôte : appel direct ; client :
+#  RPC `_server_request_primary`, MÊME patron que `request_ping`/
+#  `_server_request_ping` (section « SYSTÈME DE PING » plus bas). Le serveur
+#  ne fait JAMAIS confiance à l'id reçu au-delà de sa validité (`Loadout.
+#  is_valid_primary_id`) et borne la fréquence des requêtes (`_primary_choice_
+#  history`, réutilise les fonctions PURES `prune_ping_timestamps`/
+#  `can_send_ping` ci-dessous — génériques malgré leur nom, voir leur doc).
+#  Le choix stocké (`_chosen_primary_id`) n'est appliqué qu'au PROCHAIN
+#  spawn/respawn (`_spawn_player`/`_on_player_died`), jamais mi-vie.
+# ======================================================================
+
+func request_primary_weapon(primary_id: int) -> void:
+	if multiplayer.is_server():
+		_server_choose_primary(primary_id, multiplayer.get_unique_id())
+	else:
+		_server_request_primary.rpc_id(1, primary_id)
+
+@rpc("any_peer", "reliable")
+func _server_request_primary(primary_id: int) -> void:
+	if multiplayer.is_server():
+		_server_choose_primary(primary_id, multiplayer.get_remote_sender_id())
+
+## Validation + limite de fréquence + mémorisation — séparée de la RPC pour
+## rester appelable directement (hôte), même patron que `_server_ping`.
+func _server_choose_primary(primary_id: int, sender_id: int) -> void:
+	if not player_info.has(sender_id):
+		return  # pair non-joueur (déconnecté entre-temps, ou pas encore spawné) : ignoré.
+	if not Loadout.is_valid_primary_id(primary_id):
+		return  # id inconnu/pas encore chargé (client modifié ou désynchronisé) : silencieux.
+	var now := Time.get_unix_time_from_system()
+	var history := prune_ping_timestamps(_primary_choice_history.get(sender_id, []), now, PRIMARY_CHOICE_WINDOW_S)
+	if not can_send_ping(history, PRIMARY_CHOICE_MAX_PER_WINDOW):
+		_primary_choice_history[sender_id] = history  # purge quand même : pas de fuite mémoire.
+		return
+	history.append(now)
+	_primary_choice_history[sender_id] = history
+	_chosen_primary_id[sender_id] = primary_id
+
 
 func _on_player_disconnected(id: int) -> void:
 	if not multiplayer.is_server():
@@ -506,6 +589,23 @@ func _spawn_player(id: int, agent_index: int, is_bot: bool = false, forced_team:
 	# On ne la force pas ici pour ne pas créer d'incohérence serveur/clients.
 	get_node(players_root).add_child(player, true)
 
+	# LOADOUT SELECTION (contrat lead 2026-09-28, point 1 : "Replace the fixed
+	# default loadout at every spawn/respawn call site with the player's
+	# chosen primary") — `Weapon._ready()` (déclenché par le `add_child`
+	# ci-dessus) vient de poser le loadout par DÉFAUT
+	# (WeaponDatabase.default_loadout_ids, repli sûr hors de tout contexte de
+	# partie, ex. scenes/levels/test_arena.tscn) ; on le CORRIGE ici avec la
+	# vraie primaire choisie, comme `server_refill_ammo` ci-dessous est déjà
+	# appelé depuis ce fichier pour un autre effet de spawn. Bot : retirée au
+	# sort À CHAQUE spawn (contrat point 6, "re-rolled on respawn" — l'appel
+	# de respawn équivalent vit dans `_on_player_died`) ; humain : la primaire
+	# posée juste avant cet appel par `_spawn_local`/`_request_spawn`.
+	var spawn_weapon := player.get_node_or_null("Weapon")
+	if spawn_weapon and spawn_weapon.has_method("server_set_loadout"):
+		var spawn_primary_id: int = Loadout.random_primary(_bot_primary_rng) if is_bot \
+				else int(_chosen_primary_id.get(id, Loadout.default_primary_id()))
+		spawn_weapon.server_set_loadout(Loadout.loadout_for(spawn_primary_id))
+
 	# Stats du joueur (serveur).
 	var pname := display_name if is_bot else "Joueur %d" % id
 	player_info[id] = {"name": pname, "team": team, "kills": 0, "deaths": 0, "is_bot": is_bot}
@@ -579,13 +679,24 @@ func _on_player_died(killer_id: int, player: Node) -> void:
 	# modes qui atteignent cette ligne : SnD/Duel sont déjà repartis plus haut,
 	# ils rechargent au round via leur propre `_after_round_respawn`). Appel
 	# DIRECT (même patron que `ab.server_refill()` dans `respawn_all_for_round`
-	# ci-dessous) : on est déjà côté serveur, et `server_refill_ammo()` pousse
-	# lui-même la correction au propriétaire une fois l'inventaire autoritaire
-	# rempli — ses propres garde-fous couvrent hôte/bot simulés ICI (appel
-	# direct, `_apply_sync`) comme le client distant répliqué (RPC vers son id).
+	# ci-dessous) : on est déjà côté serveur.
+	# LOADOUT SELECTION (contrat lead 2026-09-28, point 1/6) : ce respawn
+	# applique désormais `server_set_loadout` plutôt qu'un simple
+	# `server_refill_ammo` — un humain peut avoir changé de primaire (écran de
+	# mort) DEPUIS sa dernière vie, appliqué ICI et seulement ICI ("never
+	# mid-life") ; un bot retire une NOUVELLE primaire au sort à CHAQUE
+	# respawn (contrat point 6). `set_loadout` recharge de toute façon
+	# chargeur+réserve au passage (Inventory.set_loadout), donc couvre déjà
+	# l'effet "refilled on every spawn" de l'ancien appel — `server_set_loadout`
+	# pousse lui-même la correction au propriétaire une fois l'inventaire
+	# autoritaire rempli, mêmes garde-fous que `server_refill_ammo`
+	# (appel direct hôte/bot simulés ICI, RPC vers le client distant).
 	var weapon := player.get_node_or_null("Weapon")
-	if weapon and weapon.has_method("server_refill_ammo"):
-		weapon.server_refill_ammo()
+	if weapon and weapon.has_method("server_set_loadout"):
+		var is_bot_player := bool(player.get("is_bot"))
+		var respawn_primary_id: int = Loadout.random_primary(_bot_primary_rng) if is_bot_player \
+				else int(_chosen_primary_id.get(str(player.name).to_int(), Loadout.default_primary_id()))
+		weapon.server_set_loadout(Loadout.loadout_for(respawn_primary_id))
 	# Tâche "utilitaires" (contrat lead : "refilled on every spawn") — même
 	# appel direct que server_refill_ammo ci-dessus (déjà côté serveur ici,
 	# UtilityThrower.server_refill_charges pousse lui-même la correction au

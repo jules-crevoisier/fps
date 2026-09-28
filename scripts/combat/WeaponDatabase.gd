@@ -10,9 +10,18 @@ extends RefCounted
 ## Append-only : l'ID d'une arme est son index ici (voir `get_by_id`/`id_of`).
 ## Ne JAMAIS réordonner une entrée existante (casserait tout état déjà
 ## répliqué/sauvegardé qui référence un id).
+## Tâche "quatre armes" (2026-09-28) : QUATRE nouvelles entrées, ids 2-5 —
+## Rafale (SMG), Fracas (fusil à pompe), Verdict (carbine à levier), Aiguille
+## (sniper à verrou). Pas encore dans un loadout par défaut/une boutique — ce
+## catalogue les rend seulement RÉSOLUBLES par id (WeaponDatabase.get_by_id),
+## voir le rendu de tâche pour ce qui reste à câbler côté sélection/boutique.
 const PATHS := [
 	"res://resources/weapons/ravage.tres",
 	"res://resources/weapons/revolver.tres",
+	"res://resources/weapons/rafale.tres",
+	"res://resources/weapons/fracas.tres",
+	"res://resources/weapons/verdict.tres",
+	"res://resources/weapons/aiguille.tres",
 ]
 
 static var _cache: Array = []

@@ -185,13 +185,16 @@ func test_glove_extends_past_hand_length_via_sleeve() -> void:
 # géométrique documenté sur chaque constante de ViewModel.gd), jamais pour
 # faire "passer" ce test.
 func test_right_glove_anchor_for_matches_tuned_constant_for_each_painted_weapon() -> void:
+	# Tâche "quatre armes v2" (2026-09-28) : ids 2-5 REMPLACÉS -- l'ancien roster à ces mêmes ids
+	# (Rafale/Marqueur/Fracas/Faucheur) a été retiré le 2026-09-26 ; id 6 disparaît (6 armes
+	# seulement désormais, WeaponDatabase.PATHS) ; id 0/1 (Ravage/Revolver au catalogue ACTUEL)
+	# restent HORS PÉRIMÈTRE (valeurs inchangées).
 	assert_vector(ViewModel.right_glove_anchor_for(0)).is_equal_approx(Vector3(0.0, 0.011, 0.0), Vector3.ONE * 0.001)
 	assert_vector(ViewModel.right_glove_anchor_for(1)).is_equal_approx(Vector3(0.0, 0.011, 0.0), Vector3.ONE * 0.001)
-	assert_vector(ViewModel.right_glove_anchor_for(2)).is_equal_approx(Vector3(0.0, 0.016, 0.0), Vector3.ONE * 0.001)
+	assert_vector(ViewModel.right_glove_anchor_for(2)).is_equal_approx(Vector3(0.0, 0.018, 0.0), Vector3.ONE * 0.001)
 	assert_vector(ViewModel.right_glove_anchor_for(3)).is_equal_approx(Vector3(0.0, 0.018, 0.0), Vector3.ONE * 0.001)
 	assert_vector(ViewModel.right_glove_anchor_for(4)).is_equal_approx(Vector3(0.0, 0.018, 0.0), Vector3.ONE * 0.001)
 	assert_vector(ViewModel.right_glove_anchor_for(5)).is_equal_approx(Vector3(0.0, 0.018, 0.0), Vector3.ONE * 0.001)
-	assert_vector(ViewModel.right_glove_anchor_for(6)).is_equal_approx(Vector3(0.0, 0.018, 0.0), Vector3.ONE * 0.001)
 
 
 func test_right_glove_anchor_defaults_to_zero_for_an_unknown_id() -> void:
@@ -222,7 +225,7 @@ func test_glove_scale_defaults_to_one_for_every_weapon() -> void:
 	# réduction par arme n'est présumée nécessaire (voir la doc de
 	# `_RIGHT_GLOVE_SCALE_BY_ID`) — contrairement à l'ancien gabarit bloc
 	# (0,40-0,55 selon l'arme, valeurs disparues avec lui.
-	for wid in range(7):
+	for wid in range(6):
 		assert_float(ViewModel.right_glove_scale_for(wid)).is_equal_approx(1.0, 0.001)
 		assert_float(ViewModel.left_glove_scale_for(wid)).is_equal_approx(1.0, 0.001)
 
@@ -252,7 +255,7 @@ func _mesh_aabb(root: Node) -> AABB:
 func test_right_glove_overlaps_each_painted_weapon_once_anchored() -> void:
 	var glove_r := _load_glove_node("GloveR")
 	var glove_aabb := _mesh_aabb(glove_r)
-	for wid in range(7):
+	for wid in range(6):
 		var path := Weapon.model_path_for(wid)
 		if path.is_empty() or not ResourceLoader.exists(path):
 			continue  # arme pas encore livrée (voir WeaponDatabase) -- rien à vérifier.
@@ -278,7 +281,7 @@ func test_left_glove_overlaps_each_painted_weapon_once_anchored_near_foregrip() 
 	# reste volontairement indépendant de cet arbre de scène.
 	const FOREGRIP_FORWARD_T := 0.4
 	const LEFT_GLOVE_DOWN_NUDGE := Vector3(0.06, 0.03, 0.0)
-	for wid in range(7):
+	for wid in range(6):
 		var path := Weapon.model_path_for(wid)
 		if path.is_empty() or not ResourceLoader.exists(path):
 			continue

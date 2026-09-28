@@ -251,6 +251,17 @@ static var crosshair_settings: Dictionary = {}
 ## réticule purement cosmétique.
 static var static_crosshair: bool = false
 
+## Arme PRIMAIRE choisie par le joueur (contrat lead 2026-09-28, "LOADOUT
+## SELECTION" point 2 : "persists across sessions ... default Ravage") — un
+## NOM (Loadout.PRIMARY_NAMES), pas un id WeaponDatabase : un id append-only
+## écrit par une build passée pourrait pointer vers une AUTRE arme dans une
+## build future si l'ordre venait à changer (jamais le cas aujourd'hui, mais
+## un nom reste correct même si WeaponDatabase.PATHS était un jour réordonné,
+## contrairement à un entier). `Loadout.primary_id_for_name` résout ce nom
+## vers un id au moment de l'usage (spawn), avec repli sûr sur "Ravage" pour
+## un nom inconnu/pas encore livré — voir sa doc.
+static var selected_primary: String = Loadout.DEFAULT_PRIMARY_NAME
+
 static var _loaded: bool = false
 
 static func load_all() -> void:
@@ -332,6 +343,7 @@ static func load_all() -> void:
 	# décode vers `Crosshair.DEFAULT_SETTINGS` (voir Crosshair.decode).
 	crosshair_settings = Crosshair.decode(str(cfg.get_value("video", "crosshair_code", "")))
 	static_crosshair = bool(cfg.get_value("video", "static_crosshair", static_crosshair))
+	selected_primary = clamp_selected_primary(str(cfg.get_value("loadout", "selected_primary", selected_primary)))
 	for action in ACTIONS:
 		var dk = cfg.get_value("binds_kb", action, null)
 		if dk is Dictionary:
@@ -393,6 +405,7 @@ static func save_all() -> void:
 	cfg.set_value("debug", "show_perf_overlay", show_perf_overlay)
 	cfg.set_value("video", "crosshair_code", Crosshair.encode(crosshair_settings))
 	cfg.set_value("video", "static_crosshair", static_crosshair)
+	cfg.set_value("loadout", "selected_primary", selected_primary)
 	for action in ACTIONS:
 		var kb := _first_key_or_mouse(action)
 		if kb:
@@ -448,6 +461,17 @@ static func clamp_fps_limit(v: int) -> int:
 ## Borne le préréglage graphique à un nom connu de `GRAPHICS_PRESETS` (UX-06).
 static func clamp_graphics_preset(v: String) -> String:
 	return v if GRAPHICS_PRESETS.has(v) else GRAPHICS_PRESET_DEFAULT
+
+## Borne l'arme primaire choisie (contrat lead 2026-09-28, "LOADOUT
+## SELECTION") à un nom connu de `Loadout.PRIMARY_NAMES` — un fichier corrompu,
+## un nom retiré du roster, ou (avant l'arrivée des .tres d'A) un des 4
+## nouveaux noms pas encore chargés retombent sur "Ravage" plutôt que de
+## mémoriser un choix que `Loadout.loadout_for` devrait de toute façon
+## refuser au prochain spawn (voir sa doc "invalid primary falls back to
+## Ravage"). Fonction pure isolée, testable sans fichier réel (même patron
+## que `clamp_layout`/`clamp_graphics_preset` ci-dessus).
+static func clamp_selected_primary(v: String) -> String:
+	return v if Loadout.PRIMARY_NAMES.has(v) else Loadout.DEFAULT_PRIMARY_NAME
 
 ## Borne le mode d'affichage clavier (UX-14) à une valeur connue de
 ## `LAYOUT_OPTIONS` — un fichier corrompu ou d'une version future retombe sur

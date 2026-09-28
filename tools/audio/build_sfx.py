@@ -242,7 +242,10 @@ GUNS = {
     "gunshot_pistol": (fire("Walther PPQ", None), fire("Walther PPQ", None), None, "slide"),
     # Ravage (AK) : AK-47 coup par coup en prise proche, moyenne distance pour le lointain.
     "gunshot_rifle": (fire("AK-47", "C_28P.wav"), fire("AK-47", "C_31P.wav"), None, "bolt"),
-    "gunshot_marksman": (fire("SKS", None), fire("SKS", None), None, "bolt"),
+    # Verdict (carabine a levier, tache "quatre armes" 2026-09-28) : seule
+    # arme fusil/marksman semi-auto du catalogue -> mecanique "lever"
+    # (mouvement en deux temps, distinct du "bolt" ci-dessus/ci-dessous).
+    "gunshot_marksman": (fire("SKS", None), fire("SKS", None), None, "lever"),
     "gunshot_smg": (fire("Carl Gustav M45", "G_31P.wav"), fire("Carl Gustav M45", "G_20P.wav"), None, "bolt"),
     "gunshot_shotgun": (fire("CD", "H_21P.wav"), fire("CD", "H_16P.wav"), None, "pump"),
     "gunshot_sniper": (fire("Savage 10 .300 Blackout", None), fire("Savage 10 .300 Blackout", None), None, "bolt"),
@@ -269,9 +272,15 @@ def mech_sound(kind, variant):
     latch = load(os.path.join(RPG, "metalLatch.ogg"))
     srcs = [os.path.join(RPG, "metalClick.ogg"), os.path.join(RPG, "metalLatch.ogg")]
     if kind == "hammer":      # chien du revolver : clic sec, un peu plus grave à chaque variante
-        x = mix((pitch(trim_silence(click), 1.25 - 0.1 * variant), 0, 0), (hp(trim_silence(latch), 900), -9, 18))
+        x = mix((pitch(trim_silence(latch), 1.25 - 0.1 * variant), 0, 0), (hp(trim_silence(latch), 900), -9, 18))
     elif kind == "pump":
         x = mix((pitch(trim_silence(latch), 0.8), 0, 0), (pitch(trim_silence(click), 0.9), -3, 140))
+    elif kind == "lever":     # levier (Verdict, tache "quatre armes") : mouvement en DEUX temps
+        # (bascule vers le bas puis remonte) -- plus grave/plus long qu'un
+        # simple clic de culasse, deux impacts métalliques distincts.
+        down = pitch(trim_silence(latch), 0.72 - 0.04 * variant)
+        up = mix((pitch(trim_silence(click), 0.95), 0, 0), (hp(trim_silence(latch), 700), -8, 0))
+        x = mix((down, -2, 0), (up, 0, 150))
     else:                      # culasse / glissière : claquement métallique court
         x = mix((pitch(trim_silence(latch), 1.35 + 0.08 * variant), 0, 0), (hp(trim_silence(click), 1500), -6, 6))
     return peak_norm(hp(x, 300), -16), srcs

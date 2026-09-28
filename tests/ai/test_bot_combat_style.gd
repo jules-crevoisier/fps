@@ -47,6 +47,10 @@ func test_precision_weapons_are_named_explicitly() -> void:
 	assert_bool(BotCombatStyle.is_precision_weapon("Marqueur")).is_true()
 	assert_bool(BotCombatStyle.is_precision_weapon("Percuteur")).is_true()
 	assert_bool(BotCombatStyle.is_precision_weapon("Faucheur")).is_true()
+	# Contrat lead 2026-09-28 ("LOADOUT SELECTION" point 6 : "sniper bots aim
+	# with a short settle before firing") : l'Aiguille (fusil de précision à
+	# verrou) réutilise ce mécanisme EXISTANT, jamais un nouveau délai dédié.
+	assert_bool(BotCombatStyle.is_precision_weapon("Aiguille")).is_true()
 
 
 func test_other_semi_auto_weapons_are_not_precision() -> void:
@@ -73,6 +77,8 @@ func test_precision_weapon_can_fire_under_30_percent_sprint() -> void:
 func test_precision_weapon_cannot_fire_at_or_above_30_percent_sprint() -> void:
 	assert_bool(BotCombatStyle.can_fire_at_speed("Marqueur", 0.30)).is_false()
 	assert_bool(BotCombatStyle.can_fire_at_speed("Percuteur", 0.5)).is_false()
+	assert_bool(BotCombatStyle.can_fire_at_speed("Aiguille", 0.30)).is_false()
+	assert_bool(BotCombatStyle.can_fire_at_speed("Aiguille", 0.0)).is_true()
 	assert_bool(BotCombatStyle.can_fire_at_speed("Faucheur", 1.0)).is_false()
 
 # ======================================================================

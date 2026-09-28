@@ -1,12 +1,17 @@
 ## menu_capture.gd
-## Vérification visuelle du salon (tâche "lobby / menus", 2026-09-27) — charge
-## scenes/ui/main_menu.tscn et capture chaque écran à 1920×1080 (+ une capture
-## de l'accueil à 1280×800), pour comparaison avec reports/ui/renders/*.png.
+## Vérification visuelle du salon (tâche "lobby / menus", 2026-09-27 ;
+## étendue par "LOADOUT SELECTION", 2026-09-28 : Armurerie reconvertie en
+## sélecteur de primaire) — charge scenes/ui/main_menu.tscn et capture chaque
+## écran à 1920×1080 (+ une capture de l'accueil à 1280×800), pour
+## comparaison avec reports/ui/renders/*.png.
 ##   "%GODOT%" --screen 1 --resolution 1920x1080 --path . -s res://tools/ui/menu_capture.gd
-## Images : reports/checkpoints/2026-09-27_ui/menu_*.png
+##   "%GODOT%" --screen 1 --resolution 1920x1080 --path . -s res://tools/ui/menu_capture.gd -- --size=1280x720
+## Images : reports/checkpoints/2026-09-28_loadout/menu_*.png (dossier daté
+## bumpé à cette tâche — même patron que les tâches précédentes qui ont
+## chacune stampé leur propre dossier).
 extends SceneTree
 
-const OUT_DIR := "res://reports/checkpoints/2026-09-27_ui"
+const OUT_DIR := "res://reports/checkpoints/2026-09-28_loadout"
 
 
 func _initialize() -> void:
@@ -74,9 +79,34 @@ func _run() -> void:
 	menu._show_tab("armurerie")
 	await _wait(8)
 	var armory := menu._screens["armurerie"] as ArmoryScreen
-	armory._select_slot(2)  # Revolver
+	# LOADOUT SELECTION (contrat lead 2026-09-28) : l'Armurerie n'affiche plus
+	# un loadout fixe (Ravage+Revolver) mais un sélecteur de 5 primaires — le
+	# Revolver, seconde arme fixe, n'est plus un slot numéroté (voir
+	# ArmoryScreen._build_secondary_chip). Slot 1 = Ravage (capturé par défaut
+	# à l'ouverture) ; slot 2 = Rafale, capturé ici pour prouver la sélection.
+	armory._select_slot(2)  # Rafale
 	await _wait(8)
-	await _save("menu_armory_revolver.png")
+	await _save("menu_armory_rafale.png")
+	# Tâche "quatre armes v2" (2026-09-28) : Fracas/Verdict/Aiguille (slots 3-5,
+	# même correspondance slot=id que Rafale ci-dessus) -- vérifie les 4 modèles
+	# peints (couleurs de sommet) dans le sélecteur, pas seulement le premier.
+	armory._select_slot(3)  # Fracas
+	await _wait(8)
+	await _save("menu_armory_fracas.png")
+	armory._select_slot(4)  # Verdict
+	await _wait(8)
+	await _save("menu_armory_verdict.png")
+	armory._select_slot(5)  # Aiguille
+	await _wait(8)
+	await _save("menu_armory_aiguille.png")
+	# Contrat point 3 ("no overlap at 1920x1080 and 1280x720") : capture au
+	# second gabarit DANS LE MÊME run — même technique que la capture accueil
+	# 1280×800 plus haut (redimensionner/attendre/sauver/restaurer).
+	get_root().size = Vector2i(1280, 720)
+	await _wait(8)
+	await _save("menu_armory_rafale_1280x720.png")
+	get_root().size = _base_size
+	await _wait(8)
 
 	menu._show_tab("parametres")
 	await _wait(12)

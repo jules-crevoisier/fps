@@ -1,0 +1,10 @@
+{
+  "tool": "Tripo Studio — image de concept Nano Banana 2 (concept choisi par l'utilisateur), image -> 3D H3.1 avec « Générer par parties » (Détaillé, 30 pièces), triangles, AUCUNE texture Tripo, 20k tris",
+  "concept_image_tool": "Nano Banana 2 (générateur d'images de Tripo Studio)",
+  "tripo_task_id": "66b477fd-71a6-48e7-b22d-1bc8f97f096c",
+  "source_glb": "assets/incoming/tripo/fracas.glb",
+  "date": "2026-09-28",
+  "post_processing": "art/weapons/fracas/build_fracas.py : pièces regroupées par rôle (acier bleui/noyer/laiton), garde-main coulissant détaché du bloc canon+tube fusionné par coupe au profil mesuré (rupture de silhouette réelle) en nœud \"PumpGrip\" séparé (contrat tools/blender/make_action_weapons.py), UV Blender, texture peinte par script, échelle réelle ~0,80 m",
+  "licence": "Sorties Tripo Studio générées avec le compte de l'auteur ; usage soumis aux conditions Tripo AI du plan du compte (preuve hors dépôt).",
+  "notes": "Forme seule venant de l'IA ; couleurs entièrement celles du projet (consigne utilisateur : pas de texture Tripo, pas de nom de fabricant). Remplace le placeholder procédural de tools/blender/make_action_weapons.py (2026-09-28)."
+}

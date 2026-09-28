@@ -31,6 +31,14 @@ var _game_mode: Node
 var _game_world: Node
 
 var _crosshair: Crosshair
+## Tâche "quatre armes" (2026-09-28, Aiguille) : habillage plein écran d'une
+## VRAIE lunette (`WeaponConfig.scoped`) -- voir ScopeOverlay.gd/`_update_scope`.
+var _scope_overlay: ScopeOverlay
+## Progression ADS COURANTE (0 = hanche, 1 = visée pleine, `WeaponFeel.ads_progress`,
+## même convention que le reste du projet) -- tenue ICI (pas dans ScopeOverlay,
+## fonction pure sans état de jeu) pour savoir quand la transition de visée est
+## VRAIMENT arrivée à son terme (voir `ScopeOverlay.is_fully_scoped`).
+var _scope_ads_t: float = 0.0
 var _hit_marker: HitMarker
 ## Tâche "inventaire CS-style" (2026-09-27) : rangée de 5 emplacements
 ## inclinés bas-droite — voir InventoryHUD.gd et `_update_inventory_hud`.
@@ -88,6 +96,9 @@ func _build() -> void:
 	_pause_menu = PauseMenu.new()
 	add_child(_pause_menu)
 	_build_crosshair()
+	_scope_overlay = ScopeOverlay.new()
+	Comic.anchor(_scope_overlay, Control.PRESET_FULL_RECT)
+	add_child(_scope_overlay)
 	_hit_marker = HitMarker.new()
 	Comic.anchor(_hit_marker, Control.PRESET_CENTER)
 	_hit_marker.add_to_group(HUD_CENTER_GROUP)
@@ -154,6 +165,7 @@ func _process(_delta: float) -> void:
 		return
 	if _weapon:
 		_update_crosshair()
+		_update_scope()
 	_update_inventory_hud()
 	_update_game_mode_hud()
 	_update_minimap()
@@ -406,12 +418,44 @@ func _update_crosshair() -> void:
 	var move_spread := WeaponFeel.move_spread_deg(c, _player.horizontal_speed(), _player.config.sprint_speed, sliding)
 	var air_spread := c.air_spread_add if airborne else 0.0
 	var base_deg := c.spread_aim if aiming else c.spread_hip
-	# Fusil à pompe (GF-13/Weapon._fire_local) : chaque plomb suit `pellet_spread`
-	# directement, sans dispersion de mouvement/air ajoutée — même choix que le tir.
-	var spread_deg: float = c.pellet_spread if c.pellets > 1 else WeaponFeel.total_spread_deg(base_deg, move_spread, air_spread)
+	# Fusil à pompe (GF-13/Weapon._fire_local) : chaque plomb suit `pellet_spread`/
+	# `pellet_spread_aim` (WeaponFeel.pellet_cone_deg, tâche "quatre armes" 2026-09-28, Fracas) selon
+	# la visée -- directement, sans dispersion de mouvement/air ajoutée -- même choix que le tir
+	# réel (Weapon._fire_local ~l.548). AVANT cette tâche : `c.pellet_spread` fixe, ignorait
+	# `pellet_spread_aim` -- le réticule restait à la dispersion HANCHE même en visée.
+	var spread_deg: float = WeaponFeel.pellet_cone_deg(c, aiming) if c.pellets > 1 else WeaponFeel.total_spread_deg(base_deg, move_spread, air_spread)
 	var fov_v_deg: float = _player.camera.fov if _player.camera else 90.0
 	var screen_h := get_viewport().get_visible_rect().size.y
 	_crosshair.update_spread(deg_to_rad(spread_deg), fov_v_deg, screen_h)
+
+## Habillage plein écran de la lunette (tâche "quatre armes", 2026-09-28,
+## Aiguille) : avance la progression ADS locale (`WeaponFeel.ads_progress`,
+## même convention/valeurs que ViewModel/PlayerCamera, mais tenue ICI --
+## GameHUD n'a pas accès à l'état interne du ViewModel) puis montre/masque
+## `_scope_overlay` UNIQUEMENT une fois la visée VRAIMENT à son terme
+## (`ScopeOverlay.is_fully_scoped`, pure) -- masque aussi le réticule normal
+## pendant ce temps (contrat : "hides the normal crosshair"), jamais l'inverse
+## (le réticule normal reste visible pour toute autre arme/situation, y
+## compris en visée classique SANS lunette).
+func _update_scope() -> void:
+	if _scope_overlay == null or _weapon == null or _player == null:
+		return
+	# Ne dispute jamais le réticule/la lunette à l'écran de mort (contrat
+	# "DEATH SCREEN" : `_show_death_screen` masque `_crosshair` — sans cette
+	# garde, ce `_process` continuerait de le remontrer chaque frame puisque
+	# le joueur mort ne vise plus, `fully_scoped` retombant à faux).
+	if _health and _health.is_dead:
+		_scope_overlay.set_scoped_visible(false)
+		return
+	var c := _weapon.cfg()
+	if c == null:
+		return
+	var aiming: bool = _player.input.aim_held
+	_scope_ads_t = WeaponFeel.ads_progress(_scope_ads_t, aiming, get_process_delta_time(), c.ads_time)
+	var fully_scoped := ScopeOverlay.is_fully_scoped(c.scoped, aiming, _scope_ads_t)
+	_scope_overlay.set_scoped_visible(fully_scoped)
+	if _crosshair:
+		_crosshair.visible = not fully_scoped
 
 ## `_pos`/`_dmg` : ignorés (le chiffre de dégâts 3D reste posé par
 ## `Weapon._spawn_damage_number`, hors HUD). `headshot`/`is_kill` pilotent la

@@ -94,24 +94,25 @@ func test_reload_glove_offset_tracks_the_same_timer_as_the_overall_dip() -> void
 #   passage) ; couverture cible toujours non atteinte, signalé au lead.
 # Une valeur change seulement après un nouveau passage au masque, jamais pour
 # faire "passer" ce test sans mesure.
+## Roster du 2026-09-28 (ids = index de WeaponDatabase.PATHS) : 0 Ravage, 1 Revolver, 2 Rafale,
+## 3 Fracas, 4 Verdict, 5 Aiguille. Les anciennes valeurs (Pistolet/Magnum/Marqueur/Faucheur,
+## ids 0-6) visaient un roster supprimé le 2026-09-26 ; ids 0-1 gardent leur réglage.
 func test_weapon_scale_for_matches_tuned_constant_for_each_painted_weapon() -> void:
-	assert_float(ViewModel.weapon_scale_for(0)).is_equal_approx(0.95, 0.001)  # Pistolet
-	assert_float(ViewModel.weapon_scale_for(1)).is_equal_approx(1.06, 0.001)  # Magnum
-	assert_float(ViewModel.weapon_scale_for(2)).is_equal_approx(0.95, 0.001)  # Rafale
-	assert_float(ViewModel.weapon_scale_for(3)).is_equal_approx(1.01, 0.001)  # Marqueur
-	assert_float(ViewModel.weapon_scale_for(4)).is_equal_approx(1.14, 0.001)  # Ravage
-	assert_float(ViewModel.weapon_scale_for(5)).is_equal_approx(1.70, 0.001)  # Fracas
-	assert_float(ViewModel.weapon_scale_for(6)).is_equal_approx(1.35, 0.001)  # Faucheur
+	assert_float(ViewModel.weapon_scale_for(0)).is_equal_approx(0.95, 0.001)  # Ravage
+	assert_float(ViewModel.weapon_scale_for(1)).is_equal_approx(1.06, 0.001)  # Revolver
+	assert_float(ViewModel.weapon_scale_for(2)).is_equal_approx(1.05, 0.001)  # Rafale
+	assert_float(ViewModel.weapon_scale_for(3)).is_equal_approx(0.80, 0.001)  # Fracas
+	assert_float(ViewModel.weapon_scale_for(4)).is_equal_approx(0.85, 0.001)  # Verdict
+	assert_float(ViewModel.weapon_scale_for(5)).is_equal_approx(0.70, 0.001)  # Aiguille
 
 
 func test_weapon_nudge_for_matches_tuned_constant_for_each_painted_weapon() -> void:
 	assert_vector(ViewModel.weapon_nudge_for(0)).is_equal_approx(Vector3(0.02, -0.006, -0.02), Vector3.ONE * 0.001)
 	assert_vector(ViewModel.weapon_nudge_for(1)).is_equal_approx(Vector3(0.0, 0.02, 0.0), Vector3.ONE * 0.001)
-	assert_vector(ViewModel.weapon_nudge_for(2)).is_equal_approx(Vector3(0.09, -0.065, -0.04), Vector3.ONE * 0.001)
-	assert_vector(ViewModel.weapon_nudge_for(3)).is_equal_approx(Vector3(0.165, -0.10, -0.06), Vector3.ONE * 0.001)
-	assert_vector(ViewModel.weapon_nudge_for(4)).is_equal_approx(Vector3(0.145, -0.125, -0.08), Vector3.ONE * 0.001)
-	assert_vector(ViewModel.weapon_nudge_for(5)).is_equal_approx(Vector3(0.255, -0.135, -0.09), Vector3.ONE * 0.001)
-	assert_vector(ViewModel.weapon_nudge_for(6)).is_equal_approx(Vector3(0.289, -0.118, 0.0), Vector3.ONE * 0.001)
+	assert_vector(ViewModel.weapon_nudge_for(2)).is_equal_approx(Vector3(0.10, -0.10, 0.20), Vector3.ONE * 0.001)
+	assert_vector(ViewModel.weapon_nudge_for(3)).is_equal_approx(Vector3(0.12, -0.12, 0.20), Vector3.ONE * 0.001)
+	assert_vector(ViewModel.weapon_nudge_for(4)).is_equal_approx(Vector3(0.12, -0.12, 0.20), Vector3.ONE * 0.001)
+	assert_vector(ViewModel.weapon_nudge_for(5)).is_equal_approx(Vector3(0.12, -0.14, 0.20), Vector3.ONE * 0.001)
 
 
 func test_weapon_scale_and_nudge_default_to_neutral_for_an_unknown_id() -> void:

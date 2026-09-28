@@ -1020,6 +1020,8 @@ def tri_count(objs) -> int:
 		objs = [objs]
 	total = 0
 	for obj in objs:
+		if obj.type != 'MESH':  # marqueur Empty (Muzzle/Foregrip...) : aucun triangle.
+			continue
 		total += sum(max(0, len(p.vertices) - 2) for p in obj.data.polygons)
 	return total
 
@@ -1035,6 +1037,8 @@ def _asset_attribute_report(objs) -> dict:
 	color_names = set()
 	custom_names = set()
 	for obj in objs:
+		if obj.type != 'MESH':  # marqueur Empty (Muzzle/Foregrip...) : aucun attribut.
+			continue
 		me = obj.data
 		for a in me.color_attributes:
 			color_names.add(a.name)
@@ -1076,6 +1080,13 @@ def export_glb(path: str, objs, write_report: bool = True) -> str:
 	if not objs:
 		raise ValueError("toonkit.export_glb: aucune géométrie à exporter")
 	for obj in objs:
+		# Marqueur non-mesh (Empty : "Muzzle"/"Foregrip", convention armes) --
+		# `obj.data` est `None`, aucun matériau possible à avertir dessus.
+		# Correctif défensif (tâche "quatre armes", 2026-09-28) : AUCUNE
+		# régression pour un appelant existant, qui ne passait jusqu'ici que
+		# des objets MESH (le seul type que cette boucle savait gérer avant).
+		if obj.type != 'MESH':
+			continue
 		if not obj.data.materials:
 			print(f"TOONKIT_WARN \"{obj.name}\" n'a aucun matériau assigné — "
 				"ses éventuelles color_attributes (AO/Curvature) NE seront PAS exportées")

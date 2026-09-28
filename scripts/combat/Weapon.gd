@@ -315,7 +315,15 @@ func _owner_tick(delta: float) -> void:
 	# Toute arme SANS mode fan (le Ravage) n'a que `tap_trigger`, `fan_trigger`
 	# reste toujours faux : comportement STRICTEMENT inchangé pour elle.
 	var is_fan_weapon := c != null and c.has_fan_fire()
-	var can_trigger := can_act and c != null and not _inv.reloading and _switch_cooldown <= 0.0 and not move_blocked and not nade_equipped
+	# Tâche "quatre armes" (2026-09-28, Fracas/Verdict) : "fire interrupts the
+	# reload if >= 1 round loaded" -- un rechargement PAR CARTOUCHE
+	# (`WeaponConfig.reload_per_round`) ne doit PLUS bloquer la gâchette une
+	# fois au moins une cartouche déjà en chambre, contrairement à un
+	# rechargement en BLOC (comportement HISTORIQUE inchangé, ex. Ravage/
+	# Revolver/tout sniper -- `reload_blocks` reste alors simplement
+	# `_inv.reloading`).
+	var reload_blocks := _inv.reloading and not (c != null and c.reload_per_round and _inv.current < _inv.mag.size() and _inv.mag[_inv.current] >= 1)
+	var can_trigger := can_act and c != null and not reload_blocks and _switch_cooldown <= 0.0 and not move_blocked and not nade_equipped
 	var tap_trigger := false
 	var fan_trigger := false
 	if can_trigger:
@@ -324,6 +332,13 @@ func _owner_tick(delta: float) -> void:
 			fan_trigger = player.input.alt_fire_held
 	if not (tap_trigger or fan_trigger):
 		_spray_shot_index = 0  # relâchés => le prochain tir reprend le motif au début.
+	# Interrompt réellement le rechargement PAR CARTOUCHE en cours dès qu'un
+	# déclencheur est actionné CE tick (no-op pour toute autre arme/situation,
+	# voir Inventory.interrupt_reload_for_fire) -- AVANT `_inv.can_fire()`
+	# ci-dessous, sinon `reloading` resterait vrai et `gate` refuserait le tir
+	# que `reload_blocks` vient pourtant d'autoriser.
+	if c != null and (tap_trigger or fan_trigger):
+		_inv.interrupt_reload_for_fire(c)
 
 	# GF-12 : un fire_pressed reçu pendant le cooldown est mémorisé 120 ms par
 	# FireClock (voir sa docstring) et tire dès que l'intervalle est écoulé —
@@ -456,7 +471,10 @@ func _start_reload_predicted() -> void:
 ## majorés — cosmétique/prédiction PROPRIÉTAIRE, jamais revalidés par le
 ## serveur (comme le reste de la dispersion/du recul, voir WeaponFeel.gd).
 func _fire_local(c: WeaponConfig, is_fan: bool = false) -> void:
-	_inv.consume_round()
+	# `c.cycle_time` (tâche "quatre armes", pompe/levier/verrou) : 0.0 pour
+	# toute arme sans ce champ, aucun effet sur `consume_round` (comportement
+	# HISTORIQUE inchangé, ex. Ravage/Revolver).
+	_inv.consume_round(c.cycle_time)
 	_emit_local()
 	fired.emit(c, is_fan)
 
@@ -524,7 +542,10 @@ func _fire_local(c: WeaponConfig, is_fan: bool = false) -> void:
 	for i in n:
 		var s := spread
 		if c.pellets > 1:
-			s = deg_to_rad(c.pellet_spread)
+			# Tâche "quatre armes" (Fracas) : cône hanche/visée distinct si
+			# configuré (WeaponFeel.pellet_cone_deg), sinon `pellet_spread`
+			# flat dans les deux cas comme avant cette tâche.
+			s = deg_to_rad(WeaponFeel.pellet_cone_deg(c, aiming))
 		dirs.append(WeaponFeel.spread_dir(base_dir, camera.global_transform.basis, s))
 
 	var muzzle := _muzzle_position()
@@ -666,6 +687,11 @@ func _server_fire(sender_id: int, origin: Vector3, dirs: Array, weapon_id: int, 
 		return
 	var c := WeaponDatabase.get_by_id(weapon_id)
 	_server_inv.finish_reload_if_within(RELOAD_TOLERANCE)
+	# Tâche "quatre armes" : miroir AUTORITAIRE serveur de l'interruption de
+	# rechargement PAR CARTOUCHE par le tir (voir `_owner_tick` côté
+	# propriétaire) -- no-op pour toute autre arme/situation (Inventory.
+	# interrupt_reload_for_fire).
+	_server_inv.interrupt_reload_for_fire(c)
 	if c == null or not _server_inv.can_fire():
 		_reject_shot()
 		return
@@ -715,7 +741,7 @@ func _server_fire(sender_id: int, origin: Vector3, dirs: Array, weapon_id: int, 
 		return
 	# Tir accepté : le propriétaire a déjà prédit exactement ce décompte, donc
 	# pas de synchro (elle arriverait en retard et écraserait ses tirs suivants).
-	_server_inv.consume_round()
+	_server_inv.consume_round(c.cycle_time)
 	_pending_shots.append([sender_id, origin, dirs, c])
 	# Tirer met fin à la protection de spawn (Health : R-B1, pas encore fixée
 	# à l'écriture de ce fichier — appel défensif).

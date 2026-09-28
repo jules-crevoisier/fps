@@ -59,7 +59,15 @@ extends RefCounted
 ## nommées explicitement par le contrat BOT-04) — jamais déduites de
 ## `WeaponConfig.automatic` seul : Magnum/Pistolet/Fracas sont AUSSI semi-auto
 ## (`automatic = false`) sans exiger l'arrêt.
-const PRECISION_WEAPON_NAMES := ["Marqueur", "Percuteur", "Faucheur"]
+## "Aiguille" (tâche "quatre armes"/"LOADOUT SELECTION", contrat lead
+## 2026-09-28 : fusil de précision à verrou) ajoutée ici pour le "short settle
+## before firing" — même mécanisme EXISTANT (can_fire_at_speed), jamais un
+## nouveau délai dédié : un sniper qui doit nettement ralentir avant de tirer
+## EST la "settle" demandée. "Marqueur"/"Percuteur"/"Faucheur" restaient de
+## l'ancien roster (supprimé à la remise à zéro du projet, 2026-09-26) — aucun
+## des deux ne correspond plus à une arme du catalogue actuel, gardés
+## inertes (jamais retirés hors du périmètre de cette tâche).
+const PRECISION_WEAPON_NAMES := ["Marqueur", "Percuteur", "Faucheur", "Aiguille"]
 
 ## Vitesse (fraction de `MovementConfig.sprint_speed`, [0, ~1]) sous laquelle
 ## une arme de précision peut tirer.

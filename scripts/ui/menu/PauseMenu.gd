@@ -31,10 +31,15 @@ var _buttons_panel: Control
 var _settings_wrap: Control
 var _settings_panel: SettingsPanel
 var _mouse_mode_before_open: int = Input.MOUSE_MODE_VISIBLE
+## Rangée « Prochaine arme » (retour de test 2026-09-28 : changer d'arme en pleine partie) —
+## reconstruite à chaque ouverture et après chaque choix, pour surligner le choix en cours.
+var _primary_slot: VBoxContainer
+var _primary_row: HFlowContainer
 
 
 func _ready() -> void:
 	layer = 50
+	add_to_group("pause_menu")   # lu par DeathScreen pour recapturer la souris au bon moment
 	_build()
 	visible = false
 
@@ -86,7 +91,55 @@ func _build_buttons() -> Control:
 	for b in [resume, settings_btn, lobby, quit]:
 		b.custom_minimum_size = Vector2(520, 80)
 		col.add_child(b)
+
+	# Prochaine arme, juste sous « Reprendre » : prise à la prochaine réapparition (jamais en vie).
+	_primary_slot = VBoxContainer.new()
+	_primary_slot.add_theme_constant_override("separation", UiTokens.S1)
+	var caption := UiTokens.make_label("Prochaine arme · à la réapparition",
+			UiTokens.label(UiTokens.T_XS, UiTokens.PAPER, int(UiTokens.STROKE * 0.5), true), true)
+	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_primary_slot.add_child(caption)
+	col.add_child(_primary_slot)
+	col.move_child(_primary_slot, resume.get_index() + 1)
+	_rebuild_primary_row()
 	return col
+
+
+func _rebuild_primary_row() -> void:
+	var names: Array = []
+	for id in Loadout.available_primary_ids():
+		names.append(Loadout.name_for_primary_id(id))
+	if _primary_row == null or not is_instance_valid(_primary_row) or _primary_row.get_meta("names", []) != names:
+		if _primary_row != null and is_instance_valid(_primary_row):
+			_primary_slot.remove_child(_primary_row)
+			_primary_row.queue_free()
+		_primary_row = MenuWidgets.segmented(names, names, Settings.selected_primary, _on_primary_chosen)
+		_primary_row.custom_minimum_size = Vector2(520, 0)
+		_primary_row.alignment = FlowContainer.ALIGNMENT_CENTER
+		_primary_row.set_meta("names", names)
+		_primary_slot.add_child(_primary_row)
+		return
+	# Même liste : on ne fait que déplacer le surlignage (aucun nœud recréé).
+	var i := 0
+	for b in _primary_row.get_children():
+		if b is Button:
+			MenuWidgets.apply_plate_states(b, UiTokens.YELLOW if names[i] == Settings.selected_primary else UiTokens.PAPER, 0.0)
+			for st in ["normal", "hover", "pressed", "focus", "disabled"]:
+				var sb := (b as Button).get_theme_stylebox(st) as StyleBoxComic
+				if sb:
+					sb.pad = Vector2(12, 5)
+			i += 1
+
+
+## Même effet que la colonne de l'écran de mort : persiste le choix ET prévient le serveur,
+## qui l'applique à la prochaine réapparition.
+func _on_primary_chosen(wname: String) -> void:
+	Settings.selected_primary = wname
+	Settings.save_all()
+	var match_node := get_tree().get_first_node_in_group("match") if is_inside_tree() else null
+	if match_node and match_node.has_method("request_primary_weapon"):
+		match_node.request_primary_weapon(Loadout.primary_id_for_name(wname))
+	_rebuild_primary_row()
 
 
 func open() -> void:
@@ -94,6 +147,7 @@ func open() -> void:
 		return
 	_open = true
 	visible = true
+	_rebuild_primary_row()
 	_show_buttons()
 	_mouse_mode_before_open = Input.mouse_mode
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE

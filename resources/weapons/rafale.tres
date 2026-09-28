@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="WeaponConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/WeaponConfig.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+weapon_name = "Rafale"
+weapon_type = 0
+category = 1
+cost = 1600
+damage = 18.0
+damage_min = 11.0
+falloff_start = 10.0
+falloff_end = 25.0
+headshot_mult = 1.5
+max_range = 200.0
+fire_rate = 14.0
+automatic = true
+spread_hip = 1.6
+spread_aim = 0.7
+mag_size = 32
+reserve_ammo = 96
+arena_reserve_ammo = 160
+reload_time = 1.6
+aim_fov = 62.0
+aim_speed = 12.0
+pellets = 1
+pellet_spread = 0.0
+recoil_vertical = 0.35
+recoil_horizontal = 0.25
+recoil_recovery = 8.5
+recoil_aim_mult = 0.6
+scoped = false
+move_spread_add = 0.6
+air_spread_add = 1.2
+slide_to_fire = 0.38
+dive_to_fire = 0.46
+ads_time = 0.15

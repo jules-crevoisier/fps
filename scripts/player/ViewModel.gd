@@ -246,25 +246,33 @@ const _MODEL_YAW_DEG := 9.0
 ## fourchette de couverture réduite pour cette arme précise (décision hors de
 ## ce fichier — `docs/style/tokens.json` n'est pas non plus dans la liste de
 ## FP-01).
+## Tâche "quatre armes v2" (2026-09-28) : ids 2-5 REMPLACÉS -- l'ancien roster (Rafale/Marqueur/
+## Fracas/Faucheur à CES MÊMES ids) a été retiré le 2026-09-26 (voir CLAUDE.md "remise à zéro"),
+## les commentaires "Pistolet/Magnum/Marqueur/Ravage/Faucheur" ci-dessous sont un reliquat de CETTE
+## ancienne liste -- id 0/1 (Ravage/Revolver au catalogue ACTUEL, WeaponDatabase.PATHS) restent
+## HORS PÉRIMÈTRE de cette tâche (non retouchés). Mesuré par capture (tools/rigging/
+## action_weapons_capture.gd -> reports/checkpoints/2026-09-28_weapons/) : les 4 nouveaux modèles
+## peints (A3D, origine = poignée comme le Revolver) sortaient entièrement du cadre FP à l'échelle
+## neutre -- décalage vertical nécessaire pour les faire rentrer dans le cadre (même symptôme que
+## GRIP_LIFT documenté dans tools/blender/make_action_weapons.py pour les anciens placeholders,
+## corrigé ICI plutôt que dans la géométrie : ce tableau existe pour exactement ce réglage).
 const _WEAPON_SCALE_BY_ID := {
 	0: 0.95,   # Pistolet
 	1: 1.06,   # Magnum
-	2: 0.95,   # Rafale
-	3: 1.01,   # Marqueur
-	4: 1.14,   # Ravage
-	5: 1.70,   # Fracas
-	6: 1.35,   # Faucheur
+	2: 1.05,   # Rafale
+	3: 0.80,   # Fracas
+	4: 0.85,   # Verdict
+	5: 0.70,   # Aiguille
 }
 ## Décalage par ARME, même principe que `_WEAPON_SCALE_BY_ID` — voir
 ## `_WEAPON_NUDGE_BY_CATEGORY` pour la règle "jamais vers le haut-gauche".
 const _WEAPON_NUDGE_BY_ID := {
 	0: Vector3(0.02, -0.006, -0.02),
 	1: Vector3(0.0, 0.02, 0.0),
-	2: Vector3(0.09, -0.065, -0.04),
-	3: Vector3(0.165, -0.10, -0.06),
-	4: Vector3(0.145, -0.125, -0.08),
-	5: Vector3(0.255, -0.135, -0.09),
-	6: Vector3(0.289, -0.118, 0.0),
+	2: Vector3(0.10, -0.10, 0.20),
+	3: Vector3(0.12, -0.12, 0.20),
+	4: Vector3(0.12, -0.12, 0.20),
+	5: Vector3(0.12, -0.14, 0.20),
 }
 ## Repli par CATÉGORIE (WeaponConfig.Category), réglage hérité d'ART-12 —
 ## SEULEMENT pour une arme sans entrée dans `_WEAPON_SCALE_BY_ID`/
@@ -377,6 +385,22 @@ var _glove_l: Node3D
 ## que de la modifier directement, pour ne jamais dériver au fil des
 ## rechargements.
 var _glove_l_rest: Vector3 = Vector3.ZERO
+## Pièce mobile du cycle d'action (pompe/levier/verrou/chargeur, tâche
+## "quatre armes" 2026-09-28) trouvée par NOM sur le modèle courant — voir
+## `_resolve_action_part`/`WeaponActionAnim.gd`. `null` pour toute arme sans
+## pièce dédiée (ex. le Ravage/le Revolver, dont les pièces mobiles restent
+## gérées par `_weapon_model_anim`, l'AnimationPlayer embarqué historique).
+var _action_part: Node3D
+## "PumpGrip"/"Lever"/"Bolt"/"Magazine" (nom du nœud trouvé, réutilisé
+## directement comme clé de branchement dans `_update_action_part`) ou "".
+var _action_kind: String = ""
+var _action_rest_pos: Vector3 = Vector3.ZERO
+var _action_rest_rot: Vector3 = Vector3.ZERO
+## INF = aucun cycle/geste d'insertion en cours (sentinel — voir
+## `WeaponActionAnim.progress`/`insert_offset`, qui rendent alors un repos net).
+var _cycle_since_fire: float = INF
+var _insert_since: float = INF
+
 var _last_mouse_delta: Vector2 = Vector2.ZERO
 var _ads_t: float = 1.0        # 1 = hanche, 0 = visée
 var _sprint_t: float = 0.0
@@ -397,6 +421,10 @@ func _ready() -> void:
 		weapon.fired.connect(_on_fired)
 		weapon.reload_started.connect(_on_reload_started)
 		weapon.weapon_changed.connect(_on_weapon_changed)
+		# Tâche "quatre armes" (2026-09-28) : front d'insertion d'une
+		# cartouche/balle pendant un rechargement PAR CARTOUCHE (voir
+		# `_on_ammo_changed`) -- pour Fracas/Verdict (Lever/PumpGrip).
+		weapon.ammo_changed.connect(_on_ammo_changed)
 	_utility = player.get_node_or_null("UtilityThrower") as UtilityThrower
 	if _utility:
 		_utility.fired.connect(_on_utility_thrown)
@@ -610,6 +638,8 @@ func _process(delta: float) -> void:
 	else:
 		_process_gloves(delta, bob, reload_off, equip_off, fov_scale)
 
+	_update_action_part(delta, reload_off)
+
 	if _muzzle_mesh:
 		_muzzle_mesh.visible = _anim.is_muzzle_visible()
 		if not _anim.tick_muzzle(delta):
@@ -638,6 +668,15 @@ func _process_gloves(delta: float, bob: Vector3, reload_off: Vector3, equip_off:
 	# `reload_t`/`reload_dur`.
 	if _glove_l:
 		_glove_l.position = _glove_l_rest + _anim.reload_glove_offset()
+
+	# Tâche "quatre armes" (2026-09-28, Aiguille) : "the gun model is hidden
+	# [...] while fully scoped" -- les DEUX gants sont enfants de `_model`
+	# (voir `_attach_gloves`), donc masqués avec lui automatiquement (aucun
+	# appel dédié requis ici). Faux (aucun effet) pour toute arme sans lunette.
+	if _model:
+		var c := weapon.cfg()
+		var fully_scoped := c != null and c.scoped and player.input.aim_held and _ads_t <= 0.001
+		_model.visible = not fully_scoped
 
 ## Chemin bras FP grenouille (tâche "frog fp arms") : PAS de REST_POS/ADS_POS
 ## (requirement 2, « disable the old ADS positional offset for the frog arms
@@ -708,7 +747,18 @@ func _process_arms(aiming: bool, reloading: bool, bob: Vector3, fov_scale: float
 		# la rattacherait chaque frame jusqu'à la fin du retour.
 		_update_held_grenade(nade_equipped and not _utility.is_returning(), _utility.equipped_kind())
 	if _model:
-		_model.visible = not nade_equipped
+		# Tâche "quatre armes" (2026-09-28, Aiguille) : "the gun model is
+		# hidden [...] while fully scoped" (ScopeOverlay.gd, contrat) --
+		# même convention `_ads_t` que ce fichier (1 = hanche, 0 = visée
+		# pleine, INVERSÉE par rapport à WeaponFeel.ads_progress utilisé par
+		# GameHUD -- les deux atteignent "pleinement visé" au même instant,
+		# calculés depuis le MÊME `WeaponConfig.ads_time`, juste avec des
+		# conventions de signe différentes). Faux (aucun effet) pour toute
+		# arme sans lunette (`c.scoped` faux, ex. le Ravage) -- comportement
+		# inchangé pour elles.
+		var c := weapon.cfg()
+		var fully_scoped := c != null and c.scoped and aiming and _ads_t <= 0.001
+		_model.visible = not nade_equipped and not fully_scoped
 
 ## Facteur qui neutralise le FOV RÉEL de la caméra (`player.camera.fov`,
 ## Camera3D porté par PlayerCamera.gd — voir sa doc) pour TARGET_FOV_DEG (voir
@@ -724,6 +774,12 @@ func _fov_scale() -> float:
 func _on_fired(cfg: WeaponConfig, is_fan: bool = false) -> void:
 	if cfg == null:
 		return
+	# Tâche "quatre armes" (2026-09-28) : amorce le cycle d'action procédural
+	# (pompe/levier/verrou, voir `_update_action_part`) -- no-op pour toute
+	# arme SANS `cycle_time` (ex. le Ravage/le Revolver/la Rafale), `_action_part`
+	# restant alors de toute façon `null` (voir `_resolve_action_part`).
+	if cfg.cycle_time > 0.0:
+		_cycle_since_fire = 0.0
 	_anim.kick_recoil(Vector3(0, deg_to_rad(cfg.recoil_vertical) * 6.0, 0))
 	_anim.trigger_muzzle_flash()
 	if _using_arms:
@@ -798,6 +854,21 @@ func _on_reload_started(cfg: WeaponConfig) -> void:
 			_arms.cancel_inspect()
 		_play_weapon_model_reload("Rev_Reload", cfg.reload_time)
 
+## Front d'insertion d'une cartouche/balle (tâche "quatre armes") : `ammo_changed`
+## (Weapon._emit_local) est émis à CHAQUE insertion d'un rechargement PAR
+## CARTOUCHE (`Inventory._tick_per_round`, une fois par cartouche) -- filtré
+## par `_anim.reload_t >= 0.0` (un dip de rechargement LOCAL est bien en cours,
+## même convention que `reloading` dans `_process()`) ET `c.reload_per_round`
+## (jamais pour un simple TIR, qui émet aussi ce signal, ni pour une arme à
+## rechargement en BLOC comme l'Aiguille). Un déclenchement "gratuit" au tout
+## début du rechargement (avant la première cartouche réelle, `_emit_local`
+## appelé par `_start_reload_predicted` sans changement d'ammo réel) reste
+## sans conséquence : juste un petit geste en plus, cosmétique.
+func _on_ammo_changed(_ammo: int, _reserve: int) -> void:
+	var c := weapon.cfg() if weapon else null
+	if c and c.reload_per_round and _anim.reload_t >= 0.0:
+		_insert_since = 0.0
+
 func _on_weapon_changed(_cfg: WeaponConfig) -> void:
 	# `weapon_changed` est aussi émis à CHAQUE tir (Weapon._emit_local, avec ammo_changed) :
 	# sortie d'arme seulement si l'arme change vraiment, sinon elle replongeait à chaque balle.
@@ -861,6 +932,97 @@ func _refresh_model() -> void:
 	# `null` pour une arme sans animation de pièces (ex. le Ravage), jamais un
 	# plantage.
 	_weapon_model_anim = _model.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	_resolve_action_part(id)
+
+## Trouve (par NOM) la pièce mobile du cycle d'action/de rechargement du
+## modèle COURANT (tâche "quatre armes", 2026-09-28 : PumpGrip/Lever/Bolt/
+## Magazine, voir `WeaponActionAnim.gd`/tools/blender/make_action_weapons.py)
+## et capture sa pose de REPOS (position/rotation LOCALE authored dans le
+## .glb) -- `_update_action_part` s'y ADDITIONNE chaque frame, jamais ne
+## l'écrase, pour ne jamais dériver d'un changement d'arme à l'autre. `null`/
+## "" pour toute arme sans pièce dédiée (ex. le Ravage/le Revolver) --
+## `_update_action_part` devient alors un no-op silencieux.
+func _resolve_action_part(id: int) -> void:
+	_action_part = null
+	_action_kind = ""
+	_cycle_since_fire = INF
+	_insert_since = INF
+	var cfg := WeaponDatabase.get_by_id(id)
+	if cfg == null or _model == null:
+		return
+	var node_name := action_node_name_for(cfg)
+	if node_name == "":
+		return
+	var node := _model.find_child(node_name, true, false) as Node3D
+	if node == null:
+		return
+	_action_part = node
+	_action_kind = node_name
+	_action_rest_pos = node.position
+	_action_rest_rot = node.rotation
+
+## Amplitude du cycle d'action (m pour une translation, rad pour une
+## rotation) — réglée à l'œil, une fois pour toutes les armes du même
+## mécanisme (pas un champ WeaponConfig dédié : purement cosmétique, jamais
+## revalidé par le serveur, comme le reste du "weapon-feel" procédural de ce
+## fichier).
+const _PUMP_TRAVEL_M := 0.05
+const _LEVER_SWING_RAD := 0.62   # ≈35°
+const _BOLT_TRAVEL_M := 0.045
+const _INSERT_TRAVEL_M := 0.028
+const _INSERT_SWING_RAD := 0.21  # ≈12°
+
+## Anime CHAQUE FRAME la pièce mobile trouvée par `_resolve_action_part`
+## (tâche "quatre armes") — un simple aller-retour PROCÉDURAL (WeaponActionAnim,
+## même esprit que le reste de ce fichier : recul/sway/bob/dip de
+## rechargement), jamais un clip AnimationPlayer dédié. No-op silencieux si
+## `_action_part` est nul (toute arme sans pièce dédiée). `reload_off` :
+## dip GÉNÉRIQUE de rechargement déjà calculé par `_anim.tick_reload` (voir
+## `_process()`) — réutilisé TEL QUEL (amplifié) pour le chargeur de la Rafale
+## (SMG, ni cycle ni rechargement par cartouche), qui n'a besoin d'aucun état
+## dédié au-delà de ce dip existant.
+func _update_action_part(delta: float, reload_off: Vector3) -> void:
+	if _action_part == null:
+		return
+	if _cycle_since_fire < INF:
+		_cycle_since_fire += delta
+	if _insert_since < INF:
+		_insert_since += delta
+	var c := weapon.cfg() if weapon else null
+	var cycle_dur: float = c.cycle_time if c else 0.0
+	match _action_kind:
+		"PumpGrip":
+			var cyc := WeaponActionAnim.swing(WeaponActionAnim.progress(_cycle_since_fire, cycle_dur), -_PUMP_TRAVEL_M)
+			var ins := WeaponActionAnim.insert_offset(_insert_since, -_INSERT_TRAVEL_M)
+			_action_part.position = _action_rest_pos + Vector3(0.0, 0.0, cyc + ins)
+		"Lever":
+			var cyc2 := WeaponActionAnim.swing(WeaponActionAnim.progress(_cycle_since_fire, cycle_dur), _LEVER_SWING_RAD)
+			var ins2 := WeaponActionAnim.insert_offset(_insert_since, _INSERT_SWING_RAD)
+			_action_part.rotation = _action_rest_rot + Vector3(cyc2 + ins2, 0.0, 0.0)
+		"Bolt":
+			var cyc3 := WeaponActionAnim.swing(WeaponActionAnim.progress(_cycle_since_fire, cycle_dur), _BOLT_TRAVEL_M)
+			_action_part.position = _action_rest_pos + Vector3(0.0, cyc3 * 0.35, cyc3)
+		"Magazine":
+			_action_part.position = _action_rest_pos + reload_off * 1.6
+
+## Nom du nœud mobile porté par le modèle courant pour l'arme `cfg` — "" si
+## cette arme n'a pas de pièce dédiée. Fonction PURE (aucun accès scène) :
+## SHOTGUN (Fracas) -> pompe ; un rechargement PAR CARTOUCHE hors SHOTGUN
+## (Verdict, carabine à levier) -> levier ; une arme À LUNETTE (Aiguille,
+## verrou) -> culasse ; un SMG (Rafale, ni cycle ni rechargement par
+## cartouche) -> juste son chargeur, animé au dip de rechargement générique.
+static func action_node_name_for(cfg: WeaponConfig) -> String:
+	if cfg == null:
+		return ""
+	if cfg.category == WeaponConfig.Category.SHOTGUN:
+		return "PumpGrip"
+	if cfg.reload_per_round:
+		return "Lever"
+	if cfg.scoped:
+		return "Bolt"
+	if cfg.category == WeaponConfig.Category.SMG:
+		return "Magazine"
+	return ""
 
 ## Joue `name` sur l'AnimationPlayer EMBARQUÉ dans le modèle d'arme courant
 ## (tâche "revolver" 2026-09-27 : Rev_Fire/Rev_Fan/Rev_Reload/Rev_Draw/
@@ -998,14 +1160,21 @@ func _attach_gloves() -> void:
 ## AUCUNE des deux régressions de la piste 2 (Fracas intact, la contrainte qui
 ## avait fait abandonner un lacet PARTAGÉ ne s'applique plus à un lacet PAR
 ## ARME).
+## Tâche "quatre armes v2" (2026-09-28) : ids 2-5 REMPLACÉS (Rafale/Fracas/Verdict/Aiguille, modèles
+## Tripo peints art/weapons/<id>/build_<id>.py) -- l'ancien roster à CES MÊMES ids (Rafale/Marqueur/
+## Fracas/Faucheur) a été retiré le 2026-09-26, id 6 (Faucheur) disparaît (6 armes seulement,
+## WeaponDatabase.PATHS) ; id 0/1 (Ravage/Revolver au catalogue ACTUEL) restent HORS PÉRIMÈTRE de
+## cette tâche (commentaires "Pistolet/Magnum" ci-dessous un reliquat de l'ancien roster, non
+## retouchés). Même convention que ci-dessus (petit décalage depuis l'origine/poignée) pour les 4
+## nouvelles armes -- toutes à deux mains (jamais PISTOL), donc la même valeur que
+## Marqueur/Ravage/Fracas/Faucheur avant elles.
 const _RIGHT_GLOVE_ANCHOR_BY_ID := {
 	0: Vector3(0.0, 0.011, 0.0),   # Pistolet — Foregrip.y=0,044.
 	1: Vector3(0.0, 0.011, 0.0),   # Magnum — Foregrip.y=0,044.
-	2: Vector3(0.0, 0.016, 0.0),   # Rafale — Foregrip.y=0,049.
-	3: Vector3(0.0, 0.018, 0.0),   # Marqueur — Foregrip.y=0,051.
-	4: Vector3(0.0, 0.018, 0.0),   # Ravage — Foregrip.y=0,051.
-	5: Vector3(0.0, 0.018, 0.0),   # Fracas — Foregrip.y=0,051.
-	6: Vector3(0.0, 0.018, 0.0),   # Faucheur — Foregrip.y=0,051.
+	2: Vector3(0.0, 0.018, 0.0),   # Rafale
+	3: Vector3(0.0, 0.018, 0.0),   # Fracas
+	4: Vector3(0.0, 0.018, 0.0),   # Verdict
+	5: Vector3(0.0, 0.018, 0.0),   # Aiguille
 }
 const _DEFAULT_RIGHT_GLOVE_ANCHOR := Vector3.ZERO
 
@@ -1153,6 +1322,17 @@ func _reparent(node: Node3D, new_parent: Node3D) -> void:
 ## matériau importé tel quel, jamais un crash.
 const _PAINTED_MATERIAL_MARKER := "_painted"
 
+## Marqueur du matériau couleurs-de-sommet des 4 armes "quatre armes v2" (2026-09-28) -- voir
+## tools/blender/lib/painted_weapon.py::VERTEX_COLOR_MATERIAL_MARKER (même chaîne, source unique).
+const _VERTEX_COLOR_MATERIAL_MARKER := "_vcolor"
+
+## Marqueur du matériau baked des placeholders "quatre armes" (2026-09-28,
+## tools/blender/make_action_weapons.py) — voir la branche dédiée de
+## `_apply_cartoon_materials` juste au-dessus : chaque pièce garde SA couleur
+## (jaune/cobalt Rafale-Aiguille, noyer/acier bleui/laiton Fracas-Verdict),
+## seul un anneau d'encre s'ajoute par-dessus.
+const _ACTION_WEAPON_PAINT_MARKER := "_paint"
+
 ## FP-03 : marqueur du matériau SÉPARÉ de la manche (tools/blender/
 ## fit_gloves_painted.py::_add_sleeve_material) — voir la doc de
 ## `_apply_glove_materials` pour le routage complet.
@@ -1195,6 +1375,33 @@ func _apply_cartoon_materials(model: Node3D) -> void:
 				# 2026-09-26, ToonStyle.gd) : plus de next_pass ici, voir _apply_glove_materials.
 				var tex := Cartoon.texture_from_imported_material(mat)
 				mesh.set_surface_override_material(i, ToonStyle.toon_material(tex))
+				continue
+			if name.ends_with(_VERTEX_COLOR_MATERIAL_MARKER):
+				# Rafale/Fracas/Verdict/Aiguille (tâche "quatre armes v2", 2026-09-28 --
+				# tools/blender/lib/painted_weapon.py::paint_vertex_colors) : contrairement à une
+				# texture peinte (glTF baseColorTexture, lue nativement par Godot), une couleur de
+				# sommet (COLOR_0) n'a pas d'équivalent déclaratif dans le matériau glTF -- Godot
+				# importe un StandardMaterial3D BLANC (confirmé par rendu isolé) tant qu'on ne pose
+				# pas ce drapeau soi-même. Contour : pass plein écran (ToonStyle.add_outline_pass,
+				# _wire_outline_pass), même repli que le Revolver ci-dessus/l'arme peinte -- aucun
+				# next_pass par matériau ici.
+				var vstd := mat as StandardMaterial3D
+				if vstd:
+					var vdup := vstd.duplicate() as StandardMaterial3D
+					vdup.vertex_color_use_as_albedo = true
+					mesh.set_surface_override_material(i, vdup)
+				continue
+			if name.ends_with(_ACTION_WEAPON_PAINT_MARKER):
+				# Placeholders "quatre armes" (2026-09-28, tools/blender/
+				# make_action_weapons.py) : chaque pièce garde SA PROPRE
+				# couleur baked (jaune/cobalt Rafale-Aiguille, noyer/acier
+				# bleui/laiton Fracas-Verdict) -- jamais la palette générique
+				# ci-dessous (elle réduirait toutes ces armes à la même
+				# teinte "_body"/"_metal" que le Ravage), seul l'anneau
+				# d'encre s'ajoute par-dessus (`Cartoon.character`).
+				var src := mat as BaseMaterial3D
+				var paint_color: Color = src.albedo_color if src else Color(0.5, 0.5, 0.5)
+				mesh.set_surface_override_material(i, Cartoon.character(paint_color, _THIN_OUTLINE_PX))
 				continue
 			for slot in palette.keys():
 				if name.ends_with("_%s" % slot):

@@ -21,6 +21,15 @@ const SETS := {
 		{"name": "frag", "scene": "res://assets/models/utilities/frag.glb", "view": "side"},
 		{"name": "flash", "scene": "res://assets/models/utilities/flash.glb", "view": "side"},
 		{"name": "smoke", "scene": "res://assets/models/utilities/smoke.glb", "view": "side"},
+		# Tâche "quatre armes v2" (2026-09-28) : les 4 nouvelles armes peintes (couleurs de
+		# sommet, tools/blender/lib/painted_weapon.py) n'ont pas encore d'icône. "vcolor" : voir
+		# _build() -- une couleur de sommet n'a pas d'équivalent dans le matériau glTF/PBR
+		# standard, ToonStyle.apply_to lirait un albédo blanc par défaut (StandardMaterial3D,
+		# aucune texture) sans ce marqueur.
+		{"name": "rafale", "scene": "res://assets/models/weapons/rafale.glb", "view": "side", "vcolor": true},
+		{"name": "fracas", "scene": "res://assets/models/weapons/fracas.glb", "view": "side", "vcolor": true},
+		{"name": "verdict", "scene": "res://assets/models/weapons/verdict.glb", "view": "side", "vcolor": true},
+		{"name": "aiguille", "scene": "res://assets/models/weapons/aiguille.glb", "view": "side", "vcolor": true},
 	],
 	"hero": [
 		{"name": "frog", "scene": "res://scenes/characters/frog_cowboy.tscn", "view": "hero",
@@ -91,7 +100,25 @@ class Driver extends Node:
 		add_child(holder)
 		var model := (load(s["scene"]) as PackedScene).instantiate() as Node3D
 		holder.add_child(model)
-		ToonStyle.apply_to(model)
+		if s.get("vcolor", false):
+			# Couleur de sommet (tools/blender/lib/painted_weapon.py::paint_vertex_colors) : même
+			# raison que ViewModel.gd/ThirdPersonWeapon.gd -- ToonStyle.apply_to (ink_toon.gdshader)
+			# lit une couleur de sommet comme un MASQUE (AO/arête/dégradé), pas comme l'albédo
+			# complet, donc jamais utilisable ici pour la peinture PRINCIPALE de l'arme. On pose
+			# `vertex_color_use_as_albedo` sur le StandardMaterial3D importé directement, sans passer
+			# par ToonStyle.
+			for mesh in model.find_children("*", "MeshInstance3D", true, false):
+				var mi := mesh as MeshInstance3D
+				if mi.mesh == null:
+					continue
+				for i in mi.mesh.get_surface_count():
+					var std := mi.mesh.surface_get_material(i) as StandardMaterial3D
+					if std:
+						var dup := std.duplicate() as StandardMaterial3D
+						dup.vertex_color_use_as_albedo = true
+						mi.set_surface_override_material(i, dup)
+		else:
+			ToonStyle.apply_to(model)
 		if s.has("clip"):
 			var ap := model.find_children("*", "AnimationPlayer", true, false)
 			if not ap.is_empty():

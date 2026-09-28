@@ -153,3 +153,100 @@ func test_show_death_advances_the_tip_round_robin() -> void:
 	d.show_death("Crapaud", false, "REVOLVER", true, 45.0, true, 3.0)
 	var second_tip := d._tip_label.text
 	assert_str(second_tip).is_not_equal(first_tip)
+
+
+# ======================================================================
+#  LOADOUT SELECTION (contrat lead 2026-09-28, "DEATH SCREEN" point 4) —
+#  rangée pour changer la primaire du PROCHAIN respawn, choix persisté +
+#  surlignage de la primaire ACTUELLEMENT retenue.
+# ======================================================================
+
+func _with_saved_selected_primary(callback: Callable) -> void:
+	# Settings.selected_primary est un STATIC partagé par toute la suite
+	# headless (même précaution que tests/core/test_settings.gd::_snapshot/
+	# _restore) -- restauré après le test, jamais laissé fuiter.
+	var before := Settings.selected_primary
+	callback.call()
+	Settings.selected_primary = before
+
+
+func test_primary_picker_has_one_button_per_primary_in_locked_order() -> void:
+	var d := _screen()
+	assert_int(d._picker_buttons.size()).is_equal(Loadout.PRIMARY_NAMES.size())
+	for i in Loadout.PRIMARY_NAMES.size():
+		assert_str(d._picker_buttons[i]["name"]).is_equal(Loadout.PRIMARY_NAMES[i])
+
+
+func test_primary_picker_highlights_the_currently_persisted_default() -> void:
+	_with_saved_selected_primary(func() -> void:
+		Settings.selected_primary = "Fracas"
+		var d := _screen()
+		for entry in d._picker_buttons:
+			var btn: Button = entry["button"]
+			var sb := btn.get_theme_stylebox("normal") as StyleBoxComic
+			var expected_fill := UiTokens.YELLOW if entry["name"] == "Fracas" else UiTokens.PAPER
+			assert_bool(sb.fill.is_equal_approx(expected_fill)).append_failure_message(
+				"%s : surlignage jaune attendu seulement sur la primaire persistée" % entry["name"]
+			).is_true()
+	)
+
+
+func test_picking_a_primary_persists_it_as_the_new_default() -> void:
+	_with_saved_selected_primary(func() -> void:
+		var d := _screen()
+		d._on_primary_picked("Verdict")
+		assert_str(Settings.selected_primary).is_equal("Verdict")
+	)
+
+
+func test_show_death_refreshes_the_picker_highlight() -> void:
+	_with_saved_selected_primary(func() -> void:
+		var d := _screen()
+		Settings.selected_primary = "Aiguille"  # changé APRÈS la construction de l'écran.
+		d.show_death("Crapaud", false, "REVOLVER", true, 45.0, true, 3.0)
+		for entry in d._picker_buttons:
+			if entry["name"] == "Aiguille":
+				var btn: Button = entry["button"]
+				var sb := btn.get_theme_stylebox("normal") as StyleBoxComic
+				assert_bool(sb.fill.is_equal_approx(UiTokens.YELLOW)).append_failure_message(
+					"show_death doit resurligner la primaire persistée MÊME si elle a changé depuis la construction"
+				).is_true()
+	)
+
+
+# ======================================================================
+#  Retour de test 2026-09-28 : « on ne peut pas changer d'arme, il n'y a pas
+#  la souris » -- souris libérée pendant la mort, touches 1 à 5 en plus.
+# ======================================================================
+
+func _key(keycode: Key) -> InputEventKey:
+	var e := InputEventKey.new()
+	e.keycode = keycode
+	e.physical_keycode = keycode
+	e.pressed = true
+	return e
+
+
+func test_number_key_picks_the_matching_primary_while_dead() -> void:
+	_with_saved_selected_primary(func() -> void:
+		Settings.selected_primary = "Ravage"
+		var d := _screen()
+		d.visible = true
+		d._unhandled_input(_key(KEY_4))
+		assert_str(Settings.selected_primary).is_equal(Loadout.PRIMARY_NAMES[3])
+	)
+
+
+func test_number_keys_do_nothing_while_the_screen_is_hidden() -> void:
+	_with_saved_selected_primary(func() -> void:
+		Settings.selected_primary = "Ravage"
+		var d := _screen()
+		d.visible = false
+		d._unhandled_input(_key(KEY_2))
+		assert_str(Settings.selected_primary).is_equal("Ravage")
+	)
+
+
+func test_mouse_is_released_only_if_it_was_captured() -> void:
+	assert_int(DeathScreen.mouse_mode_for_picker(Input.MOUSE_MODE_CAPTURED)).is_equal(Input.MOUSE_MODE_VISIBLE)
+	assert_int(DeathScreen.mouse_mode_for_picker(Input.MOUSE_MODE_VISIBLE)).is_equal(Input.MOUSE_MODE_VISIBLE)

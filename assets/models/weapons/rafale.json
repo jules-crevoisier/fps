@@ -1,0 +1,19 @@
+{
+  "smooth_normal": false,
+  "ao": false,
+  "curvature": false,
+  "masks": false,
+  "color_attributes": [
+    "Color"
+  ],
+  "custom_attributes": [],
+  "file": "rafale.glb",
+  "objects": [
+    "Rafale",
+    "Body",
+    "Magazine",
+    "Muzzle",
+    "Foregrip"
+  ],
+  "tris": 18165
+}

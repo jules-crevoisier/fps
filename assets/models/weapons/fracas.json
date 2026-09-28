@@ -1,0 +1,19 @@
+{
+  "smooth_normal": false,
+  "ao": false,
+  "curvature": false,
+  "masks": false,
+  "color_attributes": [
+    "Color"
+  ],
+  "custom_attributes": [],
+  "file": "fracas.glb",
+  "objects": [
+    "Fracas",
+    "Body",
+    "PumpGrip",
+    "Muzzle",
+    "Foregrip"
+  ],
+  "tris": 18632
+}

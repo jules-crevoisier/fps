@@ -1,19 +1,24 @@
 ## hud_capture.gd
 ## Captures de vérification visuelle du HUD en jeu (contrat lead 2026-09-27,
-## "HUD en jeu" puis "TAB SCOREBOARD"/"DEATH SCREEN") — même patron que
-## tools/rigging/look_capture.gd : temps piloté par la physique, fenêtre sans
-## focus (la souris de l'utilisateur ne change rien), joueur figé (mouvement/
-## regard désactivés), bots activés en 4v4 (MatchConfig.team_size, tâche
-## "TAB SCOREBOARD" : "4v4 bots if the mode allows it" -- un seul lot de
+## "HUD en jeu" puis "TAB SCOREBOARD"/"DEATH SCREEN" ; étendue par "LOADOUT
+## SELECTION", 2026-09-28 : le joueur spawn désormais avec une PRIMAIRE NEUVE
+## (Settings.selected_primary = "Rafale", forcée ici AVANT le premier
+## Settings.load_all() -- voir `_initialize()` -- pour ne jamais dépendre du
+## fichier user://settings.cfg réel de la machine) et l'écran de mort affiche
+## le nouveau sélecteur "prochain respawn", voir DeathScreen.gd) — même patron
+## que tools/rigging/look_capture.gd : temps piloté par la physique, fenêtre
+## sans focus (la souris de l'utilisateur ne change rien), joueur figé
+## (mouvement/regard désactivés), bots activés en 4v4 (MatchConfig.team_size,
+## tâche "TAB SCOREBOARD" : "4v4 bots if the mode allows it" -- un seul lot de
 ## remplissage synchrone, voir GameWorld._fill_bots_if_needed, donc déjà
 ## présents à `tick == 120` comme l'unique bot des états a-e).
 ##   "%GODOT%" --screen 1 --resolution 1920x1080 --path . -s res://tools/ui/hud_capture.gd
-## Images : reports/checkpoints/2026-09-27_ui/hud_ingame_<état>.png — à
+## Images : reports/checkpoints/2026-09-28_loadout/hud_ingame_<état>.png — à
 ## comparer avec reports/ui/renders/{hud,scoreboard,death}.png.
 extends SceneTree
 
 const _SHIPMENT := "res://scenes/levels/maps/shipment.tscn"
-const OUT_DIR := "res://reports/checkpoints/2026-09-27_ui"
+const OUT_DIR := "res://reports/checkpoints/2026-09-28_loadout"
 
 
 class Driver extends Node:
@@ -39,6 +44,12 @@ class Driver extends Node:
 				player.set_process_unhandled_input(false)
 				player.set_process_input(false)
 			hud = tree.get_root().find_child("HUD", true, false)
+		if tick == 126:
+			# LOADOUT SELECTION (contrat lead 2026-09-28) : preuve visuelle que
+			# l'inventaire du HUD affiche une PRIMAIRE NEUVE dès le spawn
+			# (Settings.selected_primary = "Rafale", voir `_initialize()`),
+			# AVANT le passage au revolver ci-dessous.
+			_save.call_deferred("a0_new_primary_equipped")
 		if tick == 130:
 			Input.action_press("weapon_2")   # équipe le revolver (slot 2).
 		if tick == 133:
@@ -108,6 +119,15 @@ class Driver extends Node:
 
 func _initialize() -> void:
 	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_NO_FOCUS, true)
+	# LOADOUT SELECTION (contrat lead 2026-09-28) : `Settings.load_all()` doit
+	# être appelé UNE FOIS ICI (garde `_loaded` statique) AVANT toute autre
+	# lecture du fichier réel `user://settings.cfg` (GameWorld._ready() en
+	# fera un second appel, no-op grâce à cette garde) -- l'override
+	# ci-dessous reste ainsi valable jusqu'au spawn, quel que soit le contenu
+	# déjà présent sur le poste (jamais un test/capture qui dépend d'un
+	# fichier utilisateur réel).
+	Settings.load_all()
+	Settings.selected_primary = "Rafale"  # preuve visuelle : le HUD affiche une PRIMAIRE NEUVE, pas le Ravage par défaut.
 	MatchConfig.mode_id = "tdm"
 	MatchConfig.map_id = "shipment"
 	MatchConfig.bots_enabled = true

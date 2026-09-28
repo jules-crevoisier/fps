@@ -73,6 +73,14 @@ var _countdown_label: Label
 var _tip_label: Label
 var _pop_tween: Tween
 
+## LOADOUT SELECTION (contrat lead 2026-09-28, point 4 "DEATH SCREEN") —
+## rangée compacte pour changer la primaire du PROCHAIN respawn : une entrée
+## par `Loadout.PRIMARY_NAMES` = {"name":String, "button":Button}.
+var _picker_buttons: Array = []
+## Vrai si CET écran a libéré la souris (capturée en jeu) pour rendre « Prochaine arme »
+## cliquable : il la recapture au respawn, jamais s'il ne l'a pas libérée lui-même.
+var _released_mouse: bool = false
+
 var _tip_index: int = -1
 var _elapsed: float = 0.0
 var _respawn_delay: float = 3.0
@@ -81,6 +89,13 @@ var _counting: bool = false
 
 ## `killer_id <= 0` = environnement (même convention que
 ## Health.apply_damage "attacker_id = 0 = environnement"). Fonction PURE.
+## Retour de test 2026-09-28 (« on ne peut pas changer d'arme, il n'y a pas la souris ») :
+## pendant la mort, une souris capturée devient visible pour cliquer sur « Prochaine arme ».
+## Tout autre mode (déjà visible : menu pause ouvert…) reste tel quel.
+static func mouse_mode_for_picker(current_mode: int) -> int:
+	return Input.MOUSE_MODE_VISIBLE if current_mode == Input.MOUSE_MODE_CAPTURED else current_mode
+
+
 static func is_environment_death(killer_id: int) -> bool:
 	return killer_id <= 0
 
@@ -127,12 +142,14 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	visible = false
 	_build()
+	_refresh_primary_picker_highlight()
 
 
 func _build() -> void:
 	_build_veil()
 	_build_burst()
 	_build_killer_card()
+	_build_primary_picker()
 	_build_respawn_ring()
 	_build_tip()
 
@@ -242,6 +259,96 @@ func _build_killer_card() -> void:
 	row.add_child(card)
 
 
+## LOADOUT SELECTION (contrat lead 2026-09-28, "DEATH SCREEN" point 4 : "a
+## compact row to change the primary for the NEXT respawn ... current one
+## highlighted") — colonne compacte de 5 boutons (silhouette + numéro),
+## posée dans la zone GAUCHE de l'écran, totalement LIBRE quelle que soit la
+## variante affichée (voir capture reports/checkpoints/2026-09-28_loadout/
+## hud_ingame_g_death.png) : une première version alignée sous la carte du
+## tueur (`_build_killer_card`, hauteur ÉLASTIQUE selon la ligne PV/arme
+## affichées) chevauchait l'anneau de compte à rebours dès que le contenu de
+## la carte grandissait un peu — cette colonne, à gauche de la carte/de
+## l'étoile "K.O. !" (tous deux CENTRÉS horizontalement), ne peut plus jamais
+## les toucher, quel que soit leur contenu. Choisir un bouton : persiste
+## IMMÉDIATEMENT (Settings.selected_primary, MÊME règle qu'ArmoryScreen) ET
+## avertit le serveur (GameWorld.request_primary_weapon, lu via le groupe
+## "match" — MÊME technique que Weapon._round_locked, aucune dépendance
+## directe à GameHUD.gd) : le serveur applique ce choix au PROCHAIN respawn
+## SEULEMENT (jamais mi-vie, voir GameWorld._on_player_died).
+const _PICKER_ORIGIN := Vector2(64.0, 340.0)
+const _PICKER_BTN_SIZE := Vector2(72.0, 72.0)  # >= 44 px de tap target (contrat).
+const _PICKER_GAP := 10.0
+
+func _build_primary_picker() -> void:
+	var col := VBoxContainer.new()
+	col.position = _PICKER_ORIGIN
+	col.add_theme_constant_override("separation", int(_PICKER_GAP))
+	col.mouse_filter = Control.MOUSE_FILTER_PASS
+	add_child(col)
+
+	col.add_child(UiTokens.make_label("Prochaine arme", UiTokens.label(UiTokens.T_XS, UiTokens.PAPER, int(UiTokens.STROKE * 0.5), true), true))
+
+	_picker_buttons = []
+	for i in Loadout.PRIMARY_NAMES.size():
+		var wname: String = Loadout.PRIMARY_NAMES[i]
+		var btn := _build_picker_button(wname, i + 1)
+		col.add_child(btn)
+		_picker_buttons.append({"name": wname, "button": btn})
+
+
+func _build_picker_button(wname: String, number: int) -> Button:
+	var btn := Button.new()
+	btn.custom_minimum_size = _PICKER_BTN_SIZE
+	btn.focus_mode = Control.FOCUS_ALL
+	btn.tooltip_text = wname
+	MenuWidgets.apply_plate_states(btn, UiTokens.PAPER, 0.0)
+
+	var icon := TextureRect.new()
+	icon.texture = UiTokens.icon(WeaponIcon.sil(wname))
+	icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+	icon.offset_left = 6.0
+	icon.offset_right = -6.0
+	icon.offset_top = 6.0
+	icon.offset_bottom = -6.0
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	btn.add_child(icon)
+
+	# Numéro discret dans le coin, DANS les bornes du bouton (contrairement à
+	# la badge flottante d'InventoryHUD — ici la colonne est déjà serrée
+	# contre le bord gauche de l'écran, une badge qui déborde à gauche sortirait
+	# du viewport).
+	var num := UiTokens.make_label(str(number), UiTokens.label(UiTokens.T_XS, UiTokens.INK_SOFT, 0, true))
+	num.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	num.position = Vector2(4.0, 2.0)
+	num.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	btn.add_child(num)
+
+	btn.pressed.connect(_on_primary_picked.bind(wname))
+	return btn
+
+
+## Choisit `wname` pour le PROCHAIN respawn — persiste (Settings) ET avertit
+## le serveur (contrat : "choice also becomes the persisted default").
+func _on_primary_picked(wname: String) -> void:
+	Settings.selected_primary = wname
+	Settings.save_all()
+	var match_node := get_tree().get_first_node_in_group("match")
+	if match_node and match_node.has_method("request_primary_weapon"):
+		match_node.request_primary_weapon(Loadout.primary_id_for_name(wname))
+	_refresh_primary_picker_highlight()
+
+
+## Surligne (jaune) le bouton de la primaire ACTUELLEMENT retenue pour le
+## prochain respawn (Settings.selected_primary) — appelée à la construction
+## ET à chaque `show_death` (contrat : "current one highlighted").
+func _refresh_primary_picker_highlight() -> void:
+	for entry in _picker_buttons:
+		var selected: bool = String(entry["name"]) == Settings.selected_primary
+		MenuWidgets.apply_plate_states(entry["button"], UiTokens.YELLOW if selected else UiTokens.PAPER)
+
+
 func _build_respawn_ring() -> void:
 	var row := HBoxContainer.new()
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -309,18 +416,54 @@ func show_death(killer_name: String, is_environment: bool, weapon_or_ability: St
 	_elapsed = 0.0
 	_counting = true
 	_update_countdown()
+	_refresh_primary_picker_highlight()
 
 	if not visible:
 		_tip_index += 1
 		_tip_label.text = tip_for(_tip_index)
 		_pop_in()
 	visible = true
+	var wanted := mouse_mode_for_picker(Input.mouse_mode)
+	if wanted != Input.mouse_mode:
+		Input.mouse_mode = wanted
+		_released_mouse = true
 
 
 ## Masque l'écran (Health.respawned du joueur LOCAL) -- GameHUD.gd.
 func hide_death() -> void:
 	_counting = false
 	visible = false
+	_recapture_mouse()
+
+
+## Rend la souris au jeu au respawn -- seulement si cet écran l'avait libérée. Menu pause
+## ouvert à ce moment : c'est lui qui recapturera à sa fermeture (il restaure le mode noté à
+## son ouverture, qu'on remplace ici par « capturé »).
+func _recapture_mouse() -> void:
+	if not _released_mouse:
+		return
+	_released_mouse = false
+	var pause := get_tree().get_first_node_in_group("pause_menu") if is_inside_tree() else null
+	if pause != null and pause.has_method("is_open") and pause.is_open():
+		pause.set("_mouse_mode_before_open", Input.MOUSE_MODE_CAPTURED)
+		return
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+
+## Touches 1 à 5 pendant la mort = choisir la primaire du prochain respawn (même ordre que
+## les boutons ; les touches d'arme du joueur sont muettes tant que la souris est libérée).
+func _unhandled_input(event: InputEvent) -> void:
+	if not visible or not (event is InputEventKey):
+		return
+	var key := event as InputEventKey
+	if not key.pressed or key.echo:
+		return
+	var index := key.keycode - KEY_1
+	if index < 0 or index >= _picker_buttons.size():
+		return
+	_on_primary_picked(String(_picker_buttons[index]["name"]))
+	if is_inside_tree():
+		get_viewport().set_input_as_handled()
 
 
 func _pop_in() -> void:

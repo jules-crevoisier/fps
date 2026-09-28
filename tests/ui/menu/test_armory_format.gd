@@ -60,6 +60,26 @@ func test_bars_are_clamped_between_0_and_10() -> void:
 	assert_int(ArmoryFormat.damage_bars(_revolver())).is_between(0, 10)
 	assert_int(ArmoryFormat.fire_rate_bars(_revolver())).is_between(0, 10)
 	assert_int(ArmoryFormat.precision_bars(_revolver())).is_between(0, 10)
+	assert_int(ArmoryFormat.range_bars(_revolver())).is_between(0, 10)
+	assert_int(ArmoryFormat.mobility_bars(_revolver())).is_between(0, 10)
+
+
+## Contrat lead 2026-09-28 ("4 simple stat bars: Dégâts, Cadence, Portée,
+## Mobilité") : Portée vient de `falloff_end` (déjà vérifié contre le
+## Revolver par `test_revolver_damage_matches_mockup` -- "35 au-delà de 45 m").
+func test_revolver_range_matches_falloff_end() -> void:
+	var r := ArmoryFormat.format_range(_revolver())
+	assert_str(r["value"]).is_equal("45 m")
+
+
+func test_ravage_range_matches_falloff_end() -> void:
+	var r := ArmoryFormat.format_range(_ravage())
+	assert_str(r["value"]).is_equal("55 m")
+
+
+func test_mobility_label_is_one_of_the_locked_buckets() -> void:
+	var m := ArmoryFormat.format_mobility(_revolver())
+	assert_array(["Très lourde", "Lourde", "Standard", "Agile", "Très agile"]).contains([m["value"]])
 
 
 func test_frag_stats() -> void:

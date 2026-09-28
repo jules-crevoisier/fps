@@ -154,6 +154,34 @@ static func ads_progress(current: float, aiming: bool, delta: float, ads_time: f
 	var t := maxf(ads_time, 0.001)
 	return move_toward(current, 1.0 if aiming else 0.0, delta / t)
 
+## Cône de plombs (deg) réellement tiré (et affiché au réticule) pour une arme
+## à `pellets > 1` — tâche "quatre armes" (2026-09-28, Fracas) : distingue
+## hanche/visée UNIQUEMENT si `WeaponConfig.pellet_spread_aim` est configuré
+## (>= 0.0), sinon retombe sur `pellet_spread` dans les deux cas
+## (comportement HISTORIQUE inchangé — voir la doc de ce champ). Pure, seule
+## source de vérité pour `Weapon._fire_local` (tir réellement résolu).
+static func pellet_cone_deg(c: WeaponConfig, aiming: bool) -> float:
+	if aiming and c.pellet_spread_aim >= 0.0:
+		return c.pellet_spread_aim
+	return c.pellet_spread
+
+## Multiplicateur de sensibilité de visée pendant une VRAIE lunette (tâche
+## "quatre armes", 2026-09-28, `WeaponConfig.scoped == true`, ex. l'Aiguille) :
+## la souris doit tourner MOINS vite à fort zoom, proportionnellement au
+## RATIO de FOV (`scoped_fov / base_fov`) — sans quoi un même mouvement de
+## souris balaierait un angle du MONDE bien plus grand qu'à l'œil nu (le
+## viseur "glisserait" hors de la cible au moindre geste), cassant la
+## précision attendue d'une lunette. Consommée par
+## `PlayerController._scope_sensitivity_scale` (souris ET manette) — multiplie
+## `effective_look_sensitivity` PAR-DESSUS, jamais à sa place (garde le
+## multiplicateur ADS plat existant, `Settings.ads_sensitivity_multiplier`,
+## pour toute arme SANS lunette, ex. le Faucheur/le Revolver, comportement
+## inchangé). Fonction PURE (aucun accès scène) : `base_fov_deg` est le FOV
+## VERTICAL de base (hors visée, `Settings.hfov_to_vfov`), jamais le FOV
+## instantané déjà zoomé (éviterait une boucle qui s'auto-corrige vers 1.0).
+static func scoped_sensitivity_scale(scoped_fov_deg: float, base_fov_deg: float) -> float:
+	return scoped_fov_deg / maxf(base_fov_deg, 0.001)
+
 ## Direction dispersée en DISQUE (pas en carré), dans le repère CAMÉRA (GF-13,
 ## docs/research/01_game_feel.md #7) : remplace l'ancienne dispersion de
 ## `Weapon._apply_spread`, qui tirait deux `randf_range` indépendants (carré

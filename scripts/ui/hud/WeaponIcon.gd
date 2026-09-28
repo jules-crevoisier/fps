@@ -3,22 +3,40 @@
 ## vers le radical de ses icônes dans assets/ui/icons/ (silhouette papier
 ## `_sil` pour l'inventaire/le fil des éliminations, autocollant couleur
 ## `_sticker` pour le panneau de munitions) — un seul point de vérité pour ce
-## mappage, partagé par AmmoHUD/InventoryHUD/KillFeed plutôt que dupliqué
-## trois fois. Fonctions PURES (aucun nœud), testées directement
+## mappage, partagé par AmmoHUD/InventoryHUD/KillFeed/ArmoryScreen/DeathScreen
+## plutôt que dupliqué. Fonctions PURES (aucun nœud), testées directement
 ## (tests/ui/test_weapon_icon.gd).
+##
+## Tâche "quatre armes" (contrat lead 2026-09-28, roster révisé "drop all
+## frog/swamp flavour") : Rafale (mitraillette/SMG), Fracas (fusil à pompe),
+## Verdict (carabine à levier), Aiguille (fusil de précision à verrou)
+## rejoignent Ravage/Revolver — même technique de résolution (sous-chaîne en
+## minuscules). `UiTokens.icon()` renvoie déjà `null` pour un radical sans
+## fichier PNG/SVG sur le disque (voir sa doc) : tant que l'artiste n'a pas
+## livré ces 4 icônes, chaque consommateur (InventoryHUD/KillFeed/Armory/
+## DeathScreen) affiche déjà son repli existant (texte "—", silhouette
+## absente...), jamais un crash.
 class_name WeaponIcon
 extends RefCounted
 
 
-## Radical d'icône ("ravage"/"revolver") pour `weapon_name`, "" si inconnu
-## (aucune icône -> l'appelant garde alors un repli textuel/vide, jamais un
-## crash sur une icône absente).
+## Radical d'icône ("ravage"/"revolver"/"rafale"/"fracas"/"verdict"/
+## "aiguille") pour `weapon_name`, "" si inconnu (aucune icône -> l'appelant
+## garde alors un repli textuel/vide, jamais un crash sur une icône absente).
 static func stem_for(weapon_name: String) -> String:
 	var n := weapon_name.to_lower()
 	if n.find("revolver") != -1:
 		return "revolver"
 	if n.find("ravage") != -1:
 		return "ravage"
+	if n.find("rafale") != -1:
+		return "rafale"
+	if n.find("fracas") != -1:
+		return "fracas"
+	if n.find("verdict") != -1:
+		return "verdict"
+	if n.find("aiguille") != -1:
+		return "aiguille"
 	return ""
 
 
